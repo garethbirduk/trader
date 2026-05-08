@@ -1,0 +1,484 @@
+[
+  {
+    "id": "del",
+    "name": "Derek 'Del Boy' Trotter",
+    "role": "Player / Wheeler-dealer-in-chief",
+    "company": "Trotters Independent Traders (TITCO)",
+    "description": "Self-styled CEO of TITCO. Eternal optimist, dodgy linguist, mangler of French. He who dares wins.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "SCAM_BAIT", "rating": 1 },
+        { "category": "ANTIQUES", "rating": 1 },
+        { "category": "JEWELLERY", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [
+        { "category": "FAKE", "rating": 4 },
+        { "category": "FAULTY", "rating": 4 },
+        { "category": "WRONG_MARKET", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["OPTIMIST", "GREEDY", "FAMILY_FIRST", "PATTER_MERCHANT"],
+    "catchphrase": "This time next year, we'll be millionaires!"
+  },
+  {
+    "id": "rodney",
+    "name": "Rodney 'Rodders' Trotter",
+    "role": "Reluctant business partner",
+    "company": "TITCO (sometimes)",
+    "description": "Two GCEs (maths and art). The conscience of the operation. Frequent plonker.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "FAULTY", "rating": 1 },
+        { "category": "SCAM_BAIT", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "WRONG_MARKET", "rating": 1 },
+        { "category": "WRONG_SEASON", "rating": 2 },
+        { "category": "FAKE", "rating": 2 }
+      ]
+    },
+    "traits": ["HONEST", "PESSIMIST", "EASILY_LED", "ART_COLLEGE"],
+    "notes": "Famously got conned by Del's own broken lawnmower engines via Towser. Also flogged gas conversion kits on an all-electric estate."
+  },
+  {
+    "id": "boycie",
+    "name": "Aubrey 'Boycie' Boyce",
+    "role": "Second-hand car dealer",
+    "company": "Boyce Auto Sales, Lewisham",
+    "description": "Wealthy, snobbish, unlovable rogue. Has a Signature Laugh. Has done time for perjury, embezzlement, perverting the course of justice and trying to bribe the Mayor of Lambeth.",
+    "buyer": {
+      "good_at": [
+        { "category": "MOTORS", "rating": 5 },
+        { "category": "JEWELLERY", "rating": 4 }
+      ],
+      "bad_at": [
+        { "category": "ELECTRONICS", "rating": 2 },
+        { "category": "SCAM_BAIT", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [
+        { "category": "MOTORS", "rating": 5 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["GREEDY", "SNOB", "VAIN", "RIVAL"],
+    "notes": "Bought the bulk of Del's continental-current VCRs. Was conned by Arnie alongside Del. Will overpay if he thinks he's putting one over on Del."
+  },
+  {
+    "id": "trigger",
+    "name": "Colin 'Trigger' Ball",
+    "role": "Roadsweeper / petty supplier",
+    "company": "Lambeth Council (day job)",
+    "description": "Holds a Grade 3 Cycling Proficiency Diploma. Calls Rodney 'Dave'. Has the same broom for 20 years (17 new heads, 14 new handles).",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "FAKE", "rating": 1 },
+        { "category": "FAULTY", "rating": 1 },
+        { "category": "SCAM_BAIT", "rating": 1 },
+        { "category": "WRONG_MARKET", "rating": 1 }
+      ]
+    },
+    "seller": {
+      "good_at": [
+        { "category": "STOLEN", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["GULLIBLE", "DIM", "LOYAL", "LUCKY"],
+    "notes": "Source of the briefcases AND the luminous paint (with Monkey Harris). Will buy almost anything Del puts in front of him."
+  },
+  {
+    "id": "denzil",
+    "name": "Denzil Tulser",
+    "role": "Lorry driver / haulier",
+    "company": "Transworld Express",
+    "description": "Liverpool-born. Legitimate businessman who somehow keeps getting roped in. Married Corinne; she made him swear off Del's deals.",
+    "buyer": {
+      "good_at": [
+        { "category": "DANGEROUS", "rating": 4 }
+      ],
+      "bad_at": [
+        { "category": "FAKE", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["HONEST", "EXASPERATED", "HEN_PECKED", "LOYAL"],
+    "notes": "Source of the explosive sex dolls (innocently). Nearly the next Arnie victim before Del rescued him."
+  },
+  {
+    "id": "mike",
+    "name": "Mike Fisher",
+    "role": "Pub landlord",
+    "company": "The Nag's Head",
+    "description": "Friendly, gormless, frequently pestered by Del across his own bar. Eventually does time for embezzlement.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "WRONG_MARKET", "rating": 2 },
+        { "category": "FAULTY", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [
+        { "category": "BOOZE", "rating": 3 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["GULLIBLE", "GENIAL", "WEAK_WILLED"],
+    "notes": "Del once tried to flog him a £375 sunbed for £120 plus a free plug-in telephone with extension. He resisted that one. Just."
+  },
+  {
+    "id": "albert",
+    "name": "Uncle Albert Trotter",
+    "role": "Lookout / family member",
+    "company": "TITCO (lookout)",
+    "description": "Ex-Royal Navy. Every story starts 'During the war...'. Beard like a tea cosy.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["LOYAL", "RAMBLING", "JONAH", "FAMILY_FIRST"],
+    "notes": "Not really a dealer. Useful as a lookout, terrible at it. Source of the redial-button idea in Chain Gang."
+  },
+  {
+    "id": "grandad",
+    "name": "Grandad Trotter",
+    "role": "Family member / accomplice",
+    "company": "TITCO (does the boxes)",
+    "description": "Watches two TVs at once. Stamping the boxes is his speciality.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["LOYAL", "LAZY", "FAMILY_FIRST", "HOARDS_CASH"],
+    "notes": "Secret 25-1 winner at Kempton Park. Won't lend Del a penny."
+  },
+  {
+    "id": "mickey-pearce",
+    "name": "Mickey Pearce",
+    "role": "Rival small-time dealer",
+    "company": "Pearce & Trotter (briefly), then with Jevon",
+    "description": "Rodney's mate and bad influence. Always claims to have 'had her'.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "FAULTY", "rating": 1 },
+        { "category": "SCAM_BAIT", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [
+        { "category": "STOLEN", "rating": 3 },
+        { "category": "ELECTRONICS", "rating": 3 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["UNTRUSTWORTHY", "BRAGGART", "OPPORTUNIST"],
+    "notes": "Bought the lawnmower engines alongside Rodney. Later sold Del the Driscoll-related mobile phones with Jevon."
+  },
+  {
+    "id": "jevon",
+    "name": "Jevon",
+    "role": "Mickey Pearce's sidekick",
+    "company": "With Mickey Pearce",
+    "description": "Rodney's other mate. The smarter half of the Mickey-and-Jevon partnership, which isn't saying much.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "ELECTRONICS", "rating": 3 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["OPPORTUNIST", "SHARPER_THAN_HE_LOOKS"]
+  },
+  {
+    "id": "monkey-harris",
+    "name": "Monkey Harris",
+    "role": "Off-screen supplier",
+    "company": "Self-employed (very)",
+    "description": "Never seen on screen. Always involved in Trigger's nickings.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "STOLEN", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["SHADY", "RELIABLE_FENCE", "OFF_SCREEN"],
+    "notes": "Co-thief of the Clapham Junction luminous paint. Useful as a 'mystery supplier' card in your game."
+  },
+  {
+    "id": "alfie-flowers",
+    "name": "Alfie Flowers",
+    "role": "Dodgy supplier",
+    "company": "Self-employed",
+    "description": "Catches Del when he's 'non compos mentis down the One-Eleven Club'.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "FAULTY", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["TAKES_ADVANTAGE", "DRINK_PUSHER"],
+    "notes": "Sold Del the broken lawnmower engines. Then sold them to Rodney too. Then took them back from Towser."
+  },
+  {
+    "id": "ronnie-nelson",
+    "name": "Ronnie Nelson",
+    "role": "Wholesale supplier",
+    "company": "Self-employed",
+    "description": "Source of dodgy electronics.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "ELECTRONICS", "rating": 3 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["WHOLESALE", "DOESN_T_CHECK_THE_PLUGS"],
+    "notes": "Supplied the continental-current VCRs."
+  },
+  {
+    "id": "mustapha",
+    "name": "Mustapha",
+    "role": "Wholesale supplier",
+    "company": "Self-employed",
+    "description": "Source of hair-related goods. Quality control: variable.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["WHOLESALE", "LANGUAGE_BARRIER"],
+    "notes": "Sold Del the men's wigs Del thought were ladies' wigs. Also the clip-on ponytails."
+  },
+  {
+    "id": "arnie",
+    "name": "Arnie (Arnold Rutter)",
+    "role": "Con artist",
+    "company": "Family scam operation with sons Gary & Steven",
+    "description": "Retired jeweller. Frequents the One-Eleven Club. Heart's not what it was.",
+    "buyer": {
+      "good_at": [
+        { "category": "JEWELLERY", "rating": 5 }
+      ],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "SCAM_BAIT", "rating": 5 },
+        { "category": "JEWELLERY", "rating": 5 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["CON_ARTIST", "FAKES_HEART_ATTACKS", "DANGEROUS"],
+    "notes": "Sells gold chains then 'dies' mid-deal. His sons drive a fake ambulance. Can run as a recurring villain card."
+  },
+  {
+    "id": "vimmal-malik",
+    "name": "Vimmal Malik",
+    "role": "Con artist",
+    "company": "With Mr Ram",
+    "description": "Poses as a wealthy businessman. Stays in grotty bedsits.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "SCAM_BAIT", "rating": 5 },
+        { "category": "ANTIQUES", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["CON_ARTIST", "ROAMING", "WORKS_WITH_PARTNER"],
+    "notes": "Half of the Kubera statue scam. Travels city to city: Cardiff, Bristol, Southampton, then Liverpool/Birmingham."
+  },
+  {
+    "id": "mr-ram",
+    "name": "Mr Ram",
+    "role": "Con artist",
+    "company": "With Vimmal Malik",
+    "description": "Has a heavy called Oddjob. Claims to own 18 restaurants. Owns none.",
+    "buyer": {
+      "good_at": [
+        { "category": "ANTIQUES", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["CON_ARTIST", "WORKS_WITH_PARTNER", "BOUNCES_CHEQUES"]
+  },
+  {
+    "id": "driscoll-brothers",
+    "name": "The Driscoll Brothers (Danny & Tony)",
+    "role": "Local gangsters",
+    "company": "Self-employed (very)",
+    "description": "The genuine article. Not to be crossed.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "STOLEN", "rating": 5 },
+        { "category": "DANGEROUS", "rating": 5 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["VIOLENT", "FEARED", "DEBT_COLLECTORS"],
+    "notes": "Use as 'enforcer event' cards. Owed money + Driscolls visiting = bad day."
+  },
+  {
+    "id": "slater",
+    "name": "DCI Roy Slater",
+    "role": "Bent copper / rival",
+    "company": "Metropolitan Police (later: prison)",
+    "description": "Old schoolmate. Universally loathed. Married Raquel briefly.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "STOLEN", "rating": 4 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["CORRUPT", "HATED", "DANGEROUS"],
+    "notes": "Was getting a rake-off from the diamond heist he served time for. Useful as a recurring antagonist."
+  },
+  {
+    "id": "dirty-barry",
+    "name": "Dirty Barry",
+    "role": "Sex shop owner",
+    "company": "Barry's (had his licence revoked)",
+    "description": "South London's go-to for adult merchandise.",
+    "buyer": {
+      "good_at": [
+        { "category": "DANGEROUS", "rating": 3 }
+      ],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["SHADY", "NICHE_MARKET"],
+    "notes": "Del's intended buyer for the explosive sex dolls. Was unreachable when needed."
+  },
+  {
+    "id": "towser",
+    "name": "Towser",
+    "role": "Trader / favour merchant",
+    "company": "Self-employed",
+    "description": "Will run errands for a cut.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["OPPORTUNIST", "SKIMS_OFF_THE_TOP"],
+    "notes": "Was paid by Del to buy the lawnmower engines off Rodney for £200. Pocketed £35 and only paid £165."
+  },
+  {
+    "id": "paddy-the-greek",
+    "name": "Paddy the Greek",
+    "role": "Rival market trader",
+    "company": "Self-employed",
+    "description": "Undercuts Del on his own stock.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "seller": {
+      "good_at": [
+        { "category": "WRONG_MARKET", "rating": 3 }
+      ],
+      "bad_at": []
+    },
+    "traits": ["UNDERCUTS", "WHOLESALE_RESELLER"],
+    "notes": "Bought stock off Del then sold it cheaper than Del was offering it. Even Rodney bought from him instead."
+  },
+  {
+    "id": "vicar",
+    "name": "The Vicar",
+    "role": "Generic mug buyer",
+    "company": "Local parish",
+    "description": "Trusting man of the cloth. Bought a Rajah 2000 computer.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "FAKE", "rating": 1 },
+        { "category": "ELECTRONICS", "rating": 1 }
+      ]
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["TRUSTING", "TECHNOPHOBE", "BUYS_FOR_FETES"]
+  },
+  {
+    "id": "old-ladies",
+    "name": "Old Ladies in the Nag's Head",
+    "role": "Generic buyer pool",
+    "company": "n/a",
+    "description": "Sentimental buyers, easy to charm, hard to please twice.",
+    "buyer": {
+      "good_at": [],
+      "bad_at": [
+        { "category": "WRONG_MARKET", "rating": 2 }
+      ]
+    },
+    "seller": {
+      "good_at": [],
+      "bad_at": []
+    },
+    "traits": ["SENTIMENTAL", "GOSSIPS", "WORD_OF_MOUTH"],
+    "notes": "Word travels fast. Sell them dud goods and the next batch won't move at all."
+  }
+]

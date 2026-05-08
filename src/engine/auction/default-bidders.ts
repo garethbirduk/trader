@@ -1,0 +1,134 @@
+import type { DB } from "../core/db.js";
+import type { SeededRNG } from "../core/rng.js";
+import type { AuctionLot } from "./types.js";
+import type { AuctionBidder } from "./auction-session.js";
+import { getItemKindById } from "../stock/items-repo.js";
+import { listActors } from "../actors/actors-repo.js";
+import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
+import {
+  FALLBACK_BIDDER_PROFILE,
+  appraiseLot,
+  type BidderProfile,
+} from "./bidder-profile.js";
+import type { FlawType } from "../stock/types.js";
+
+export interface BidderOptions {
+  /** Per-actor bidder profiles. Actors without one use `fallbackProfile`. */
+  readonly profiles?: ReadonlyMap<number, BidderProfile>;
+  /** Profile used for actors not present in `profiles`. */
+  readonly fallbackProfile?: BidderProfile;
+  /** Actors with cash <= this floor are excluded from the bidder pool. */
+  readonly minCashToParticipate?: number;
+  /** Skipped actor codes (e.g. "auction-house", or the player). */
+  readonly excludeActorCodes?: readonly string[];
+  /** Multipliers per quality tier. Override per skin if appropriate. */
+  readonly tierMultipliers?: Readonly<Record<string, number>>;
+  /**
+   * If set, only actors whose `current_location_id` matches this id
+   * participate as bidders. Models physical attendance — you can't bid
+   * at the auction if you're at the pub. Skin schedules then naturally
+   * filter who shows up: NPCs whose timetables don't visit the auction
+   * room never bid.
+   */
+  readonly requireActorAtLocationId?: number;
+}
+
+const DEFAULT_TIER_MULT: Record<string, number> = {
+  mint: 1.5,
+  good: 1.1,
+  fair: 0.8,
+  shoddy: 0.5,
+  broken: 0.25,
+};
+
+/**
+ * The engine's default bidder generator. For each eligible actor:
+ *
+ *   1. Compute the lot's *true* market value:
+ *        baseValue × tierMultiplier × quantity
+ *   2. Run it through the actor's appraisal profile to get their perceived
+ *      `valuation` — coloured by category skill, RNG-driven appraisal
+ *      error, and any lot-specific inspection adjustment they hold.
+ *   3. Their effective bid ceiling is `min(valuation, actor.cash)`. They
+ *      won't pay more than they think it's worth, even with cash to spare;
+ *      and they obviously can't pay more than they have.
+ *   4. Bidders whose ceiling falls below the lot's floor drop out.
+ *
+ * Plug a `BidderProfile` per actor into the skin to get characters who
+ * specialise (an electrical specialist, a clueless mug, etc.). Actors
+ * without a profile fall back to a passable generalist.
+ */
+export function makeBidders(
+  opts: BidderOptions = {},
+): (db: DB, lot: AuctionLot, day: number, rng: SeededRNG) => readonly AuctionBidder[] {
+  const profiles = opts.profiles ?? new Map<number, BidderProfile>();
+  const fallback = opts.fallbackProfile ?? FALLBACK_BIDDER_PROFILE;
+  const minCash = opts.minCashToParticipate ?? 100;
+  const exclude = new Set(opts.excludeActorCodes ?? ["auction-house"]);
+  const tierMult = opts.tierMultipliers ?? DEFAULT_TIER_MULT;
+  const requireLocation = opts.requireActorAtLocationId;
+
+  return (db, lot, _day, rng) => {
+    const item = getItemKindById(db, lot.itemKindId);
+    if (!item) return [];
+    const trueLotValue = Math.round(
+      item.baseValue * (tierMult[lot.qualityTier] ?? 1) * lot.quantity,
+    );
+
+    const bidders: AuctionBidder[] = [];
+    for (const a of listActors(db)) {
+      if (exclude.has(a.code)) continue;
+      if (a.cash <= minCash) continue;
+      if (
+        requireLocation !== undefined &&
+        a.currentLocationId !== requireLocation
+      ) {
+        continue;
+      }
+
+      const baseProfile = profiles.get(a.id) ?? fallback;
+      // If the actor has previously learned this item's flaw type
+      // (via inspection or by being burned), force their detection to
+      // 1.0 for that flaw — they always apply the discount on bids
+      // for this item kind.
+      const profile =
+        item.flawType !== null && actorKnowsFlaw(db, a.id, item.id, item.flawType)
+          ? withForcedFlawDetection(baseProfile, item.flawType)
+          : baseProfile;
+      const { valuation } = appraiseLot({
+        profile,
+        lot,
+        category: item.category,
+        flawType: item.flawType,
+        trueLotValue,
+        itemTargetCustomers: item.targetCustomers,
+        rng,
+      });
+      const ceiling = Math.min(valuation, a.cash);
+
+      if (ceiling < lot.floorPrice) continue;
+      bidders.push({ actorId: a.id, ceiling });
+    }
+    return bidders;
+  };
+}
+
+/**
+ * Backwards-compatible alias. Kept so existing call sites that don't yet
+ * supply profiles continue to work — they now run on the fallback
+ * profile, producing slightly noisier valuations than the old direct
+ * tier-multiplier formula but in the same general neighbourhood.
+ */
+export const makeDefaultBidders = makeBidders;
+
+function withForcedFlawDetection(
+  profile: BidderProfile,
+  flawType: FlawType,
+): BidderProfile {
+  const merged = new Map(profile.flawTypeDetection);
+  merged.set(flawType, 1);
+  return {
+    ...profile,
+    flawTypeDetection: merged,
+  };
+}

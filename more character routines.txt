@@ -1,0 +1,525 @@
+{
+  "locations": [
+    { "id": "nelson_mandela_house", "name": "Nelson Mandela House (flat 127)", "type": "home", "notes": "The Trotters' flat, 12th floor (or 13th depending on the episode). Peckham." },
+    { "id": "peckham_market", "name": "Peckham Market", "type": "market", "notes": "Del's main pitch. Open mornings into early afternoon." },
+    { "id": "nags_head", "name": "The Nag's Head", "type": "pub", "notes": "Mike's pub. Trotters' second living room." },
+    { "id": "sids_cafe", "name": "Sid's Café", "type": "cafe", "notes": "Greasy spoon. Sid's the proprietor; later Nag's Head landlord." },
+    { "id": "boyce_auto_sales", "name": "Boyce Auto Sales", "type": "business", "notes": "Boycie's used-car lot, Lewisham." },
+    { "id": "boycie_house", "name": "Boycie & Marlene's house", "type": "home", "notes": "Detached. Posh by Peckham standards. Duke the Great Dane lives here." },
+    { "id": "transworld_express", "name": "Transworld Express depot", "type": "business", "notes": "Denzil's haulage firm." },
+    { "id": "denzil_house", "name": "Denzil & Corinne's house", "type": "home" },
+    { "id": "council_yard", "name": "Lambeth Council depot", "type": "business", "notes": "Where Trigger collects his broom and lorry." },
+    { "id": "council_streets", "name": "Trigger's sweeping round", "type": "street_route", "notes": "Roughly Peckham High Street and surrounds." },
+    { "id": "one_eleven_club", "name": "The One-Eleven Club", "type": "club", "notes": "Members-only drinking club. Where Del meets Arnie." },
+    { "id": "starlight_rooms", "name": "The Starlight Rooms", "type": "club", "notes": "Cabaret nightclub. Eric / Eugene McCarthy." },
+    { "id": "garage", "name": "Trotter lock-up garage", "type": "warehouse", "notes": "Where TITCO stock lives, including a certain Harrison watch." },
+    { "id": "auction_room", "name": "The Auction Room", "type": "auction", "notes": "Where Del buys job lots." },
+    { "id": "police_station", "name": "Peckham Police Station", "type": "civic" },
+    { "id": "post_office", "name": "Post Office", "type": "civic", "notes": "Pension day for the old ladies. Del times his market pitch around it." },
+    { "id": "betting_shop", "name": "The Bookies", "type": "business" },
+    { "id": "shamrock_club", "name": "The Shamrock Club, Deptford", "type": "club", "notes": "Liam's pub. Paddies' Moulin Rouge." },
+    { "id": "dirty_barrys", "name": "Dirty Barry's", "type": "shop", "notes": "Sex shop. Off the high street." },
+    { "id": "raquel_flat", "name": "Raquel's flat (later: Trotter flat)", "type": "home" },
+    { "id": "cassandra_bank", "name": "Cassandra's bank", "type": "business", "notes": "Where Cassandra works as a junior manager." },
+    { "id": "rodney_funeral_parlour", "name": "Funeral Parlour", "type": "business", "notes": "Where Rodney briefly works (Frog's Legacy era)." },
+    { "id": "parry_printers", "name": "Parry Print", "type": "business", "notes": "Alan Parry's printing firm. Rodney's later employer." },
+    { "id": "trigger_flat", "name": "Trigger's flat", "type": "home" },
+    { "id": "albert_legion", "name": "Royal British Legion", "type": "club", "notes": "Albert's daytime drinking spot." }
+  ],
+  "characters": [
+    {
+      "id": "del",
+      "name": "Derek 'Del Boy' Trotter",
+      "occupation": "Self-employed wheeler-dealer",
+      "employer": null,
+      "home": "nelson_mandela_house",
+      "reliability": 2,
+      "schedule": [
+        { "from": "06:00", "to": "08:00", "location": "nelson_mandela_house", "activity": "Up early, suit on, Filofax out" },
+        { "from": "08:00", "to": "08:30", "location": "sids_cafe", "activity": "Tea and a bacon sandwich, scout for gossip" },
+        { "from": "08:30", "to": "09:00", "location": "garage", "activity": "Load the Reliant" },
+        { "from": "09:00", "to": "13:00", "location": "peckham_market", "activity": "Pitch up, flog stock" },
+        { "from": "13:00", "to": "14:00", "location": "nags_head", "activity": "Liquid lunch, scout for buyers" },
+        { "from": "14:00", "to": "17:00", "location": "FLEXIBLE", "activity": "Chasing deals, visiting suppliers, no fixed location" },
+        { "from": "17:00", "to": "18:30", "location": "nelson_mandela_house", "activity": "Tea, count the float" },
+        { "from": "18:30", "to": "23:30", "location": "nags_head", "activity": "Evening session, deals over a Pina Colada" },
+        { "from": "23:30", "to": "06:00", "location": "nelson_mandela_house", "activity": "Sleep" }
+      ],
+      "weekend_overrides": [
+        { "day": "Saturday", "notes": "Market all morning, then One-Eleven Club in the evening" },
+        { "day": "Sunday", "notes": "Lay-in, late lunch, betting shop, evening at the Nag's" }
+      ],
+      "travel_style": "Reliant Regal van",
+      "haunts": ["peckham_market", "nags_head", "sids_cafe", "one_eleven_club"]
+    },
+    {
+      "id": "rodney",
+      "name": "Rodney 'Rodders' Trotter",
+      "occupation": "Variously: TITCO, computer course, funeral parlour, later Parry Print",
+      "employer_default": "TITCO",
+      "home": "nelson_mandela_house",
+      "reliability": 3,
+      "schedule": [
+        { "from": "08:00", "to": "09:00", "location": "nelson_mandela_house", "activity": "Cornflakes, chickenpox, sulk" },
+        { "from": "09:00", "to": "13:00", "location": "peckham_market", "activity": "Lookout / lifts boxes / takes the stick" },
+        { "from": "13:00", "to": "14:00", "location": "nags_head", "activity": "Pint with Del or Mickey Pearce" },
+        { "from": "14:00", "to": "17:00", "location": "FLEXIBLE", "activity": "Errands for Del or evening-class admin" },
+        { "from": "19:00", "to": "22:00", "location": "nags_head", "activity": "Evening with Mickey, Jevon, later Cassandra" },
+        { "from": "22:00", "to": "08:00", "location": "nelson_mandela_house", "activity": "Sleep, paint, write poetry" }
+      ],
+      "weekend_overrides": [
+        { "day": "Saturday", "notes": "Disco night, dates with Cassandra" }
+      ],
+      "travel_style": "Passenger in the Reliant, sometimes pushbike",
+      "haunts": ["nags_head", "nelson_mandela_house", "peckham_market"]
+    },
+    {
+      "id": "boycie",
+      "name": "Aubrey 'Boycie' Boyce",
+      "occupation": "Used-car dealer",
+      "employer": "Boyce Auto Sales (owner)",
+      "home": "boycie_house",
+      "reliability": 4,
+      "schedule": [
+        { "from": "08:00", "to": "09:00", "location": "boycie_house", "activity": "Marlene serves breakfast, Boycie reads the Telegraph" },
+        { "from": "09:00", "to": "13:00", "location": "boyce_auto_sales", "activity": "Selling motors, valeting, haggling" },
+        { "from": "13:00", "to": "14:30", "location": "nags_head", "activity": "Long lunch, brandy, plays cards with Del" },
+        { "from": "14:30", "to": "18:00", "location": "boyce_auto_sales", "activity": "Afternoon trade" },
+        { "from": "18:00", "to": "19:00", "location": "boycie_house", "activity": "Home for tea" },
+        { "from": "19:30", "to": "22:30", "location": "nags_head", "activity": "Evening session, dominoes, complains about Del" },
+        { "from": "22:30", "to": "08:00", "location": "boycie_house", "activity": "Sleep" }
+      ],
+      "weekend_overrides": [
+        { "day": "Saturday", "notes": "Big day at the lot — most punters buy cars Saturday" },
+        { "day": "Sunday", "notes": "Golf in the morning, lunch at the Nag's, evening in" }
+      ],
+      "travel_style": "Mercedes (top-of-the-range)",
+      "haunts": ["boyce_auto_sales", "nags_head", "boycie_house"]
+    },
+    {
+      "id": "marlene",
+      "name": "Marlene Boyce",
+      "occupation": "Housewife / occasional helper at the lot",
+      "employer": "Boyce Auto Sales (informal)",
+      "home": "boycie_house",
+      "reliability": 4,
+      "schedule": [
+        { "from": "08:00", "to": "10:00", "location": "boycie_house", "activity": "Breakfast, Duke needs walking" },
+        { "from": "10:00", "to": "12:00", "location": "peckham_market", "activity": "Shopping, gossip with Del" },
+        { "from": "12:00", "to": "14:00", "location": "nags_head", "activity": "Lunch, often with Del and Boycie" },
+        { "from": "14:00", "to": "18:00", "location": "boycie_house", "activity": "Home" },
+        { "from": "20:00", "to": "23:00", "location": "nags_head", "activity": "Evening with Boycie when he behaves" }
+      ],
+      "travel_style": "Boycie's runabout (pink sometimes)",
+      "haunts": ["nags_head", "boycie_house", "peckham_market"]
+    },
+    {
+      "id": "trigger",
+      "name": "Colin 'Trigger' Ball",
+      "occupation": "Roadsweeper",
+      "employer": "Lambeth Council",
+      "home": "trigger_flat",
+      "reliability": 5,
+      "schedule": [
+        { "from": "06:30", "to": "07:00", "location": "council_yard", "activity": "Clock in, collect the broom (same one for 20 years)" },
+        { "from": "07:00", "to": "12:00", "location": "council_streets", "activity": "Sweeping the high street and surrounds" },
+        { "from": "12:00", "to": "13:00", "location": "sids_cafe", "activity": "Tea, sandwich, stares into space" },
+        { "from": "13:00", "to": "16:00", "location": "council_streets", "activity": "Afternoon round" },
+        { "from": "16:00", "to": "16:30", "location": "council_yard", "activity": "Clock out" },
+        { "from": "17:00", "to": "23:00", "location": "nags_head", "activity": "Steady drinking, calls Rodney 'Dave'" },
+        { "from": "23:00", "to": "06:30", "location": "trigger_flat", "activity": "Sleep" }
+      ],
+      "travel_style": "On foot or pushbike (Grade 3 Cycling Proficiency Diploma)",
+      "haunts": ["nags_head", "sids_cafe", "council_streets"]
+    },
+    {
+      "id": "denzil",
+      "name": "Denzil Tulser",
+      "occupation": "Lorry driver / haulier",
+      "employer": "Transworld Express (later: owner)",
+      "home": "denzil_house",
+      "reliability": 3,
+      "schedule": [
+        { "from": "05:00", "to": "06:00", "location": "denzil_house", "activity": "Early start, Corinne not impressed" },
+        { "from": "06:00", "to": "14:00", "location": "TRAVELLING", "activity": "Long-distance haul (could be anywhere on the M25 or beyond)" },
+        { "from": "14:00", "to": "15:00", "location": "transworld_express", "activity": "Back at base, paperwork" },
+        { "from": "15:00", "to": "18:00", "location": "FLEXIBLE", "activity": "Local deliveries or home" },
+        { "from": "19:00", "to": "22:00", "location": "nags_head", "activity": "Pint, gets roped in by Del" },
+        { "from": "22:00", "to": "05:00", "location": "denzil_house", "activity": "Sleep" }
+      ],
+      "weekend_overrides": [
+        { "day": "Saturday", "notes": "Often working a half-day or away on a job" },
+        { "day": "Sunday", "notes": "Strictly home with Corinne — she insists" }
+      ],
+      "travel_style": "Lorry (work) / Ford Granada (personal)",
+      "haunts": ["nags_head", "transworld_express"]
+    },
+    {
+      "id": "mike",
+      "name": "Mike Fisher",
+      "occupation": "Pub landlord",
+      "employer": "The Nag's Head (manager)",
+      "home": "nags_head",
+      "reliability": 5,
+      "schedule": [
+        { "from": "07:00", "to": "10:00", "location": "nags_head", "activity": "Cellar work, deliveries, paperwork" },
+        { "from": "10:30", "to": "15:00", "location": "nags_head", "activity": "Open for lunch trade" },
+        { "from": "15:00", "to": "17:00", "location": "nags_head", "activity": "Afternoon close (old licensing hours), kip upstairs" },
+        { "from": "17:00", "to": "23:00", "location": "nags_head", "activity": "Evening trade — peak time" },
+        { "from": "23:00", "to": "07:00", "location": "nags_head", "activity": "Cash up, sleep above the pub" }
+      ],
+      "weekend_overrides": [
+        { "day": "Sunday", "notes": "Sunday lunch trade only, often closes early evening" }
+      ],
+      "travel_style": "Rarely leaves the pub",
+      "haunts": ["nags_head"]
+    },
+    {
+      "id": "albert",
+      "name": "Uncle Albert Trotter",
+      "occupation": "Retired Royal Navy",
+      "employer": null,
+      "home": "nelson_mandela_house",
+      "reliability": 4,
+      "schedule": [
+        { "from": "08:00", "to": "11:00", "location": "nelson_mandela_house", "activity": "Tea, stories about the war, gets in the way" },
+        { "from": "11:00", "to": "14:00", "location": "albert_legion", "activity": "Pint at the Legion with the lads" },
+        { "from": "14:00", "to": "17:00", "location": "nelson_mandela_house", "activity": "TV, nap" },
+        { "from": "19:00", "to": "23:00", "location": "nags_head", "activity": "Plays the piano (badly), 'During the war...'" },
+        { "from": "23:00", "to": "08:00", "location": "nelson_mandela_house", "activity": "Sleep" }
+      ],
+      "travel_style": "On foot",
+      "haunts": ["nags_head", "albert_legion", "nelson_mandela_house"]
+    },
+    {
+      "id": "grandad",
+      "name": "Grandad Trotter",
+      "occupation": "Retired",
+      "employer": null,
+      "home": "nelson_mandela_house",
+      "reliability": 5,
+      "schedule": [
+        { "from": "09:00", "to": "23:00", "location": "nelson_mandela_house", "activity": "Watches two TVs at once, makes tea, stamps the boxes" }
+      ],
+      "travel_style": "Doesn't",
+      "haunts": ["nelson_mandela_house"],
+      "notes": "Practically a static node. Useful as a base anchor."
+    },
+    {
+      "id": "mickey-pearce",
+      "name": "Mickey Pearce",
+      "occupation": "Itinerant trader / chancer",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 1,
+      "schedule": [
+        { "from": "10:00", "to": "13:00", "location": "FLEXIBLE", "activity": "Wherever the deal is" },
+        { "from": "13:00", "to": "15:00", "location": "nags_head", "activity": "Lunchtime pose" },
+        { "from": "15:00", "to": "19:00", "location": "FLEXIBLE", "activity": "Auctions, markets, mate's flat" },
+        { "from": "19:00", "to": "23:30", "location": "nags_head", "activity": "Evening — tells lies about birds" }
+      ],
+      "travel_style": "Lifts off other people",
+      "haunts": ["nags_head", "auction_room"]
+    },
+    {
+      "id": "jevon",
+      "name": "Jevon",
+      "occupation": "Trader / Mickey Pearce's partner",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 2,
+      "schedule": [
+        { "from": "12:00", "to": "14:00", "location": "nags_head", "activity": "Lunch with Mickey" },
+        { "from": "14:00", "to": "19:00", "location": "FLEXIBLE", "activity": "Wherever Mickey goes" },
+        { "from": "19:00", "to": "23:30", "location": "nags_head", "activity": "Evening session" }
+      ],
+      "travel_style": "With Mickey",
+      "haunts": ["nags_head"]
+    },
+    {
+      "id": "raquel",
+      "name": "Raquel Turner",
+      "occupation": "Singer / actress (between gigs)",
+      "employer": null,
+      "home": "raquel_flat",
+      "reliability": 3,
+      "schedule": [
+        { "from": "10:00", "to": "13:00", "location": "raquel_flat", "activity": "Audition prep, vocal warm-ups" },
+        { "from": "13:00", "to": "17:00", "location": "FLEXIBLE", "activity": "Auditions, agents, errands" },
+        { "from": "19:00", "to": "23:00", "location": "FLEXIBLE", "activity": "Gigs at clubs (Starlight Rooms, working men's clubs)" },
+        { "from": "23:00", "to": "10:00", "location": "raquel_flat", "activity": "Home" }
+      ],
+      "travel_style": "Public transport / Del's Reliant",
+      "haunts": ["starlight_rooms", "nags_head", "raquel_flat"]
+    },
+    {
+      "id": "cassandra",
+      "name": "Cassandra Parry / Trotter",
+      "occupation": "Junior bank manager",
+      "employer": "Cassandra's bank",
+      "home": "FLEXIBLE",
+      "reliability": 5,
+      "schedule": [
+        { "from": "07:30", "to": "08:30", "location": "FLEXIBLE", "activity": "Commute" },
+        { "from": "08:30", "to": "13:00", "location": "cassandra_bank", "activity": "Banking" },
+        { "from": "13:00", "to": "14:00", "location": "FLEXIBLE", "activity": "Lunch — sometimes with Rodney" },
+        { "from": "14:00", "to": "17:30", "location": "cassandra_bank", "activity": "Banking" },
+        { "from": "18:00", "to": "20:00", "location": "FLEXIBLE", "activity": "Home / errands" },
+        { "from": "20:00", "to": "22:30", "location": "nags_head", "activity": "Sometimes joins Rodney" }
+      ],
+      "weekend_overrides": [
+        { "day": "Saturday", "notes": "Off — sometimes training courses (Guernsey)" }
+      ],
+      "travel_style": "Car (better than the Reliant)",
+      "haunts": ["cassandra_bank", "nags_head"]
+    },
+    {
+      "id": "alan-parry",
+      "name": "Alan Parry",
+      "occupation": "Printing firm owner",
+      "employer": "Parry Print (owner)",
+      "home": "FLEXIBLE",
+      "reliability": 5,
+      "schedule": [
+        { "from": "08:30", "to": "13:00", "location": "parry_printers", "activity": "Running the firm" },
+        { "from": "13:00", "to": "14:30", "location": "FLEXIBLE", "activity": "Lunch — golf club or restaurant" },
+        { "from": "14:30", "to": "18:00", "location": "parry_printers", "activity": "Afternoon" },
+        { "from": "19:00", "to": "22:00", "location": "FLEXIBLE", "activity": "Home with Pamela, sometimes drinks with Boycie" }
+      ],
+      "travel_style": "Jaguar",
+      "haunts": ["parry_printers"],
+      "notes": "Cassandra's father. Becomes Rodney's employer. A bridge between the Trotters and the middle class."
+    },
+    {
+      "id": "sid",
+      "name": "Sid",
+      "occupation": "Café owner / later Nag's Head landlord",
+      "employer": "Sid's Café (owner)",
+      "home": "sids_cafe",
+      "reliability": 5,
+      "schedule": [
+        { "from": "06:00", "to": "15:00", "location": "sids_cafe", "activity": "Frying, complaining, ash falling in the eggs" },
+        { "from": "15:00", "to": "17:00", "location": "sids_cafe", "activity": "Cleaning down" },
+        { "from": "19:00", "to": "23:00", "location": "nags_head", "activity": "Quiet pint" }
+      ],
+      "travel_style": "On foot",
+      "haunts": ["sids_cafe", "nags_head"]
+    },
+    {
+      "id": "monkey-harris",
+      "name": "Monkey Harris",
+      "occupation": "Off-screen fence",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 1,
+      "schedule": [
+        { "from": "00:00", "to": "23:59", "location": "OFF_SCREEN", "activity": "Never seen, always supplying" }
+      ],
+      "travel_style": "Unknown",
+      "haunts": [],
+      "notes": "Use as an off-map supplier. Trigger phones him; he never appears in person. Good for 'mystery supplier' events."
+    },
+    {
+      "id": "alfie-flowers",
+      "name": "Alfie Flowers",
+      "occupation": "Dodgy supplier",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 2,
+      "schedule": [
+        { "from": "10:00", "to": "13:00", "location": "auction_room", "activity": "Watches the auctions" },
+        { "from": "13:00", "to": "15:00", "location": "one_eleven_club", "activity": "Lunch and a few stiff ones" },
+        { "from": "20:00", "to": "00:00", "location": "one_eleven_club", "activity": "Where he catches Del 'non compos mentis'" }
+      ],
+      "travel_style": "Cabs",
+      "haunts": ["one_eleven_club", "auction_room"]
+    },
+    {
+      "id": "ronnie-nelson",
+      "name": "Ronnie Nelson",
+      "occupation": "Wholesale supplier (electronics)",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 2,
+      "schedule": [
+        { "from": "10:00", "to": "17:00", "location": "FLEXIBLE", "activity": "Warehouse visits, deliveries" },
+        { "from": "20:00", "to": "23:00", "location": "one_eleven_club", "activity": "Drinks with potential buyers" }
+      ],
+      "travel_style": "Transit van",
+      "haunts": ["one_eleven_club"]
+    },
+    {
+      "id": "mustapha",
+      "name": "Mustapha",
+      "occupation": "Wholesale supplier (hair goods, sundries)",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 2,
+      "schedule": [
+        { "from": "09:00", "to": "17:00", "location": "FLEXIBLE", "activity": "Warehouse, market sourcing" }
+      ],
+      "travel_style": "Van",
+      "haunts": []
+    },
+    {
+      "id": "arnie",
+      "name": "Arnie (Arnold Rutter)",
+      "occupation": "Con artist (poses as retired jeweller)",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 2,
+      "schedule": [
+        { "from": "12:00", "to": "14:00", "location": "one_eleven_club", "activity": "Working the bar, picking marks" },
+        { "from": "19:00", "to": "23:00", "location": "FLEXIBLE", "activity": "Restaurant 'meetings' that end in heart attacks" }
+      ],
+      "travel_style": "Fake ambulance (with sons Gary & Steven)",
+      "haunts": ["one_eleven_club"],
+      "notes": "Roams across London. Use as a roving event card — appears in different boroughs each time."
+    },
+    {
+      "id": "vimmal-malik",
+      "name": "Vimmal Malik",
+      "occupation": "Con artist (mobile)",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 1,
+      "schedule": [
+        { "from": "00:00", "to": "23:59", "location": "ROAMING", "activity": "Hits a city for a week, runs the Kubera scam, leaves" }
+      ],
+      "travel_style": "Long-distance",
+      "haunts": []
+    },
+    {
+      "id": "mr-ram",
+      "name": "Mr Ram",
+      "occupation": "Con artist (mobile)",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 1,
+      "schedule": [
+        { "from": "00:00", "to": "23:59", "location": "ROAMING", "activity": "Travels with Vimmal" }
+      ],
+      "travel_style": "Long-distance",
+      "haunts": []
+    },
+    {
+      "id": "driscoll-brothers",
+      "name": "The Driscoll Brothers",
+      "occupation": "Gangsters / debt collectors",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 3,
+      "schedule": [
+        { "from": "10:00", "to": "13:00", "location": "FLEXIBLE", "activity": "Visiting people who owe them" },
+        { "from": "20:00", "to": "00:00", "location": "FLEXIBLE", "activity": "Their own pub or club" }
+      ],
+      "travel_style": "Big car with tinted windows",
+      "haunts": [],
+      "notes": "Use as an event-driven character — appears when triggered, not on a routine."
+    },
+    {
+      "id": "slater",
+      "name": "DCI Roy Slater",
+      "occupation": "Detective Chief Inspector (later: prisoner)",
+      "employer": "Metropolitan Police",
+      "home": "FLEXIBLE",
+      "reliability": 4,
+      "schedule": [
+        { "from": "08:00", "to": "18:00", "location": "police_station", "activity": "Police work / harassing Del" },
+        { "from": "18:00", "to": "22:00", "location": "FLEXIBLE", "activity": "Off duty, but always watching" }
+      ],
+      "travel_style": "Unmarked Cavalier",
+      "haunts": ["police_station"]
+    },
+    {
+      "id": "dirty-barry",
+      "name": "Dirty Barry",
+      "occupation": "Sex shop proprietor",
+      "employer": "Dirty Barry's (owner)",
+      "home": "FLEXIBLE",
+      "reliability": 4,
+      "schedule": [
+        { "from": "11:00", "to": "20:00", "location": "dirty_barrys", "activity": "Running the shop" },
+        { "from": "21:00", "to": "23:00", "location": "nags_head", "activity": "Quiet pint at the back" }
+      ],
+      "travel_style": "Cab",
+      "haunts": ["dirty_barrys"]
+    },
+    {
+      "id": "towser",
+      "name": "Towser",
+      "occupation": "Trader / errand runner",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 2,
+      "schedule": [
+        { "from": "10:00", "to": "16:00", "location": "auction_room", "activity": "Picking up jobs" },
+        { "from": "19:00", "to": "23:00", "location": "nags_head", "activity": "Drinks and gossip" }
+      ],
+      "travel_style": "On foot",
+      "haunts": ["nags_head", "auction_room"]
+    },
+    {
+      "id": "paddy-the-greek",
+      "name": "Paddy the Greek",
+      "occupation": "Market trader",
+      "employer": null,
+      "home": "FLEXIBLE",
+      "reliability": 4,
+      "schedule": [
+        { "from": "08:00", "to": "14:00", "location": "peckham_market", "activity": "Pitches up two stalls down from Del" },
+        { "from": "14:00", "to": "16:00", "location": "sids_cafe", "activity": "Late lunch" }
+      ],
+      "travel_style": "Van",
+      "haunts": ["peckham_market"],
+      "notes": "Direct competitor at the market. Same hours as Del."
+    },
+    {
+      "id": "eugene-mccarthy",
+      "name": "Eugene McCarthy",
+      "occupation": "Gangster / nightclub owner",
+      "employer": "The Starlight Rooms (owner)",
+      "home": "FLEXIBLE",
+      "reliability": 3,
+      "schedule": [
+        { "from": "20:00", "to": "02:00", "location": "starlight_rooms", "activity": "Running the club, watching cabaret" }
+      ],
+      "travel_style": "Chauffeured",
+      "haunts": ["starlight_rooms"]
+    }
+  ]
+}
+
+{
+  "additional_locations": [
+    { "id": "mickey_jevon_flat", "name": "Mickey & Jevon's flat", "type": "home", "notes": "Shared bachelor pad. Probably another tower block on the estate." },
+    { "id": "cassandra_flat", "name": "Cassandra's flat (pre-marriage)", "type": "home", "notes": "Smarter side of Peckham. Where Rodney visits in Yuppy Love." },
+    { "id": "rodney_cassandra_flat", "name": "Rodney & Cassandra's flat", "type": "home", "notes": "Post-marriage. Rodney moves out of Nelson Mandela House." },
+    { "id": "parry_house", "name": "Alan & Pamela Parry's house", "type": "home", "notes": "Suburban, detached. The posh in-laws." },
+    { "id": "slater_flat", "name": "Slater's flat", "type": "home", "notes": "Bachelor copper's place. Universally avoided." },
+    { "id": "dirty_barrys_flat", "name": "Above Dirty Barry's", "type": "home", "notes": "Lives above the shop." },
+    { "id": "off_map", "name": "Off-map", "type": "abstract", "notes": "Used for suppliers who never appear at home — Monkey Harris, Mustapha, Ronnie Nelson, Arnie, Alfie Flowers, Towser, Paddy the Greek. They drop in to Peckham, then vanish." }
+  ]
+}
+
+{
+  "home_patches": {
+    "mickey-pearce": "mickey_jevon_flat",
+    "jevon": "mickey_jevon_flat",
+    "cassandra": "cassandra_flat",
+    "alan-parry": "parry_house",
+    "slater": "slater_flat",
+    "dirty-barry": "dirty_barrys_flat",
+    "monkey-harris": "off_map",
+    "alfie-flowers": "off_map",
+    "ronnie-nelson": "off_map",
+    "mustapha": "off_map",
+    "arnie": "off_map",
+    "vimmal-malik": "off_map",
+    "mr-ram": "off_map",
+    "driscoll-brothers": "off_map",
+    "towser": "off_map",
+    "paddy-the-greek": "off_map",
+    "eugene-mccarthy": "off_map"
+  }
+}

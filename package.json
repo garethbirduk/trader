@@ -1,0 +1,29 @@
+{
+  "name": "trader-engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "A skin-agnostic stock-trading simulation engine.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "sim": "tsx src/headless/run-sim.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0",
+    "seedrandom": "^3.0.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.9.0",
+    "@types/seedrandom": "^3.0.8",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
