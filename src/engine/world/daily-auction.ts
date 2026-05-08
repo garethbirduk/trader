@@ -2,6 +2,7 @@ import type { World, Unsubscribe } from "../core/world.js";
 import {
   adjustActorCash,
   getActorById,
+  listActors,
 } from "../actors/actors-repo.js";
 import {
   clearAuctionLot,
@@ -13,6 +14,7 @@ import {
   resolveAuctionSession,
   type AuctionBidder,
 } from "../auction/auction-session.js";
+import { rungAtOrBelow } from "../auction/bid-ladder.js";
 import { insertStockLot } from "../stock/lots-repo.js";
 import type { DB } from "../core/db.js";
 import type { SeededRNG } from "../core/rng.js";
@@ -52,6 +54,13 @@ export interface DailyAuctionOptions {
    * backwards compatibility with existing tests.
    */
   readonly auctionHour?: number;
+  /**
+   * The location ID where the auction is held. When set, the handler
+   * snapshots all actors physically at that location at auction time
+   * and emits them on the event as `attendees` — the room, not just the
+   * subset who chose to bid. Bidders are always a subset of attendees.
+   */
+  readonly auctionLocationId?: number;
 }
 
 /**
@@ -75,6 +84,18 @@ export function registerDailyAuction(
     throw new Error(`floorDecayPerDay must be in (0, 1]; got ${floorDecay}`);
   }
 
+  const auctionLocationId = opts.auctionLocationId;
+
+  const collectAttendees = (excludeIds: ReadonlySet<number>): number[] => {
+    if (auctionLocationId === undefined) return [];
+    const ids: number[] = [];
+    for (const a of listActors(world.db)) {
+      if (excludeIds.has(a.id)) continue;
+      if (a.currentLocationId === auctionLocationId) ids.push(a.id);
+    }
+    return ids;
+  };
+
   const runForDay = (day: number): void => {
     const lots = listOpenAuctionLots(world.db).filter((l) => l.listedDay < day);
     for (const lot of lots) {
@@ -93,7 +114,15 @@ export function registerDailyAuction(
         1,
         Math.round(lot.floorPrice * Math.pow(floorDecay, Math.max(0, daysOpen - 1))),
       );
-      runOneLot(world, lot, day, effectiveFloor, opts.findBiddersForLot, proceedsActorId);
+      runOneLot(
+        world,
+        lot,
+        day,
+        effectiveFloor,
+        opts.findBiddersForLot,
+        proceedsActorId,
+        collectAttendees,
+      );
     }
   };
 
@@ -117,12 +146,26 @@ function runOneLot(
   effectiveFloor: number,
   findBidders: FindBiddersFn,
   proceedsActorId: number | null,
+  collectAttendees: (excludeIds: ReadonlySet<number>) => number[],
 ): void {
   // Bidder factories see the lot's *original* floorPrice; they decide
   // their ceilings against intrinsic value. The resolver compares those
   // ceilings against the *decayed* floor — bidders who couldn't afford
   // yesterday's floor may clear today's.
-  let bidders = [...findBidders(world.db, lot, day, world.rng)];
+  const originalBidders = [...findBidders(world.db, lot, day, world.rng)];
+  const biddersSnapshot = originalBidders.map((b) => ({
+    actorId: b.actorId,
+    ceiling: b.ceiling,
+  }));
+  // Attendees: everyone in the room except the bidders themselves. The
+  // bidders are listed separately so the webapp can show "in the room"
+  // (non-bidders) alongside "bidding" (bidders).
+  const bidderIdSet = new Set(originalBidders.map((b) => b.actorId));
+  const attendees = collectAttendees(bidderIdSet);
+  // The opening ask snaps DOWN: a £144 floor opens at £125 (last rung at
+  // or below the floor). Surfaced as `openingAsk` for visualisation.
+  const openingAsk = rungAtOrBelow(Math.max(0, effectiveFloor));
+  let bidders = [...originalBidders];
   let cashFailures = 0;
 
   while (true) {
@@ -133,6 +176,11 @@ function runOneLot(
         at: world.clock,
         auctionLotId: lot.id,
         reason: cashFailures > 0 ? "winner-cant-pay" : session.type,
+        floorPrice: lot.floorPrice,
+        effectiveFloor,
+        openingAsk,
+        attendees,
+        bidders: biddersSnapshot,
       });
       return;
     }
@@ -179,6 +227,11 @@ function runOneLot(
       winnerActorId: winner.id,
       unitPrice: acquiredUnitPrice,
       totalPrice: totalCost,
+      floorPrice: lot.floorPrice,
+      effectiveFloor,
+      openingAsk,
+      attendees,
+      bidders: biddersSnapshot,
     });
     return;
   }

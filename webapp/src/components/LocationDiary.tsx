@@ -37,9 +37,12 @@ export function LocationDiary({
   const loc = dump.locations.find((l) => l.id === locationId);
   if (loc === undefined) return null;
 
+  // Diary is a turn-by-turn replay: only events at-or-before the
+  // current cursor hour have "happened" yet.
   const dayEvents = useMemo(
-    () => dump.events.filter((e) => e.at.day === day),
-    [dump, day],
+    () =>
+      dump.events.filter((e) => e.at.day === day && e.at.hour <= hour),
+    [dump, day, hour],
   );
 
   // Actual presence per hour, computed by replaying travels from the
@@ -62,7 +65,9 @@ export function LocationDiary({
       .filter((e) => e.type === "actor.travelled")
       .sort((a, b) => a.at.hour - b.at.hour);
     let idx = 0;
-    for (let h = 0; h <= 23; h += 1) {
+    // Only fill out presence up to the cursor hour — anything later
+    // hasn't happened yet, so we don't know who's there.
+    for (let h = 0; h <= hour; h += 1) {
       while (idx < travels.length && travels[idx]!.at.hour <= h) {
         const t = travels[idx]!;
         current.set(t.actorId as number, (t.toLocationId as number) ?? null);
@@ -72,7 +77,7 @@ export function LocationDiary({
       for (const [aid, lid] of current) if (lid === locationId) here.add(aid);
     }
     return out;
-  }, [dayEvents, startOfDayLocations, locationId]);
+  }, [dayEvents, startOfDayLocations, locationId, hour]);
 
   // Booked presence per hour from skin routines.
   const bookedByHour = useMemo(() => {
@@ -153,8 +158,25 @@ export function LocationDiary({
         {hourRange.map((h) => {
           const isCurrent = h === hour;
           const isOpen = isHourOpen(loc, h);
+          // The star auction panel only fires once the cursor reaches
+          // the auction hour — before that, the auction hasn't happened.
           const isStar =
-            isAuction && dump.auctionHour !== undefined && h === dump.auctionHour;
+            isAuction &&
+            dump.auctionHour !== undefined &&
+            h === dump.auctionHour &&
+            h <= hour;
+          // Distinguish "auction running" (events fired) from "viewing only"
+          // (lots on display but not being sold today). Lots listed today
+          // are on view; the auction itself only runs lots listed earlier.
+          const auctionEventsThisHour = isStar
+            ? (eventsByHour.get(h) ?? []).filter(
+                (e) =>
+                  e.type === "auction.cleared" ||
+                  e.type === "auction.unsold" ||
+                  e.type === "auction.written_off",
+              )
+            : [];
+          const auctionLive = auctionEventsThisHour.length > 0;
           const peopleHere = sortByPlayerFirst(
             [...(presenceByHour.get(h) ?? new Set<number>())],
             dump.playerActorId,
@@ -176,7 +198,9 @@ export function LocationDiary({
                 ) : null}
                 {isStar ? (
                   <div className="star-lots">
-                    <span className="star-flag">★ Auction now</span>
+                    <span className="star-flag">
+                      {auctionLive ? "★ Auction now" : "Auction · viewing"}
+                    </span>
                     {todaysLots.length === 0 ? (
                       <span className="muted">no lots today</span>
                     ) : (

@@ -39,9 +39,12 @@ export function ActorDiary({
     return m;
   }, [routine]);
 
+  // Diary is a turn-by-turn replay — only events at-or-before the
+  // cursor hour have "happened" yet.
   const dayEvents = useMemo(
-    () => dump.events.filter((e) => e.at.day === day),
-    [dump, day],
+    () =>
+      dump.events.filter((e) => e.at.day === day && e.at.hour <= hour),
+    [dump, day, hour],
   );
 
   const entries = useMemo<DiaryHourEntry[]>(() => {

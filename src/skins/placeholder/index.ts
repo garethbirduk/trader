@@ -2,6 +2,8 @@ import type { DB } from "../../engine/core/db.js";
 import type { SeededRNG } from "../../engine/core/rng.js";
 import { insertActor } from "../../engine/actors/actors-repo.js";
 import { insertItemKind } from "../../engine/stock/items-repo.js";
+import { insertStockLot } from "../../engine/stock/lots-repo.js";
+import { seedSupplyLeadForStockLot } from "../../engine/leads/seed-from-stock.js";
 import {
   insertLocation,
   setActorLocation,
@@ -11,7 +13,7 @@ import type { LocationType } from "../../engine/locations/locations.js";
 import { RuleBasedAIPolicy } from "../../engine/policy/rule-based.js";
 import type { ActorPolicy } from "../../engine/policy/types.js";
 import type { BidderProfile } from "../../engine/auction/bidder-profile.js";
-import type { FlawType } from "../../engine/stock/types.js";
+import type { FlawType, QualityTier } from "../../engine/stock/types.js";
 import type { TransportCapacity } from "../../engine/actors/types.js";
 import { EVERYDAY_ITEMS } from "./catalogue-everyday.js";
 import { EASTER_EGG_ITEMS } from "./catalogue-easter-eggs.js";
@@ -59,6 +61,12 @@ export interface SkinSeedResult {
    * rendering.
    */
   readonly actorRoutines: ReadonlyMap<number, ActorRoutineInfo>;
+  /**
+   * Tags describing what each actor *is* in the fiction (dealer,
+   * civilian, police, …). Purely presentational — used by the
+   * webapp's filter rail to slice the cast. Keyed by actor id.
+   */
+  readonly rolesByActorId: ReadonlyMap<number, readonly string[]>;
 }
 
 export interface ActorRoutineInfo {
@@ -87,35 +95,34 @@ interface LocationSpec {
 
 const LOCATIONS: readonly LocationSpec[] = [
   // Original cast's spaces.
-  { code: "peckham-flat", displayName: "Peckham flat (Nelson Mandela House)", type: "home" },
+  { code: "peckham-flat", displayName: "Del's Flat", type: "home" },
   { code: "lockup", displayName: "The Lock-up", type: "business", openHours: { start: 8, end: 20 } },
   { code: "nags", displayName: "The Nag's Head", type: "pub", openHours: { start: 11, end: 23 } },
-  { code: "auction-house", displayName: "Sotheby's-by-the-Pub", type: "auction", openHours: { start: 9, end: 13 } },
-  { code: "boyce-auto-sales", displayName: "Boyce Auto Sales (Lewisham)", type: "business", openHours: { start: 9, end: 18 } },
-  { code: "transworld-depot", displayName: "Transworld Express depot", type: "business", openHours: { start: 6, end: 18 } },
-  { code: "lambeth-council-yard", displayName: "Lambeth Council yard", type: "civic", openHours: { start: 6, end: 17 } },
+  { code: "auction-house", displayName: "Sotheby's", type: "auction", openHours: { start: 9, end: 13 } },
+  { code: "boyce-auto-sales", displayName: "Boyce Autos", type: "business", openHours: { start: 9, end: 18 } },
+  { code: "transworld-depot", displayName: "Transworld Depot", type: "business", openHours: { start: 6, end: 18 } },
+  { code: "lambeth-council-yard", displayName: "Council Yard", type: "civic", openHours: { start: 6, end: 17 } },
   // Added from the wider canon.
   { code: "peckham-market", displayName: "Peckham Market", type: "business", openHours: { start: 8, end: 14 } },
   { code: "sids-cafe", displayName: "Sid's Café", type: "business", openHours: { start: 6, end: 17 } },
-  { code: "boycie-house", displayName: "Boycie & Marlene's house", type: "home" },
-  { code: "denzil-house", displayName: "Denzil & Corinne's house", type: "home" },
-  { code: "council-streets", displayName: "Council sweeping round", type: "street" },
-  { code: "one-eleven-club", displayName: "The One-Eleven Club", type: "pub", openHours: { start: 12, end: 24 } },
-  { code: "starlight-rooms", displayName: "The Starlight Rooms", type: "pub", openHours: { start: 20, end: 26 } },
-  { code: "police-station", displayName: "Peckham Police Station", type: "civic" },
+  { code: "boycie-house", displayName: "Boycie's", type: "home" },
+  { code: "denzil-house", displayName: "Denzil's", type: "home" },
+  { code: "one-eleven-club", displayName: "The 111 Club", type: "pub", openHours: { start: 12, end: 24 } },
+  { code: "starlight-rooms", displayName: "Starlight Rooms", type: "pub", openHours: { start: 20, end: 26 } },
+  { code: "police-station", displayName: "The Nick", type: "civic" },
   { code: "post-office", displayName: "Post Office", type: "civic", openHours: { start: 8, end: 17 } },
   { code: "betting-shop", displayName: "The Bookies", type: "business", openHours: { start: 9, end: 18 } },
-  { code: "shamrock-club", displayName: "The Shamrock Club, Deptford", type: "pub", openHours: { start: 19, end: 26 } },
+  { code: "shamrock-club", displayName: "Shamrock Club", type: "pub", openHours: { start: 19, end: 26 } },
   { code: "dirty-barrys", displayName: "Dirty Barry's", type: "business", openHours: { start: 11, end: 20 } },
-  { code: "raquel-flat", displayName: "Raquel's flat", type: "home" },
-  { code: "cassandra-bank", displayName: "Cassandra's bank", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "raquel-flat", displayName: "Raquel's", type: "home" },
+  { code: "cassandra-bank", displayName: "The Bank", type: "business", openHours: { start: 9, end: 17 } },
   { code: "parry-printers", displayName: "Parry Print", type: "business", openHours: { start: 8, end: 18 } },
-  { code: "trigger-flat", displayName: "Trigger's flat", type: "home" },
-  { code: "albert-legion", displayName: "Royal British Legion", type: "pub", openHours: { start: 11, end: 23 } },
-  { code: "mickey-jevon-flat", displayName: "Mickey & Jevon's flat", type: "home" },
-  { code: "cassandra-flat", displayName: "Cassandra's flat", type: "home" },
-  { code: "parry-house", displayName: "Alan & Pamela Parry's house", type: "home" },
-  { code: "slater-flat", displayName: "Slater's flat", type: "home" },
+  { code: "trigger-flat", displayName: "Trigger's", type: "home" },
+  { code: "albert-legion", displayName: "The Legion", type: "pub", openHours: { start: 11, end: 23 } },
+  { code: "mickey-jevon-flat", displayName: "Mickey & Jevon's", type: "home" },
+  { code: "cassandra-flat", displayName: "Cassandra's", type: "home" },
+  { code: "parry-house", displayName: "Parry's", type: "home" },
+  { code: "slater-flat", displayName: "Slater's", type: "home" },
   { code: "off-map", displayName: "Off-map", type: "abstract" },
 ];
 
@@ -314,16 +321,23 @@ const ACTORS: readonly ActorSpec[] = [
     code: "trigger",
     displayName: "Trigger",
     cash: 200,
+    // Trigger sweeps a beat — hourly diary of real spots along the
+    // round (no abstract "council-streets" pseudo-location).
     schedule: makeRoutineFromSpans("trigger-flat", [
-      { from: 6.5, to: 7, location: "lambeth-council-yard" },
-      { from: 7, to: 12, location: "council-streets" },
-      { from: 12, to: 13, location: "sids-cafe" },
-      { from: 13, to: 16, location: "council-streets" },
-      { from: 16, to: 16.5, location: "lambeth-council-yard" },
+      { from: 7, to: 8, location: "lambeth-council-yard" }, // pick up broom
+      { from: 8, to: 9, location: "post-office" },
+      { from: 9, to: 10, location: "peckham-market" },
+      { from: 10, to: 11, location: "albert-legion" },
+      { from: 11, to: 12, location: "betting-shop" },
+      { from: 12, to: 13, location: "sids-cafe" }, // lunch
+      { from: 13, to: 14, location: "post-office" },
+      { from: 14, to: 15, location: "peckham-market" },
+      { from: 15, to: 16, location: "dirty-barrys" },
+      { from: 16, to: 17, location: "lambeth-council-yard" }, // clock off
       { from: 17, to: 23, location: "nags" },
-      { from: 23, to: 6.5, location: "trigger-flat" },
+      { from: 23, to: 7, location: "trigger-flat" },
     ]),
-    defaultLocation: "council-streets",
+    defaultLocation: "lambeth-council-yard",
     homeLocation: "trigger-flat",
     transportCapacity: "pocket",
     awakeHours: { start: 6, end: 23 },
@@ -343,7 +357,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "auction-house",
-    displayName: "Sotheby's-by-the-Pub",
+    displayName: "Sotheby's",
     cash: 0,
     schedule: makeRoutineFromSpans("auction-house", []),
     defaultLocation: "auction-house",
@@ -357,14 +371,18 @@ const ACTORS: readonly ActorSpec[] = [
     code: "rodney",
     displayName: "Rodney Trotter",
     cash: 200,
-    schedule: makeRoutineFromSpans("peckham-flat", [
-      { from: 8, to: 9, location: "peckham-flat" },
-      { from: 9, to: 13, location: "peckham-market" },
-      { from: 13, to: 14, location: "nags" },
-      { from: 14, to: 17, location: "FLEXIBLE" },
-      { from: 19, to: 22, location: "nags" },
-      { from: 22, to: 8, location: "peckham-flat" },
-    ]),
+    schedule: makeRoutineFromSpans(
+      "peckham-flat",
+      [
+        { from: 8, to: 9, location: "peckham-flat" },
+        { from: 9, to: 13, location: "peckham-market" },
+        { from: 13, to: 14, location: "nags" },
+        { from: 14, to: 17, location: "FLEXIBLE" },
+        { from: 19, to: 22, location: "nags" },
+        { from: 22, to: 8, location: "peckham-flat" },
+      ],
+      { attendsAuction: true },
+    ),
     defaultLocation: "peckham-flat",
     homeLocation: "peckham-flat",
     transportCapacity: "pocket",
@@ -613,11 +631,15 @@ const ACTORS: readonly ActorSpec[] = [
     code: "dirty-barry",
     displayName: "Dirty Barry",
     cash: 250,
-    schedule: makeRoutineFromSpans("dirty-barrys", [
-      { from: 11, to: 20, location: "dirty-barrys" },
-      { from: 21, to: 23, location: "nags" },
-      { from: 23, to: 11, location: "dirty-barrys" },
-    ]),
+    schedule: makeRoutineFromSpans(
+      "dirty-barrys",
+      [
+        { from: 11, to: 20, location: "dirty-barrys" },
+        { from: 21, to: 23, location: "nags" },
+        { from: 23, to: 11, location: "dirty-barrys" },
+      ],
+      { attendsAuction: true },
+    ),
     defaultLocation: "dirty-barrys",
     homeLocation: "dirty-barrys",
     transportCapacity: "pocket",
@@ -665,13 +687,50 @@ const REACHABLE_BY_CATEGORY: Readonly<Record<string, readonly string[]>> = {
 
 const DEFAULT_REACHABLE_CODES: readonly string[] = ["denzil", "monkey-harris", "boyce"];
 
+/**
+ * Free-form descriptive tags per character. Used by the webapp filter
+ * rail (no engine logic depends on these). Order in each list is just
+ * for readability — primary identity first, secondary tags after.
+ *
+ * Keys must match an actor `code` in ACTORS above. New code → empty
+ * roles unless added here.
+ */
+const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
+  player: ["player", "dealer", "family"],
+  boyce: ["dealer", "fence"],
+  denzil: ["dealer"],
+  "monkey-harris": ["dealer", "fence"],
+  trigger: ["civilian", "official"],
+  mike: ["pub"],
+  "auction-house": ["official"],
+  rodney: ["dealer", "family"],
+  albert: ["civilian", "family"],
+  grandad: ["civilian", "family"],
+  marlene: ["civilian", "family"],
+  "mickey-pearce": ["dealer"],
+  jevon: ["dealer"],
+  raquel: ["civilian"],
+  cassandra: ["civilian", "family"],
+  "alan-parry": ["civilian", "family"],
+  sid: ["pub"],
+  "alfie-flowers": ["supplier"],
+  "ronnie-nelson": ["supplier"],
+  mustapha: ["supplier"],
+  arnie: ["supplier"],
+  towser: ["supplier"],
+  "paddy-the-greek": ["supplier", "dealer"],
+  slater: ["police"],
+  "dirty-barry": ["fence", "villain"],
+  "eugene-mccarthy": ["villain"],
+};
+
 export interface SkinSeedOptions {
   readonly runLengthDays?: number;
 }
 
 export function seedPlaceholderSkin(
   db: DB,
-  _rng: SeededRNG,
+  rng: SeededRNG,
   opts: SkinSeedOptions = {},
 ): SkinSeedResult {
   const runLengthDays = opts.runLengthDays ?? 14;
@@ -688,12 +747,18 @@ export function seedPlaceholderSkin(
     locByCode.set(spec.code, loc.id);
   }
 
-  // Items.
-  for (const spec of EVERYDAY_ITEMS) insertItemKind(db, spec);
+  // Items. Track everyday item ids so we can seed starter stock from
+  // the same catalogue.
+  const everydayItemIds: number[] = [];
+  for (const spec of EVERYDAY_ITEMS) {
+    const k = insertItemKind(db, spec);
+    everydayItemIds.push(k.id);
+  }
   for (const spec of EASTER_EGG_ITEMS) insertItemKind(db, spec);
 
   // Actors.
   const actorByCode = new Map<string, number>();
+  const actorDefaultLocByCode = new Map<string, number>();
   const policies = new Map<number, ActorPolicy>();
   const actorRoutines = new Map<number, ActorRoutineInfo>();
   for (const spec of ACTORS) {
@@ -715,6 +780,7 @@ export function seedPlaceholderSkin(
       throw new Error(`unknown default location for ${spec.code}: ${spec.defaultLocation}`);
     }
     setActorLocation(db, a.id, defaultLocId);
+    actorDefaultLocByCode.set(spec.code, defaultLocId);
 
     const scheduleByHour = new Map<number, number>();
     for (const [hour, locCode] of spec.schedule) {
@@ -744,6 +810,12 @@ export function seedPlaceholderSkin(
 
   const playerId = actorByCode.get("player");
   const auctionHouseId = actorByCode.get("auction-house");
+  // Resolve role tags: skin-defined codes → live actor ids.
+  const rolesByActorId = new Map<number, readonly string[]>();
+  for (const [code, roles] of Object.entries(ACTOR_ROLES)) {
+    const id = actorByCode.get(code);
+    if (id !== undefined && roles.length > 0) rolesByActorId.set(id, roles);
+  }
   if (playerId === undefined || auctionHouseId === undefined) {
     throw new Error("placeholder skin must seed player and auction-house actors");
   }
@@ -816,6 +888,15 @@ export function seedPlaceholderSkin(
     (id): id is number => id !== undefined,
   );
 
+  // Starter stock — every dealer/fence opens day 1 with 2-3 lots from
+  // the everyday catalogue. Each lot also seeds a first-hand "I have
+  // this" supply lead, so gossip starts with something to circulate.
+  seedStarterStock(db, rng, {
+    actorByCode,
+    actorDefaultLocByCode,
+    everydayItemIds,
+  });
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -829,5 +910,78 @@ export function seedPlaceholderSkin(
     runLengthDays,
     tradingActorIds,
     actorRoutines,
+    rolesByActorId,
   };
+}
+
+/** Actor codes that get starter stock — anyone tagged dealer or fence. */
+const STARTER_STOCK_CODES: readonly string[] = (() => {
+  const out: string[] = [];
+  for (const [code, roles] of Object.entries(ACTOR_ROLES)) {
+    if (roles.includes("dealer") || roles.includes("fence")) out.push(code);
+  }
+  return out;
+})();
+
+const STARTER_TIERS: readonly QualityTier[] = ["good", "fair"];
+
+interface SeedStarterStockArgs {
+  readonly actorByCode: ReadonlyMap<string, number>;
+  readonly actorDefaultLocByCode: ReadonlyMap<string, number>;
+  readonly everydayItemIds: readonly number[];
+}
+
+function seedStarterStock(
+  db: DB,
+  rng: SeededRNG,
+  args: SeedStarterStockArgs,
+): void {
+  const { actorByCode, actorDefaultLocByCode, everydayItemIds } = args;
+  if (everydayItemIds.length === 0) return;
+
+  for (const code of STARTER_STOCK_CODES) {
+    const ownerId = actorByCode.get(code);
+    if (ownerId === undefined) continue;
+    const locId = actorDefaultLocByCode.get(code) ?? null;
+
+    const lotCount = rng.int(2, 4); // 2 or 3 lots
+    const usedItemIds = new Set<number>();
+    for (let i = 0; i < lotCount; i += 1) {
+      // Pick a distinct item per actor — multiple lots of the same item
+      // would just collapse together for gossip purposes.
+      let itemId: number;
+      let guard = 0;
+      do {
+        itemId = rng.pick(everydayItemIds);
+        guard += 1;
+      } while (usedItemIds.has(itemId) && guard < 8);
+      usedItemIds.add(itemId);
+
+      const item = EVERYDAY_ITEMS.find(
+        (_, idx) => everydayItemIds[idx] === itemId,
+      );
+      if (item === undefined) continue;
+
+      const tier = rng.pick(STARTER_TIERS);
+      const quantity = rng.int(10, 41); // 10..40
+      // Acquired at 40-80% of base value — they got it cheap.
+      const priceFactor = 0.4 + rng.next() * 0.4;
+      const acquiredUnitPrice = Math.max(
+        1,
+        Math.round(item.baseValue * priceFactor),
+      );
+
+      const lot = insertStockLot(db, {
+        ownerActorId: ownerId,
+        itemKindId: itemId,
+        qualityTier: tier,
+        quantity,
+        acquiredUnitPrice,
+        acquiredDay: 1,
+        locationId: locId,
+      });
+
+      seedSupplyLeadForStockLot(db, lot, 1);
+    }
+  }
 }

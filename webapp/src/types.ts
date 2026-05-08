@@ -23,6 +23,9 @@ export interface RunActor {
   readonly currentLocationId: number | null;
   readonly homeLocationId: number | null;
   readonly transportCapacity: string;
+  /** Descriptive tags ("dealer", "civilian", "police", …). Optional
+   *  so dumps generated before this field still load. */
+  readonly roles?: readonly string[];
 }
 
 export interface RunActorRoutine {

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { getActorColor, getInitials } from "../avatar.js";
+import { combinedPositions, useLayout, type MapLayout } from "../map-layout.js";
+import { getPlaybackSpeed, setMapBusy } from "../anim-state.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -15,84 +17,31 @@ interface Props {
 const WORLD_W = 1600;
 const WORLD_H = 1080;
 
-// Hand-placed location coordinates. Pure abstract layout — no
-// underlying basemap, no real-world geography. Just a graph.
-const LOCATION_POSITIONS: Record<string, { x: number; y: number }> = {
-  // Council axis (NW)
-  "lambeth-council-yard": { x: 110, y: 180 },
-  "council-streets": { x: 280, y: 200 },
-  "trigger-flat": { x: 430, y: 110 },
-  // Auction / dodgy strip (north)
-  "albert-legion": { x: 600, y: 220 },
-  "auction-house": { x: 820, y: 200 },
-  "one-eleven-club": { x: 1000, y: 130 },
-  "starlight-rooms": { x: 1180, y: 200 },
-  // Off-map (NE corner)
-  "off-map": { x: 1480, y: 90 },
-  // Peckham core
-  "raquel-flat": { x: 410, y: 310 },
-  "mickey-jevon-flat": { x: 250, y: 400 },
-  nags: { x: 560, y: 380 },
-  "sids-cafe": { x: 640, y: 510 },
-  "peckham-flat": { x: 800, y: 470 },
-  "peckham-market": { x: 880, y: 580 },
-  lockup: { x: 1010, y: 470 },
-  "post-office": { x: 410, y: 540 },
-  "betting-shop": { x: 540, y: 630 },
-  // Civic / cops
-  "dirty-barrys": { x: 770, y: 660 },
-  "police-station": { x: 620, y: 760 },
-  "slater-flat": { x: 470, y: 830 },
-  // Boyce belt (SW)
-  "boyce-auto-sales": { x: 380, y: 920 },
-  "boycie-house": { x: 220, y: 850 },
-  // Posh suburb / Parry strand (NE)
-  "parry-printers": { x: 1280, y: 270 },
-  "parry-house": { x: 1450, y: 340 },
-  "cassandra-bank": { x: 1180, y: 350 },
-  "cassandra-flat": { x: 1130, y: 480 },
-  // Industrial east
-  "transworld-depot": { x: 1330, y: 700 },
-  "denzil-house": { x: 1480, y: 860 },
-  // Deptford
-  "shamrock-club": { x: 1330, y: 990 },
-};
+// Layout (positions + edges) lives in map-layout.ts so the editor and
+// the runtime view share one source of truth. We mirror the latest
+// values into module-level vars at the top of each render so the
+// existing module-level helpers keep working without threading a
+// layout argument through every call site.
+let LOCATION_POSITIONS: Record<string, { x: number; y: number }> = {};
+let WAYPOINT_POSITIONS: Record<string, { x: number; y: number }> = {};
+let POSITIONS: Record<string, { x: number; y: number }> = {};
+let EDGES: ReadonlyArray<readonly [string, string]> = [];
 
-/**
- * Pure routing nodes — they don't represent a place anyone lives or
- * works, they just exist so edges have a clean corner to bend at and
- * fewer roads cross each other. Avatars can pass through them in
- * transit but never stop here. No label, no profile, no click target.
- */
-const WAYPOINT_POSITIONS: Record<string, { x: number; y: number }> = {
-  // West connector — between Mickey/Jevon flat, Council streets, Raquel's.
-  wp_NW: { x: 280, y: 290 },
-  // North junction — Trigger / Albert / Nag's converge here.
-  wp_N: { x: 700, y: 290 },
-  // West-south corridor — connects Mickey/Jevon down to Boycie's via Peckham fringe.
-  wp_WS: { x: 290, y: 690 },
-  // South junction — Police, Slater, Boyce belt meet here.
-  wp_S: { x: 580, y: 870 },
-  // East corner just past Lock-up — bridges Peckham to the posh suburb.
-  wp_E: { x: 1110, y: 470 },
-  // South-east — bridges Cassandra/Bank to Transworld/Deptford.
-  wp_SE: { x: 1180, y: 720 },
-};
-
-const POSITIONS: Record<string, { x: number; y: number }> = {
-  ...LOCATION_POSITIONS,
-  ...WAYPOINT_POSITIONS,
-};
+function syncFromLayout(layout: MapLayout): void {
+  LOCATION_POSITIONS = layout.locations;
+  WAYPOINT_POSITIONS = layout.waypoints;
+  POSITIONS = combinedPositions(layout);
+  EDGES = layout.edges;
+}
 
 const SHORT_LABELS: Record<string, string> = {
-  "peckham-flat": "Peckham flat",
+  "peckham-flat": "Del's",
   "boycie-house": "Boycie's",
   "denzil-house": "Denzil's",
   "boyce-auto-sales": "Boyce Autos",
   "transworld-depot": "Transworld",
   "lambeth-council-yard": "Council yard",
   "auction-house": "Sotheby's",
-  "council-streets": "Sweep round",
   "one-eleven-club": "111 Club",
   "starlight-rooms": "Starlight",
   "mickey-jevon-flat": "Mickey/Jevon",
@@ -113,82 +62,7 @@ const SHORT_LABELS: Record<string, string> = {
   "peckham-market": "Market",
 };
 
-// Edges. Each segment is a short hop between adjacent nodes; longer
-// journeys chain through waypoints / intermediate locations. No "long
-// diagonal" edges that cross the whole map — Dijkstra still finds the
-// shortest path through whatever's actually wired up.
-const EDGES: ReadonlyArray<readonly [string, string]> = [
-  // ── Council / NW corner ──────────────────────────────────────────
-  ["lambeth-council-yard", "council-streets"],
-  ["council-streets", "wp_NW"],
-  ["trigger-flat", "wp_NW"],
-  ["raquel-flat", "wp_NW"],
-  ["mickey-jevon-flat", "wp_NW"],
-
-  // ── North junction (auction strip + Trotter household) ───────────
-  ["trigger-flat", "wp_N"],
-  ["albert-legion", "wp_N"],
-  ["nags", "wp_N"],
-
-  // ── Auction / dodgy clubs strip (chained west→east) ──────────────
-  ["albert-legion", "auction-house"],
-  ["auction-house", "one-eleven-club"],
-  ["one-eleven-club", "starlight-rooms"],
-  ["starlight-rooms", "off-map"],
-
-  // ── Trotter cluster around the Nag's ─────────────────────────────
-  ["nags", "raquel-flat"],
-  ["nags", "sids-cafe"],
-  ["nags", "peckham-flat"],
-  ["mickey-jevon-flat", "post-office"],
-
-  // ── Peckham high street ──────────────────────────────────────────
-  ["peckham-flat", "sids-cafe"],
-  ["peckham-flat", "peckham-market"],
-  ["peckham-flat", "lockup"],
-  ["peckham-flat", "post-office"],
-  ["peckham-flat", "dirty-barrys"],
-  ["sids-cafe", "post-office"],
-  ["peckham-market", "lockup"],
-  ["peckham-market", "auction-house"],
-  ["peckham-market", "dirty-barrys"],
-
-  // ── Bookies / civic spine ────────────────────────────────────────
-  ["post-office", "betting-shop"],
-  ["betting-shop", "dirty-barrys"],
-  ["betting-shop", "police-station"],
-  ["dirty-barrys", "police-station"],
-  ["police-station", "wp_S"],
-  ["slater-flat", "wp_S"],
-
-  // ── Boyce belt (SW) ──────────────────────────────────────────────
-  ["boyce-auto-sales", "boycie-house"],
-  ["boyce-auto-sales", "wp_S"],
-  ["boycie-house", "wp_WS"],
-  ["wp_WS", "post-office"],
-  ["wp_WS", "mickey-jevon-flat"],
-
-  // ── East / posh suburb ───────────────────────────────────────────
-  ["lockup", "wp_E"],
-  ["wp_E", "cassandra-flat"],
-  ["wp_E", "cassandra-bank"],
-  ["cassandra-flat", "cassandra-bank"],
-  ["cassandra-bank", "parry-printers"],
-  ["cassandra-bank", "parry-house"],
-  ["parry-printers", "parry-house"],
-  ["parry-printers", "auction-house"],
-
-  // ── East-southeast bridge ────────────────────────────────────────
-  ["wp_E", "wp_SE"],
-  ["cassandra-flat", "wp_SE"],
-  ["wp_SE", "transworld-depot"],
-
-  // ── Industrial east ──────────────────────────────────────────────
-  ["transworld-depot", "denzil-house"],
-  ["transworld-depot", "shamrock-club"],
-  ["shamrock-club", "off-map"],
-];
-
+// Edges live in map-layout.ts (defaults + saved overrides).
 const TYPE_FILL: Record<string, string> = {
   home: "#1a201a",
   pub: "#2a1a1a",
@@ -336,13 +210,26 @@ interface ActorAnim {
   /** Stop the walk here (so transit halts at the path midpoint). */
   targetProgress: number;
   transit: boolean;
+  /** Graph nodes the avatar is walking through, in order. Used to
+   *  pick a sensible "start node" when re-routing mid-edge so the
+   *  new path doesn't double back. */
+  nodes: ReadonlyArray<string>;
+  /** Arc length at which each entry of `nodes` is reached along the
+   *  polyline (parallel to `nodes`). */
+  nodeLengthAt: ReadonlyArray<number>;
 }
 
 const ANIM_SPEED_PX_PER_SEC = 700;
 
 export function MapGraph(props: Props) {
   const { dump, day, hour, selection, onSelect } = props;
-  const adj = useMemo(buildAdjacency, []);
+  const layout = useLayout();
+  syncFromLayout(layout);
+  const adj = useMemo(buildAdjacency, [layout]);
+  const [canvasSize, setCanvasSize] = useState<{ w: number; h: number }>({
+    w: WORLD_W,
+    h: WORLD_H,
+  });
   const [view, setView] = useState<ViewState>(DEFAULT_VIEW);
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(
@@ -425,22 +312,18 @@ export function MapGraph(props: Props) {
     return m;
   }, [placement]);
 
-  // Active edges: any edge fully contained within an in-transit path.
-  const activeEdgeKeys = useMemo(() => {
-    const set = new Set<string>();
-    for (const p of placement.values()) {
-      if (p.kind !== "transit") continue;
-      const nodes = p.pathInfo.nodes;
-      for (let i = 1; i < nodes.length; i += 1) {
-        set.add(edgeKey(nodes[i - 1]!, nodes[i]!));
-      }
-    }
-    return set;
-  }, [placement]);
+  // Per-in-transit-actor route overlays are computed inline at render
+  // time (not via useMemo) so the polyline shrinks every frame as the
+  // avatar consumes their route. The slice runs from the avatar's
+  // current arc-length progress to their targetProgress, so what's
+  // drawn is always "the bit ahead of them, in their colour".
 
   // Where each actor "wants to be" right now (end-of-current-hour).
-  // Used as the animation target. The actual displayed position is
-  // tweened via animsRef along the graph polyline below.
+  // The polyline target is **always a graph node centre** — never an
+  // offset position — so the walk stays exactly on the road. Stack
+  // jitter (so co-located actors don't perfectly overlap) is computed
+  // separately as a `renderOffset` and applied via CSS transition at
+  // render time, only when the avatar is at-location and idle.
   const targets = useMemo(() => {
     const map = new Map<
       number,
@@ -448,8 +331,8 @@ export function MapGraph(props: Props) {
         x: number;
         y: number;
         transit: boolean;
-        nodes: readonly string[]; // graph nodes for the journey, in order
-        targetFraction: number; // 0..1 along `nodes` polyline
+        nodes: readonly string[];
+        targetFraction: number;
       }
     >();
     for (const a of dump.actors) {
@@ -458,34 +341,66 @@ export function MapGraph(props: Props) {
       if (p.kind === "at") {
         const pos = LOCATION_POSITIONS[p.locationCode];
         if (!pos) continue;
-        const list = stackedAt.get(p.locationCode) ?? [];
-        const idx = list.indexOf(a.id);
-        const total = list.length;
-        let x = pos.x;
-        let y = pos.y + NODE_R + AVATAR_R + 4;
-        if (total > 1) {
-          const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
-          const r = NODE_R + AVATAR_R + 6;
-          x = pos.x + Math.cos(angle) * r;
-          y = pos.y + Math.sin(angle) * r;
-        }
         map.set(a.id, {
-          x,
-          y,
+          x: pos.x,
+          y: pos.y,
           transit: false,
           nodes: [p.locationCode],
           targetFraction: 1,
         });
       } else {
-        const mid = pointAtDistance(p.pathInfo, p.pathInfo.totalLength / 2);
+        // Transit: walk the FULL path so the avatar reaches the
+        // destination within the hour (matches the engine, where
+        // travel is "1 hour for any distance" and the actor has
+        // arrived by end of H). The route overlay still shrinks as
+        // they walk, so the journey is visible.
+        const lastCode = p.pathInfo.nodes[p.pathInfo.nodes.length - 1];
+        const destPos =
+          lastCode !== undefined ? LOCATION_POSITIONS[lastCode] : undefined;
+        if (destPos === undefined) continue;
         map.set(a.id, {
-          x: mid.x,
-          y: mid.y,
+          x: destPos.x,
+          y: destPos.y,
           transit: true,
           nodes: p.pathInfo.nodes,
-          targetFraction: 0.5,
+          targetFraction: 1,
         });
       }
+    }
+    return map;
+  }, [dump.actors, placement]);
+
+  // Stack-jitter render offsets: applied on top of the on-road anim
+  // position via a CSS-transitioned inner <g>. (0,0) while in transit
+  // so the avatar sits exactly on the polyline; only fans out when
+  // they've arrived and are idle.
+  const renderOffsets = useMemo(() => {
+    const map = new Map<number, { x: number; y: number }>();
+    for (const a of dump.actors) {
+      const p = placement.get(a.id);
+      if (!p) {
+        map.set(a.id, { x: 0, y: 0 });
+        continue;
+      }
+      if (p.kind === "transit") {
+        map.set(a.id, { x: 0, y: 0 });
+        continue;
+      }
+      const list = stackedAt.get(p.locationCode) ?? [];
+      const idx = list.indexOf(a.id);
+      const total = list.length;
+      if (total <= 1) {
+        // Single actor: small hint-offset below the node so the dot
+        // doesn't perfectly cover the node circle.
+        map.set(a.id, { x: 0, y: NODE_R + AVATAR_R + 4 });
+        continue;
+      }
+      const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
+      const r = NODE_R + AVATAR_R + 6;
+      map.set(a.id, {
+        x: Math.cos(angle) * r,
+        y: Math.sin(angle) * r,
+      });
     }
     return map;
   }, [dump.actors, placement, stackedAt]);
@@ -496,6 +411,7 @@ export function MapGraph(props: Props) {
   // including the offset from the node centre (stack jitter or transit
   // midpoint).
   useEffect(() => {
+    let anyMoving = false;
     for (const a of dump.actors) {
       const target = targets.get(a.id);
       if (!target) continue;
@@ -510,6 +426,8 @@ export function MapGraph(props: Props) {
           progress: 0,
           targetProgress: 0,
           transit: target.transit,
+          nodes: [],
+          nodeLengthAt: [],
         });
         continue;
       }
@@ -520,35 +438,51 @@ export function MapGraph(props: Props) {
         existing.transit = target.transit;
         continue;
       }
-      // Build a polyline from current position → graph nodes → target.
+      // pickStartNode (inside buildAnimPath) needs the previous
+      // animation state to know which two graph nodes bracket the
+      // avatar's current position — those are the only valid entry
+      // points back into the network for the new route.
       const built = buildAnimPath(
         { x: existing.x, y: existing.y },
         target,
         adj,
+        existing,
       );
       existing.path = built.path;
       existing.lengthAt = built.lengthAt;
+      existing.nodes = built.nodes;
+      existing.nodeLengthAt = built.nodeLengthAt;
       existing.progress = 0;
-      existing.targetProgress = built.lengthAt[built.lengthAt.length - 1] ?? 0;
+      // For transit, this is total × 0.5 so the avatar stops at the
+      // path midpoint *along the road*; for at-location it's total
+      // (full walk).
+      existing.targetProgress = built.targetProgress;
       existing.transit = target.transit;
+      if (existing.targetProgress > 0) anyMoving = true;
     }
+    // Tell the playback timer "we're now transiting". The rAF loop
+    // will keep it true and flip it false when everyone's settled.
+    if (anyMoving) setMapBusy(true);
   }, [targets, adj, dump.actors]);
 
-  // Single rAF loop driving every active animation. Re-renders the
-  // component while anyone is still moving so the SVG transforms
-  // refresh.
+  // Single rAF loop driving every active animation. Publishes a
+  // global `mapBusy` flag (via anim-state) so PlaybackControls can
+  // hold the playback timer until every avatar has finished its
+  // leave→arrive walk.
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    let lastBusy = false;
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      const speed = getPlaybackSpeed();
       let anyActive = false;
       for (const anim of animsRef.current.values()) {
         if (anim.progress < anim.targetProgress) {
           anim.progress = Math.min(
             anim.targetProgress,
-            anim.progress + ANIM_SPEED_PX_PER_SEC * dt,
+            anim.progress + ANIM_SPEED_PX_PER_SEC * speed * dt,
           );
           const p = pointAlongPolyline(
             anim.path,
@@ -560,11 +494,18 @@ export function MapGraph(props: Props) {
           anyActive = true;
         }
       }
+      if (anyActive !== lastBusy) {
+        lastBusy = anyActive;
+        setMapBusy(anyActive);
+      }
       if (anyActive) setFrame((n) => (n + 1) & 0x7fffffff);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      setMapBusy(false);
+    };
   }, []);
 
   // Pan via drag.
@@ -608,6 +549,23 @@ export function MapGraph(props: Props) {
     };
   }, [view.x, view.y, view.w, view.h]);
 
+  // Track the SVG canvas's actual pixel size so we can clamp the
+  // off-screen indicators to the real visible-canvas edges (instead
+  // of the viewBox edges, which sit inside letterbox bars when the
+  // canvas aspect doesn't match the world aspect).
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (svg === null) return;
+    const ro = new ResizeObserver(() => {
+      const r = svg.getBoundingClientRect();
+      setCanvasSize({ w: r.width, h: r.height });
+    });
+    ro.observe(svg);
+    const r = svg.getBoundingClientRect();
+    setCanvasSize({ w: r.width, h: r.height });
+    return () => ro.disconnect();
+  }, []);
+
   // Wheel zoom (cursor-pivoted).
   useEffect(() => {
     const svg = svgRef.current;
@@ -643,19 +601,70 @@ export function MapGraph(props: Props) {
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* Edges */}
+        {/* Cartoon basemap (CC0 — Geographia Pictorial plan of
+            London, Wikimedia Commons). Sits under everything; the
+            graph + avatars float on top. */}
+        <image
+          href="/map-bg.jpg"
+          x={0}
+          y={0}
+          width={WORLD_W}
+          height={WORLD_H}
+          opacity={0.45}
+          preserveAspectRatio="none"
+          style={{ pointerEvents: "none" }}
+        />
+        {/* Base edges — always plain grey. */}
         <g className="edges">
           {EDGES.map(([a, b]) => {
             const pa = POSITIONS[a];
             const pb = POSITIONS[b];
             if (!pa || !pb) return null;
-            const k = edgeKey(a, b);
-            const active = activeEdgeKeys.has(k);
             return (
               <line
-                key={k}
+                key={edgeKey(a, b)}
                 x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
-                className={`graph-edge ${active ? "graph-edge-active" : ""}`}
+                className="graph-edge"
+              />
+            );
+          })}
+        </g>
+        {/* Per-actor route overlays for in-transit actors. The route
+            shrinks each frame as the avatar walks along it (slice
+            from anim.progress to anim.targetProgress), so by the
+            time they reach the target the line has fully cleaned
+            up. Makes routing bugs obvious — if the line lingers
+            behind the avatar, something's wrong. */}
+        <g className="route-overlays" pointerEvents="none">
+          {dump.actors.map((actor) => {
+            const anim = animsRef.current.get(actor.id);
+            if (!anim || !anim.transit) return null;
+            if (anim.progress >= anim.targetProgress - 0.5) return null;
+            const remaining = sliceProgress(
+              anim.path,
+              anim.lengthAt,
+              anim.progress,
+              anim.targetProgress,
+            );
+            if (remaining.length < 2) return null;
+            const isPlayer = actor.id === dump.playerActorId;
+            const colour = getActorColor({
+              code: actor.code,
+              isPlayer,
+            });
+            return (
+              <polyline
+                key={`route-${actor.id}`}
+                points={remaining
+                  .map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
+                  .join(" ")}
+                fill="none"
+                stroke={colour}
+                strokeWidth={2.8}
+                strokeLinecap="round"
+                strokeDasharray="6 5"
+                opacity={0.75}
+                className="route-overlay"
               />
             );
           })}
@@ -674,9 +683,13 @@ export function MapGraph(props: Props) {
           ))}
         </g>
 
-        {/* Location nodes */}
+        {/* Location nodes — off-map locations skip the SVG render
+            and appear as perimeter markers in the HTML overlay
+            below, so they always sit on the canvas edge regardless
+            of zoom/pan. */}
         <g className="nodes">
           {dump.locations.map((loc) => {
+            if (layout.offMap[loc.code] === true) return null;
             const pos = POSITIONS[loc.code];
             if (!pos) return null;
             const isSel = loc.id === selLoc;
@@ -728,12 +741,30 @@ export function MapGraph(props: Props) {
           })}
         </g>
 
-        {/* Avatars — driven manually by animsRef so they walk the
-            polyline rather than cutting diagonally between renders. */}
+        {/* Avatars — outer <g> is the on-road walk position (anim.x/y
+            tweened along the polyline). Inner <g> applies the
+            stack-jitter offset with a CSS transition, so the avatar
+            walks exactly on the road and only fans out once it has
+            arrived at a location. */}
         <g className="avatars">
           {dump.actors.map((actor) => {
             const anim = animsRef.current.get(actor.id);
             if (!anim) return null;
+            // Avatars currently AT an off-map location render in the
+            // HTML overlay (clustered with the perimeter marker);
+            // skip the SVG copy. Transit avatars still walk the
+            // polyline as world coords here.
+            if (!anim.transit) {
+              const code = placement.get(actor.id);
+              if (
+                code &&
+                code.kind === "at" &&
+                layout.offMap[code.locationCode] === true
+              ) {
+                return null;
+              }
+            }
+            const off = renderOffsets.get(actor.id) ?? { x: 0, y: 0 };
             const isPlayer = actor.id === dump.playerActorId;
             const isSel = actor.id === selActor;
             const colour = getActorColor({ code: actor.code, isPlayer });
@@ -749,29 +780,146 @@ export function MapGraph(props: Props) {
                   onSelect(isSel ? null : { kind: "actor", id: actor.id });
                 }}
               >
-                <circle
-                  r={AVATAR_R}
-                  fill={colour}
-                  stroke={isSel ? "#fff" : isPlayer ? "#fff" : "rgba(0,0,0,0.5)"}
-                  strokeWidth={isSel ? 2.5 : isPlayer ? 1.5 : 1}
-                  strokeDasharray={anim.transit ? "3 2" : undefined}
-                />
-                <text
-                  className="avatar-initials"
-                  textAnchor="middle"
-                  dy="0.35em"
+                <g
+                  style={{
+                    transform: `translate(${off.x}px, ${off.y}px)`,
+                    transition: "transform 320ms ease-out",
+                  }}
                 >
-                  {getInitials(actor.displayName)}
-                </text>
-                <title>
-                  {actor.displayName}
-                  {anim.transit ? " (in transit)" : ""}
-                </title>
+                  <circle
+                    r={AVATAR_R}
+                    fill={colour}
+                    stroke={isSel ? "#fff" : isPlayer ? "#fff" : "rgba(0,0,0,0.5)"}
+                    strokeWidth={isSel ? 2.5 : isPlayer ? 1.5 : 1}
+                  />
+                  <text
+                    className="avatar-initials"
+                    textAnchor="middle"
+                    dy="0.35em"
+                  >
+                    {getInitials(actor.displayName)}
+                  </text>
+                  <title>
+                    {actor.displayName}
+                    {anim.transit ? " (in transit)" : ""}
+                  </title>
+                </g>
               </g>
             );
           })}
         </g>
+
       </svg>
+      {/* Off-screen perimeter indicators + off-map markers, both
+          rendered in *pixel* space. The overlay is sized to the SVG's
+          bounding rect so positions track the actual canvas edge
+          across resizes (no letterbox bars eating the perimeter). */}
+      <div className="map-indicators-overlay">
+        {/* Off-map location markers — clamped to canvas perimeter at
+            the angle from canvas centre to the location's world
+            position. They always sit on the edge, regardless of zoom. */}
+        {dump.locations.map((loc) => {
+          if (layout.offMap[loc.code] !== true) return null;
+          const pos = POSITIONS[loc.code];
+          if (!pos) return null;
+          const peri = projectToPerimeter(pos.x, pos.y, view, canvasSize, 18);
+          if (peri === null) return null;
+          const isSel = loc.id === selLoc;
+          const pop = stackedAt.get(loc.code)?.length ?? 0;
+          return (
+            <button
+              key={`offmap-${loc.code}`}
+              className={`map-offmap-marker ${isSel ? "selected" : ""}`}
+              style={{ left: `${peri.x}px`, top: `${peri.y}px` }}
+              title={`${loc.displayName} (off-map)${pop > 0 ? ` · ${pop}` : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(isSel ? null : { kind: "location", id: loc.id });
+              }}
+            >
+              <span className="offmap-label">
+                {SHORT_LABELS[loc.code] ?? loc.displayName}
+              </span>
+              {pop > 0 ? <span className="offmap-pop">{pop}</span> : null}
+            </button>
+          );
+        })}
+        {dump.actors.map((actor) => {
+          const anim = animsRef.current.get(actor.id);
+          if (!anim) return null;
+          const off = renderOffsets.get(actor.id) ?? { x: 0, y: 0 };
+          // If the actor is at-location at an off-map place, force a
+          // perimeter render (clustered at the off-map marker), even
+          // if their world position would otherwise fall inside the
+          // canvas at the current zoom.
+          let perim: { x: number; y: number } | null = null;
+          let titleSuffix = " (off-screen)";
+          if (!anim.transit) {
+            const pl = placement.get(actor.id);
+            if (
+              pl &&
+              pl.kind === "at" &&
+              layout.offMap[pl.locationCode] === true
+            ) {
+              const pos = POSITIONS[pl.locationCode];
+              if (pos) {
+                perim = projectToPerimeter(pos.x, pos.y, view, canvasSize, 18);
+                titleSuffix = " (off-map)";
+              }
+            }
+          }
+          if (perim === null) {
+            const wx = anim.x + off.x;
+            const wy = anim.y + off.y;
+            const screen = worldToScreen(wx, wy, view, canvasSize);
+            const margin = 18;
+            const inside =
+              screen.x >= margin &&
+              screen.x <= canvasSize.w - margin &&
+              screen.y >= margin &&
+              screen.y <= canvasSize.h - margin;
+            if (inside) return null;
+            const cx = canvasSize.w / 2;
+            const cy = canvasSize.h / 2;
+            const dx = screen.x - cx;
+            const dy = screen.y - cy;
+            if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return null;
+            let t = Infinity;
+            if (dx > 0) t = Math.min(t, (canvasSize.w - margin - cx) / dx);
+            else if (dx < 0) t = Math.min(t, (margin - cx) / dx);
+            if (dy > 0) t = Math.min(t, (canvasSize.h - margin - cy) / dy);
+            else if (dy < 0) t = Math.min(t, (margin - cy) / dy);
+            if (!Number.isFinite(t) || t <= 0) return null;
+            perim = { x: cx + dx * t, y: cy + dy * t };
+          }
+          const isPlayer = actor.id === dump.playerActorId;
+          const isSel = actor.id === selActor;
+          const colour = getActorColor({ code: actor.code, isPlayer });
+          // Tiny stack offset so multiple avatars at the same
+          // off-map location don't perfectly overlap.
+          const stackOff = renderOffsets.get(actor.id) ?? { x: 0, y: 0 };
+          const px = perim.x + stackOff.x * 0.35;
+          const py = perim.y + stackOff.y * 0.35;
+          return (
+            <button
+              key={`ind-${actor.id}`}
+              className={`map-indicator ${isSel ? "selected" : ""}`}
+              style={{
+                left: `${px}px`,
+                top: `${py}px`,
+                background: colour,
+              }}
+              title={`${actor.displayName}${titleSuffix}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(isSel ? null : { kind: "actor", id: actor.id });
+              }}
+            >
+              {getInitials(actor.displayName)}
+            </button>
+          );
+        })}
+      </div>
       <div className="map-legend muted">
         Day {day} · {String(hour).padStart(2, "0")}:00 · scroll to zoom · drag
         empty space to pan · routes path through intermediate nodes
@@ -785,26 +933,168 @@ function edgeKey(a: string, b: string): string {
 }
 
 /**
+ * Convert a world coordinate to canvas pixel coordinates given the
+ * current viewBox and canvas size. Mirrors the transform that SVG
+ * applies under `preserveAspectRatio="xMidYMid meet"`: viewBox is
+ * fitted entirely inside the canvas with letterbox/pillarbox
+ * padding centred on the wider axis.
+ */
+function worldToScreen(
+  wx: number,
+  wy: number,
+  view: ViewState,
+  canvas: { w: number; h: number },
+): { x: number; y: number } {
+  const scale = Math.min(canvas.w / view.w, canvas.h / view.h);
+  const padX = (canvas.w - view.w * scale) / 2;
+  const padY = (canvas.h - view.h * scale) / 2;
+  return {
+    x: (wx - view.x) * scale + padX,
+    y: (wy - view.y) * scale + padY,
+  };
+}
+
+/**
+ * Force-project a world point to the canvas perimeter (with margin),
+ * along the ray from the canvas centre to that point. Used for off-
+ * map markers: even if the world point projects inside the visible
+ * canvas at the current zoom, we still want the marker at the edge.
+ */
+function projectToPerimeter(
+  wx: number,
+  wy: number,
+  view: ViewState,
+  canvas: { w: number; h: number },
+  margin: number,
+): { x: number; y: number } | null {
+  if (canvas.w <= margin * 2 || canvas.h <= margin * 2) return null;
+  const screen = worldToScreen(wx, wy, view, canvas);
+  const cx = canvas.w / 2;
+  const cy = canvas.h / 2;
+  const dx = screen.x - cx;
+  const dy = screen.y - cy;
+  if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return null;
+  let t = Infinity;
+  if (dx > 0) t = Math.min(t, (canvas.w - margin - cx) / dx);
+  else if (dx < 0) t = Math.min(t, (margin - cx) / dx);
+  if (dy > 0) t = Math.min(t, (canvas.h - margin - cy) / dy);
+  else if (dy < 0) t = Math.min(t, (margin - cy) / dy);
+  if (!Number.isFinite(t) || t <= 0) return null;
+  return { x: cx + dx * t, y: cy + dy * t };
+}
+
+/**
  * Find the shortest-path polyline from a free-floating start point to
  * a target point, walking through real graph nodes wherever possible.
- * The returned `path` always begins at `start` and ends at `target`,
- * with graph node coordinates in between.
+ *
+ * If `nextNodeAhead` is supplied (mid-animation re-route), use it as
+ * the route's first graph node instead of `nearestNode(start)` — this
+ * keeps the avatar moving forward toward the next-node-it-was-heading-
+ * to, rather than backtracking through the node it just left.
+ *
+ * The returned polyline is built strictly from graph node centres
+ * (plus a leading point at the avatar's current position). The
+ * "stopping point" for transit (mid-hour midpoint) is expressed by
+ * `targetProgress` — the rAF loop walks until `progress` reaches it
+ * and stops. Earlier versions appended the midpoint position as the
+ * last polyline point, which made the path overshoot the destination
+ * node and then backtrack to the midpoint.
  */
+/**
+ * Pick the cheapest start node for a re-route. The candidate set is
+ * restricted to the two graph nodes the avatar is currently between —
+ * the last node they passed on their previous polyline, and the next
+ * un-passed node ahead. Other graph nodes (and especially the
+ * destination itself) aren't valid entry points: the avatar must
+ * enter the network at one of those two boundary nodes, then route
+ * through the graph from there. This stops the avatar from "cutting
+ * straight over the map" to the destination, ignoring waypoints.
+ *
+ * If no previous animation context is available (first call after
+ * startup), fall back to nearestNode.
+ */
+function pickStartNode(
+  start: { x: number; y: number },
+  endNode: string,
+  adj: Adjacency,
+  prevAnim: ActorAnim | undefined,
+): string {
+  let prevNode: string | undefined;
+  let nextNode: string | undefined;
+  if (prevAnim !== undefined && prevAnim.nodes.length > 0) {
+    let lastPassed = -1;
+    for (let i = 0; i < prevAnim.nodes.length; i += 1) {
+      if ((prevAnim.nodeLengthAt[i] ?? 0) <= prevAnim.progress + 0.01) {
+        lastPassed = i;
+      }
+    }
+    if (lastPassed >= 0) prevNode = prevAnim.nodes[lastPassed];
+    if (lastPassed + 1 < prevAnim.nodes.length) {
+      nextNode = prevAnim.nodes[lastPassed + 1];
+    }
+    if (prevNode === undefined && nextNode === undefined) {
+      // Neither end resolved — pick whatever's first in the prev path.
+      prevNode = prevAnim.nodes[0];
+    }
+  }
+
+  const candidates: string[] = [];
+  if (prevNode !== undefined) candidates.push(prevNode);
+  if (nextNode !== undefined && nextNode !== prevNode) candidates.push(nextNode);
+  if (candidates.length === 0) return nearestNode(start.x, start.y);
+
+  let best: string | null = null;
+  let bestCost = Infinity;
+  for (const cand of candidates) {
+    const candPos = POSITIONS[cand];
+    if (candPos === undefined) continue;
+    const distFromStart = Math.hypot(
+      candPos.x - start.x,
+      candPos.y - start.y,
+    );
+    let pathLen = 0;
+    if (cand !== endNode) {
+      const path = shortestPath(adj, cand, endNode);
+      if (path.length < 2) continue;
+      for (let i = 1; i < path.length; i += 1) {
+        const a = POSITIONS[path[i - 1]!];
+        const b = POSITIONS[path[i]!];
+        if (a === undefined || b === undefined) continue;
+        pathLen += Math.hypot(b.x - a.x, b.y - a.y);
+      }
+    }
+    const cost = distFromStart + pathLen;
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = cand;
+    }
+  }
+  return best ?? nearestNode(start.x, start.y);
+}
+
 function buildAnimPath(
   start: { x: number; y: number },
   target: {
-    x: number;
-    y: number;
     nodes: readonly string[];
     targetFraction: number;
   },
   adj: Adjacency,
+  prevAnim: ActorAnim | undefined,
 ): {
   path: ReadonlyArray<{ x: number; y: number }>;
   lengthAt: ReadonlyArray<number>;
+  nodes: ReadonlyArray<string>;
+  nodeLengthAt: ReadonlyArray<number>;
+  /** Where the walk should stop (in arc length). For at-location
+   *  targets this equals total polyline length; for transit it's
+   *  the start-node arc length plus journeyLen × targetFraction so
+   *  the avatar pauses geometrically along the journey, not partway
+   *  through the leading "currentPos → first node" segment. */
+  targetProgress: number;
 } {
-  const startNode = nearestNode(start.x, start.y);
-  const endNode = target.nodes[target.nodes.length - 1] ?? startNode;
+  const endNode =
+    target.nodes[target.nodes.length - 1] ?? nearestNode(start.x, start.y);
+  const startNode = pickStartNode(start, endNode, adj, prevAnim);
 
   let nodeIds: string[];
   if (startNode === endNode) {
@@ -814,32 +1104,49 @@ function buildAnimPath(
     if (nodeIds.length === 0) nodeIds = [startNode, endNode];
   }
 
-  // For a transit target (midpoint), prefer the journey's actual node
-  // sequence over Dijkstra's choice from the start point — they should
-  // match anyway, but this makes sure waypoints render correctly when
-  // multiple shortest paths exist.
-  if (target.targetFraction < 1 && target.nodes.length > 1) {
+  // For a transit target (midpoint) we'd usually prefer the placement's
+  // node sequence — but only when the path the placement gives starts
+  // at the same node we're starting from. Otherwise Dijkstra's result
+  // (which starts at our nextNodeAhead) is the right answer.
+  if (
+    target.targetFraction < 1 &&
+    target.nodes.length > 1 &&
+    target.nodes[0] === startNode
+  ) {
     nodeIds = [...target.nodes];
   }
 
-  // Construct the polyline: start → each node's coordinate → target.
-  const polyline: { x: number; y: number }[] = [{ x: start.x, y: start.y }];
+  // Construct the polyline: avatar's current position → each graph
+  // node's coordinate. We do NOT append the target's xy here — that
+  // was the old bug: for transit targets the appended midpoint sat
+  // *after* the destination node in the polyline, so the walker went
+  // forward to the destination and then doubled back to the midpoint.
+  type Tagged = { x: number; y: number; nodeId: string | null };
+  const polyline: Tagged[] = [{ x: start.x, y: start.y, nodeId: null }];
   for (const id of nodeIds) {
     const pos = POSITIONS[id];
-    if (pos !== undefined) polyline.push(pos);
+    if (pos !== undefined) polyline.push({ x: pos.x, y: pos.y, nodeId: id });
   }
-  polyline.push({ x: target.x, y: target.y });
 
-  // Drop consecutive duplicates so arc lengths don't include zero-length segments.
-  const cleaned: { x: number; y: number }[] = [];
+  // Drop consecutive duplicates; keep nodeId tags through merges.
+  const cleaned: Tagged[] = [];
   for (const p of polyline) {
     const last = cleaned[cleaned.length - 1];
-    if (last !== undefined &&
-        Math.abs(p.x - last.x) < 0.1 &&
-        Math.abs(p.y - last.y) < 0.1) continue;
-    cleaned.push(p);
+    if (
+      last !== undefined &&
+      Math.abs(p.x - last.x) < 0.1 &&
+      Math.abs(p.y - last.y) < 0.1
+    ) {
+      if (last.nodeId === null && p.nodeId !== null) last.nodeId = p.nodeId;
+      continue;
+    }
+    cleaned.push({ x: p.x, y: p.y, nodeId: p.nodeId });
   }
-  if (cleaned.length === 1) cleaned.push({ x: target.x, y: target.y });
+  // Always keep at least two points so pointAlongPolyline is happy
+  // (zero-distance walks just sit at the start).
+  if (cleaned.length === 1) {
+    cleaned.push({ x: cleaned[0]!.x, y: cleaned[0]!.y, nodeId: cleaned[0]!.nodeId });
+  }
 
   const lengthAt: number[] = [0];
   for (let i = 1; i < cleaned.length; i += 1) {
@@ -847,7 +1154,39 @@ function buildAnimPath(
     const b = cleaned[i]!;
     lengthAt.push((lengthAt[i - 1] ?? 0) + Math.hypot(b.x - a.x, b.y - a.y));
   }
-  return { path: cleaned, lengthAt };
+
+  const fraction = Math.max(0, Math.min(1, target.targetFraction));
+
+  const nodes: string[] = [];
+  const nodeLengthAt: number[] = [];
+  for (let i = 0; i < cleaned.length; i += 1) {
+    const tag = cleaned[i]!.nodeId;
+    if (tag !== null) {
+      nodes.push(tag);
+      nodeLengthAt.push(lengthAt[i] ?? 0);
+    }
+  }
+  // targetProgress = first-graph-node length + journeyLen × fraction.
+  // The lead-in segment (from start to the first graph node) is
+  // "pre-walk" and doesn't count toward the journey fraction — so a
+  // transit avatar with a non-zero start offset still stops at the
+  // geometric midpoint of the road journey, not partway through the
+  // start lead-in.
+  const firstNodeLen = nodeLengthAt[0] ?? 0;
+  const lastNodeLen =
+    nodeLengthAt[nodeLengthAt.length - 1] ??
+    lengthAt[lengthAt.length - 1] ??
+    0;
+  const journeyLen = Math.max(0, lastNodeLen - firstNodeLen);
+  const targetProgress = firstNodeLen + journeyLen * fraction;
+
+  return {
+    path: cleaned.map((p) => ({ x: p.x, y: p.y })),
+    lengthAt,
+    nodes,
+    nodeLengthAt,
+    targetProgress,
+  };
 }
 
 function nearestNode(x: number, y: number): string {
@@ -858,6 +1197,46 @@ function nearestNode(x: number, y: number): string {
     if (d < bestDist) { bestDist = d; best = id; }
   }
   return best ?? "peckham-flat";
+}
+
+/**
+ * Return the polyline segment from arc length `fromDist` to `toDist`,
+ * with interpolated endpoints if those distances fall mid-segment.
+ * Used to draw the "still ahead" portion of an in-transit actor's
+ * route, so the line cleans up behind them as they walk.
+ */
+function sliceProgress(
+  path: ReadonlyArray<{ x: number; y: number }>,
+  lengthAt: ReadonlyArray<number>,
+  fromDist: number,
+  toDist: number,
+): { x: number; y: number }[] {
+  if (path.length < 2) return [];
+  const total = lengthAt[lengthAt.length - 1] ?? 0;
+  const a = Math.max(0, Math.min(total, fromDist));
+  const b = Math.max(a, Math.min(total, toDist));
+  if (b - a < 0.5) return [];
+  const out: { x: number; y: number }[] = [];
+  for (let i = 1; i < path.length; i += 1) {
+    const segStart = lengthAt[i - 1] ?? 0;
+    const segEnd = lengthAt[i] ?? 0;
+    if (segEnd <= a) continue;
+    if (segStart >= b) break;
+    const p0 = path[i - 1]!;
+    const p1 = path[i]!;
+    const segLen = segEnd - segStart;
+    if (out.length === 0) {
+      const t = segLen > 0 ? (a - segStart) / segLen : 0;
+      out.push({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t });
+    }
+    const portionEnd = Math.min(segEnd, b);
+    const tEnd = segLen > 0 ? (portionEnd - segStart) / segLen : 1;
+    out.push({
+      x: p0.x + (p1.x - p0.x) * tEnd,
+      y: p0.y + (p1.y - p0.y) * tEnd,
+    });
+  }
+  return out;
 }
 
 function pointAlongPolyline(

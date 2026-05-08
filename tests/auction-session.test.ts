@@ -57,9 +57,11 @@ describe("resolveAuctionSession", () => {
     expect(r.finalPrice).toBe(45);
   });
 
-  it("snaps non-rung ceilings down — winner pays a rung, not the raw value", () => {
+  it("snaps non-rung ceilings down — winner pays their last spoken bid", () => {
     // Bidders' ceilings 73 and 41 snap to 70 and 40 respectively.
-    // Winner pays nextRungAbove(40) = 45.
+    // Lower-snap (40) opens at 10 and alternates with the other up the
+    // ladder. Lower bows out at the first rung > 40, which is 45. The
+    // last bid before that — by the higher-snap winner — was at 40.
     const r = resolveAuctionSession(
       [
         { actorId: 1, ceiling: 73 },
@@ -70,11 +72,13 @@ describe("resolveAuctionSession", () => {
     expect(r.type).toBe("won");
     if (r.type !== "won") return;
     expect(r.winnerActorId).toBe(1);
-    expect(r.finalPrice).toBe(45);
+    expect(r.finalPrice).toBe(40);
   });
 
-  it("ties at a rung resolve to whoever had the higher raw ceiling", () => {
-    // Both snap to 100, but actor 9's raw ceiling is higher (more headroom).
+  it("ties at a rung — whoever takes the last bid at that rung wins", () => {
+    // Both snap to 100. The alternation walks them up to 100; whichever
+    // is "next in rotation" at rung 100 takes it as their last bid.
+    // With queue ordered by raw asc, actor 7 takes the rung-100 bid.
     const r = resolveAuctionSession(
       [
         { actorId: 7, ceiling: 100 },
@@ -84,11 +88,11 @@ describe("resolveAuctionSession", () => {
     );
     expect(r.type).toBe("won");
     if (r.type !== "won") return;
-    expect(r.winnerActorId).toBe(9);
+    expect(r.winnerActorId).toBe(7);
     expect(r.finalPrice).toBe(100);
   });
 
-  it("identical ceilings break to the earlier-listed bidder", () => {
+  it("identical ceilings — earlier-listed bidder takes the last bid", () => {
     const r = resolveAuctionSession(
       [
         { actorId: 7, ceiling: 100 },
@@ -147,9 +151,10 @@ describe("daily auction handler (pool → auction → bidder)", () => {
       proceedsActorId: house.id,
       findBiddersForLot: (_db, lot) => {
         if (lot.itemKindId === vacuums.id && lot.qualityTier === "good") {
-          // Total ceilings — what the bidder would pay for the WHOLE lot.
-          // Ceilings 175 and 100 both land on rungs; runner-up is 100, so
-          // nextRungAbove(100) = 125, capped by Boyce's snapped 175 → £125.
+          // Ceilings 175 and 100. In ascending alternation, bidderA opens
+          // and the two trade rungs up to 100 (bidderA's ceiling). At
+          // ask 125 bidderA bows out — Boyce's last bid was at 100,
+          // so Boyce wins at £100.
           return [
             { actorId: boyce.id, ceiling: 175 },
             { actorId: bidderA.id, ceiling: 100 },
@@ -163,8 +168,8 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     const lots = listOpenAuctionLots(localDb);
     expect(lots).toHaveLength(0); // cleared
     expect(totalQuantityForOwnerAndKind(localDb, boyce.id, vacuums.id)).toBe(10);
-    expect(getActorById(localDb, boyce.id)?.cash).toBe(875);
-    expect(getActorById(localDb, house.id)?.cash).toBe(125);
+    expect(getActorById(localDb, boyce.id)?.cash).toBe(900);
+    expect(getActorById(localDb, house.id)?.cash).toBe(100);
   });
 
   it("emits auction.unsold when no bidders cover the floor", () => {

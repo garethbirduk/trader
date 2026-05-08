@@ -95,10 +95,14 @@ function main(): void {
 
     // If --out is set, capture every event into a buffer plus an
     // end-of-day snapshot of the world's tabular state so the webapp can
-    // render any historical day directly.
+    // render any historical day directly. We also push a "day 0"
+    // snapshot taken right after seeding so the webapp can show
+    // pre-day-1 actor positions correctly (otherwise it falls back to
+    // the actor's end-of-run location).
     const eventLog: WorldEvent[] = [];
     const snapshots: DaySnapshot[] = [];
     if (opts.out !== null) {
+      snapshots.push(captureSnapshot(db, 0));
       world.events.subscribe((e) => {
         eventLog.push(e);
         if (e.type === "day.ended") {
@@ -107,43 +111,50 @@ function main(): void {
       });
     }
 
-    // Wire up the engine subsystems.
+    // ── Engine subsystems ────────────────────────────────────────────
+    //
+    // The hour-tick lifecycle is:
+    //
+    //   1. LEAVE   — actors whose schedule says "be elsewhere this
+    //                hour" depart; `actor.departed` fires for each.
+    //   2. ARRIVE  — those actors land at their destination;
+    //                `actor.travelled` fires for each.
+    //   3. INTERACT — gossip with proprietors, the daily auction (at
+    //                AUCTION_HOUR), pool claims, pub deals. By this
+    //                point everyone's at the location they're meant
+    //                to be at this hour.
+    //   4. TICK    — the world clock advances one hour.
+    //
+    // (1) and (2) are both done by `policy-tick`, which is therefore
+    // registered first — every interaction handler that follows
+    // observes post-arrival state. Day-scoped handlers (settlement,
+    // pool expiry, lead decay, heat decay, authority sweep, pool
+    // spawner) hook `onDayStart` / `onDayEnd` and their registration
+    // order doesn't affect the hour pipeline.
+
     registerPoolExpiry(world);
     registerDailySettlement(world, {
       procurementProceedsActorId: skin.auctionHouseActorId,
     });
-    registerLocationGossip(world);
 
-    // Policy tick fires BEFORE daily-auction at the same hour, so NPCs
-    // travel into the auction room before the auctioneer opens. Hour
-    // handlers run in registration order.
+    // 1 + 2 — leave & arrive.
     const registry = new PolicyRegistry();
     for (const [actorId, policy] of skin.policies) {
       registry.register(actorId, policy);
     }
     registerPolicyHourTick(world, registry);
 
+    // 3 — interactions, all observe post-arrival positions.
+    registerLocationGossip(world);
     registerDailyAuction(world, {
       proceedsActorId: skin.auctionHouseActorId,
       auctionHour: skin.auctionHour,
+      auctionLocationId: skin.auctionLocationId,
       findBiddersForLot: makeDefaultBidders({
         profiles: skin.bidderProfiles,
         requireActorAtLocationId: skin.auctionLocationId,
       }),
     });
-    registerLeadDecay(world);
-    registerTrustReactions(world);
-    registerHeatReactions(world);
-    registerHeatDecay(world);
-    registerAuthoritySweep(world, {
-      fineProceedsActorId: skin.auctionHouseActorId,
-    });
-
-    registerPoolSpawner(world, {
-      reachableByCategory: skin.reachableByCategory,
-      defaultReachableActorIds: skin.defaultReachableActorIds,
-    });
-
     const tradingIds = skin.tradingActorIds;
     registerPoolClaimAutonomy(world, {
       claimingActorIds: tradingIds,
@@ -151,11 +162,26 @@ function main(): void {
       attemptChance: 0.5,
       claimQuantity: 8,
     });
-
     registerPubDealAutonomy(world, {
       pubLocationIds: skin.pubLocationIds,
       npcActorIds: tradingIds,
       bidderProfiles: skin.bidderProfiles,
+    });
+
+    // Trust/heat reactions are event-driven (subscribe to other
+    // events) — registration order doesn't pin them to a phase.
+    registerTrustReactions(world);
+    registerHeatReactions(world);
+
+    // Day-scoped bookkeeping.
+    registerLeadDecay(world);
+    registerHeatDecay(world);
+    registerAuthoritySweep(world, {
+      fineProceedsActorId: skin.auctionHouseActorId,
+    });
+    registerPoolSpawner(world, {
+      reachableByCategory: skin.reachableByCategory,
+      defaultReachableActorIds: skin.defaultReachableActorIds,
     });
 
     world.runToCompletion();
@@ -187,6 +213,7 @@ function main(): void {
           currentLocationId: a.currentLocationId,
           homeLocationId: a.homeLocationId,
           transportCapacity: a.transportCapacity,
+          roles: skin.rolesByActorId.get(a.id) ?? [],
         })),
         actorRoutines: routineEntries,
         items: listItemKinds(db).map((it) => ({
@@ -233,6 +260,7 @@ interface RunDump {
     currentLocationId: number | null;
     homeLocationId: number | null;
     transportCapacity: string;
+    roles: readonly string[];
   }[];
   readonly actorRoutines: readonly {
     actorId: number;

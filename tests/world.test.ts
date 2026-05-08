@@ -79,19 +79,19 @@ describe("World tick loop", () => {
     const ctx = freshWorld(5);
     db = ctx.db;
     ctx.world.start();
-    expect(ctx.world.clock).toEqual({ day: 1, hour: 9 });
+    expect(ctx.world.clock).toEqual({ day: 1, hour: 0 });
 
     ctx.world.tickOnce();
-    expect(ctx.world.clock).toEqual({ day: 1, hour: 10 });
+    expect(ctx.world.clock).toEqual({ day: 1, hour: 1 });
 
     ctx.world.pause();
     ctx.world.tickOnce();
     ctx.world.tickOnce();
-    expect(ctx.world.clock).toEqual({ day: 1, hour: 10 });
+    expect(ctx.world.clock).toEqual({ day: 1, hour: 1 });
 
     ctx.world.resume();
     ctx.world.tickOnce();
-    expect(ctx.world.clock).toEqual({ day: 1, hour: 11 });
+    expect(ctx.world.clock).toEqual({ day: 1, hour: 2 });
   });
 
   it("rejects double-start", () => {

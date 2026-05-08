@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump } from "./types.js";
 import { TimeStepper } from "./components/TimeStepper.js";
 import { EventList } from "./components/EventList.js";
@@ -8,7 +8,11 @@ import { InventoryView } from "./components/InventoryView.js";
 import { DealBook } from "./components/DealBook.js";
 import { PoolBoard } from "./components/PoolBoard.js";
 import { MapGraph } from "./components/MapGraph.js";
+import { MapEditor } from "./components/MapEditor.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
+import { SceneDeck } from "./components/SceneDeck.js";
+
+const DEV = import.meta.env.DEV;
 
 interface LoadState {
   readonly status: "loading" | "loaded" | "error";
@@ -16,7 +20,13 @@ interface LoadState {
   readonly error?: string;
 }
 
-type TabId = "events" | "inventory" | "deals" | "pools" | "map";
+type TabId =
+  | "events"
+  | "inventory"
+  | "deals"
+  | "pools"
+  | "map"
+  | "editor";
 
 const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
   { id: "events", label: "Events" },
@@ -24,10 +34,13 @@ const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
   { id: "deals", label: "Deals" },
   { id: "pools", label: "Pools" },
   { id: "map", label: "Map" },
+  ...(DEV
+    ? ([{ id: "editor" as const, label: "Editor" }] as const)
+    : []),
 ];
 
 export type SidebarTopTab = "actors" | "locations";
-export type SidebarLowerTab = "profile" | "diary";
+export type SidebarLowerTab = "profile" | "diary" | "knows" | "inventory";
 
 export interface Selection {
   readonly kind: "actor" | "location";
@@ -37,7 +50,7 @@ export interface Selection {
 export function App() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [day, setDay] = useState(1);
-  const [hour, setHour] = useState(8);
+  const [hour, setHour] = useState(0);
   const [tab, setTab] = useState<TabId>("events");
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
   const [lowerTab, setLowerTab] = useState<SidebarLowerTab>("profile");
@@ -104,8 +117,144 @@ interface LoadedProps {
   readonly setSelection: (s: Selection | null) => void;
 }
 
+const RIGHT_PANEL_KEY = "trader-right-panel-px";
+const DEFAULT_RIGHT_PX = 320;
+const MIN_RIGHT_PX = 200;
+const MIN_MAIN_PX = 360;
+
+const LEFT_PANEL_KEY = "trader-left-panel-px";
+const DEFAULT_LEFT_PX = 280;
+const MIN_LEFT_PX = 220;
+
+const MAIN_LOWER_KEY = "trader-main-lower-px";
+const DEFAULT_MAIN_LOWER_PX = 240;
+const MIN_MAIN_LOWER_PX = 80;
+const MIN_MAIN_UPPER_PX = 200;
+
+function readPersistedPx(key: string, min: number, fallback: number): number {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= min) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return fallback;
+}
+
 function Loaded(props: LoadedProps) {
   const { dump, day, hour, setDay, setHour } = props;
+  const appRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const [rightPx, setRightPx] = useState<number>(() =>
+    readPersistedPx(RIGHT_PANEL_KEY, MIN_RIGHT_PX, DEFAULT_RIGHT_PX),
+  );
+  const [leftPx, setLeftPx] = useState<number>(() =>
+    readPersistedPx(LEFT_PANEL_KEY, MIN_LEFT_PX, DEFAULT_LEFT_PX),
+  );
+  const [mainLowerPx, setMainLowerPx] = useState<number>(() =>
+    readPersistedPx(MAIN_LOWER_KEY, MIN_MAIN_LOWER_PX, DEFAULT_MAIN_LOWER_PX),
+  );
+  useEffect(() => {
+    try {
+      localStorage.setItem(RIGHT_PANEL_KEY, String(Math.round(rightPx)));
+    } catch {
+      /* quota / disabled */
+    }
+  }, [rightPx]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(LEFT_PANEL_KEY, String(Math.round(leftPx)));
+    } catch {
+      /* quota / disabled */
+    }
+  }, [leftPx]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(MAIN_LOWER_KEY, String(Math.round(mainLowerPx)));
+    } catch {
+      /* quota / disabled */
+    }
+  }, [mainLowerPx]);
+
+  const onMainResizeDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const main = mainRef.current;
+    if (main === null) return;
+    const startY = e.clientY;
+    const startLower = mainLowerPx;
+    const totalH = main.getBoundingClientRect().height;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    const onMove = (ev: PointerEvent) => {
+      const delta = startY - ev.clientY;
+      const next = startLower + delta;
+      const maxLower = Math.max(MIN_MAIN_LOWER_PX, totalH - MIN_MAIN_UPPER_PX);
+      setMainLowerPx(Math.min(maxLower, Math.max(MIN_MAIN_LOWER_PX, next)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
+  const onRightResizeDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const app = appRef.current;
+    if (app === null) return;
+    const startX = e.clientX;
+    const startRight = rightPx;
+    const totalW = app.getBoundingClientRect().width;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+
+    const onMove = (ev: PointerEvent) => {
+      // Drag left → right panel grows, main shrinks.
+      const delta = startX - ev.clientX;
+      const next = startRight + delta;
+      // Reserve left + main min + two 6px dividers; the rest is free.
+      const maxRight = Math.max(MIN_RIGHT_PX, totalW - leftPx - MIN_MAIN_PX - 12);
+      setRightPx(Math.min(maxRight, Math.max(MIN_RIGHT_PX, next)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
+  const onLeftResizeDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const app = appRef.current;
+    if (app === null) return;
+    const startX = e.clientX;
+    const startLeft = leftPx;
+    const totalW = app.getBoundingClientRect().width;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+
+    const onMove = (ev: PointerEvent) => {
+      // Drag right → left panel grows, main shrinks.
+      const delta = ev.clientX - startX;
+      const next = startLeft + delta;
+      const maxLeft = Math.max(MIN_LEFT_PX, totalW - rightPx - MIN_MAIN_PX - 12);
+      setLeftPx(Math.min(maxLeft, Math.max(MIN_LEFT_PX, next)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
 
   useEffect(() => {
     if (day > dump.runLengthDays) setDay(dump.runLengthDays);
@@ -131,7 +280,14 @@ function Loaded(props: LoadedProps) {
   }, [dump, day]);
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      ref={appRef}
+      style={{
+        ["--left-panel-w" as string]: `${leftPx}px`,
+        ["--right-panel-w" as string]: `${rightPx}px`,
+      }}
+    >
       <header className="header">
         <h1>TRADER · sim viewer</h1>
         <div className="header-controls">
@@ -148,6 +304,7 @@ function Loaded(props: LoadedProps) {
             day={day}
             hour={hour}
             maxDay={dump.runLengthDays}
+            dump={dump}
             onChange={(d, h) => {
               setDay(d);
               setHour(h);
@@ -171,44 +328,86 @@ function Loaded(props: LoadedProps) {
         setSelection={props.setSelection}
         onChangeDay={setDay}
       />
-      <main className="panel main-panel">
-        <nav className="tabs">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              className={`tab ${props.tab === t.id ? "tab-active" : ""}`}
-              onClick={() => props.setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-        <div className="tab-body">
-          {props.tab === "events" && (
-            <EventList events={eventsAsOf} dump={dump} />
-          )}
-          {props.tab === "inventory" && (
-            <InventoryView dump={dump} day={day} snapshot={snapshot} />
-          )}
-          {props.tab === "deals" && (
-            <DealBook dump={dump} day={day} snapshot={snapshot} />
-          )}
-          {props.tab === "pools" && (
-            <PoolBoard dump={dump} day={day} snapshot={snapshot} />
-          )}
-          {props.tab === "map" && (
-            <MapGraph
-              dump={dump}
-              day={day}
-              hour={hour}
-              snapshot={snapshot}
-              selection={props.selection}
-              onSelect={props.setSelection}
-            />
-          )}
+      <div
+        className="left-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        title="Drag to resize"
+        onPointerDown={onLeftResizeDown}
+      >
+        <span className="left-resizer-grip" />
+      </div>
+      <main className="main-panel" ref={mainRef}>
+        <div className="main-upper panel">
+          <nav className="tabs">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                className={`tab ${props.tab === t.id ? "tab-active" : ""}`}
+                onClick={() => props.setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          <div className="tab-body">
+            {props.tab === "events" && (
+              <EventList events={eventsAsOf} dump={dump} />
+            )}
+            {props.tab === "inventory" && (
+              <InventoryView dump={dump} day={day} snapshot={snapshot} />
+            )}
+            {props.tab === "deals" && (
+              <DealBook dump={dump} day={day} snapshot={snapshot} />
+            )}
+            {props.tab === "pools" && (
+              <PoolBoard dump={dump} day={day} snapshot={snapshot} />
+            )}
+            {props.tab === "map" && (
+              <MapGraph
+                dump={dump}
+                day={day}
+                hour={hour}
+                snapshot={snapshot}
+                selection={props.selection}
+                onSelect={props.setSelection}
+              />
+            )}
+            {DEV && props.tab === "editor" && <MapEditor dump={dump} />}
+          </div>
+        </div>
+        <div
+          className="side-divider"
+          role="separator"
+          aria-orientation="horizontal"
+          title="Drag to resize"
+          onPointerDown={onMainResizeDown}
+        >
+          <span className="side-divider-grip" />
+        </div>
+        <div
+          className="main-lower"
+          style={{ height: `${mainLowerPx}px` }}
+        >
+          <SceneDeck
+            dump={dump}
+            day={day}
+            hour={hour}
+            snapshot={snapshot}
+            onSelect={props.setSelection}
+          />
         </div>
       </main>
-      <Summary dump={dump} day={day} />
+      <div
+        className="right-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        title="Drag to resize"
+        onPointerDown={onRightResizeDown}
+      >
+        <span className="right-resizer-grip" />
+      </div>
+      <Summary dump={dump} day={day} snapshot={snapshot} />
     </div>
   );
 }

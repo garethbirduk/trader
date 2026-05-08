@@ -1,25 +1,27 @@
-import {
-  nextRungAbove,
-  rungAtOrAbove,
-  rungAtOrBelow,
-} from "./bid-ladder.js";
+import { nextRungAbove, rungAtOrBelow } from "./bid-ladder.js";
 
 /**
- * Closed-form resolver for an ascending second-price-style auction lot,
- * snapped to the standard auction bid ladder (`bid-ladder.ts`).
+ * Resolver for a true ascending alternation auction, snapped to the
+ * standard bid ladder (`bid-ladder.ts`).
  *
  * Each interested actor declares a hidden ceiling — the most they'd pay
- * for the entire lot. The engine snaps every ceiling DOWN to the highest
- * ladder rung at or below it (you can't bid a non-rung amount), and snaps
- * the floor UP to the lowest rung at or above it (the reserve).
+ * for the entire lot. The engine simulates an English ascending auction:
  *
- * Resolution:
- *   • The bidder with the highest snapped ceiling wins.
- *   • If only one bidder clears the floor, they pay the snapped floor.
- *   • Otherwise, the winner pays one rung above the runner-up's snapped
- *     ceiling, capped at the winner's own snapped ceiling. If both top
- *     bidders snap to the same rung (a tie), the first by sort wins at
- *     the tied amount.
+ *   1. The opening ask snaps DOWN from the listed floor: a £144 floor
+ *      opens at £125 if rungs are 125/150.
+ *   2. Bidders sit in a queue, ordered by their snapped ceiling
+ *      ascending (lowest opens, highest gets the last word).
+ *   3. The auctioneer announces the opening ask. The first bidder in
+ *      the queue who can match it takes it — they're now the leader.
+ *   4. The auctioneer asks the next rung. Bidders rotate: the next
+ *      one in the queue who isn't currently leading bids if their
+ *      snap allows. They become the new leader.
+ *   5. When nobody other than the leader can match the next ask, the
+ *      auction ends. The leader wins at their LAST ACTUAL BID.
+ *
+ * This is "no proxy" — bidders only pay for what they actually said.
+ * If R bid £200 (his ceiling) and M countered £250, R can't match
+ * £300 next round, so M wins at £250 (M's last bid).
  *
  * No bidders, or all bidders below the snapped floor, returns a
  * no-clear result; the caller decides what to do with an unsold lot.
@@ -34,7 +36,7 @@ export type AuctionSessionResult =
   | {
       readonly type: "won";
       readonly winnerActorId: number;
-      /** Hammer price — total for the whole lot. Always lands on a ladder rung. */
+      /** Hammer price — winner's last actual bid. Always on a rung. */
       readonly finalPrice: number;
     }
   | { readonly type: "no-bidders" }
@@ -55,7 +57,7 @@ export function resolveAuctionSession(
     return { type: "no-bidders" };
   }
 
-  const reservedRung = rungAtOrAbove(Math.max(0, floorPrice));
+  const reservedRung = rungAtOrBelow(Math.max(0, floorPrice));
 
   const valid: SnappedBidder[] = [];
   bidders.forEach((b, i) => {
@@ -73,42 +75,66 @@ export function resolveAuctionSession(
   if (valid.length === 0) {
     return { type: "all-below-floor" };
   }
-
-  // Sort by snappedCeiling desc; ties broken by raw ceiling (the bidder with
-  // more headroom wins, matching an English-auction "last hand still up at
-  // the price"); ties at the raw level go to the earlier-listed bidder.
-  valid.sort((a, b) => {
-    if (b.snappedCeiling !== a.snappedCeiling) return b.snappedCeiling - a.snappedCeiling;
-    if (b.originalCeiling !== a.originalCeiling) return b.originalCeiling - a.originalCeiling;
-    return a.originalIndex - b.originalIndex;
-  });
-
-  const winner = valid[0]!;
-
   if (valid.length === 1) {
     return {
       type: "won",
-      winnerActorId: winner.actorId,
+      winnerActorId: valid[0]!.actorId,
       finalPrice: reservedRung,
     };
   }
 
-  const second = valid[1]!;
-  if (winner.snappedCeiling === second.snappedCeiling) {
-    // Tied at a rung — winner pays that rung.
-    return {
-      type: "won",
-      winnerActorId: winner.actorId,
-      finalPrice: winner.snappedCeiling,
-    };
+  // Walk the auction in ascending alternation. Bidders rotate in queue
+  // order (lowest snap first); each round, the auctioneer's ask is
+  // taken by the next bidder in rotation who isn't currently leader and
+  // can still bid. When nobody else can match, leader wins at last bid.
+  const queue = [...valid].sort((a, b) => {
+    if (a.snappedCeiling !== b.snappedCeiling) {
+      return a.snappedCeiling - b.snappedCeiling;
+    }
+    if (a.originalCeiling !== b.originalCeiling) {
+      return a.originalCeiling - b.originalCeiling;
+    }
+    return a.originalIndex - b.originalIndex;
+  });
+
+  let leader: SnappedBidder | null = null;
+  let lastBid = reservedRung;
+  let queueIdx = 0;
+  let ask = reservedRung;
+
+  // safety bound — should never trip with a well-formed lot
+  for (let guard = 0; guard < 10_000; guard += 1) {
+    let picked: SnappedBidder | null = null;
+    for (let scan = 0; scan < queue.length; scan += 1) {
+      const candidate = queue[(queueIdx + scan) % queue.length]!;
+      if (
+        (leader === null || candidate.actorId !== leader.actorId) &&
+        candidate.snappedCeiling >= ask
+      ) {
+        picked = candidate;
+        break;
+      }
+    }
+    if (picked === null) {
+      // Nobody else can match the ask. Leader wins at last actual bid.
+      if (leader === null) return { type: "all-below-floor" };
+      return {
+        type: "won",
+        winnerActorId: leader.actorId,
+        finalPrice: lastBid,
+      };
+    }
+    leader = picked;
+    lastBid = ask;
+    queueIdx = (queue.indexOf(picked) + 1) % queue.length;
+    ask = nextRungAbove(ask);
   }
 
-  // Winner outbids by one ladder rung over runner-up.
-  const oneAbove = nextRungAbove(second.snappedCeiling);
-  const finalPrice = Math.min(winner.snappedCeiling, oneAbove);
+  // Defensive fallback — shouldn't be reached.
+  if (leader === null) return { type: "all-below-floor" };
   return {
     type: "won",
-    winnerActorId: winner.actorId,
-    finalPrice: Math.max(finalPrice, reservedRung),
+    winnerActorId: (leader as SnappedBidder).actorId,
+    finalPrice: lastBid,
   };
 }

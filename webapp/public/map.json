@@ -1,0 +1,439 @@
+{
+  "locations": {
+    "lambeth-council-yard": {
+      "x": 1250,
+      "y": 10
+    },
+    "trigger-flat": {
+      "x": 350,
+      "y": 390
+    },
+    "albert-legion": {
+      "x": 570,
+      "y": 340
+    },
+    "auction-house": {
+      "x": 920,
+      "y": -90
+    },
+    "one-eleven-club": {
+      "x": 990,
+      "y": 200
+    },
+    "starlight-rooms": {
+      "x": 1120,
+      "y": 150
+    },
+    "off-map": {
+      "x": 1700,
+      "y": 90
+    },
+    "raquel-flat": {
+      "x": 320,
+      "y": 240
+    },
+    "mickey-jevon-flat": {
+      "x": 280,
+      "y": 430
+    },
+    "nags": {
+      "x": 340,
+      "y": 600
+    },
+    "sids-cafe": {
+      "x": 470,
+      "y": 600
+    },
+    "peckham-flat": {
+      "x": 430,
+      "y": 650
+    },
+    "peckham-market": {
+      "x": 750,
+      "y": 800
+    },
+    "lockup": {
+      "x": 1010,
+      "y": 470
+    },
+    "post-office": {
+      "x": 680,
+      "y": 680
+    },
+    "betting-shop": {
+      "x": 540,
+      "y": 630
+    },
+    "dirty-barrys": {
+      "x": 210,
+      "y": 970
+    },
+    "police-station": {
+      "x": 620,
+      "y": 760
+    },
+    "slater-flat": {
+      "x": 1060,
+      "y": 870
+    },
+    "boyce-auto-sales": {
+      "x": 900,
+      "y": 1180
+    },
+    "boycie-house": {
+      "x": 1120,
+      "y": 1040
+    },
+    "parry-printers": {
+      "x": 1330,
+      "y": 250
+    },
+    "parry-house": {
+      "x": 1430,
+      "y": 680
+    },
+    "cassandra-bank": {
+      "x": 150,
+      "y": 650
+    },
+    "cassandra-flat": {
+      "x": 1230,
+      "y": 390
+    },
+    "transworld-depot": {
+      "x": 1510,
+      "y": 260
+    },
+    "denzil-house": {
+      "x": 790,
+      "y": 910
+    },
+    "shamrock-club": {
+      "x": 1360,
+      "y": 320
+    }
+  },
+  "waypoints": {
+    "wp_1": {
+      "x": 820,
+      "y": 630
+    },
+    "wp_2": {
+      "x": 980,
+      "y": 620
+    },
+    "wp_4": {
+      "x": 720,
+      "y": 300
+    },
+    "wp_5": {
+      "x": 590,
+      "y": 850
+    },
+    "wp_6": {
+      "x": 510,
+      "y": 880
+    },
+    "wp_7": {
+      "x": 480,
+      "y": 700
+    },
+    "wp_8": {
+      "x": 440,
+      "y": 710
+    },
+    "wp_3": {
+      "x": 1210,
+      "y": 620
+    },
+    "wp_9": {
+      "x": 1390,
+      "y": 670
+    },
+    "wp_10": {
+      "x": 1200,
+      "y": 300
+    },
+    "wp_11": {
+      "x": 740,
+      "y": 670
+    },
+    "wp_12": {
+      "x": 750,
+      "y": 840
+    },
+    "wp_13": {
+      "x": 970,
+      "y": 770
+    },
+    "wp_14": {
+      "x": 520,
+      "y": 950
+    },
+    "wp_15": {
+      "x": 630,
+      "y": 590
+    },
+    "wp_16": {
+      "x": 670,
+      "y": 590
+    },
+    "wp_17": {
+      "x": 1650,
+      "y": 240
+    },
+    "wp_18": {
+      "x": 820,
+      "y": 250
+    },
+    "wp_19": {
+      "x": 1160,
+      "y": 1130
+    }
+  },
+  "edges": [
+    [
+      "one-eleven-club",
+      "lockup"
+    ],
+    [
+      "lockup",
+      "wp_2"
+    ],
+    [
+      "wp_2",
+      "wp_1"
+    ],
+    [
+      "wp_1",
+      "wp_4"
+    ],
+    [
+      "wp_4",
+      "albert-legion"
+    ],
+    [
+      "albert-legion",
+      "trigger-flat"
+    ],
+    [
+      "trigger-flat",
+      "raquel-flat"
+    ],
+    [
+      "trigger-flat",
+      "mickey-jevon-flat"
+    ],
+    [
+      "mickey-jevon-flat",
+      "nags"
+    ],
+    [
+      "nags",
+      "cassandra-bank"
+    ],
+    [
+      "nags",
+      "sids-cafe"
+    ],
+    [
+      "sids-cafe",
+      "betting-shop"
+    ],
+    [
+      "betting-shop",
+      "post-office"
+    ],
+    [
+      "post-office",
+      "police-station"
+    ],
+    [
+      "police-station",
+      "wp_5"
+    ],
+    [
+      "peckham-market",
+      "wp_12"
+    ],
+    [
+      "wp_12",
+      "wp_5"
+    ],
+    [
+      "denzil-house",
+      "wp_12"
+    ],
+    [
+      "peckham-market",
+      "wp_11"
+    ],
+    [
+      "wp_11",
+      "wp_1"
+    ],
+    [
+      "wp_11",
+      "post-office"
+    ],
+    [
+      "wp_3",
+      "wp_2"
+    ],
+    [
+      "parry-house",
+      "wp_9"
+    ],
+    [
+      "wp_9",
+      "wp_3"
+    ],
+    [
+      "wp_2",
+      "wp_13"
+    ],
+    [
+      "wp_13",
+      "peckham-market"
+    ],
+    [
+      "slater-flat",
+      "wp_13"
+    ],
+    [
+      "slater-flat",
+      "boycie-house"
+    ],
+    [
+      "denzil-house",
+      "boyce-auto-sales"
+    ],
+    [
+      "lockup",
+      "cassandra-flat"
+    ],
+    [
+      "parry-printers",
+      "wp_10"
+    ],
+    [
+      "wp_10",
+      "cassandra-flat"
+    ],
+    [
+      "cassandra-flat",
+      "shamrock-club"
+    ],
+    [
+      "shamrock-club",
+      "parry-printers"
+    ],
+    [
+      "shamrock-club",
+      "wp_9"
+    ],
+    [
+      "parry-printers",
+      "lambeth-council-yard"
+    ],
+    [
+      "lambeth-council-yard",
+      "starlight-rooms"
+    ],
+    [
+      "starlight-rooms",
+      "one-eleven-club"
+    ],
+    [
+      "starlight-rooms",
+      "wp_10"
+    ],
+    [
+      "parry-printers",
+      "transworld-depot"
+    ],
+    [
+      "dirty-barrys",
+      "cassandra-bank"
+    ],
+    [
+      "peckham-flat",
+      "wp_8"
+    ],
+    [
+      "wp_8",
+      "wp_7"
+    ],
+    [
+      "wp_7",
+      "sids-cafe"
+    ],
+    [
+      "wp_7",
+      "wp_6"
+    ],
+    [
+      "wp_6",
+      "wp_5"
+    ],
+    [
+      "wp_6",
+      "wp_14"
+    ],
+    [
+      "wp_14",
+      "dirty-barrys"
+    ],
+    [
+      "wp_15",
+      "wp_16"
+    ],
+    [
+      "wp_16",
+      "post-office"
+    ],
+    [
+      "wp_15",
+      "betting-shop"
+    ],
+    [
+      "wp_15",
+      "albert-legion"
+    ],
+    [
+      "wp_4",
+      "wp_18"
+    ],
+    [
+      "wp_18",
+      "one-eleven-club"
+    ],
+    [
+      "one-eleven-club",
+      "auction-house"
+    ],
+    [
+      "auction-house",
+      "wp_18"
+    ],
+    [
+      "wp_17",
+      "lambeth-council-yard"
+    ],
+    [
+      "wp_17",
+      "off-map"
+    ],
+    [
+      "wp_19",
+      "boycie-house"
+    ],
+    [
+      "wp_19",
+      "boyce-auto-sales"
+    ]
+  ],
+  "offMap": {
+    "off-map": true
+  }
+}

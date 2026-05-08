@@ -25,7 +25,7 @@ export interface WorldOptions {
 }
 
 const DEFAULT_START_DAY = 1;
-const DEFAULT_START_HOUR = 9;
+const DEFAULT_START_HOUR = 0;
 
 /**
  * The World owns the clock, the DB connection, the RNG, and the event log.
