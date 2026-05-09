@@ -20,6 +20,10 @@ import { registerAuctionListingKnowledge } from "../engine/world/auction-listing
 import { registerAuctionInspection } from "../engine/world/auction-inspection.js";
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
 import { registerMarketSale } from "../engine/world/market-sale.js";
+import {
+  DayModeRegistry,
+  registerDealerDayMode,
+} from "../engine/world/dealer-day-mode.js";
 import { resolveEconomicsConfig } from "../engine/economics/config.js";
 import { registerTrustReactions } from "../engine/world/trust-reactions.js";
 import { registerPolicyHourTick } from "../engine/world/policy-tick.js";
@@ -78,12 +82,22 @@ function main(): void {
     const rng = createRNG(opts.seed);
 
     // The delivery registry is created up-front so the skin's policies
-    // can consult it for trip overrides at construction time.
+    // can consult it for trip overrides at construction time. The
+    // day-mode registry is filled at day-start by the dealer mode
+    // picker; both are consulted in priority order by the override
+    // callback (delivery > daymode > base schedule).
     const deliveryRegistry = new DeliveryRegistry();
+    const dayModeRegistry = new DayModeRegistry();
     const skin = seedPlaceholderSkin(db, rng, {
       ...(opts.days !== null ? { runLengthDays: opts.days } : {}),
-      hourOverrideForActor: (actorId) => (clock) =>
-        deliveryRegistry.getOverride(actorId, clock.hour),
+      hourOverrideForActor: (actorId) => (clock) => {
+        // Delivery commitments win — physical pickup/dropoff trips
+        // override anything else.
+        const fromDelivery = deliveryRegistry.getOverride(actorId, clock.hour);
+        if (fromDelivery !== null) return fromDelivery;
+        // Then today's chosen mode (auction / market / pub / home).
+        return dayModeRegistry.getOverride(actorId, clock.day, clock.hour);
+      },
       // Tunable economy knobs. Edit these to retune the price chain.
       economics: resolveEconomicsConfig({
         // Wholesale prices at ~25% of retail mid — enough headroom for
@@ -218,6 +232,16 @@ function main(): void {
         requireKnowledge: true,
         economics: skin.economics,
       }),
+    });
+    // Dealer day-mode picker — runs at day-start AFTER the auction's
+    // docket-publish handler (registration order). Reads the docket
+    // and rolls today's mode for each flexible dealer.
+    registerDealerDayMode(world, {
+      flexibleActorIds: new Set(skin.flexibleDailyModeActorIds),
+      bidderProfiles: skin.bidderProfiles,
+      locationByCode: skin.locationByCode,
+      registry: dayModeRegistry,
+      economics: skin.economics,
     });
     const tradingIds = skin.tradingActorIds;
     registerPoolClaimAutonomy(world, {

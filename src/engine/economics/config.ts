@@ -104,6 +104,41 @@ export interface EconomicsConfig {
    * hour and an aggregated summary event fires per (seller, hour).
    */
   readonly marketSale: MarketSaleConfig;
+
+  /**
+   * Daily mode picker for "flexible" dealers — actors who don't have
+   * a fixed venue (Boycie, Denzil, Monkey, Mickey, Jevon, Rodney,
+   * Paddy, the Player). Each morning they roll a mode (auction /
+   * market / pub / home) which overrides their hourly schedule for
+   * that day. Auction weight is reactive: it bumps when today's
+   * docket has items in the actor's category-skill set.
+   */
+  readonly dealerDayMode: DealerDayModeConfig;
+}
+
+export type DealerDayModeKey = "auction" | "market" | "pub" | "home";
+
+export interface DealerDayModeConfig {
+  /** Base weight per mode before reactive adjustment. Relative;
+   *  normalised at draw time. */
+  readonly baseWeights: Readonly<Record<DealerDayModeKey, number>>;
+  /** Added to the 'auction' weight when today's docket has at least
+   *  one lot in a category the actor's profile rates >= interestThreshold. */
+  readonly auctionInterestBoost: number;
+  /** Category-accuracy threshold above which the actor counts a docket
+   *  category as "interesting". Default 0.6. */
+  readonly interestThreshold: number;
+  /**
+   * Hour-of-day → location-code map per mode. The day-mode handler
+   * applies these as overrides to the actor's regular schedule for
+   * the day. Hours not in the map fall through to the actor's normal
+   * schedule (or the delivery override, which still wins). Skin
+   * resolves the codes against its location table.
+   */
+  readonly modeSchedules: Readonly<Record<
+    DealerDayModeKey,
+    Readonly<Record<number, string>>
+  >>;
 }
 
 export interface MarketSaleConfig {
@@ -214,6 +249,49 @@ const DEFAULT_MARKET_HOURLY_FOOTFALL: Record<number, number> = {
   14: 8,
 };
 
+/** Default mode schedules: keys are hours of day, values are location
+ *  codes (resolved by the skin to ids). Modes leave non-listed hours
+ *  alone — actors fall back to their base schedule outside these. */
+const DEFAULT_MODE_SCHEDULES: Record<
+  "auction" | "market" | "pub" | "home",
+  Record<number, string>
+> = {
+  // Auction-day: paper run + the auction window.
+  auction: {
+    6: "sids-cafe",
+    11: "auction-house",
+    12: "auction-house",
+    13: "auction-house",
+    14: "auction-house",
+    15: "auction-house",
+    16: "auction-house",
+  },
+  // Market-day: stall during market hours.
+  market: {
+    9: "peckham-market",
+    10: "peckham-market",
+    11: "peckham-market",
+    12: "peckham-market",
+    13: "peckham-market",
+    14: "peckham-market",
+  },
+  // Pub-day: linger longer at the Nag's for haggling.
+  pub: {
+    13: "nags",
+    14: "nags",
+    15: "nags",
+    16: "nags",
+    17: "nags",
+    18: "nags",
+    19: "nags",
+    20: "nags",
+    21: "nags",
+  },
+  // Home-day: no overrides — fall through to the actor's home/lockup
+  // default. Empty map = "leave the schedule alone".
+  home: {},
+};
+
 /**
  * Defaults match the engine's previous hardcoded values exactly. Skins
  * override individual fields via `resolveEconomicsConfig`.
@@ -243,6 +321,13 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     pricePerUnitFraction: 1.0,
     customerTypes: DEFAULT_MARKET_CUSTOMER_TYPES,
     hourlyFootfall: DEFAULT_MARKET_HOURLY_FOOTFALL,
+  },
+  dealerDayMode: {
+    // Market dominates; pub and auction roughly equal; rare home day.
+    baseWeights: { auction: 0.15, market: 0.45, pub: 0.30, home: 0.10 },
+    auctionInterestBoost: 0.25,
+    interestThreshold: 0.6,
+    modeSchedules: DEFAULT_MODE_SCHEDULES,
   },
 };
 
@@ -277,6 +362,18 @@ export function resolveEconomicsConfig(
       hourlyFootfall: {
         ...DEFAULT_ECONOMICS_CONFIG.marketSale.hourlyFootfall,
         ...(partial.marketSale?.hourlyFootfall ?? {}),
+      },
+    },
+    dealerDayMode: {
+      ...DEFAULT_ECONOMICS_CONFIG.dealerDayMode,
+      ...(partial.dealerDayMode ?? {}),
+      baseWeights: {
+        ...DEFAULT_ECONOMICS_CONFIG.dealerDayMode.baseWeights,
+        ...(partial.dealerDayMode?.baseWeights ?? {}),
+      },
+      modeSchedules: {
+        ...DEFAULT_ECONOMICS_CONFIG.dealerDayMode.modeSchedules,
+        ...(partial.dealerDayMode?.modeSchedules ?? {}),
       },
     },
   };

@@ -293,6 +293,15 @@ function summarizeEvent(
           {" "}<span className="muted">(rev £{String(e.revenue)})</span>
         </>
       );
+    case "dealer.day-mode":
+      return (
+        <>
+          today: {String(e.mode)}
+          {e.auctionInterested === true ? (
+            <span className="muted"> (docket interest)</span>
+          ) : null}
+        </>
+      );
     default:
       return <></>;
   }

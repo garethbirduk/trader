@@ -72,6 +72,13 @@ export type WorldEvent =
   | { readonly type: "auction.knowledge-acquired"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number; readonly via: "paper" | "gallery" | "gossip" | "attended"; readonly fromActorId: number | null }
   | { readonly type: "auction.lot-inspected"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number }
   | {
+      readonly type: "dealer.day-mode";
+      readonly at: Clock;
+      readonly actorId: number;
+      readonly mode: "auction" | "market" | "pub" | "home";
+      readonly auctionInterested: boolean;
+    }
+  | {
       readonly type: "market.hour-summary";
       readonly at: Clock;
       readonly sellerActorId: number;
@@ -203,6 +210,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "market.hour-summary":
         console.log(`[${stamp}] market.hour-summary seller=${e.sellerActorId} sold=${e.unitsSold}/${e.unitsOffered} @£${e.pricePerUnit}/u rev=£${e.revenue} footfall=${e.footfall}`);
+        break;
+      case "dealer.day-mode":
+        console.log(`[${stamp}] dealer.day-mode actor=${e.actorId} mode=${e.mode}${e.auctionInterested ? " (auction-interest+)" : ""}`);
         break;
       case "pool.claimed":
         console.log(`[${stamp}] pool.claimed pool=${e.poolId} actor=${e.actorId} ${e.quantity}@£${e.unitPrice}`);

@@ -61,6 +61,12 @@ export interface SkinSeedResult {
   /** Actor ids eligible to run a market stall (dealer / fence /
    *  player). Civilians passing through aren't sellers. */
   readonly marketSellerActorIds: readonly number[];
+  /** Actor ids whose daily routines are picked by the dealer-day-mode
+   *  handler (auction / market / pub / home). */
+  readonly flexibleDailyModeActorIds: readonly number[];
+  /** Location code → id map, used by the day-mode handler to resolve
+   *  the schedules in `EconomicsConfig.dealerDayMode.modeSchedules`. */
+  readonly locationByCode: ReadonlyMap<string, number>;
   /** Hour from which the paper is on the table at Sid's. */
   readonly paperFromHour: number;
   /** Hour from which the listing is on display at Sotheby's. */
@@ -115,6 +121,11 @@ interface ActorSpec {
   readonly lockupLocation?: string;
   readonly transportCapacity: TransportCapacity;
   readonly awakeHours: { readonly start: number; readonly end: number };
+  /** When true, the dealer-day-mode picker assigns a fresh mode each
+   *  morning (auction / market / pub / home) and rewrites their hours
+   *  for that day. Fixed-job actors (Mike, Sid, Slater, …) leave this
+   *  unset and their routine runs as written. */
+  readonly flexibleDailyMode?: boolean;
 }
 
 interface LocationSpec {
@@ -221,19 +232,12 @@ function makeRoutineFromSpans(
       for (let h = 0; h < t && h < 24; h += 1) apply(h);
     }
   }
-  if (options?.attendsAuction) {
-    // Auction-attending dealers do the morning paper run at Sid's then
-    // spend the auction window at Sotheby's. The window covers reading
-    // the docket on arrival, inspecting where useful, and bidding.
-    // Their other commitments at these hours get displaced — going to
-    // the auction is the day's main commitment.
-    schedule.set(PAPER_FROM_HOUR, "sids-cafe");
-    fixed.add(PAPER_FROM_HOUR);
-    for (let h = AUCTION_START_HOUR; h <= AUCTION_END_HOUR; h += 1) {
-      schedule.set(h, "auction-house");
-      fixed.add(h);
-    }
-  }
+  // Note: the legacy `attendsAuction` flag once forced fixed paper +
+  // auction hours every day. With the dealer-day-mode picker that
+  // decision is now made each morning based on actor preferences and
+  // the day's docket, so the option is a no-op. Kept on the signature
+  // so the call sites still compile while we migrate the cast.
+  void options;
   const flexibleHours = new Set<number>();
   for (let h = 0; h < 24; h += 1) {
     if (!fixed.has(h)) flexibleHours.add(h);
@@ -306,87 +310,71 @@ const ACTORS: readonly ActorSpec[] = [
     code: "player",
     displayName: "The Trader",
     cash: 2000,
-    ...makeRoutineFromSpans(
-      "peckham-flat",
-      [
-        { from: 6, to: 8, location: "peckham-flat" },
-        { from: 8, to: 8.5, location: "sids-cafe" },
-        { from: 8.5, to: 9, location: "lockup" },
-        { from: 9, to: 13, location: "peckham-market" },
-        { from: 13, to: 14, location: "nags" },
-        { from: 14, to: 17, location: "FLEXIBLE" },
-        { from: 17, to: 18.5, location: "peckham-flat" },
-        { from: 18.5, to: 23.5, location: "nags" },
-        { from: 23.5, to: 6, location: "peckham-flat" },
-      ],
-      { attendsAuction: true },
-    ),
+    ...makeRoutineFromSpans("peckham-flat", [
+      { from: 6, to: 8, location: "peckham-flat" },
+      { from: 8, to: 8.5, location: "sids-cafe" },
+      { from: 8.5, to: 9, location: "lockup" },
+      { from: 9, to: 17, location: "FLEXIBLE" },
+      { from: 17, to: 18.5, location: "peckham-flat" },
+      { from: 18.5, to: 23.5, location: "nags" },
+      { from: 23.5, to: 6, location: "peckham-flat" },
+    ]),
     defaultLocation: "peckham-flat",
     homeLocation: "peckham-flat",
     transportCapacity: "pocket",
     awakeHours: { start: 6, end: 23 },
+    flexibleDailyMode: true,
   },
   {
     code: "boyce",
     displayName: "Boycie",
     cash: 5000,
-    ...makeRoutineFromSpans(
-      "boycie-house",
-      [
-        { from: 8, to: 9, location: "boycie-house" },
-        { from: 9, to: 13, location: "boyce-auto-sales" },
-        { from: 13, to: 14.5, location: "nags" },
-        { from: 14.5, to: 17, location: "boyce-auto-sales" },
-        { from: 17, to: 19, location: "FLEXIBLE" },
-        { from: 19.5, to: 22.5, location: "nags" },
-        { from: 22.5, to: 8, location: "boycie-house" },
-      ],
-      { attendsAuction: true },
-    ),
+    ...makeRoutineFromSpans("boycie-house", [
+      { from: 8, to: 9, location: "boycie-house" },
+      { from: 9, to: 17, location: "FLEXIBLE" },
+      { from: 17, to: 19, location: "FLEXIBLE" },
+      { from: 19.5, to: 22.5, location: "nags" },
+      { from: 22.5, to: 8, location: "boycie-house" },
+    ]),
     defaultLocation: "boyce-auto-sales",
     homeLocation: "boycie-house",
     lockupLocation: "boyce-auto-sales",
     transportCapacity: "boot",
     awakeHours: { start: 7, end: 23 },
+    flexibleDailyMode: true,
   },
   {
     code: "denzil",
     displayName: "Denzil",
     cash: 1500,
-    ...makeRoutineFromSpans(
-      "denzil-house",
-      [
-        { from: 5, to: 6, location: "denzil-house" },
-        { from: 6, to: 14, location: "TRAVELLING" },
-        { from: 14, to: 15, location: "transworld-depot" },
-        { from: 15, to: 18, location: "FLEXIBLE" },
-        { from: 19, to: 22, location: "nags" },
-        { from: 22, to: 5, location: "denzil-house" },
-      ],
-      { attendsAuction: true },
-    ),
+    ...makeRoutineFromSpans("denzil-house", [
+      { from: 5, to: 6, location: "denzil-house" },
+      { from: 6, to: 14, location: "TRAVELLING" },
+      { from: 14, to: 15, location: "transworld-depot" },
+      { from: 15, to: 18, location: "FLEXIBLE" },
+      { from: 19, to: 22, location: "nags" },
+      { from: 22, to: 5, location: "denzil-house" },
+    ]),
     defaultLocation: "transworld-depot",
     homeLocation: "denzil-house",
     lockupLocation: "transworld-depot",
     transportCapacity: "truck",
     awakeHours: { start: 5, end: 23 },
+    flexibleDailyMode: true,
   },
   {
     code: "monkey-harris",
     displayName: "Monkey Harris",
     cash: 800,
-    ...makeRoutineFromSpans(
-      "lockup",
-      [
-        { from: 11, to: 17, location: "lockup" },
-        { from: 19, to: 23, location: "nags" },
-      ],
-      { attendsAuction: true },
-    ),
+    ...makeRoutineFromSpans("lockup", [
+      { from: 11, to: 17, location: "FLEXIBLE" },
+      { from: 19, to: 23, location: "nags" },
+    ]),
     defaultLocation: "lockup",
     homeLocation: "lockup",
     transportCapacity: "van",
     awakeHours: { start: 9, end: 23 },
+    flexibleDailyMode: true,
   },
   {
     code: "trigger",
@@ -443,21 +431,16 @@ const ACTORS: readonly ActorSpec[] = [
     code: "rodney",
     displayName: "Rodney Trotter",
     cash: 200,
-    ...makeRoutineFromSpans(
-      "peckham-flat",
-      [
-        { from: 8, to: 9, location: "peckham-flat" },
-        { from: 9, to: 13, location: "peckham-market" },
-        { from: 13, to: 14, location: "nags" },
-        { from: 14, to: 17, location: "FLEXIBLE" },
-        { from: 19, to: 22, location: "nags" },
-        { from: 22, to: 8, location: "peckham-flat" },
-      ],
-      { attendsAuction: true },
-    ),
+    ...makeRoutineFromSpans("peckham-flat", [
+      { from: 8, to: 9, location: "peckham-flat" },
+      { from: 9, to: 17, location: "FLEXIBLE" },
+      { from: 19, to: 22, location: "nags" },
+      { from: 22, to: 8, location: "peckham-flat" },
+    ]),
     defaultLocation: "peckham-flat",
     homeLocation: "peckham-flat",
     transportCapacity: "van",
+    flexibleDailyMode: true,
     awakeHours: { start: 8, end: 22 },
   },
   {
@@ -514,9 +497,7 @@ const ACTORS: readonly ActorSpec[] = [
     displayName: "Mickey Pearce",
     cash: 150,
     ...makeRoutineFromSpans("mickey-jevon-flat", [
-      { from: 10, to: 13, location: "FLEXIBLE" },
-      { from: 13, to: 15, location: "nags" },
-      { from: 15, to: 19, location: "FLEXIBLE" },
+      { from: 10, to: 19, location: "FLEXIBLE" },
       { from: 19, to: 23.5, location: "nags" },
       { from: 23.5, to: 10, location: "mickey-jevon-flat" },
     ]),
@@ -524,14 +505,14 @@ const ACTORS: readonly ActorSpec[] = [
     homeLocation: "mickey-jevon-flat",
     transportCapacity: "pocket",
     awakeHours: { start: 10, end: 23 },
+    flexibleDailyMode: true,
   },
   {
     code: "jevon",
     displayName: "Jevon",
     cash: 120,
     ...makeRoutineFromSpans("mickey-jevon-flat", [
-      { from: 12, to: 14, location: "nags" },
-      { from: 14, to: 19, location: "FLEXIBLE" },
+      { from: 12, to: 19, location: "FLEXIBLE" },
       { from: 19, to: 23.5, location: "nags" },
       { from: 23.5, to: 12, location: "mickey-jevon-flat" },
     ]),
@@ -539,6 +520,7 @@ const ACTORS: readonly ActorSpec[] = [
     homeLocation: "mickey-jevon-flat",
     transportCapacity: "pocket",
     awakeHours: { start: 11, end: 23 },
+    flexibleDailyMode: true,
   },
   {
     code: "raquel",
@@ -705,15 +687,13 @@ const ACTORS: readonly ActorSpec[] = [
     code: "dirty-barry",
     displayName: "Dirty Barry",
     cash: 250,
-    ...makeRoutineFromSpans(
-      "dirty-barrys",
-      [
-        { from: 11, to: 20, location: "dirty-barrys" },
-        { from: 21, to: 23, location: "nags" },
-        { from: 23, to: 11, location: "dirty-barrys" },
-      ],
-      { attendsAuction: true },
-    ),
+    // Dirty Barry has a fixed job: minding his fence shop. No daily
+    // mode picker — he's at the shop until he heads to the pub.
+    ...makeRoutineFromSpans("dirty-barrys", [
+      { from: 11, to: 20, location: "dirty-barrys" },
+      { from: 21, to: 23, location: "nags" },
+      { from: 23, to: 11, location: "dirty-barrys" },
+    ]),
     defaultLocation: "dirty-barrys",
     homeLocation: "dirty-barrys",
     transportCapacity: "pocket",
@@ -1025,6 +1005,16 @@ export function seedPlaceholderSkin(
     }
   }
 
+  // Actors that opted into the daily mode picker (set their flag in
+  // the spec). Resolved against actorByCode here for downstream use.
+  const flexibleDailyModeActorIds: number[] = [];
+  for (const spec of ACTORS) {
+    if (spec.flexibleDailyMode === true) {
+      const id = actorByCode.get(spec.code);
+      if (id !== undefined) flexibleDailyModeActorIds.push(id);
+    }
+  }
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -1041,6 +1031,8 @@ export function seedPlaceholderSkin(
     galleryFromHour: GALLERY_FROM_HOUR,
     marketLocationId,
     marketSellerActorIds,
+    flexibleDailyModeActorIds,
+    locationByCode: locByCode,
     runLengthDays,
     tradingActorIds,
     economics,

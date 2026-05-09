@@ -150,6 +150,15 @@ export function renderEvent(
           {A(e.actorId)} inspected {Lot(e.auctionLotId)}
         </>
       );
+    case "dealer.day-mode":
+      return (
+        <>
+          {A(e.actorId)} picks {String(e.mode)} day
+          {e.auctionInterested === true ? (
+            <span className="muted"> (docket interest)</span>
+          ) : null}
+        </>
+      );
     case "market.hour-summary": {
       const sold = Number(e.unitsSold);
       const offered = Number(e.unitsOffered);
