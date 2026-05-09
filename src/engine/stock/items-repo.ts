@@ -1,6 +1,6 @@
 import type { DB } from "../core/db.js";
-import type { FlawType, ItemKind } from "./types.js";
-import { isFlawType } from "./types.js";
+import type { FlawType, ItemKind, ItemSize } from "./types.js";
+import { isFlawType, isItemSize } from "./types.js";
 
 export interface InsertItemKindInput {
   readonly code: string;
@@ -13,6 +13,8 @@ export interface InsertItemKindInput {
   readonly isEasterEgg?: boolean;
   readonly flavourText?: string | null;
   readonly spawnWeight?: number;
+  /** Physical size — defaults to 'mid'. */
+  readonly size?: ItemSize;
 }
 
 interface ItemKindRow {
@@ -27,11 +29,15 @@ interface ItemKindRow {
   is_easter_egg: number;
   flavour_text: string | null;
   spawn_weight: number;
+  size: string;
 }
 
 function rowToItemKind(r: ItemKindRow): ItemKind {
   if (r.flaw_type !== null && !isFlawType(r.flaw_type)) {
     throw new Error(`invalid flaw_type in DB: ${r.flaw_type}`);
+  }
+  if (!isItemSize(r.size)) {
+    throw new Error(`invalid size in DB: ${r.size}`);
   }
   const targetCustomers =
     r.target_customers.length === 0
@@ -49,6 +55,7 @@ function rowToItemKind(r: ItemKindRow): ItemKind {
     isEasterEgg: r.is_easter_egg === 1,
     flavourText: r.flavour_text,
     spawnWeight: r.spawn_weight,
+    size: r.size,
   };
 }
 
@@ -58,10 +65,10 @@ export function insertItemKind(db: DB, input: InsertItemKindInput): ItemKind {
     .prepare(
       `INSERT INTO item_kinds
         (code, display_name, category, base_value, flaw_type, risk,
-         target_customers, is_easter_egg, flavour_text, spawn_weight)
+         target_customers, is_easter_egg, flavour_text, spawn_weight, size)
        VALUES
         (@code, @display_name, @category, @base_value, @flaw_type, @risk,
-         @target_customers, @is_easter_egg, @flavour_text, @spawn_weight)`,
+         @target_customers, @is_easter_egg, @flavour_text, @spawn_weight, @size)`,
     )
     .run({
       code: input.code,
@@ -74,6 +81,7 @@ export function insertItemKind(db: DB, input: InsertItemKindInput): ItemKind {
       is_easter_egg: input.isEasterEgg ? 1 : 0,
       flavour_text: input.flavourText ?? null,
       spawn_weight: input.spawnWeight ?? 10,
+      size: input.size ?? "mid",
     });
   const fetched = getItemKindById(db, result.lastInsertRowid);
   if (!fetched) throw new Error("failed to fetch newly inserted item_kind");

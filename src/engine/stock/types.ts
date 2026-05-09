@@ -11,6 +11,21 @@ export function isQualityTier(value: unknown): value is QualityTier {
   return typeof value === "string" && (QUALITY_TIERS as readonly string[]).includes(value);
 }
 
+/**
+ * Physical-size category — drives the transport tier required to move
+ * a unit. Per the design:
+ *
+ *   • small  — fits in a pocket. Movable by anyone, anywhere.
+ *   • mid    — fits in a car boot. Needs at least 'boot' transport.
+ *   • large  — needs a van or truck.
+ */
+export const ITEM_SIZES = ["small", "mid", "large"] as const;
+export type ItemSize = (typeof ITEM_SIZES)[number];
+
+export function isItemSize(value: unknown): value is ItemSize {
+  return typeof value === "string" && (ITEM_SIZES as readonly string[]).includes(value);
+}
+
 export const FLAW_TYPES = [
   "faulty",
   "stolen",
@@ -38,6 +53,7 @@ export interface ItemKind {
   readonly isEasterEgg: boolean;
   readonly flavourText: string | null;
   readonly spawnWeight: number;
+  readonly size: ItemSize;
 }
 
 export interface StockLot {

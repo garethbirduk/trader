@@ -13,7 +13,7 @@ import {
 } from "../engine/actors/actors-repo.js";
 import { PolicyRegistry } from "../engine/policy/runner.js";
 import { seedPlaceholderSkin } from "../skins/placeholder/index.js";
-import { registerDailySettlement } from "../engine/world/daily-settlement.js";
+import { DeliveryRegistry, registerDailyDelivery } from "../engine/world/delivery-scheduler.js";
 import { registerPoolExpiry } from "../engine/world/pool-expiry.js";
 import { registerDailyAuction } from "../engine/world/daily-auction.js";
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
@@ -72,11 +72,15 @@ function main(): void {
   try {
     applyMigrations(db, ALL_MIGRATIONS);
     const rng = createRNG(opts.seed);
-    const skin = seedPlaceholderSkin(
-      db,
-      rng,
-      opts.days !== null ? { runLengthDays: opts.days } : {},
-    );
+
+    // The delivery registry is created up-front so the skin's policies
+    // can consult it for trip overrides at construction time.
+    const deliveryRegistry = new DeliveryRegistry();
+    const skin = seedPlaceholderSkin(db, rng, {
+      ...(opts.days !== null ? { runLengthDays: opts.days } : {}),
+      hourOverrideForActor: (actorId) => (clock) =>
+        deliveryRegistry.getOverride(actorId, clock.hour),
+    });
 
     const world = new World({
       db,
@@ -133,9 +137,6 @@ function main(): void {
     // order doesn't affect the hour pipeline.
 
     registerPoolExpiry(world);
-    registerDailySettlement(world, {
-      procurementProceedsActorId: skin.auctionHouseActorId,
-    });
 
     // 1 + 2 — leave & arrive.
     const registry = new PolicyRegistry();
@@ -143,6 +144,26 @@ function main(): void {
       registry.register(actorId, policy);
     }
     registerPolicyHourTick(world, registry);
+
+    // Delivery scheduler: at day-start of each deadline day, plans
+    // pickup/dropoff trips into sellers' flexible hours; settles deals
+    // when the dropoff hour arrives. Registered AFTER policy-tick so
+    // settlement runs after the seller has actually arrived at the
+    // dropoff location. Registry is created up-front above so the
+    // skin's policies can consult it via hourOverrideForActor.
+    registerDailyDelivery(world, {
+      registry: deliveryRegistry,
+      procurementProceedsActorId: skin.auctionHouseActorId,
+      getSchedulingInfo: (actorId) => {
+        const r = skin.actorRoutines.get(actorId);
+        if (!r) return null;
+        return {
+          flexibleHours: r.flexibleHours,
+          schedule: r.schedule,
+          awakeHours: r.awakeHours,
+        };
+      },
+    });
 
     // 3 — interactions, all observe post-arrival positions.
     registerLocationGossip(world);

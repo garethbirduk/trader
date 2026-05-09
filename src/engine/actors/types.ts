@@ -61,5 +61,13 @@ export interface Actor {
   readonly cash: number;
   readonly currentLocationId: number | null;
   readonly homeLocationId: number | null;
+  /**
+   * Where this actor stores stock by default. Distinct from home —
+   * Boycie sleeps at home but his stock lives at Boyce Autos. Mike's
+   * Nag's Head is both. Some actors (Trigger, Paddy) rent containers
+   * at "The Lock-up". Null = no fixed lockup (uses the deal's
+   * deliveryLocationId or the home).
+   */
+  readonly lockupLocationId: number | null;
   readonly transportCapacity: TransportCapacity;
 }

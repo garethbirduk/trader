@@ -8,6 +8,7 @@ export interface InsertActorInput {
   readonly cash?: number;
   readonly transportCapacity?: TransportCapacity;
   readonly homeLocationId?: number | null;
+  readonly lockupLocationId?: number | null;
 }
 
 interface ActorRow {
@@ -17,6 +18,7 @@ interface ActorRow {
   cash: number;
   current_location_id: number | null;
   home_location_id: number | null;
+  lockup_location_id: number | null;
   transport_capacity: string;
 }
 
@@ -31,6 +33,7 @@ function rowToActor(r: ActorRow): Actor {
     cash: r.cash,
     currentLocationId: r.current_location_id,
     homeLocationId: r.home_location_id,
+    lockupLocationId: r.lockup_location_id,
     transportCapacity: r.transport_capacity,
   };
 }
@@ -39,10 +42,11 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
   const cash = input.cash ?? 0;
   const transportCapacity = input.transportCapacity ?? "pocket";
   const homeLocationId = input.homeLocationId ?? null;
+  const lockupLocationId = input.lockupLocationId ?? null;
   const result = db
     .prepare(
-      `INSERT INTO actors (code, display_name, cash, transport_capacity, home_location_id)
-       VALUES (@code, @display_name, @cash, @transport_capacity, @home_location_id)`,
+      `INSERT INTO actors (code, display_name, cash, transport_capacity, home_location_id, lockup_location_id)
+       VALUES (@code, @display_name, @cash, @transport_capacity, @home_location_id, @lockup_location_id)`,
     )
     .run({
       code: input.code,
@@ -50,6 +54,7 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
       cash,
       transport_capacity: transportCapacity,
       home_location_id: homeLocationId,
+      lockup_location_id: lockupLocationId,
     });
   return {
     id: result.lastInsertRowid,
@@ -58,6 +63,7 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
     cash,
     currentLocationId: null,
     homeLocationId,
+    lockupLocationId,
     transportCapacity,
   };
 }
@@ -70,6 +76,16 @@ export function setActorHome(
   db.prepare(
     `UPDATE actors SET home_location_id = @home WHERE id = @id`,
   ).run({ id: actorId, home: homeLocationId });
+}
+
+export function setActorLockup(
+  db: DB,
+  actorId: number,
+  lockupLocationId: number | null,
+): void {
+  db.prepare(
+    `UPDATE actors SET lockup_location_id = @lockup WHERE id = @id`,
+  ).run({ id: actorId, lockup: lockupLocationId });
 }
 
 export function getActorById(db: DB, id: number): Actor | null {
