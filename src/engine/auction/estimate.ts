@@ -1,5 +1,9 @@
 import type { BidderProfile } from "./bidder-profile.js";
 import type { QualityTier } from "../stock/types.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 /**
  * The trader's mental price tag for a per-unit retail price band. Used
@@ -19,22 +23,6 @@ export interface RetailEstimate {
   readonly high: number;
 }
 
-/** Same multipliers used by `default-bidders.ts` to keep the engine's
- *  pricing language consistent. Per-unit context (the lot's quantity is
- *  applied separately when wanted). */
-const TIER_MULT: Readonly<Record<QualityTier, number>> = {
-  mint: 1.5,
-  good: 1.1,
-  fair: 0.8,
-  shoddy: 0.5,
-  broken: 0.25,
-};
-
-/** At accuracy 0 the band is ±50% of mid. At accuracy 1 it's ±5% — even
- *  a top expert can't price perfectly on sight. */
-const SPREAD_AT_ZERO_ACCURACY = 0.5;
-const SPREAD_AT_FULL_ACCURACY = 0.05;
-
 /**
  * Compute the trader's per-unit retail estimate for an item at a given
  * tier. Pass `null` for tier when the trader doesn't know the tier yet
@@ -43,24 +31,29 @@ const SPREAD_AT_FULL_ACCURACY = 0.05;
  *
  * Pure function: stable across calls with the same arguments. RNG-free
  * by design; the bidder pipeline samples around this band when it
- * needs a noisy ceiling.
+ * needs a noisy ceiling. All numerical knobs (tier multipliers, spread
+ * bounds) come from `EconomicsConfig` — defaulting to engine defaults.
  */
 export function estimateUnitRetail(
   profile: BidderProfile,
   item: { readonly baseValue: number; readonly category: string },
   tier: QualityTier | null,
+  economics: EconomicsConfig = DEFAULT_ECONOMICS_CONFIG,
 ): RetailEstimate {
+  const tierMult = economics.tierMultipliers;
   const accuracyRaw =
     profile.appraisalAccuracy.get(item.category) ??
     profile.defaultAppraisalAccuracy;
   const judgement = clamp01(accuracyRaw);
   // Linear interpolation between the two extremes.
   const spread =
-    SPREAD_AT_ZERO_ACCURACY +
-    (SPREAD_AT_FULL_ACCURACY - SPREAD_AT_ZERO_ACCURACY) * judgement;
+    economics.estimateSpreadAtZeroAccuracy +
+    (economics.estimateSpreadAtFullAccuracy -
+      economics.estimateSpreadAtZeroAccuracy) *
+      judgement;
 
   if (tier !== null) {
-    const mid = item.baseValue * TIER_MULT[tier];
+    const mid = item.baseValue * tierMult[tier];
     return {
       low: Math.max(0, Math.round(mid * (1 - spread))),
       mid: Math.max(0, Math.round(mid)),
@@ -71,9 +64,9 @@ export function estimateUnitRetail(
   // Tier unknown: the trader's uncertainty stretches the band across
   // adjacent tiers. Anchor the low/high at the shoddy/good multipliers
   // and let accuracy still squeeze the band a bit.
-  const lowAnchor = item.baseValue * TIER_MULT.shoddy;
-  const midAnchor = item.baseValue * TIER_MULT.fair;
-  const highAnchor = item.baseValue * TIER_MULT.good;
+  const lowAnchor = item.baseValue * tierMult.shoddy;
+  const midAnchor = item.baseValue * tierMult.fair;
+  const highAnchor = item.baseValue * tierMult.good;
   return {
     low: Math.max(0, Math.round(lowAnchor * (1 - spread))),
     mid: Math.max(0, Math.round(midAnchor)),

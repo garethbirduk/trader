@@ -38,6 +38,13 @@ export interface BidderProfileDump {
   readonly customerTypes: readonly string[];
 }
 
+export interface EconomicsDump {
+  readonly tierMultipliers: Readonly<Record<string, number>>;
+  readonly estimateSpreadAtZeroAccuracy: number;
+  readonly estimateSpreadAtFullAccuracy: number;
+  readonly pubBuyerCeilingFraction: number;
+}
+
 export interface RunActorRoutine {
   readonly actorId: number;
   readonly homeLocationId: number | null;
@@ -187,6 +194,10 @@ export interface RunDump {
   readonly playerActorId: number;
   readonly auctionHouseActorId: number;
   readonly auctionLocationId?: number;
+  /** Subset of the engine's economics config that the webapp needs to
+   *  reproduce retail estimates and ceilings client-side. Optional for
+   *  older dumps. */
+  readonly economics?: EconomicsDump;
   /** Legacy single-hour auction; replaced by start/end. Older dumps
    *  populate this; newer dumps populate the window pair instead. */
   readonly auctionHour?: number;

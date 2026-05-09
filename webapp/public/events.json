@@ -57786,5 +57786,17 @@
   "auctionLocationId": 4,
   "auctionStartHour": 11,
   "auctionEndHour": 16,
-  "newspaperLocationId": 9
+  "newspaperLocationId": 9,
+  "economics": {
+    "tierMultipliers": {
+      "mint": 1.5,
+      "good": 1.1,
+      "fair": 0.8,
+      "shoddy": 0.5,
+      "broken": 0.25
+    },
+    "estimateSpreadAtZeroAccuracy": 0.5,
+    "estimateSpreadAtFullAccuracy": 0.05,
+    "pubBuyerCeilingFraction": 0.5
+  }
 }

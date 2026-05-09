@@ -3,6 +3,10 @@ import { listSpawnableItemKinds } from "../../engine/stock/items-repo.js";
 import { insertPool } from "../../engine/pools/pools-repo.js";
 import { seedSupplyLeadsForPool } from "../../engine/leads/seed-from-pool.js";
 import type { ItemKind, QualityTier } from "../../engine/stock/types.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../../engine/economics/config.js";
 
 export interface PoolSpawnerOptions {
   /**
@@ -14,6 +18,9 @@ export interface PoolSpawnerOptions {
   readonly defaultReachableActorIds: readonly number[];
   /** Probability distribution for "how many pools spawn this morning". */
   readonly spawnsPerDay?: readonly { value: number; weight: number }[];
+  /** Economic tuning bundle. Tier multipliers + opening/closing fractions
+   *  + jitter come from here. */
+  readonly economics?: EconomicsConfig;
 }
 
 const DEFAULT_SPAWNS_PER_DAY = [
@@ -31,14 +38,6 @@ const TIER_DISTRIBUTION: readonly { value: QualityTier; weight: number }[] = [
   { value: "broken", weight: 10 },
 ];
 
-const TIER_PRICE_MULT: Record<QualityTier, number> = {
-  mint: 1.5,
-  good: 1.1,
-  fair: 0.8,
-  shoddy: 0.5,
-  broken: 0.25,
-};
-
 /**
  * Daily pool spawner. Each morning, rolls how many new pools appear, then
  * for each picks an item kind weighted by its `spawnWeight` (so easter
@@ -52,6 +51,7 @@ export function registerPoolSpawner(
   opts: PoolSpawnerOptions,
 ): Unsubscribe {
   const spawnsPerDayDist = opts.spawnsPerDay ?? DEFAULT_SPAWNS_PER_DAY;
+  const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
 
   return world.onDayStart((day) => {
     const spawnable = listSpawnableItemKinds(world.db);
@@ -65,8 +65,8 @@ export function registerPoolSpawner(
       const tier = world.rng.weighted(TIER_DISTRIBUTION);
       const quantity = pickQuantity(item, world.rng);
       const windowDays = world.rng.int(2, 7);
-      const opening = priceFor(item, tier, world.rng);
-      const closing = Math.max(1, Math.round(opening * 0.4));
+      const opening = priceFor(item, tier, world.rng, economics);
+      const closing = Math.max(1, Math.round(opening * economics.poolClosingFraction));
       const reachable = pickReachableActors(item, opts);
 
       if (reachable.length === 0) continue;
@@ -117,10 +117,13 @@ function priceFor(
   item: ItemKind,
   tier: QualityTier,
   rng: import("../../engine/core/rng.js").SeededRNG,
+  economics: EconomicsConfig,
 ): number {
-  const base = item.baseValue * TIER_PRICE_MULT[tier];
-  // Supplier markup jitter ±25%.
-  const jittered = base * (0.75 + rng.next() * 0.5);
+  // Tier-anchored retail mid × wholesale fraction × symmetric jitter.
+  const retailMid = item.baseValue * economics.tierMultipliers[tier];
+  const wholesaleAnchor = retailMid * economics.poolOpeningFraction;
+  const j = economics.poolOpeningJitter;
+  const jittered = wholesaleAnchor * (1 - j + rng.next() * 2 * j);
   return Math.max(1, Math.round(jittered));
 }
 

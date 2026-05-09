@@ -1,4 +1,4 @@
-import type { BidderProfileDump, RunItem } from "../types.js";
+import type { BidderProfileDump, EconomicsDump, RunItem } from "../types.js";
 
 /**
  * Per-unit retail estimate band. Mirrors the engine's `RetailEstimate`
@@ -11,16 +11,14 @@ export interface RetailEstimate {
   readonly high: number;
 }
 
-const TIER_MULT: Readonly<Record<string, number>> = {
-  mint: 1.5,
-  good: 1.1,
-  fair: 0.8,
-  shoddy: 0.5,
-  broken: 0.25,
+/** Defaults that match the engine's `DEFAULT_ECONOMICS_CONFIG`. Used
+ *  when a dump pre-dates the economics field. */
+const FALLBACK_ECONOMICS: EconomicsDump = {
+  tierMultipliers: { mint: 1.5, good: 1.1, fair: 0.8, shoddy: 0.5, broken: 0.25 },
+  estimateSpreadAtZeroAccuracy: 0.5,
+  estimateSpreadAtFullAccuracy: 0.05,
+  pubBuyerCeilingFraction: 0.5,
 };
-
-const SPREAD_AT_ZERO_ACCURACY = 0.5;
-const SPREAD_AT_FULL_ACCURACY = 0.05;
 
 /**
  * Compute a trader's per-unit retail estimate for an item at a given
@@ -28,23 +26,28 @@ const SPREAD_AT_FULL_ACCURACY = 0.05;
  * un-inspected auction lot) — the band widens to span shoddy..good.
  *
  * Better category accuracy → narrower band. Mirrors the engine's
- * `estimateUnitRetail` exactly so the UI matches what the bidder
- * pipeline thinks.
+ * `estimateUnitRetail` exactly. Reads tier multipliers and spread
+ * bounds from the dump's economics block when present (falls back to
+ * defaults for older dumps).
  */
 export function estimateUnitRetail(
   profile: BidderProfileDump,
   item: Pick<RunItem, "baseValue" | "category">,
   tier: string | null,
+  economics: EconomicsDump = FALLBACK_ECONOMICS,
 ): RetailEstimate {
+  const tierMult = economics.tierMultipliers;
   const accuracyRaw =
     profile.appraisalAccuracy[item.category] ?? profile.defaultAppraisalAccuracy;
   const judgement = clamp01(accuracyRaw);
   const spread =
-    SPREAD_AT_ZERO_ACCURACY +
-    (SPREAD_AT_FULL_ACCURACY - SPREAD_AT_ZERO_ACCURACY) * judgement;
+    economics.estimateSpreadAtZeroAccuracy +
+    (economics.estimateSpreadAtFullAccuracy -
+      economics.estimateSpreadAtZeroAccuracy) *
+      judgement;
 
-  if (tier !== null && TIER_MULT[tier] !== undefined) {
-    const mid = item.baseValue * (TIER_MULT[tier] ?? 1);
+  if (tier !== null && tierMult[tier] !== undefined) {
+    const mid = item.baseValue * (tierMult[tier] ?? 1);
     return {
       low: Math.max(0, Math.round(mid * (1 - spread))),
       mid: Math.max(0, Math.round(mid)),
@@ -52,9 +55,9 @@ export function estimateUnitRetail(
     };
   }
 
-  const lowAnchor = item.baseValue * TIER_MULT.shoddy!;
-  const midAnchor = item.baseValue * TIER_MULT.fair!;
-  const highAnchor = item.baseValue * TIER_MULT.good!;
+  const lowAnchor = item.baseValue * (tierMult.shoddy ?? 0.5);
+  const midAnchor = item.baseValue * (tierMult.fair ?? 0.8);
+  const highAnchor = item.baseValue * (tierMult.good ?? 1.1);
   return {
     low: Math.max(0, Math.round(lowAnchor * (1 - spread))),
     mid: Math.max(0, Math.round(midAnchor)),

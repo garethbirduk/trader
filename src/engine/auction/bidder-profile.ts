@@ -1,6 +1,10 @@
 import type { SeededRNG } from "../core/rng.js";
 import type { FlawType } from "../stock/types.js";
 import type { AuctionLot } from "./types.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 /**
  * A bidder's appraisal profile — how good they are at estimating the value
@@ -49,9 +53,11 @@ export interface BidderProfile {
  * Discount applied to a bidder's valuation when an item's target
  * customers don't overlap with their own. Calibrated so a poor-fit item
  * values at ~40% — significant but not catastrophic, since some items
- * still have onward niche markets.
+ * still have onward niche markets. Re-exported from the economics
+ * config so legacy call sites keep working.
  */
-export const CUSTOMER_MISMATCH_MULTIPLIER = 0.4;
+export const CUSTOMER_MISMATCH_MULTIPLIER =
+  DEFAULT_ECONOMICS_CONFIG.customerMismatchMultiplier;
 
 /**
  * The fallback profile used for actors who don't have one yet — they're
@@ -70,16 +76,10 @@ export const FALLBACK_BIDDER_PROFILE: BidderProfile = {
  * given type. Calibrated so the comedy lands: a clueless bidder pays full
  * price for SCAM_BAIT goods (which a clued-in bidder values at zero); a
  * sharp bidder won't touch DANGEROUS stock at any reasonable price.
+ * Re-exported from the economics config so legacy call sites keep working.
  */
-export const FLAW_DISCOUNT: Readonly<Record<FlawType, number>> = {
-  faulty: 0.3,
-  fake: 0.2,
-  stolen: 0.7,
-  wrong_market: 0.4,
-  wrong_season: 0.5,
-  dangerous: 0.1,
-  scam_bait: 0.0,
-};
+export const FLAW_DISCOUNT: Readonly<Record<FlawType, number>> =
+  DEFAULT_ECONOMICS_CONFIG.flawDiscount;
 
 export interface AppraisalResult {
   /** What the bidder thinks this lot is worth, in pounds (total). */
@@ -109,7 +109,10 @@ export function appraiseLot(args: {
   /** Item's target customers; empty = universal item. */
   itemTargetCustomers?: readonly string[];
   rng: SeededRNG;
+  /** Optional config override. Defaults to engine defaults. */
+  economics?: EconomicsConfig;
 }): AppraisalResult {
+  const economics = args.economics ?? DEFAULT_ECONOMICS_CONFIG;
   const accuracyRaw =
     args.profile.appraisalAccuracy.get(args.category) ??
     args.profile.defaultAppraisalAccuracy;
@@ -126,7 +129,7 @@ export function appraiseLot(args: {
     const detection = clamp01(detectionRaw);
     flawDetected = args.rng.next() < detection;
     if (flawDetected) {
-      flawMultiplier = FLAW_DISCOUNT[args.flawType];
+      flawMultiplier = economics.flawDiscount[args.flawType];
     }
   }
 
@@ -136,6 +139,7 @@ export function appraiseLot(args: {
   const customerFitMultiplier = computeCustomerFit(
     args.itemTargetCustomers ?? [],
     args.profile.customerTypes ?? [],
+    economics.customerMismatchMultiplier,
   );
 
   const valuation = Math.max(
@@ -162,13 +166,14 @@ export function appraiseLot(args: {
 function computeCustomerFit(
   itemTargets: readonly string[],
   buyerTypes: readonly string[],
+  mismatchMultiplier: number,
 ): number {
   if (itemTargets.length === 0) return 1; // universal item — no preference
   if (buyerTypes.length === 0) return 1; // bidder unaligned — no penalty
   for (const t of itemTargets) {
     if (buyerTypes.includes(t)) return 1;
   }
-  return CUSTOMER_MISMATCH_MULTIPLIER;
+  return mismatchMultiplier;
 }
 
 function clamp01(x: number): number {

@@ -203,6 +203,7 @@ function main(): void {
         // Production runs use docket + listing-knowledge: bidders must
         // have learned about the lot to participate.
         requireKnowledge: true,
+        economics: skin.economics,
       }),
     });
     const tradingIds = skin.tradingActorIds;
@@ -216,6 +217,7 @@ function main(): void {
       pubLocationIds: skin.pubLocationIds,
       npcActorIds: tradingIds,
       bidderProfiles: skin.bidderProfiles,
+      economics: skin.economics,
     });
 
     // Trust/heat reactions are event-driven (subscribe to other
@@ -232,6 +234,7 @@ function main(): void {
     registerPoolSpawner(world, {
       reachableByCategory: skin.reachableByCategory,
       defaultReachableActorIds: skin.defaultReachableActorIds,
+      economics: skin.economics,
     });
 
     world.runToCompletion();
@@ -305,6 +308,14 @@ function main(): void {
         auctionStartHour: skin.auctionStartHour,
         auctionEndHour: skin.auctionEndHour,
         newspaperLocationId: skin.newspaperLocationId,
+        economics: {
+          tierMultipliers: skin.economics.tierMultipliers,
+          estimateSpreadAtZeroAccuracy:
+            skin.economics.estimateSpreadAtZeroAccuracy,
+          estimateSpreadAtFullAccuracy:
+            skin.economics.estimateSpreadAtFullAccuracy,
+          pubBuyerCeilingFraction: skin.economics.pubBuyerCeilingFraction,
+        },
       });
       console.log(`\nrun dumped to ${opts.out}`);
     }
@@ -368,6 +379,14 @@ interface RunDump {
   readonly auctionStartHour: number;
   readonly auctionEndHour: number;
   readonly newspaperLocationId: number;
+  /** Subset of the economics config that the webapp needs to reproduce
+   *  retail estimates client-side. */
+  readonly economics: {
+    tierMultipliers: Record<string, number>;
+    estimateSpreadAtZeroAccuracy: number;
+    estimateSpreadAtFullAccuracy: number;
+    pubBuyerCeilingFraction: number;
+  };
 }
 
 interface DaySnapshot {

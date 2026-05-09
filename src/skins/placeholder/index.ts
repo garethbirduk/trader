@@ -17,6 +17,10 @@ import type { FlawType, QualityTier } from "../../engine/stock/types.js";
 import type { TransportCapacity } from "../../engine/actors/types.js";
 import { EVERYDAY_ITEMS } from "./catalogue-everyday.js";
 import { EASTER_EGG_ITEMS } from "./catalogue-easter-eggs.js";
+import {
+  resolveEconomicsConfig,
+  type EconomicsConfig,
+} from "../../engine/economics/config.js";
 
 /**
  * Placeholder skin — the v1 content used for self-running simulations.
@@ -63,6 +67,13 @@ export interface SkinSeedResult {
    * civilians (Cassandra, Marlene, Albert…) don't initiate deals.
    */
   readonly tradingActorIds: readonly number[];
+  /**
+   * Resolved economics config, exposed back to the caller so the
+   * world-setup wiring (pool spawner, pub-deal autonomy, bidders) can
+   * read the same bundle. Defaults applied where the skin caller
+   * didn't override.
+   */
+  readonly economics: EconomicsConfig;
   /**
    * Per-actor metadata for diary / profile views. Includes home location
    * id, the hour→location schedule, and the awake window for diary
@@ -794,6 +805,13 @@ export interface SkinSeedOptions {
   readonly hourOverrideForActor?: (
     actorId: number,
   ) => ((clock: { day: number; hour: number }) => number | null) | null;
+  /**
+   * Economic tuning bundle. Override individual fields to change pool
+   * wholesale ratios, pub-deal ceilings, tier multipliers, etc. without
+   * touching engine code. Pass `resolveEconomicsConfig({ poolOpeningFraction: 0.25 })`
+   * to override one knob and inherit defaults for the rest.
+   */
+  readonly economics?: EconomicsConfig;
 }
 
 export function seedPlaceholderSkin(
@@ -802,6 +820,7 @@ export function seedPlaceholderSkin(
   opts: SkinSeedOptions = {},
 ): SkinSeedResult {
   const runLengthDays = opts.runLengthDays ?? 14;
+  const economics = resolveEconomicsConfig(opts.economics);
 
   // Locations.
   const locByCode = new Map<string, number>();
@@ -975,6 +994,7 @@ export function seedPlaceholderSkin(
     actorByCode,
     actorLockupLocByCode,
     everydayItemIds,
+    economics,
   });
 
   const newspaperLocationId = sidsId;
@@ -998,6 +1018,7 @@ export function seedPlaceholderSkin(
     galleryFromHour: GALLERY_FROM_HOUR,
     runLengthDays,
     tradingActorIds,
+    economics,
     actorRoutines,
     rolesByActorId,
   };
@@ -1018,6 +1039,7 @@ interface SeedStarterStockArgs {
   readonly actorByCode: ReadonlyMap<string, number>;
   readonly actorLockupLocByCode: ReadonlyMap<string, number>;
   readonly everydayItemIds: readonly number[];
+  readonly economics: EconomicsConfig;
 }
 
 function seedStarterStock(
@@ -1025,8 +1047,11 @@ function seedStarterStock(
   rng: SeededRNG,
   args: SeedStarterStockArgs,
 ): void {
-  const { actorByCode, actorLockupLocByCode, everydayItemIds } = args;
+  const { actorByCode, actorLockupLocByCode, everydayItemIds, economics } = args;
   if (everydayItemIds.length === 0) return;
+  const fmin = economics.starterStockAcquisitionFractionMin;
+  const fmax = economics.starterStockAcquisitionFractionMax;
+  const fspan = Math.max(0, fmax - fmin);
 
   for (const code of STARTER_STOCK_CODES) {
     const ownerId = actorByCode.get(code);
@@ -1053,8 +1078,7 @@ function seedStarterStock(
 
       const tier = rng.pick(STARTER_TIERS);
       const quantity = rng.int(10, 41); // 10..40
-      // Acquired at 40-80% of base value — they got it cheap.
-      const priceFactor = 0.4 + rng.next() * 0.4;
+      const priceFactor = fmin + rng.next() * fspan;
       const acquiredUnitPrice = Math.max(
         1,
         Math.round(item.baseValue * priceFactor),

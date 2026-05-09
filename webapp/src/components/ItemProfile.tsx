@@ -180,7 +180,12 @@ function RetailEstimateTable({
                 />
               </td>
               {TIERS_FOR_TABLE.map((t) => {
-                const est = estimateUnitRetail(a.bidderProfile!, item, t);
+                const est = estimateUnitRetail(
+                  a.bidderProfile!,
+                  item,
+                  t,
+                  dump.economics,
+                );
                 return (
                   <td key={t} className="num muted">
                     {formatRetailEstimate(est)}

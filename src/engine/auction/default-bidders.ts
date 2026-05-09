@@ -15,6 +15,10 @@ import {
   type BidderProfile,
 } from "./bidder-profile.js";
 import type { FlawType, QualityTier } from "../stock/types.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 export interface BidderOptions {
   /** Per-actor bidder profiles. Actors without one use `fallbackProfile`. */
@@ -53,15 +57,13 @@ export interface BidderOptions {
    * mechanic) reveals the real tier and lets the actor bid accurately.
    */
   readonly assumedTierWhenUninspected?: QualityTier;
+  /**
+   * Economic tuning bundle. Tier multipliers and other shared knobs
+   * are read from here. Defaults to the engine-wide defaults. Skin can
+   * pass an override via `resolveEconomicsConfig({...})`.
+   */
+  readonly economics?: EconomicsConfig;
 }
-
-const DEFAULT_TIER_MULT: Record<string, number> = {
-  mint: 1.5,
-  good: 1.1,
-  fair: 0.8,
-  shoddy: 0.5,
-  broken: 0.25,
-};
 
 /**
  * The engine's default bidder generator. For each eligible actor:
@@ -83,15 +85,16 @@ const DEFAULT_TIER_MULT: Record<string, number> = {
 export function makeBidders(
   opts: BidderOptions = {},
 ): (db: DB, lot: AuctionLot, day: number, rng: SeededRNG) => readonly AuctionBidder[] {
+  const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
   const profiles = opts.profiles ?? new Map<number, BidderProfile>();
   const fallback = opts.fallbackProfile ?? FALLBACK_BIDDER_PROFILE;
   const minCash = opts.minCashToParticipate ?? 100;
   const exclude = new Set(opts.excludeActorCodes ?? ["auction-house"]);
-  const tierMult = opts.tierMultipliers ?? DEFAULT_TIER_MULT;
+  const tierMult = opts.tierMultipliers ?? economics.tierMultipliers;
   const requireLocation = opts.requireActorAtLocationId;
   const requireKnowledge = opts.requireKnowledge ?? false;
   const assumedTier: QualityTier =
-    opts.assumedTierWhenUninspected ?? "fair";
+    opts.assumedTierWhenUninspected ?? economics.pubAssumedTier;
 
   return (db, lot, _day, rng) => {
     const item = getItemKindById(db, lot.itemKindId);
@@ -158,6 +161,7 @@ export function makeBidders(
         trueLotValue: lotValueForAppraisal,
         itemTargetCustomers: item.targetCustomers,
         rng,
+        economics,
       });
       const ceiling = Math.min(valuation, a.cash);
 

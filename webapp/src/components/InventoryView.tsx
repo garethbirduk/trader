@@ -90,7 +90,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                     const item = dump.items.find((i) => i.id === lot.itemKindId);
                     const retail =
                       profile !== undefined && item !== undefined
-                        ? estimateUnitRetail(profile, item, lot.qualityTier)
+                        ? estimateUnitRetail(profile, item, lot.qualityTier, dump.economics)
                         : null;
                     return (
                       <tr key={lot.id}>

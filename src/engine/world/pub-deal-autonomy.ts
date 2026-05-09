@@ -16,6 +16,10 @@ import { getPoolById } from "../pools/pools-repo.js";
 import { attemptPubDeal } from "../mechanics/pub-deal/attempt.js";
 import type { AuctionLot } from "../auction/types.js";
 import type { FlawType, QualityTier } from "../stock/types.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 export interface PubDealAutonomyOptions {
   /** Locations where pub-deal attempts can happen (a skin's social venues). */
@@ -56,15 +60,15 @@ export interface PubDealAutonomyOptions {
    * given M6's -10/default and +2/clean-settle calibration).
    */
   readonly trustGatingThreshold?: number;
+  /**
+   * Economic tuning bundle. Tier multipliers, the buyer-ceiling
+   * fraction (default 0.5 = aim for 50% of retail value), and the
+   * tier-blind mode (whether the buyer values the lot at its actual
+   * tier or assumes the listing's `pubAssumedTier`) all read from here.
+   */
+  readonly economics?: EconomicsConfig;
 }
 
-const TIER_MULT: Record<QualityTier, number> = {
-  mint: 1.5,
-  good: 1.1,
-  fair: 0.8,
-  shoddy: 0.5,
-  broken: 0.25,
-};
 
 /**
  * Evening pub-deal autonomy. During the configured hour window (default
@@ -105,6 +109,7 @@ export function registerPubDealAutonomy(
   const forwardSellDeadlineRange =
     opts.forwardSellDeadlineRange ?? ([2, 5] as const);
   const trustGatingThreshold = opts.trustGatingThreshold ?? -25;
+  const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
   const npcSet = new Set(opts.npcActorIds);
 
   return world.onHour((clock) => {
@@ -129,6 +134,7 @@ export function registerPubDealAutonomy(
           forwardSellQtyRange,
           forwardSellDeadlineRange,
           trustGatingThreshold,
+          economics,
         });
       }
     }
@@ -147,8 +153,9 @@ function runOneAttempt(args: {
   forwardSellQtyRange: readonly [number, number];
   forwardSellDeadlineRange: readonly [number, number];
   trustGatingThreshold: number;
+  economics: EconomicsConfig;
 }): void {
-  const { world, clock, locId, present, profiles } = args;
+  const { world, clock, locId, present, profiles, economics } = args;
 
   if (present.length < 2) return;
   const sellerId = world.rng.pick(present);
@@ -237,7 +244,15 @@ function runOneAttempt(args: {
   const item = getItemKindById(world.db, lot.itemKindId);
   if (!item) return;
 
-  const tierMult = TIER_MULT[lot.qualityTier];
+  // Buyer's perceived tier — either the lot's actual tier (full info)
+  // or an assumed tier (tier-blind: buyer hasn't inspected the seller's
+  // stock). The lot's `qualityTier` is what the seller knows; the
+  // buyer's mental model uses `perceivedTier`.
+  const perceivedTier: QualityTier =
+    economics.pubBuyerTierMode === "assumed"
+      ? economics.pubAssumedTier
+      : lot.qualityTier;
+  const tierMult = economics.tierMultipliers[perceivedTier];
   const trueLotValue = Math.max(1, Math.round(item.baseValue * tierMult * proposalQty));
 
   // Build the buyer's profile, forcing flaw detection if they already know
@@ -251,12 +266,13 @@ function runOneAttempt(args: {
 
   // Synthetic AuctionLot for appraisal — the only field anyone reads is
   // `inspectionAdjustment(lot)` and v1 profiles don't set that callback,
-  // so the synthetic shape is harmless.
+  // so the synthetic shape is harmless. The appraised tier matches the
+  // buyer's perceived tier so flaw/customer-fit math stays consistent.
   const fakeLot: AuctionLot = {
     id: -1,
     sourcePoolId: null,
     itemKindId: item.id,
-    qualityTier: lot.qualityTier,
+    qualityTier: perceivedTier,
     quantity: proposalQty,
     floorPrice: 0,
     listedDay: clock.day,
@@ -274,6 +290,7 @@ function runOneAttempt(args: {
     itemTargetCustomers: item.targetCustomers,
     trueLotValue,
     rng: world.rng,
+    economics,
   });
 
   const buyer = getActorById(world.db, buyerId);
@@ -281,11 +298,12 @@ function runOneAttempt(args: {
 
   // The appraisal is the buyer's noisy estimate of *retail* value (what
   // they think they can resell the lot for). At the pub the buyer is
-  // sourcing for onward sale, so they aim to pay around half of that —
-  // leaving margin for transport, risk, and profit. Cash still caps it.
-  const PUBDEAL_CEILING_FRACTION = 0.5;
+  // sourcing for onward sale, so they aim to pay only a fraction of
+  // that — leaving margin for transport, risk, and profit. The fraction
+  // is configurable via economics.pubBuyerCeilingFraction (default 0.5).
+  // Cash still caps it.
   const buyerTotalCeiling = Math.min(
-    Math.round(appraisal.valuation * PUBDEAL_CEILING_FRACTION),
+    Math.round(appraisal.valuation * economics.pubBuyerCeilingFraction),
     buyer.cash,
   );
   if (buyerTotalCeiling < proposalQty) return; // can't even bid £1/unit
