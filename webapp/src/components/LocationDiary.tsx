@@ -3,6 +3,7 @@ import type { RunDump, RunEvent, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip } from "./Links.js";
 import { ActorRef, DealRef, ItemRef, LotRef, PoolRef } from "./Refs.js";
+import { resolveAuctionWindow } from "../lib/auction-window.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -114,8 +115,10 @@ export function LocationDiary({
   const hourRange = chooseHourRange(loc, dump);
   const isAuction =
     loc.type === "auction" || locationId === dump.auctionLocationId;
+  const auctionWindow = resolveAuctionWindow(dump);
 
-  // Today's auction lots — used by the auction view.
+  // Today's auction lots — used by the auction view. Indexed by
+  // scheduledHour so each hour row in the window can show its lot.
   const todaysLots = useMemo<SnapshotAuctionLot[]>(() => {
     if (!isAuction) return [];
     const snap = dump.snapshots?.find((s) => s.day === day) ?? null;
@@ -126,6 +129,16 @@ export function LocationDiary({
         (l.clearedDay === null || l.clearedDay === day),
     );
   }, [dump, day, isAuction]);
+
+  const lotByScheduledHour = useMemo(() => {
+    const m = new Map<number, SnapshotAuctionLot>();
+    for (const l of todaysLots) {
+      if (l.scheduledHour !== undefined && l.scheduledHour !== null) {
+        m.set(l.scheduledHour, l);
+      }
+    }
+    return m;
+  }, [todaysLots]);
 
   const residents = useMemo(
     () => dump.actors.filter((a) => a.homeLocationId === locationId),
@@ -152,23 +165,25 @@ export function LocationDiary({
         dump={dump}
         onSelect={onSelect}
         isAuction={isAuction}
-        auctionHour={dump.auctionHour}
+        auctionWindow={auctionWindow}
       />
 
       <div className="diary-hours">
         {hourRange.map((h) => {
           const isCurrent = h === hour;
           const isOpen = isHourOpen(loc, h);
-          // The star auction panel only fires once the cursor reaches
-          // the auction hour — before that, the auction hasn't happened.
-          const isStar =
+          // Auction-window star rows: any hour in the docket window
+          // that has a scheduled lot, but only once the cursor has
+          // reached or passed it (the auction hasn't happened yet for
+          // hours after `hour`). Future-hour rows still show the
+          // scheduled lot as "on view."
+          const lotForHour = lotByScheduledHour.get(h);
+          const isWindowHour =
             isAuction &&
-            dump.auctionHour !== undefined &&
-            h === dump.auctionHour &&
-            h <= hour;
-          // Distinguish "auction running" (events fired) from "viewing only"
-          // (lots on display but not being sold today). Lots listed today
-          // are on view; the auction itself only runs lots listed earlier.
+            auctionWindow !== null &&
+            h >= auctionWindow.start &&
+            h <= auctionWindow.end;
+          const isStar = isWindowHour && lotForHour !== undefined;
           const auctionEventsThisHour = isStar
             ? (eventsByHour.get(h) ?? []).filter(
                 (e) =>
@@ -178,6 +193,7 @@ export function LocationDiary({
               )
             : [];
           const auctionLive = auctionEventsThisHour.length > 0;
+          const auctionUpcoming = isStar && h > hour && !auctionLive;
           const peopleHere = sortByPlayerFirst(
             [...(presenceByHour.get(h) ?? new Set<number>())],
             dump.playerActorId,
@@ -197,20 +213,22 @@ export function LocationDiary({
                 {!isOpen && !isStar && peopleHere.length === 0 ? (
                   <span className="muted">closed</span>
                 ) : null}
-                {isStar ? (
+                {isStar && lotForHour !== undefined ? (
                   <div className="star-lots">
                     <span className="star-flag">
-                      {auctionLive ? "★ Auction now" : "Auction · viewing"}
+                      {auctionLive
+                        ? "★ Auction now"
+                        : auctionUpcoming
+                          ? "Auction · upcoming"
+                          : "Auction · cleared"}
                     </span>
-                    {todaysLots.length === 0 ? (
-                      <span className="muted">no lots today</span>
-                    ) : (
-                      <ul className="lot-list">
-                        {todaysLots.map((l) => (
-                          <AuctionLotRow key={l.id} lot={l} dump={dump} onSelect={onSelect} />
-                        ))}
-                      </ul>
-                    )}
+                    <ul className="lot-list">
+                      <AuctionLotRow
+                        lot={lotForHour}
+                        dump={dump}
+                        onSelect={onSelect}
+                      />
+                    </ul>
                   </div>
                 ) : null}
                 {peopleHere.length > 0 ? (
@@ -269,19 +287,24 @@ function LocationHeader({
   dump,
   onSelect,
   isAuction,
-  auctionHour,
+  auctionWindow,
 }: {
   loc: RunDump["locations"][number];
   residents: readonly RunDump["actors"][number][];
   dump: RunDump;
   onSelect: (s: Selection) => void;
   isAuction: boolean;
-  auctionHour: number | undefined;
+  auctionWindow: { start: number; end: number } | null;
 }) {
   if (isAuction) {
+    const auctionLabel = auctionWindow
+      ? auctionWindow.start === auctionWindow.end
+        ? `at ${fmtHour(auctionWindow.start)}`
+        : `${fmtHour(auctionWindow.start)}–${fmtHour(auctionWindow.end)}, one lot/hr`
+      : "";
     return (
       <div className="diary-meta">
-        ★ Daily auction {auctionHour !== undefined ? `at ${String(auctionHour).padStart(2, "0")}:00` : ""}
+        ★ Daily auction {auctionLabel}
         {loc.openHours
           ? ` · viewing ${fmtHour(loc.openHours.start)}–${fmtHour(loc.openHours.end)}`
           : null}
@@ -374,8 +397,9 @@ function chooseHourRange(
     const e = Math.min(23, Math.max(loc.openHours.end, loc.openHours.start) + 1);
     return range(s, e);
   }
-  if (loc.id === dump.auctionLocationId && dump.auctionHour !== undefined) {
-    return range(Math.max(0, dump.auctionHour - 2), Math.min(23, dump.auctionHour + 4));
+  const w = resolveAuctionWindow(dump);
+  if (loc.id === dump.auctionLocationId && w !== null) {
+    return range(Math.max(0, w.start - 3), Math.min(23, w.end + 1));
   }
   return range(6, 23);
 }
@@ -510,6 +534,19 @@ function summarizeLocEvent(
       return (
         <>
           🚨 {A(e.actorId)} raided — £{String(e.fine)} fine
+        </>
+      );
+    case "auction.knowledge-acquired":
+      return (
+        <>
+          {A(e.actorId)} learned about {Lot(e.auctionLotId)}{" "}
+          <span className="muted">via {String(e.via)}</span>
+        </>
+      );
+    case "auction.lot-inspected":
+      return (
+        <>
+          {A(e.actorId)} inspected {Lot(e.auctionLotId)}
         </>
       );
     default:

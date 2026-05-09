@@ -4,6 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef } from "./Refs.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
+import { isHourInAuctionWindow } from "../lib/auction-window.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -42,18 +43,34 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
         e.type === "auction.unsold" ||
         e.type === "auction.written_off",
     );
-    const isAuctionHour =
-      dump.auctionHour !== undefined && hour === dump.auctionHour;
+    const isAuctionHour = isHourInAuctionWindow(dump, hour);
     const eventLotIds = new Set<number>(
       auctionEvents.map((e) => e.auctionLotId as number),
     );
+    // "On view" = today's docket lots scheduled for a LATER hour. They
+    // have a known scheduledHour but haven't run yet. Past-hour lots
+    // are already in the events list (cleared/unsold) so we don't
+    // duplicate them. When dumps don't carry scheduledHour (legacy),
+    // fall back to "any open lot listed by today".
+    // In docket mode, "on view" is strictly today's later-hour lots.
+    // Legacy single-hour mode falls back to listed-but-not-cleared.
+    const docketMode =
+      dump.auctionStartHour !== undefined && dump.auctionEndHour !== undefined;
     const onViewLots = isAuctionHour
-      ? (snapshot?.auctionLots ?? []).filter(
-          (l) =>
-            l.listedDay <= day &&
-            (l.clearedDay === null || l.clearedDay === day) &&
-            !eventLotIds.has(l.id),
-        )
+      ? (snapshot?.auctionLots ?? []).filter((l) => {
+          if (eventLotIds.has(l.id)) return false;
+          if (docketMode) {
+            return (
+              l.scheduledHour !== undefined &&
+              l.scheduledHour !== null &&
+              l.scheduledHour > hour &&
+              (l.clearedDay === null || l.clearedDay === day)
+            );
+          }
+          if (l.listedDay > day) return false;
+          if (l.clearedDay !== null && l.clearedDay < day) return false;
+          return l.clearedDay === null || l.clearedDay === day;
+        })
       : [];
     const totalLots = auctionEvents.length + onViewLots.length;
     if (totalLots > 0) {
@@ -269,9 +286,14 @@ function AuctionLotOnView({
   readonly onSelect: (s: Selection) => void;
   readonly itemName: (id: number) => string;
 }) {
-  // The engine auctions lots whose listedDay < today. Anything listed
-  // today goes on the block tomorrow.
-  const auctionedOnDay = lot.listedDay < day ? day : lot.listedDay + 1;
+  void onSelect;
+  void dump;
+  // Docket mode: lot has a scheduledHour today. Legacy: schedule next
+  // listed-day-after-today at the legacy auctionHour.
+  const scheduled =
+    lot.scheduledHour !== undefined && lot.scheduledHour !== null
+      ? { day, hour: lot.scheduledHour }
+      : null;
   return (
     <article className="lot-card lot-card-onview">
       <div className="lot-line">
@@ -284,9 +306,12 @@ function AuctionLotOnView({
         <span className="lot-status muted">
           On view{lot.listedDay === day ? " (just listed)" : ""}
         </span>
-        <span className="muted">
-          next session: D{String(auctionedOnDay).padStart(2, "0")} 10:00
-        </span>
+        {scheduled !== null ? (
+          <span className="muted">
+            on the block: D{String(scheduled.day).padStart(2, "0")}{" "}
+            {String(scheduled.hour).padStart(2, "0")}:00
+          </span>
+        ) : null}
       </div>
     </article>
   );

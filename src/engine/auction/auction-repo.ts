@@ -20,6 +20,7 @@ interface AuctionLotRow {
   quantity: number;
   floor_price: number;
   listed_day: number;
+  scheduled_hour: number | null;
   cleared_day: number | null;
   cleared_price: number | null;
   cleared_to_actor_id: number | null;
@@ -37,10 +38,38 @@ function rowToLot(r: AuctionLotRow): AuctionLot {
     quantity: r.quantity,
     floorPrice: r.floor_price,
     listedDay: r.listed_day,
+    scheduledHour: r.scheduled_hour,
     clearedDay: r.cleared_day,
     clearedPrice: r.cleared_price,
     clearedToActorId: r.cleared_to_actor_id,
   };
+}
+
+/** Mark a lot as scheduled for today's auction at a given hour. */
+export function setAuctionLotScheduledHour(
+  db: DB,
+  lotId: number,
+  hour: number,
+): void {
+  db.prepare(
+    `UPDATE auction_lots SET scheduled_hour = @hour
+       WHERE id = @id AND cleared_day IS NULL`,
+  ).run({ id: lotId, hour });
+}
+
+/** List lots scheduled for a given hour today (typically 0 or 1 lot). */
+export function listAuctionLotsScheduledForHour(
+  db: DB,
+  hour: number,
+): AuctionLot[] {
+  return db
+    .prepare<AuctionLotRow>(
+      `SELECT * FROM auction_lots
+        WHERE scheduled_hour = @hour AND cleared_day IS NULL
+        ORDER BY id ASC`,
+    )
+    .all({ hour })
+    .map(rowToLot);
 }
 
 export function insertAuctionLot(

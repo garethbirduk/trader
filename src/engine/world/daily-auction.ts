@@ -6,7 +6,9 @@ import {
 } from "../actors/actors-repo.js";
 import {
   clearAuctionLot,
+  listAuctionLotsScheduledForHour,
   listOpenAuctionLots,
+  setAuctionLotScheduledHour,
   writeOffAuctionLot,
 } from "../auction/auction-repo.js";
 import type { AuctionLot } from "../auction/types.js";
@@ -42,18 +44,30 @@ export interface DailyAuctionOptions {
   readonly floorDecayPerDay?: number;
   /**
    * Maximum days a lot can stay open on the auction floor before being
-   * written off (no buyer, no cash, lot is closed). Counted as
-   * `today - listed_day`. Default 5.
+   * written off. Counted as `today - listed_day`. Default 5. Combined
+   * with the docket pick (only 6 lots/day get auctioned), unpicked lots
+   * may sit for several days waiting their turn — but if the docket
+   * mode (`auctionStartHour` set) is on, lots that don't make today's
+   * docket are written off immediately rather than rolled.
    */
   readonly maxDaysOpen?: number;
   /**
-   * Hour of day at which the auction fires (0..23). When set, the handler
-   * runs once per day at that hour rather than at day-start — giving
-   * NPCs time to travel to the auction room before bidding opens. When
-   * undefined (default), retains the legacy day-start firing for
-   * backwards compatibility with existing tests.
+   * Legacy single-hour firing — when set without `auctionEndHour`, runs
+   * all eligible lots in one batch at this hour (matching pre-docket
+   * behaviour). Kept for backwards compatibility with tests that haven't
+   * migrated.
    */
   readonly auctionHour?: number;
+  /**
+   * Docket mode: if `auctionStartHour` and `auctionEndHour` are both set,
+   * auctions run one lot per hour from start..end inclusive (so a 11..16
+   * window allows up to 6 lots/day). At day-start, up to (end-start+1)
+   * eligible lots are picked at random and assigned an hour; the rest
+   * are written off as "not chosen for today's docket".
+   */
+  readonly auctionStartHour?: number;
+  /** See `auctionStartHour`. Inclusive endpoint of the docket window. */
+  readonly auctionEndHour?: number;
   /**
    * The location ID where the auction is held. When set, the handler
    * snapshots all actors physically at that location at auction time
@@ -64,13 +78,17 @@ export interface DailyAuctionOptions {
 }
 
 /**
- * Run the auction every morning over lots listed yesterday or earlier.
- * Lots listed today are held over so bidders have a day to consider them
- * (matches the natural rhythm: pool expires → lot listed → next day's
- * auction). Bid resolution snaps to the standard auction bid ladder
- * (see `bid-ladder.ts`) — bidders' total ceilings are snapped to rungs,
- * the floor is snapped to the lowest rung at or above it, and the hammer
- * price is always a ladder rung.
+ * Run the daily auction over open lots. Two modes:
+ *
+ *   - **legacy single-hour**: pass `auctionHour`. All eligible lots
+ *     (listed yesterday or earlier, within the maxDaysOpen window) run
+ *     at that hour. Original behaviour, retained for tests.
+ *
+ *   - **docket window** (preferred): pass `auctionStartHour` and
+ *     `auctionEndHour`. At day-start the engine picks up to
+ *     (end-start+1) random eligible lots, assigns each a unique hour
+ *     in the window, and writes off any remaining open lots. Each
+ *     hour H in the window then runs that hour's lot if any.
  */
 export function registerDailyAuction(
   world: World,
@@ -96,8 +114,66 @@ export function registerDailyAuction(
     return ids;
   };
 
+  const isDocketMode =
+    opts.auctionStartHour !== undefined && opts.auctionEndHour !== undefined;
+
+  // ── Docket mode ────────────────────────────────────────────────────
+  if (isDocketMode) {
+    const startHour = opts.auctionStartHour!;
+    const endHour = opts.auctionEndHour!;
+    if (
+      !Number.isInteger(startHour) ||
+      !Number.isInteger(endHour) ||
+      startHour < 0 ||
+      endHour > 23 ||
+      startHour > endHour
+    ) {
+      throw new Error(
+        `auctionStartHour/auctionEndHour must satisfy 0 <= start <= end <= 23; got ${startHour}..${endHour}`,
+      );
+    }
+    const slotCount = endHour - startHour + 1;
+
+    const unsubDayStart = world.onDayStart((day) => {
+      pickTodaysDocket(world, day, startHour, slotCount);
+    });
+    const unsubHour = world.onHour((clock) => {
+      if (clock.hour < startHour || clock.hour > endHour) return;
+      const lots = listAuctionLotsScheduledForHour(world.db, clock.hour);
+      // Only run lots whose listed_day is < today (matches the legacy
+      // "lots listed yesterday auction today" rhythm) and that haven't
+      // yet been cleared.
+      for (const lot of lots) {
+        if (lot.listedDay >= clock.day) continue;
+        const daysOpen = clock.day - lot.listedDay;
+        const effectiveFloor = Math.max(
+          1,
+          Math.round(
+            lot.floorPrice * Math.pow(floorDecay, Math.max(0, daysOpen - 1)),
+          ),
+        );
+        runOneLot(
+          world,
+          lot,
+          clock.day,
+          effectiveFloor,
+          opts.findBiddersForLot,
+          proceedsActorId,
+          collectAttendees,
+        );
+      }
+    });
+    return () => {
+      unsubDayStart();
+      unsubHour();
+    };
+  }
+
+  // ── Legacy single-hour mode ────────────────────────────────────────
   const runForDay = (day: number): void => {
-    const lots = listOpenAuctionLots(world.db).filter((l) => l.listedDay < day);
+    const lots = listOpenAuctionLots(world.db).filter(
+      (l) => l.listedDay < day,
+    );
     for (const lot of lots) {
       const daysOpen = day - lot.listedDay;
       if (daysOpen > maxDaysOpen) {
@@ -137,6 +213,70 @@ export function registerDailyAuction(
     });
   }
   return world.onDayStart((day) => runForDay(day));
+}
+
+/**
+ * Pick today's running docket: up to `slotCount` random open lots, each
+ * assigned a unique hour starting at `startHour`. Any remaining open
+ * lots are written off — they were "listed but not interesting enough
+ * for the dealer crowd," in fiction.
+ */
+function pickTodaysDocket(
+  world: World,
+  day: number,
+  startHour: number,
+  slotCount: number,
+): void {
+  // Eligible = listed on a previous day and still open.
+  const eligible = listOpenAuctionLots(world.db).filter(
+    (l) => l.listedDay < day,
+  );
+  if (eligible.length === 0) {
+    world.events.emit({
+      type: "auction.docket-published",
+      at: world.clock,
+      lots: [],
+    });
+    return;
+  }
+  // Deterministic shuffle using the world RNG. Fisher-Yates on a copy.
+  const shuffled = [...eligible];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(world.rng.next() * (i + 1));
+    const tmp = shuffled[i]!;
+    shuffled[i] = shuffled[j]!;
+    shuffled[j] = tmp;
+  }
+  const picked = shuffled.slice(0, slotCount);
+  const dropped = shuffled.slice(slotCount);
+
+  // Assign hours to picked lots.
+  const docket: { lotId: number; scheduledHour: number }[] = [];
+  for (let i = 0; i < picked.length; i += 1) {
+    const hour = startHour + i;
+    const lot = picked[i]!;
+    setAuctionLotScheduledHour(world.db, lot.id, hour);
+    docket.push({ lotId: lot.id, scheduledHour: hour });
+  }
+
+  // Drop the rest — they aren't interesting enough today and won't
+  // be reconsidered tomorrow either.
+  for (const lot of dropped) {
+    writeOffAuctionLot(world.db, lot.id, day);
+    world.events.emit({
+      type: "auction.written_off",
+      at: world.clock,
+      auctionLotId: lot.id,
+      reason: "not-on-docket",
+      daysOpen: day - lot.listedDay,
+    });
+  }
+
+  world.events.emit({
+    type: "auction.docket-published",
+    at: world.clock,
+    lots: docket,
+  });
 }
 
 function runOneLot(

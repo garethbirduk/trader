@@ -6,11 +6,15 @@ import { getItemKindById } from "../stock/items-repo.js";
 import { listActors } from "../actors/actors-repo.js";
 import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
 import {
+  actorHasInspectedLot,
+  actorKnowsLot,
+} from "./knowledge-repo.js";
+import {
   FALLBACK_BIDDER_PROFILE,
   appraiseLot,
   type BidderProfile,
 } from "./bidder-profile.js";
-import type { FlawType } from "../stock/types.js";
+import type { FlawType, QualityTier } from "../stock/types.js";
 
 export interface BidderOptions {
   /** Per-actor bidder profiles. Actors without one use `fallbackProfile`. */
@@ -31,6 +35,24 @@ export interface BidderOptions {
    * room never bid.
    */
   readonly requireActorAtLocationId?: number;
+  /**
+   * When true, actors must have learned about the lot
+   * (`actor_known_lots`) before they can bid. Knowledge is acquired
+   * via Sid's paper, the gallery, gossip, or attendance. Defaults
+   * `false` for backwards compatibility — tests and legacy single-hour
+   * auction setups that don't seed the knowledge table keep working.
+   * Production runs that register the listing-knowledge handler should
+   * pass `true` to enforce the gating.
+   */
+  readonly requireKnowledge?: boolean;
+  /**
+   * Tier assumed when computing valuation for an actor who knows about
+   * the lot but hasn't inspected it. The actor doesn't see the real
+   * tier on the listing; they bid against a guess. Default 'fair' — the
+   * mid-range guess between mint and broken. Inspection (a separate
+   * mechanic) reveals the real tier and lets the actor bid accurately.
+   */
+  readonly assumedTierWhenUninspected?: QualityTier;
 }
 
 const DEFAULT_TIER_MULT: Record<string, number> = {
@@ -67,12 +89,21 @@ export function makeBidders(
   const exclude = new Set(opts.excludeActorCodes ?? ["auction-house"]);
   const tierMult = opts.tierMultipliers ?? DEFAULT_TIER_MULT;
   const requireLocation = opts.requireActorAtLocationId;
+  const requireKnowledge = opts.requireKnowledge ?? false;
+  const assumedTier: QualityTier =
+    opts.assumedTierWhenUninspected ?? "fair";
 
   return (db, lot, _day, rng) => {
     const item = getItemKindById(db, lot.itemKindId);
     if (!item) return [];
+    // Two valuations: one against the lot's true tier (used by
+    // inspected bidders) and one against the assumed tier (used by
+    // un-inspected bidders who still know about the lot).
     const trueLotValue = Math.round(
       item.baseValue * (tierMult[lot.qualityTier] ?? 1) * lot.quantity,
+    );
+    const guessedLotValue = Math.round(
+      item.baseValue * (tierMult[assumedTier] ?? 1) * lot.quantity,
     );
 
     const bidders: AuctionBidder[] = [];
@@ -85,7 +116,25 @@ export function makeBidders(
       ) {
         continue;
       }
+      if (requireKnowledge && !actorKnowsLot(db, a.id, lot.id)) continue;
 
+      // Skip actors who chose to spend this hour inspecting some other
+      // lot. Inspection happens before the auction handler runs, and an
+      // actor only has one hour per slot — bidding and inspecting are
+      // mutually exclusive within the same hour. Only relevant when
+      // knowledge gating is on (legacy mode runs all eligible bidders).
+      if (
+        requireKnowledge &&
+        lot.scheduledHour !== null &&
+        actorBusyInspectingThisHour(db, a.id, _day, lot.scheduledHour)
+      ) {
+        continue;
+      }
+
+      // When knowledge gating is off, fall back to the legacy
+      // behaviour: bidders see the lot's actual tier. Inspection only
+      // matters when gating is on.
+      const inspected = !requireKnowledge || actorHasInspectedLot(db, a.id, lot.id);
       const baseProfile = profiles.get(a.id) ?? fallback;
       // If the actor has previously learned this item's flaw type
       // (via inspection or by being burned), force their detection to
@@ -95,12 +144,18 @@ export function makeBidders(
         item.flawType !== null && actorKnowsFlaw(db, a.id, item.id, item.flawType)
           ? withForcedFlawDetection(baseProfile, item.flawType)
           : baseProfile;
+      // Uninspected bidders see the listing (item kind, qty, floor) but
+      // not the quality tier; they bid against the assumed-tier guess.
+      const lotForAppraisal: AuctionLot = inspected
+        ? lot
+        : { ...lot, qualityTier: assumedTier };
+      const lotValueForAppraisal = inspected ? trueLotValue : guessedLotValue;
       const { valuation } = appraiseLot({
         profile,
-        lot,
+        lot: lotForAppraisal,
         category: item.category,
         flawType: item.flawType,
-        trueLotValue,
+        trueLotValue: lotValueForAppraisal,
         itemTargetCustomers: item.targetCustomers,
         rng,
       });
@@ -131,4 +186,19 @@ function withForcedFlawDetection(
     ...profile,
     flawTypeDetection: merged,
   };
+}
+
+function actorBusyInspectingThisHour(
+  db: DB,
+  actorId: number,
+  day: number,
+  hour: number,
+): boolean {
+  const row = db
+    .prepare<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM actor_inspected_lots
+        WHERE actor_id = @actor AND inspected_day = @day AND inspected_hour = @hour`,
+    )
+    .get({ actor: actorId, day, hour });
+  return (row?.n ?? 0) > 0;
 }

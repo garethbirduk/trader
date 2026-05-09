@@ -271,6 +271,21 @@ function summarizeEvent(
           🚨 raid — £{String(e.fine)} fine, {String(e.unitsSeized)} units seized
         </>
       );
+    case "auction.knowledge-acquired":
+      return (
+        <>
+          learned about {Lot(e.auctionLotId)}{" "}
+          <span className="muted">via {String(e.via)}</span>
+          {typeof e.fromActorId === "number" ? (
+            <>
+              {" "}
+              <span className="muted">from</span> {A(e.fromActorId)}
+            </>
+          ) : null}
+        </>
+      );
+    case "auction.lot-inspected":
+      return <>inspected {Lot(e.auctionLotId)}</>;
     default:
       return <></>;
   }

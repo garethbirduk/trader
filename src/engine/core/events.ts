@@ -67,7 +67,10 @@ export type WorldEvent =
   | { readonly type: "authority.raid"; readonly at: Clock; readonly actorId: number; readonly unitsSeized: number; readonly seizedItemCodes: readonly string[]; readonly fine: number; readonly heatBefore: number }
   | { readonly type: "auction.cleared"; readonly at: Clock; readonly auctionLotId: number; readonly winnerActorId: number; readonly unitPrice: number; readonly totalPrice: number; readonly floorPrice: number; readonly effectiveFloor: number; readonly openingAsk: number; readonly attendees: readonly number[]; readonly bidders: readonly AuctionBidderSnapshot[] }
   | { readonly type: "auction.unsold"; readonly at: Clock; readonly auctionLotId: number; readonly reason: string; readonly floorPrice: number; readonly effectiveFloor: number; readonly openingAsk: number; readonly attendees: readonly number[]; readonly bidders: readonly AuctionBidderSnapshot[] }
-  | { readonly type: "auction.written_off"; readonly at: Clock; readonly auctionLotId: number; readonly daysOpen: number }
+  | { readonly type: "auction.written_off"; readonly at: Clock; readonly auctionLotId: number; readonly daysOpen: number; readonly reason?: string }
+  | { readonly type: "auction.docket-published"; readonly at: Clock; readonly lots: readonly { readonly lotId: number; readonly scheduledHour: number }[] }
+  | { readonly type: "auction.knowledge-acquired"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number; readonly via: "paper" | "gallery" | "gossip" | "attended"; readonly fromActorId: number | null }
+  | { readonly type: "auction.lot-inspected"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number }
   | { readonly type: "pool.claimed"; readonly at: Clock; readonly poolId: number; readonly actorId: number; readonly quantity: number; readonly unitPrice: number }
   | { readonly type: "pool.spawned"; readonly at: Clock; readonly poolId: number; readonly itemKindId: number; readonly itemCode: string; readonly qualityTier: string; readonly quantity: number; readonly openingUnitPrice: number; readonly closingUnitPrice: number; readonly expiryDay: number; readonly isEasterEgg: boolean; readonly flavourText: string | null };
 
@@ -171,7 +174,16 @@ export function consoleHandler(): EventHandler {
         console.log(`[${stamp}] auction.unsold lot=${e.auctionLotId} reason=${e.reason} floor=£${e.effectiveFloor} bidders=${e.bidders.length}`);
         break;
       case "auction.written_off":
-        console.log(`[${stamp}] auction.written_off lot=${e.auctionLotId} after ${e.daysOpen} days unsold`);
+        console.log(`[${stamp}] auction.written_off lot=${e.auctionLotId} after ${e.daysOpen} days${e.reason ? ` (${e.reason})` : ""}`);
+        break;
+      case "auction.docket-published":
+        console.log(`[${stamp}] auction.docket-published lots=${e.lots.length}${e.lots.length > 0 ? ` (${e.lots.map((l) => `lot=${l.lotId}@${String(l.scheduledHour).padStart(2, "0")}:00`).join(", ")})` : ""}`);
+        break;
+      case "auction.knowledge-acquired":
+        console.log(`[${stamp}] auction.knowledge-acquired actor=${e.actorId} lot=${e.auctionLotId} via=${e.via}${e.fromActorId !== null ? ` from=${e.fromActorId}` : ""}`);
+        break;
+      case "auction.lot-inspected":
+        console.log(`[${stamp}] auction.lot-inspected actor=${e.actorId} lot=${e.auctionLotId}`);
         break;
       case "pool.claimed":
         console.log(`[${stamp}] pool.claimed pool=${e.poolId} actor=${e.actorId} ${e.quantity}@£${e.unitPrice}`);

@@ -260,6 +260,7 @@ function runOneAttempt(args: {
     quantity: proposalQty,
     floorPrice: 0,
     listedDay: clock.day,
+    scheduledHour: null,
     clearedDay: null,
     clearedPrice: null,
     clearedToActorId: null,

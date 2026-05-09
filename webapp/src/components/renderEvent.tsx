@@ -108,6 +108,46 @@ export function renderEvent(
       return (
         <>
           {Lot(e.auctionLotId)} written off after {String(e.daysOpen)} days
+          {typeof e.reason === "string" ? (
+            <>
+              {" — "}
+              <em>{e.reason}</em>
+            </>
+          ) : null}
+        </>
+      );
+    case "auction.docket-published": {
+      const lots = (e.lots as readonly { lotId: number; scheduledHour: number }[] | undefined) ?? [];
+      if (lots.length === 0) return <>no lots on today's docket</>;
+      return (
+        <>
+          today's docket ({lots.length} lot{lots.length === 1 ? "" : "s"}):{" "}
+          {lots.map((l, i) => (
+            <span key={l.lotId}>
+              {i > 0 ? ", " : ""}
+              {String(l.scheduledHour).padStart(2, "0")}:00 {Lot(l.lotId)}
+            </span>
+          ))}
+        </>
+      );
+    }
+    case "auction.knowledge-acquired":
+      return (
+        <>
+          {A(e.actorId)} learned about {Lot(e.auctionLotId)}{" "}
+          <span className="muted">via {String(e.via)}</span>
+          {typeof e.fromActorId === "number" ? (
+            <>
+              {" "}
+              <span className="muted">from</span> {A(e.fromActorId)}
+            </>
+          ) : null}
+        </>
+      );
+    case "auction.lot-inspected":
+      return (
+        <>
+          {A(e.actorId)} inspected {Lot(e.auctionLotId)}
         </>
       );
     case "deal.settled":

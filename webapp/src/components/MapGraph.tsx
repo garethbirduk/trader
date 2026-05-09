@@ -4,6 +4,7 @@ import type { Selection } from "../App.js";
 import { getActorColor, getInitials } from "../avatar.js";
 import { combinedPositions, useLayout, type MapLayout } from "../map-layout.js";
 import { getPlaybackSpeed, setMapBusy } from "../anim-state.js";
+import { isHourInAuctionWindow } from "../lib/auction-window.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -696,9 +697,7 @@ export function MapGraph(props: Props) {
             const isAuction =
               loc.id === dump.auctionLocationId ||
               (loc as { type?: string }).type === "auction";
-            const isStar =
-              isAuction && dump.auctionHour !== undefined &&
-              hour === dump.auctionHour;
+            const isStar = isAuction && isHourInAuctionWindow(dump, hour);
             const t = (loc as { type?: string }).type ?? "business";
             const fill = TYPE_FILL[t] ?? "#15161c";
             const stroke = isSel || isStar ? HEX_PLAYER : (TYPE_STROKE[t] ?? "#2a2b35");

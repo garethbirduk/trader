@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
+import { ActorRef, LotRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -37,6 +38,15 @@ interface LearnedRow {
   readonly lead: ExchangedLead;
 }
 
+interface LotKnowledgeRow {
+  readonly day: number;
+  readonly hour: number;
+  readonly lotId: number;
+  readonly via: string;
+  readonly fromActorId: number | null;
+  readonly inspected: boolean;
+}
+
 /** Identity of a piece of news, for dedup. Two leads with the same
  *  side + item + quality + counterparty are "the same fact" — refined
  *  qty/price estimates don't count as new news. */
@@ -50,6 +60,60 @@ function dedupKey(l: ExchangedLead): string {
 }
 
 export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
+  // Auction lot knowledge from `auction.knowledge-acquired` and
+  // `auction.lot-inspected` events. Newest first, deduped per lot —
+  // the inspection (if any) merges into the same row.
+  const lotRows = useMemo<readonly LotKnowledgeRow[]>(() => {
+    const byLot = new Map<number, LotKnowledgeRow>();
+    const events = [...dump.events]
+      .filter(
+        (e) =>
+          (e.type === "auction.knowledge-acquired" ||
+            e.type === "auction.lot-inspected") &&
+          e.actorId === actorId,
+      )
+      .filter((e) => e.at.day < day || (e.at.day === day && e.at.hour <= hour))
+      .sort((a, b) =>
+        a.at.day !== b.at.day ? a.at.day - b.at.day : a.at.hour - b.at.hour,
+      );
+    for (const e of events) {
+      const lotId = e.auctionLotId as number;
+      const existing = byLot.get(lotId);
+      if (e.type === "auction.knowledge-acquired") {
+        if (existing === undefined) {
+          byLot.set(lotId, {
+            day: e.at.day,
+            hour: e.at.hour,
+            lotId,
+            via: String(e.via),
+            fromActorId:
+              typeof e.fromActorId === "number" ? e.fromActorId : null,
+            inspected: false,
+          });
+        }
+      } else {
+        // lot-inspected — flag inspection on the existing row, or
+        // create one if knowledge was already there from a snapshot
+        // not represented here.
+        if (existing === undefined) {
+          byLot.set(lotId, {
+            day: e.at.day,
+            hour: e.at.hour,
+            lotId,
+            via: "inspected",
+            fromActorId: null,
+            inspected: true,
+          });
+        } else {
+          byLot.set(lotId, { ...existing, inspected: true });
+        }
+      }
+    }
+    return [...byLot.values()].sort((a, b) =>
+      a.day !== b.day ? b.day - a.day : b.hour - a.hour,
+    );
+  }, [dump.events, actorId, day, hour]);
+
   const rows = useMemo<readonly LearnedRow[]>(() => {
     // Walk events chronologically and keep the *first time* the actor
     // heard each distinct fact. Anything they already knew is dropped.
@@ -83,7 +147,7 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
     return learned;
   }, [dump.events, actorId, day, hour]);
 
-  if (rows.length === 0) {
+  if (rows.length === 0 && lotRows.length === 0) {
     return (
       <div className="side-lower-empty muted">
         Nothing yet — nothing new learned by this point.
@@ -94,24 +158,86 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
   return (
     <section className="knows-list">
       <header className="knows-header muted">
-        {rows.length} thing{rows.length === 1 ? "" : "s"} learned · as of D{day} {pad(hour)}:00
+        {rows.length + lotRows.length} thing
+        {rows.length + lotRows.length === 1 ? "" : "s"} learned · as of D{day}{" "}
+        {pad(hour)}:00
       </header>
-      <ul>
-        {rows.map((r, i) => (
-          <li key={i} className="knows-row">
-            <div className="knows-stamp-line">
-              <span className="knows-stamp">
-                D{pad(r.day)} {pad(r.hour)}:00
-              </span>
-              <span className="knows-body">
-                from <ActorChip dump={dump} actorId={r.fromActorId} onSelect={onSelect} size={14} /> at{" "}
-                <LocationLink dump={dump} locationId={r.atLocationId} onSelect={onSelect} />
-              </span>
-            </div>
-            <div className="knows-fact">{formatLead(r.lead, dump, onSelect)}</div>
-          </li>
-        ))}
-      </ul>
+      {lotRows.length > 0 ? (
+        <>
+          <div className="profile-section-label">Auction lots</div>
+          <ul>
+            {lotRows.map((r) => (
+              <li key={r.lotId} className="knows-row">
+                <div className="knows-stamp-line">
+                  <span className="knows-stamp">
+                    D{pad(r.day)} {pad(r.hour)}:00
+                  </span>
+                  <span className="knows-body">
+                    <LotRef
+                      dump={dump}
+                      id={r.lotId}
+                      onSelect={onSelect}
+                      variant="inline"
+                    />{" "}
+                    <span className="muted">
+                      via {r.via}
+                      {r.inspected ? " · inspected" : ""}
+                    </span>
+                    {r.fromActorId !== null ? (
+                      <>
+                        {" "}
+                        <span className="muted">from</span>{" "}
+                        <ActorRef
+                          dump={dump}
+                          id={r.fromActorId}
+                          onSelect={onSelect}
+                          variant="inline"
+                        />
+                      </>
+                    ) : null}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {rows.length > 0 ? (
+        <>
+          {lotRows.length > 0 ? (
+            <div className="profile-section-label">Gossip leads</div>
+          ) : null}
+          <ul>
+            {rows.map((r, i) => (
+              <li key={i} className="knows-row">
+                <div className="knows-stamp-line">
+                  <span className="knows-stamp">
+                    D{pad(r.day)} {pad(r.hour)}:00
+                  </span>
+                  <span className="knows-body">
+                    from{" "}
+                    <ActorChip
+                      dump={dump}
+                      actorId={r.fromActorId}
+                      onSelect={onSelect}
+                      size={14}
+                    />{" "}
+                    at{" "}
+                    <LocationLink
+                      dump={dump}
+                      locationId={r.atLocationId}
+                      onSelect={onSelect}
+                    />
+                  </span>
+                </div>
+                <div className="knows-fact">
+                  {formatLead(r.lead, dump, onSelect)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
 }

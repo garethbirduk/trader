@@ -81,6 +81,12 @@ export interface SnapshotActor {
   readonly cash: number;
   readonly currentLocationId: number | null;
   readonly heat: number;
+  /** Auction lot ids the actor has learned about. Optional for older
+   *  dumps. */
+  readonly knownAuctionLotIds?: readonly number[];
+  /** Auction lot ids the actor has personally inspected. Optional for
+   *  older dumps. */
+  readonly inspectedAuctionLotIds?: readonly number[];
 }
 
 export interface SnapshotStockLot {
@@ -140,6 +146,10 @@ export interface SnapshotAuctionLot {
   readonly quantity: number;
   readonly floorPrice: number;
   readonly listedDay: number;
+  /** Hour the engine scheduled this lot for today's running docket
+   *  (max one lot per hour, across the auction window). Null when the
+   *  lot has never been on the docket. Optional for older dumps. */
+  readonly scheduledHour?: number | null;
   readonly clearedDay: number | null;
   readonly clearedPrice: number | null;
   readonly clearedToActorId: number | null;
@@ -167,5 +177,14 @@ export interface RunDump {
   readonly playerActorId: number;
   readonly auctionHouseActorId: number;
   readonly auctionLocationId?: number;
+  /** Legacy single-hour auction; replaced by start/end. Older dumps
+   *  populate this; newer dumps populate the window pair instead. */
   readonly auctionHour?: number;
+  /** First hour of the daily auction window (inclusive). */
+  readonly auctionStartHour?: number;
+  /** Last hour of the daily auction window (inclusive). One lot per
+   *  hour from start..end fires within this range. */
+  readonly auctionEndHour?: number;
+  /** Where the morning newspaper is published (Sid's Café). */
+  readonly newspaperLocationId?: number;
 }

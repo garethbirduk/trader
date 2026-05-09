@@ -60,6 +60,12 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
         <dd>£{lot.floorPrice}</dd>
         <dt>Listed</dt>
         <dd>D{lot.listedDay}</dd>
+        {lot.scheduledHour !== undefined && lot.scheduledHour !== null ? (
+          <>
+            <dt>On the block</dt>
+            <dd>{String(lot.scheduledHour).padStart(2, "0")}:00</dd>
+          </>
+        ) : null}
         {auctionLocId !== undefined ? (
           <>
             <dt>Where</dt>
@@ -111,6 +117,74 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
           </>
         ) : null}
       </dl>
+      {snapshot !== null ? (
+        <KnowledgeSummary
+          dump={dump}
+          snapshot={snapshot}
+          lotId={lot.id}
+          onSelect={onSelect}
+        />
+      ) : null}
     </section>
+  );
+}
+
+function KnowledgeSummary({
+  dump,
+  snapshot,
+  lotId,
+  onSelect,
+}: {
+  dump: RunDump;
+  snapshot: DaySnapshot;
+  lotId: number;
+  onSelect: (s: Selection) => void;
+}) {
+  const knowers: number[] = [];
+  const inspectors: number[] = [];
+  for (const a of snapshot.actors) {
+    if ((a.knownAuctionLotIds ?? []).includes(lotId)) knowers.push(a.id);
+    if ((a.inspectedAuctionLotIds ?? []).includes(lotId)) inspectors.push(a.id);
+  }
+  if (knowers.length === 0 && inspectors.length === 0) return null;
+  return (
+    <>
+      {knowers.length > 0 ? (
+        <div className="loc-people">
+          <div className="profile-section-label">
+            Knows about ({knowers.length})
+          </div>
+          {knowers.map((aid) => (
+            <div key={aid} className="loc-person-row">
+              <ActorRef
+                dump={dump}
+                id={aid}
+                onSelect={onSelect}
+                variant="chip"
+                size={20}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {inspectors.length > 0 ? (
+        <div className="loc-people">
+          <div className="profile-section-label">
+            Inspected ({inspectors.length})
+          </div>
+          {inspectors.map((aid) => (
+            <div key={aid} className="loc-person-row">
+              <ActorRef
+                dump={dump}
+                id={aid}
+                onSelect={onSelect}
+                variant="chip"
+                size={20}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </>
   );
 }

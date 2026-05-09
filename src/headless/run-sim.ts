@@ -16,6 +16,8 @@ import { seedPlaceholderSkin } from "../skins/placeholder/index.js";
 import { DeliveryRegistry, registerDailyDelivery } from "../engine/world/delivery-scheduler.js";
 import { registerPoolExpiry } from "../engine/world/pool-expiry.js";
 import { registerDailyAuction } from "../engine/world/daily-auction.js";
+import { registerAuctionListingKnowledge } from "../engine/world/auction-listing-knowledge.js";
+import { registerAuctionInspection } from "../engine/world/auction-inspection.js";
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
 import { registerTrustReactions } from "../engine/world/trust-reactions.js";
 import { registerPolicyHourTick } from "../engine/world/policy-tick.js";
@@ -167,13 +169,40 @@ function main(): void {
 
     // 3 — interactions, all observe post-arrival positions.
     registerLocationGossip(world);
+    // Auction listing knowledge gates who can bid: actors learn today's
+    // docket by reading the paper at Sid's, visiting Sotheby's gallery,
+    // attending the auction itself, or via gossip. Without knowledge,
+    // bidders can't appear. Registered BEFORE inspection so actors who
+    // arrive at the gallery this hour learn the docket in time to act
+    // on it within the same hour.
+    registerAuctionListingKnowledge(world, {
+      newspaperLocationId: skin.newspaperLocationId,
+      paperFromHour: skin.paperFromHour,
+      galleryLocationId: skin.auctionLocationId,
+      galleryFromHour: skin.galleryFromHour,
+      auctionStartHour: skin.auctionStartHour,
+      auctionEndHour: skin.auctionEndHour,
+    });
+    // Inspection: actors at Sotheby's can spend a non-bidding hour
+    // reviewing a future lot to reveal its quality tier. Registered
+    // BEFORE the auction handler so the auction sees this hour's
+    // inspection records when filtering out occupied bidders.
+    registerAuctionInspection(world, {
+      galleryLocationId: skin.auctionLocationId,
+      auctionStartHour: skin.auctionStartHour,
+      auctionEndHour: skin.auctionEndHour,
+    });
     registerDailyAuction(world, {
       proceedsActorId: skin.auctionHouseActorId,
-      auctionHour: skin.auctionHour,
+      auctionStartHour: skin.auctionStartHour,
+      auctionEndHour: skin.auctionEndHour,
       auctionLocationId: skin.auctionLocationId,
       findBiddersForLot: makeDefaultBidders({
         profiles: skin.bidderProfiles,
         requireActorAtLocationId: skin.auctionLocationId,
+        // Production runs use docket + listing-knowledge: bidders must
+        // have learned about the lot to participate.
+        requireKnowledge: true,
       }),
     });
     const tradingIds = skin.tradingActorIds;
@@ -259,7 +288,9 @@ function main(): void {
         playerActorId: skin.playerActorId,
         auctionHouseActorId: skin.auctionHouseActorId,
         auctionLocationId: skin.auctionLocationId,
-        auctionHour: skin.auctionHour,
+        auctionStartHour: skin.auctionStartHour,
+        auctionEndHour: skin.auctionEndHour,
+        newspaperLocationId: skin.newspaperLocationId,
       });
       console.log(`\nrun dumped to ${opts.out}`);
     }
@@ -311,7 +342,9 @@ interface RunDump {
   readonly playerActorId: number;
   readonly auctionHouseActorId: number;
   readonly auctionLocationId: number;
-  readonly auctionHour: number;
+  readonly auctionStartHour: number;
+  readonly auctionEndHour: number;
+  readonly newspaperLocationId: number;
 }
 
 interface DaySnapshot {
@@ -321,6 +354,12 @@ interface DaySnapshot {
     cash: number;
     currentLocationId: number | null;
     heat: number;
+    /** Lot ids the actor knows about, learned via paper / gallery /
+     *  attended / gossip. Snapshot of cumulative knowledge as of the
+     *  end of `day`. */
+    knownAuctionLotIds: readonly number[];
+    /** Lot ids the actor has personally inspected, revealing quality. */
+    inspectedAuctionLotIds: readonly number[];
   }[];
   readonly stockLots: readonly {
     id: number;
@@ -374,6 +413,7 @@ interface DaySnapshot {
     quantity: number;
     floorPrice: number;
     listedDay: number;
+    scheduledHour: number | null;
     clearedDay: number | null;
     clearedPrice: number | null;
     clearedToActorId: number | null;
@@ -396,11 +436,31 @@ function captureSnapshot(
       current_location_id: number | null;
       score: number | null;
     }>;
+  const knownLotRows = db
+    .prepare(`SELECT actor_id, lot_id FROM actor_known_lots`)
+    .all() as ReadonlyArray<{ actor_id: number; lot_id: number }>;
+  const knownByActor = new Map<number, number[]>();
+  for (const r of knownLotRows) {
+    const list = knownByActor.get(r.actor_id) ?? [];
+    list.push(r.lot_id);
+    knownByActor.set(r.actor_id, list);
+  }
+  const inspectedLotRows = db
+    .prepare(`SELECT actor_id, lot_id FROM actor_inspected_lots`)
+    .all() as ReadonlyArray<{ actor_id: number; lot_id: number }>;
+  const inspectedByActor = new Map<number, number[]>();
+  for (const r of inspectedLotRows) {
+    const list = inspectedByActor.get(r.actor_id) ?? [];
+    list.push(r.lot_id);
+    inspectedByActor.set(r.actor_id, list);
+  }
   const actors = actorRows.map((r) => ({
     id: r.id,
     cash: r.cash,
     currentLocationId: r.current_location_id,
     heat: r.score ?? 0,
+    knownAuctionLotIds: knownByActor.get(r.id) ?? [],
+    inspectedAuctionLotIds: inspectedByActor.get(r.id) ?? [],
   }));
 
   const lotRows = db
@@ -542,8 +602,8 @@ function captureSnapshot(
   const lotAuctionRows = db
     .prepare(
       `SELECT id, source_pool_id, item_kind_id, quality_tier, quantity,
-              floor_price, listed_day, cleared_day, cleared_price,
-              cleared_to_actor_id
+              floor_price, listed_day, scheduled_hour, cleared_day,
+              cleared_price, cleared_to_actor_id
        FROM auction_lots`,
     )
     .all() as ReadonlyArray<{
@@ -554,6 +614,7 @@ function captureSnapshot(
       quantity: number;
       floor_price: number;
       listed_day: number;
+      scheduled_hour: number | null;
       cleared_day: number | null;
       cleared_price: number | null;
       cleared_to_actor_id: number | null;
@@ -566,6 +627,7 @@ function captureSnapshot(
     quantity: r.quantity,
     floorPrice: r.floor_price,
     listedDay: r.listed_day,
+    scheduledHour: r.scheduled_hour,
     clearedDay: r.cleared_day,
     clearedPrice: r.cleared_price,
     clearedToActorId: r.cleared_to_actor_id,

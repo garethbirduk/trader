@@ -46,8 +46,16 @@ export interface SkinSeedResult {
   readonly pubLocationIds: readonly number[];
   /** Where the daily auction is held; bidders must be physically present. */
   readonly auctionLocationId: number;
-  /** Hour of day at which the auction fires. */
-  readonly auctionHour: number;
+  /** First and last hour of the daily auction window. One lot per hour
+   *  runs in this inclusive range. */
+  readonly auctionStartHour: number;
+  readonly auctionEndHour: number;
+  /** Where the morning newspaper publishes the day's lot listing. */
+  readonly newspaperLocationId: number;
+  /** Hour from which the paper is on the table at Sid's. */
+  readonly paperFromHour: number;
+  /** Hour from which the listing is on display at Sotheby's. */
+  readonly galleryFromHour: number;
   readonly runLengthDays: number;
   /**
    * Actor ids that participate in trading autonomy (pub-deal /
@@ -105,7 +113,7 @@ const LOCATIONS: readonly LocationSpec[] = [
   { code: "peckham-flat", displayName: "Del's Flat", type: "home" },
   { code: "lockup", displayName: "The Lock-up", type: "business", openHours: { start: 8, end: 20 } },
   { code: "nags", displayName: "The Nag's Head", type: "pub", openHours: { start: 11, end: 23 } },
-  { code: "auction-house", displayName: "Sotheby's", type: "auction", openHours: { start: 9, end: 13 } },
+  { code: "auction-house", displayName: "Sotheby's", type: "auction", openHours: { start: 8, end: 17 } },
   { code: "boyce-auto-sales", displayName: "Boyce Autos", type: "business", openHours: { start: 9, end: 18 } },
   { code: "transworld-depot", displayName: "Transworld Depot", type: "business", openHours: { start: 6, end: 18 } },
   { code: "lambeth-council-yard", displayName: "Council Yard", type: "civic", openHours: { start: 6, end: 17 } },
@@ -133,8 +141,19 @@ const LOCATIONS: readonly LocationSpec[] = [
   { code: "off-map", displayName: "Off-map", type: "abstract" },
 ];
 
-/** Hour at which the daily auction is held. */
-const AUCTION_HOUR = 10;
+/**
+ * Daily auction window. The engine picks up to (END-START+1) lots
+ * randomly each morning and runs them one per hour during this range.
+ * Combined with the listing knowledge mechanic, dealers must visit
+ * Sid's Café (newspaper) or the gallery to learn what's on the docket
+ * — without that, they can't bid.
+ */
+const AUCTION_START_HOUR = 11;
+const AUCTION_END_HOUR = 16;
+/** Hour the newspaper drops at Sid's Café. */
+const PAPER_FROM_HOUR = 6;
+/** Hour the listing goes up in Sotheby's gallery. */
+const GALLERY_FROM_HOUR = 8;
 
 /**
  * Build an hour-by-hour schedule from an explicit list of {from, to,
@@ -187,8 +206,17 @@ function makeRoutineFromSpans(
     }
   }
   if (options?.attendsAuction) {
-    schedule.set(AUCTION_HOUR, "auction-house");
-    fixed.add(AUCTION_HOUR);
+    // Auction-attending dealers do the morning paper run at Sid's then
+    // spend the auction window at Sotheby's. The window covers reading
+    // the docket on arrival, inspecting where useful, and bidding.
+    // Their other commitments at these hours get displaced — going to
+    // the auction is the day's main commitment.
+    schedule.set(PAPER_FROM_HOUR, "sids-cafe");
+    fixed.add(PAPER_FROM_HOUR);
+    for (let h = AUCTION_START_HOUR; h <= AUCTION_END_HOUR; h += 1) {
+      schedule.set(h, "auction-house");
+      fixed.add(h);
+    }
   }
   const flexibleHours = new Set<number>();
   for (let h = 0; h < 24; h += 1) {
@@ -949,6 +977,11 @@ export function seedPlaceholderSkin(
     everydayItemIds,
   });
 
+  const newspaperLocationId = sidsId;
+  if (newspaperLocationId === undefined) {
+    throw new Error("placeholder skin must seed the sids-cafe location");
+  }
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -958,7 +991,11 @@ export function seedPlaceholderSkin(
     defaultReachableActorIds,
     pubLocationIds,
     auctionLocationId,
-    auctionHour: AUCTION_HOUR,
+    auctionStartHour: AUCTION_START_HOUR,
+    auctionEndHour: AUCTION_END_HOUR,
+    newspaperLocationId,
+    paperFromHour: PAPER_FROM_HOUR,
+    galleryFromHour: GALLERY_FROM_HOUR,
     runLengthDays,
     tradingActorIds,
     actorRoutines,
