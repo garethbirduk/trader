@@ -31,7 +31,9 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "pubdeal.agreed", label: "· agreed", types: ["pubdeal.agreed"] },
   { key: "pubdeal.walked", label: "· walked", types: ["pubdeal.walked"] },
   { key: "pubdeal.trust-blocked", label: "· trust-blocked", types: ["pubdeal.skipped-low-trust"] },
+  { key: "market.hour-summary", label: "Market hours", types: ["market.hour-summary"] },
   { key: "gossip.exchanged", label: "Gossip exchanges", types: ["gossip.exchanged"] },
+  { key: "dealer.day-mode", label: "Day-mode picks", types: ["dealer.day-mode"] },
   { key: "heat.raised", label: "Heat raises", types: ["heat.raised"] },
   { key: "authority.raid", label: "🚨 Raids", types: ["authority.raid"], warn: true },
 ];
@@ -127,6 +129,17 @@ export function Summary({ dump, day, snapshot, onSelect }: Props) {
     [grouped],
   );
 
+  const marketTotals = useMemo(() => {
+    const rows = grouped.get("market.hour-summary") ?? [];
+    let unitsSold = 0;
+    let revenue = 0;
+    for (const r of rows) {
+      unitsSold += Number((r.event as { unitsSold?: number }).unitsSold ?? 0);
+      revenue += Number((r.event as { revenue?: number }).revenue ?? 0);
+    }
+    return { unitsSold, revenue };
+  }, [grouped]);
+
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
@@ -208,6 +221,10 @@ export function Summary({ dump, day, snapshot, onSelect }: Props) {
               c.key === "pool.spawned" && easterEggSpawns > 0
                 ? ` (${easterEggSpawns} ✨)`
                 : "";
+            const marketSuffix =
+              c.key === "market.hour-summary" && marketTotals.unitsSold > 0
+                ? ` (${marketTotals.unitsSold}u · £${marketTotals.revenue})`
+                : "";
             return (
               <li key={c.key} className="cat-item">
                 <button
@@ -228,6 +245,7 @@ export function Summary({ dump, day, snapshot, onSelect }: Props) {
                   >
                     {count}
                     {eggSuffix}
+                    {marketSuffix}
                   </span>
                 </button>
                 {isOpen && count > 0 ? (

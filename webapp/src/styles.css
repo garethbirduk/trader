@@ -602,6 +602,37 @@ button.cat-child-row:hover { background: var(--panel-2); }
 .scene-tag-walk { background: var(--warn); color: #fff; }
 .scene-tag-gossip { background: var(--easter, #b18ad9); color: #0d0d12; }
 .scene-tag-raid { background: var(--warn); color: #fff; }
+.scene-tag-market { background: var(--accent); color: #0d0d12; }
+.market-histogram {
+  display: flex;
+  width: 100%;
+  height: 22px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 10px;
+  margin: 4px 0 6px 0;
+}
+.market-histogram-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0 4px;
+  color: #0d0d12;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.market-histogram-label {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.market-persona-old-dears { background: #c89090; }
+.market-persona-students  { background: #8aa3c8; }
+.market-persona-mums      { background: #c8a05a; }
+.market-persona-dads      { background: #6db3d3; }
 .scene-parties {
   display: flex;
   gap: 6px;

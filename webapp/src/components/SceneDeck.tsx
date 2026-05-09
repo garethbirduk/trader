@@ -127,6 +127,20 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
         });
       });
 
+    // Market — one tab covering every stall trading this hour.
+    const market = eventsThisHour.filter(
+      (e) => e.type === "market.hour-summary",
+    );
+    if (market.length > 0) {
+      list.push({
+        key: "market",
+        label: `Market (${market.length})`,
+        render: () => (
+          <MarketScene events={market} dump={dump} onSelect={onSelect} />
+        ),
+      });
+    }
+
     // Gossip — single tab covering every exchange this hour.
     const gossip = eventsThisHour.filter((e) => e.type === "gossip.exchanged");
     if (gossip.length > 0) {
@@ -1385,6 +1399,153 @@ function RaidScene({
       {codes.length > 0 ? (
         <div className="scene-row muted">{codes.join(", ")}</div>
       ) : null}
+    </section>
+  );
+}
+
+function MarketScene({
+  events,
+  dump,
+  onSelect,
+}: {
+  readonly events: readonly RunEvent[];
+  readonly dump: RunDump;
+  readonly onSelect: (s: Selection) => void;
+}) {
+  // All sellers this hour share the same footfall + customer mix —
+  // it's the same passing crowd. Take the mix from the first event.
+  const first = events[0]!;
+  const footfall = Number(first.footfall ?? 0);
+  const customerMix =
+    (first.customerMix as Record<string, number> | undefined) ?? {};
+  const personaIds = Object.keys(customerMix);
+  const personaTotal = Math.max(
+    1,
+    Object.values(customerMix).reduce((s, n) => s + Number(n), 0),
+  );
+  const itemName = (id: number) =>
+    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
+  const totalSold = events.reduce(
+    (s, e) => s + Number(e.unitsSold ?? 0),
+    0,
+  );
+  const totalRevenue = events.reduce(
+    (s, e) => s + Number(e.revenue ?? 0),
+    0,
+  );
+  const marketLocId = first.atLocationId as number | undefined;
+
+  return (
+    <section className="scene scene-market">
+      <header className="scene-header">
+        <span className="scene-tag scene-tag-market">★ Market</span>
+        {marketLocId !== undefined ? (
+          <LocationLink
+            dump={dump}
+            locationId={marketLocId}
+            onSelect={onSelect}
+          />
+        ) : null}
+        <span className="muted">
+          · {events.length} stall{events.length === 1 ? "" : "s"} · footfall{" "}
+          {footfall} · sold {totalSold} units · rev £{totalRevenue}
+        </span>
+      </header>
+
+      {/* Customer mix: a stacked-bar histogram showing the persona
+          breakdown of the hour's footfall. */}
+      {personaIds.length > 0 && footfall > 0 ? (
+        <div className="market-histogram" role="img" aria-label="customer mix">
+          {personaIds.map((id) => {
+            const count = Number(customerMix[id] ?? 0);
+            const pct = (count / personaTotal) * 100;
+            return (
+              <span
+                key={id}
+                className={`market-histogram-bar market-persona-${id}`}
+                style={{ flexBasis: `${pct}%` }}
+                title={`${count} ${id}`}
+              >
+                <span className="market-histogram-label">
+                  {count} {id}
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* Per-stall cards. Each is a lot-card with the seller, the
+          displayed item, the price, and a sold/offered split with a
+          per-persona breakdown of who bought. */}
+      <ul className="lot-cards">
+        {events.map((e, i) => {
+          const sellerId = e.sellerActorId as number;
+          const itemId = e.itemKindId as number;
+          const tier = String(e.qualityTier ?? "");
+          const price = Number(e.pricePerUnit ?? 0);
+          const sold = Number(e.unitsSold ?? 0);
+          const offered = Number(e.unitsOffered ?? 0);
+          const revenue = Number(e.revenue ?? 0);
+          const soldByPersona =
+            (e.soldByPersona as Record<string, number> | undefined) ?? {};
+          const soldOut = sold > 0 && sold === offered;
+          const empty = sold === 0;
+          const cardClass = `lot-card ${
+            soldOut
+              ? "lot-card-final lot-cleared"
+              : empty
+                ? "lot-card-final lot-unsold"
+                : "lot-card-live"
+          }`;
+          return (
+            <li key={i}>
+              <article className={cardClass}>
+                <div className="lot-line">
+                  <ActorChip
+                    dump={dump}
+                    actorId={sellerId}
+                    onSelect={onSelect}
+                    size={20}
+                  />
+                  <span className="muted">·</span>
+                  <strong>{itemName(itemId)}</strong>
+                  <span className={`tier tier-${tier}`}>{tier}</span>
+                </div>
+                <div className="lot-bidline">
+                  <span className="lot-price">£{price}</span>
+                  {empty ? (
+                    <span className="lot-hammer lot-hammer-unsold">
+                      0 sold
+                    </span>
+                  ) : (
+                    <span className="lot-hammer">
+                      ★ {sold}/{offered} sold · rev £{revenue}
+                    </span>
+                  )}
+                </div>
+                {Object.keys(soldByPersona).length > 0 ? (
+                  <div className="lot-room">
+                    <span className="lot-room-label muted">Bought by:</span>
+                    <ul className="lot-bidders">
+                      {Object.entries(soldByPersona).map(([persona, n]) => (
+                        <li
+                          key={persona}
+                          className="lot-bidder lot-bidder-in"
+                        >
+                          <span>
+                            {String(n)} {persona}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </article>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
