@@ -19,6 +19,7 @@ import { registerDailyAuction } from "../engine/world/daily-auction.js";
 import { registerAuctionListingKnowledge } from "../engine/world/auction-listing-knowledge.js";
 import { registerAuctionInspection } from "../engine/world/auction-inspection.js";
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
+import { registerMarketSale } from "../engine/world/market-sale.js";
 import { resolveEconomicsConfig } from "../engine/economics/config.js";
 import { registerTrustReactions } from "../engine/world/trust-reactions.js";
 import { registerPolicyHourTick } from "../engine/world/policy-tick.js";
@@ -228,6 +229,12 @@ function main(): void {
     registerPubDealAutonomy(world, {
       pubLocationIds: skin.pubLocationIds,
       npcActorIds: tradingIds,
+      bidderProfiles: skin.bidderProfiles,
+      economics: skin.economics,
+    });
+    registerMarketSale(world, {
+      marketLocationId: skin.marketLocationId,
+      sellerActorIds: new Set(skin.marketSellerActorIds),
       bidderProfiles: skin.bidderProfiles,
       economics: skin.economics,
     });

@@ -71,6 +71,22 @@ export type WorldEvent =
   | { readonly type: "auction.docket-published"; readonly at: Clock; readonly lots: readonly { readonly lotId: number; readonly scheduledHour: number }[] }
   | { readonly type: "auction.knowledge-acquired"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number; readonly via: "paper" | "gallery" | "gossip" | "attended"; readonly fromActorId: number | null }
   | { readonly type: "auction.lot-inspected"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number }
+  | {
+      readonly type: "market.hour-summary";
+      readonly at: Clock;
+      readonly sellerActorId: number;
+      readonly atLocationId: number;
+      readonly stockLotId: number;
+      readonly itemKindId: number;
+      readonly qualityTier: string;
+      readonly pricePerUnit: number;
+      readonly unitsOffered: number;
+      readonly unitsSold: number;
+      readonly revenue: number;
+      readonly footfall: number;
+      readonly customerMix: Readonly<Record<string, number>>;
+      readonly soldByPersona: Readonly<Record<string, number>>;
+    }
   | { readonly type: "pool.claimed"; readonly at: Clock; readonly poolId: number; readonly actorId: number; readonly quantity: number; readonly unitPrice: number }
   | { readonly type: "pool.spawned"; readonly at: Clock; readonly poolId: number; readonly itemKindId: number; readonly itemCode: string; readonly qualityTier: string; readonly quantity: number; readonly openingUnitPrice: number; readonly closingUnitPrice: number; readonly expiryDay: number; readonly isEasterEgg: boolean; readonly flavourText: string | null };
 
@@ -184,6 +200,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "auction.lot-inspected":
         console.log(`[${stamp}] auction.lot-inspected actor=${e.actorId} lot=${e.auctionLotId}`);
+        break;
+      case "market.hour-summary":
+        console.log(`[${stamp}] market.hour-summary seller=${e.sellerActorId} sold=${e.unitsSold}/${e.unitsOffered} @£${e.pricePerUnit}/u rev=£${e.revenue} footfall=${e.footfall}`);
         break;
       case "pool.claimed":
         console.log(`[${stamp}] pool.claimed pool=${e.poolId} actor=${e.actorId} ${e.quantity}@£${e.unitPrice}`);

@@ -101,6 +101,7 @@ export function LocationDiary({
       const here = presenceByHour.get(e.at.hour) ?? new Set();
       const matchesLoc =
         (e.type === "gossip.exchanged" && e.atLocationId === locationId) ||
+        (e.type === "market.hour-summary" && e.atLocationId === locationId) ||
         (e.type === "actor.travelled" && e.toLocationId === locationId);
       const matchesActor =
         (typeof e.actorId === "number" && here.has(e.actorId)) ||
@@ -547,6 +548,13 @@ function summarizeLocEvent(
       return (
         <>
           {A(e.actorId)} inspected {Lot(e.auctionLotId)}
+        </>
+      );
+    case "market.hour-summary":
+      return (
+        <>
+          {A(e.sellerActorId)}: {String(e.unitsSold)}/{String(e.unitsOffered)} ×{" "}
+          {I(e.itemKindId)} @ £{String(e.pricePerUnit)}/u — rev £{String(e.revenue)}
         </>
       );
     default:

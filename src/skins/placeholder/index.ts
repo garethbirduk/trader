@@ -56,6 +56,11 @@ export interface SkinSeedResult {
   readonly auctionEndHour: number;
   /** Where the morning newspaper publishes the day's lot listing. */
   readonly newspaperLocationId: number;
+  /** Peckham Market — where dealers run stalls during the day. */
+  readonly marketLocationId: number;
+  /** Actor ids eligible to run a market stall (dealer / fence /
+   *  player). Civilians passing through aren't sellers. */
+  readonly marketSellerActorIds: readonly number[];
   /** Hour from which the paper is on the table at Sid's. */
   readonly paperFromHour: number;
   /** Hour from which the listing is on display at Sotheby's. */
@@ -1002,6 +1007,24 @@ export function seedPlaceholderSkin(
     throw new Error("placeholder skin must seed the sids-cafe location");
   }
 
+  const marketLocationId = locByCode.get("peckham-market");
+  if (marketLocationId === undefined) {
+    throw new Error("placeholder skin must seed the peckham-market location");
+  }
+  // Anyone tagged dealer / fence / player runs a stall when at the market.
+  const marketSellerActorIds: number[] = [];
+  for (const [code, roles] of Object.entries(ACTOR_ROLES)) {
+    const id = actorByCode.get(code);
+    if (id === undefined) continue;
+    if (
+      roles.includes("dealer") ||
+      roles.includes("fence") ||
+      roles.includes("player")
+    ) {
+      marketSellerActorIds.push(id);
+    }
+  }
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -1016,6 +1039,8 @@ export function seedPlaceholderSkin(
     newspaperLocationId,
     paperFromHour: PAPER_FROM_HOUR,
     galleryFromHour: GALLERY_FROM_HOUR,
+    marketLocationId,
+    marketSellerActorIds,
     runLengthDays,
     tradingActorIds,
     economics,

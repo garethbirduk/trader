@@ -286,6 +286,13 @@ function summarizeEvent(
       );
     case "auction.lot-inspected":
       return <>inspected {Lot(e.auctionLotId)}</>;
+    case "market.hour-summary":
+      return (
+        <>
+          sold {String(e.unitsSold)}× {I(e.itemKindId)} @ £{String(e.pricePerUnit)}/u
+          {" "}<span className="muted">(rev £{String(e.revenue)})</span>
+        </>
+      );
     default:
       return <></>;
   }

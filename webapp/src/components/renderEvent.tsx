@@ -150,6 +150,28 @@ export function renderEvent(
           {A(e.actorId)} inspected {Lot(e.auctionLotId)}
         </>
       );
+    case "market.hour-summary": {
+      const sold = Number(e.unitsSold);
+      const offered = Number(e.unitsOffered);
+      const rev = Number(e.revenue);
+      const footfall = Number(e.footfall);
+      const mix = (e.customerMix ?? {}) as Record<string, number>;
+      const mixStr = Object.entries(mix)
+        .filter(([, n]) => n > 0)
+        .map(([k, n]) => `${n} ${k}`)
+        .join(", ");
+      return (
+        <>
+          {A(e.sellerActorId)} sold {sold}/{offered} ×{" "}
+          {I(e.itemKindId, String(e.qualityTier))} @ £{String(e.pricePerUnit)}/u —{" "}
+          rev £{rev}{" "}
+          <span className="muted">
+            (footfall {footfall}
+            {mixStr.length > 0 ? `: ${mixStr}` : ""})
+          </span>
+        </>
+      );
+    }
     case "deal.settled":
       return (
         <>
