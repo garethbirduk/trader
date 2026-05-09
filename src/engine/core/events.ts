@@ -1,6 +1,15 @@
 import type { Clock } from "./clock.js";
 import { formatClock } from "./clock.js";
 
+/** Value-shape of one turn in a pub-deal negotiation. The full sequence
+ *  is embedded on `pubdeal.agreed` / `pubdeal.walked` so the UI can play
+ *  the haggle out step-by-step. */
+export interface NegotiationTurnSnapshot {
+  readonly by: "seller" | "buyer";
+  readonly action: "open" | "counter" | "accept" | "walk";
+  readonly unitPrice: number | null;
+}
+
 /** Value-shape of a single bidder who turned up for an auction lot.
  *  `ceiling` is the maximum total they were prepared to pay; the resolver
  *  walks the bid ladder to determine the actual hammer price. Embedding
@@ -48,8 +57,8 @@ export type WorldEvent =
   | { readonly type: "policy.errored"; readonly at: Clock; readonly actorId: number; readonly policyId: string; readonly reason: string }
   | { readonly type: "pool.flushed"; readonly at: Clock; readonly poolId: number; readonly quantity: number; readonly destination: "auction" | "market" | "write_off"; readonly auctionLotId: number | null }
   | { readonly type: "pubdeal.attempted"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly itemKindId: number; readonly qualityTier: string; readonly quantity: number }
-  | { readonly type: "pubdeal.agreed"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly unitPrice: number; readonly quantity: number }
-  | { readonly type: "pubdeal.walked"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly reason: string }
+  | { readonly type: "pubdeal.agreed"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly unitPrice: number; readonly quantity: number; readonly turns: readonly NegotiationTurnSnapshot[] }
+  | { readonly type: "pubdeal.walked"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly reason: string; readonly turns: readonly NegotiationTurnSnapshot[] }
   | { readonly type: "pubdeal.skipped-low-trust"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly trustScore: number }
   | { readonly type: "gossip.exchanged"; readonly at: Clock; readonly atLocationId: number; readonly visitorActorId: number; readonly proprietorActorId: number; readonly exchanges: readonly GossipExchange[] }
   | { readonly type: "settlement.lead-claim"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly poolId: number; readonly quantity: number; readonly unitPrice: number; readonly throughLeadId: number }

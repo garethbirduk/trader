@@ -107,6 +107,15 @@ export interface SettleOptions {
   readonly events?: EventLog;
   /** Clock at settlement time, used for event timestamps. */
   readonly atClock?: Clock;
+  /**
+   * When true (the delivery scheduler's path), the seller is physically
+   * carrying the stock themselves — no flat per-trip delivery fee
+   * applies. The fee was a proxy for "Sotheby's ships it for you" in
+   * the old abstract day-start model; now that the seller actually
+   * drives the trip, charging it would double-count the cost. Defaults
+   * to false to preserve old behaviour for legacy callers.
+   */
+  readonly sellerSelfDelivers?: boolean;
 }
 
 /**
@@ -282,7 +291,10 @@ function consumeStockForLine(
     if (remaining === 0) break;
     if (deliveryLocationId !== null && !timeGatePassed) break;
 
-    if (deliveryLocationId !== null && !feeCharged) {
+    if (deliveryLocationId !== null && !feeCharged && !opts.sellerSelfDelivers) {
+      // Outsourced delivery (Sotheby's-ships-it model): a flat fee
+      // representing fuel + labour for the trip. Skipped when the
+      // seller physically delivers — the trip's already in their day.
       const seller = getActorById(db, sellerId);
       if (!seller) throw new Error(`seller ${sellerId} not found`);
       const fee = DELIVERY_FEE_BY_TIER[seller.transportCapacity];

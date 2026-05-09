@@ -725,27 +725,50 @@ function describeLogEntry(
   return { price: frame.price, text: `${bidderName} bids` };
 }
 
-function PubdealAgreedScene({
-  event,
-  dump,
-  snapshot,
-  hourEvents,
-  onSelect,
-}: {
+interface NegotiationTurn {
+  readonly by: "seller" | "buyer";
+  readonly action: "open" | "counter" | "accept" | "walk";
+  readonly unitPrice: number | null;
+}
+
+function PubdealAgreedScene(props: {
   readonly event: RunEvent;
   readonly dump: RunDump;
   readonly snapshot: DaySnapshot | null;
   readonly hourEvents: readonly RunEvent[];
   readonly onSelect: (s: Selection) => void;
 }) {
-  const dealId = event.dealId as number;
+  return <PubdealHagglePlayer kind="agreed" {...props} />;
+}
+
+function PubdealWalkedScene(props: {
+  readonly event: RunEvent;
+  readonly dump: RunDump;
+  readonly hourEvents: readonly RunEvent[];
+  readonly onSelect: (s: Selection) => void;
+}) {
+  return <PubdealHagglePlayer kind="walked" {...props} snapshot={null} />;
+}
+
+function PubdealHagglePlayer({
+  event,
+  dump,
+  snapshot,
+  hourEvents,
+  onSelect,
+  kind,
+}: {
+  readonly event: RunEvent;
+  readonly dump: RunDump;
+  readonly snapshot: DaySnapshot | null;
+  readonly hourEvents: readonly RunEvent[];
+  readonly onSelect: (s: Selection) => void;
+  readonly kind: "agreed" | "walked";
+}) {
   const sellerId = event.sellerActorId as number;
   const buyerId = event.buyerActorId as number;
-  const unitPrice = event.unitPrice as number;
-  const qty = event.quantity as number;
-  const deal: SnapshotDeal | undefined = snapshot?.deals.find((d) => d.id === dealId);
+  const turns = (event.turns as readonly NegotiationTurn[] | undefined) ?? [];
 
-  // Find the corresponding pubdeal.attempted to recover the location.
   const attempted = hourEvents.find(
     (e) =>
       e.type === "pubdeal.attempted" &&
@@ -753,40 +776,192 @@ function PubdealAgreedScene({
       e.buyerActorId === buyerId,
   );
   const locId = attempted?.locationId as number | undefined;
+  const itemId = attempted?.itemKindId as number | undefined;
+  const tier = attempted?.qualityTier as string | undefined;
+  const qty = attempted?.quantity as number | undefined;
+
+  const dealId = kind === "agreed" ? (event.dealId as number) : null;
+  const unitPrice = kind === "agreed" ? (event.unitPrice as number) : null;
+  const reason = kind === "walked" ? String(event.reason ?? "") : "";
+  const deal: SnapshotDeal | undefined =
+    dealId !== null ? snapshot?.deals.find((d) => d.id === dealId) : undefined;
 
   const itemName = (id: number) =>
     dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
+  const actorName = (id: number) =>
+    dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`;
+
+  // Frame index 0..turns.length. The final frame (index === turns.length)
+  // is the "deal struck" / "walked" stamp.
+  const frameKey = `${event.at.day}-${event.at.hour}-${sellerId}-${buyerId}-${dealId ?? "w"}`;
+  const [frameIdx, setFrameIdx] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  useEffect(() => {
+    setFrameIdx(0);
+    setPlaying(true);
+  }, [frameKey]);
+
+  const total = turns.length + 1; // +1 for the closing stamp frame
+  const timerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!playing) return;
+    if (frameIdx >= total - 1) return;
+    timerRef.current = window.setTimeout(() => {
+      setFrameIdx((i) => Math.min(i + 1, total - 1));
+    }, 600);
+    return () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    };
+  }, [frameIdx, playing, total]);
+
+  const isFinal = frameIdx >= total - 1;
+  const currentTurn: NegotiationTurn | null =
+    !isFinal && turns[frameIdx] !== undefined ? turns[frameIdx]! : null;
+
+  const stepBack = () => {
+    setPlaying(false);
+    setFrameIdx((i) => Math.max(0, i - 1));
+  };
+  const stepFwd = () => {
+    setPlaying(false);
+    setFrameIdx((i) => Math.min(total - 1, i + 1));
+  };
+  const togglePlay = () => {
+    if (isFinal) {
+      setFrameIdx(0);
+      setPlaying(true);
+    } else {
+      setPlaying((p) => !p);
+    }
+  };
 
   return (
-    <section className="scene scene-pubdeal">
+    <section className={`scene scene-pubdeal ${kind === "walked" ? "scene-walked" : ""}`}>
       <header className="scene-header">
-        <span className="scene-tag scene-tag-deal">Pub deal struck</span>
+        <span className={`scene-tag ${kind === "walked" ? "scene-tag-walk" : "scene-tag-deal"}`}>
+          {isFinal
+            ? kind === "agreed"
+              ? "Pub deal struck"
+              : "Couldn't agree"
+            : "Haggling…"}
+        </span>
         {locId !== undefined ? (
           <LocationLink dump={dump} locationId={locId} onSelect={onSelect} />
         ) : null}
       </header>
+
       <div className="scene-parties">
         <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={20} />
-        <span>→</span>
+        <span className="muted">{kind === "walked" && isFinal ? "↮" : "↔"}</span>
         <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={20} />
+        {itemId !== undefined ? (
+          <span className="muted">
+            · {qty} {itemName(itemId)}
+            {tier !== undefined ? ` (${tier})` : ""}
+          </span>
+        ) : null}
       </div>
-      <div className="scene-row muted">
-        deal {dealId} · qty {qty} @ £{unitPrice}{deal !== undefined ? ` · total £${deal.totalPrice}` : ""}
+
+      {/* Big price line: current offer if mid-haggle, agreed price on final. */}
+      <div className="lot-bidline">
+        {currentTurn !== null && currentTurn.unitPrice !== null ? (
+          <>
+            <span className="lot-price">£{currentTurn.unitPrice}</span>
+            <span className="muted">
+              from <ActorChip
+                dump={dump}
+                actorId={currentTurn.by === "seller" ? sellerId : buyerId}
+                onSelect={onSelect}
+                size={14}
+              />
+            </span>
+          </>
+        ) : isFinal && kind === "agreed" && unitPrice !== null ? (
+          <>
+            <span className="lot-price">£{unitPrice}</span>
+            <span className="lot-hammer">
+              ★ DEAL · qty {qty} @ £{unitPrice}
+              {deal !== undefined ? ` · total £${deal.totalPrice}` : ""}
+            </span>
+          </>
+        ) : (
+          <span className="lot-hammer lot-hammer-unsold">walked ({reason || "no overlap"})</span>
+        )}
       </div>
-      {deal !== undefined && deal.lines.length > 0 ? (
-        <ul className="scene-lines">
-          {deal.lines.map((line, i) => (
-            <li key={i}>
-              {line.quantity} {itemName(line.itemKindId)}{" "}
-              <span className="muted">({line.qualityTier})</span>{" "}
-              <span className="muted">@ £{line.unitPrice}</span>
+
+      {/* Auctioneer-style line: dialogue for the current turn. */}
+      <blockquote className="lot-call">
+        {renderHaggleQuote(currentTurn, isFinal, kind, sellerId, buyerId, unitPrice, actorName)}
+      </blockquote>
+
+      {/* Controls */}
+      {turns.length > 0 ? (
+        <div className="lot-controls muted">
+          <button
+            onClick={() => {
+              setFrameIdx(0);
+              setPlaying(true);
+            }}
+            title="restart and play"
+          >
+            ↺
+          </button>
+          <button onClick={stepBack} disabled={frameIdx === 0} title="back one step">
+            ◀
+          </button>
+          <button onClick={togglePlay} title={playing ? "pause" : isFinal ? "replay" : "play"}>
+            {playing ? "⏸" : "▶"}
+          </button>
+          <button onClick={stepFwd} disabled={isFinal} title="forward one step">
+            ▶|
+          </button>
+          <button
+            onClick={() => {
+              setPlaying(false);
+              setFrameIdx(total - 1);
+            }}
+            disabled={isFinal}
+            title="skip to end"
+          >
+            ⏭
+          </button>
+          <span>
+            {frameIdx + 1}/{total}
+          </span>
+        </div>
+      ) : null}
+
+      {/* Turn log */}
+      {turns.length > 0 ? (
+        <ol className="lot-log">
+          {turns.slice(0, frameIdx + 1).map((t, i) => (
+            <li key={i} className={i === Math.min(frameIdx, turns.length - 1) ? "lot-log-current" : ""}>
+              <span className="lot-log-price">
+                {t.unitPrice !== null ? `£${t.unitPrice}` : "—"}
+              </span>
+              <span className="lot-log-text">
+                {t.by} {t.action === "open" ? "opens" : t.action === "counter" ? "counters" : t.action === "accept" ? "accepts" : "walks"}
+                {t.action === "walk" ? "" : "."}
+              </span>
             </li>
           ))}
-        </ul>
+          {isFinal ? (
+            <li className="lot-log-current">
+              <span className="lot-log-price">
+                {kind === "agreed" && unitPrice !== null ? `£${unitPrice}` : "—"}
+              </span>
+              <span className="lot-log-text">
+                {kind === "agreed" ? `★ DEAL — ${actorName(sellerId)} → ${actorName(buyerId)}` : `walked — ${reason || "no overlap"}`}
+              </span>
+            </li>
+          ) : null}
+        </ol>
       ) : null}
-      {deal !== undefined ? (
+
+      {/* Deal details once agreed */}
+      {isFinal && kind === "agreed" && deal !== undefined ? (
         <div className="scene-row muted">
-          deadline D{deal.deadlineDay}
+          deal {dealId} · deadline D{deal.deadlineDay}
           {deal.deliveryLocationId !== null ? (
             <>
               {" "}· drop @{" "}
@@ -799,57 +974,35 @@ function PubdealAgreedScene({
   );
 }
 
-function PubdealWalkedScene({
-  event,
-  dump,
-  hourEvents,
-  onSelect,
-}: {
-  readonly event: RunEvent;
-  readonly dump: RunDump;
-  readonly hourEvents: readonly RunEvent[];
-  readonly onSelect: (s: Selection) => void;
-}) {
-  const sellerId = event.sellerActorId as number;
-  const buyerId = event.buyerActorId as number;
-  const reason = String(event.reason ?? "");
-  const attempted = hourEvents.find(
-    (e) =>
-      e.type === "pubdeal.attempted" &&
-      e.sellerActorId === sellerId &&
-      e.buyerActorId === buyerId,
-  );
-  const locId = attempted?.locationId as number | undefined;
-  const itemId = attempted?.itemKindId as number | undefined;
-  const tier = attempted?.qualityTier as string | undefined;
-  const qty = attempted?.quantity as number | undefined;
-  const itemName = (id: number) =>
-    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
-
-  return (
-    <section className="scene scene-pubdeal scene-walked">
-      <header className="scene-header">
-        <span className="scene-tag scene-tag-walk">Couldn't agree</span>
-        {locId !== undefined ? (
-          <LocationLink dump={dump} locationId={locId} onSelect={onSelect} />
-        ) : null}
-      </header>
-      <div className="scene-parties">
-        <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={20} />
-        <span className="muted">↮</span>
-        <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={20} />
-      </div>
-      {itemId !== undefined ? (
-        <div className="scene-row">
-          {qty} {itemName(itemId)}
-          {tier !== undefined ? (
-            <span className="muted"> ({tier})</span>
-          ) : null}
-        </div>
-      ) : null}
-      <div className="scene-row muted">{reason}</div>
-    </section>
-  );
+function renderHaggleQuote(
+  turn: NegotiationTurn | null,
+  isFinal: boolean,
+  kind: "agreed" | "walked",
+  sellerId: number,
+  buyerId: number,
+  finalPrice: number | null,
+  actorName: (id: number) => string,
+): string {
+  if (turn === null) {
+    if (kind === "agreed" && finalPrice !== null) {
+      return `Done. ${actorName(sellerId)} → ${actorName(buyerId)} at £${finalPrice}.`;
+    }
+    return `No deal — neither would budge.`;
+  }
+  const speaker = turn.by === "seller" ? actorName(sellerId) : actorName(buyerId);
+  const price = turn.unitPrice;
+  switch (turn.action) {
+    case "open":
+      return turn.by === "buyer"
+        ? `${speaker}: "How much?${price !== null ? ` I'd say £${price}."` : `"`}`
+        : `${speaker}: "${price !== null ? `For you, £${price}.` : `Make me an offer.`}"`;
+    case "counter":
+      return `${speaker}: "${price !== null ? `£${price}.` : `Pass.`}"`;
+    case "accept":
+      return `${speaker}: "${price !== null ? `£${price}? Done.` : `Done.`}"`;
+    case "walk":
+      return `${speaker} walks away.`;
+  }
 }
 
 function GossipScene({

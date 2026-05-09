@@ -3,14 +3,14 @@
   "runLengthDays": 14,
   "tally": {
     "poolFlushed": 8,
-    "poolClaimed": 14,
+    "poolClaimed": 12,
     "auctionCleared": 7,
     "auctionUnsold": 0,
-    "dealsSettled": 17,
+    "dealsSettled": 14,
     "dealsDefaulted": 5,
-    "pubdealsAttempted": 28,
-    "pubdealsAgreed": 25,
-    "pubdealsWalked": 3
+    "pubdealsAttempted": 22,
+    "pubdealsAgreed": 20,
+    "pubdealsWalked": 2
   },
   "events": [
     {
@@ -2099,7 +2099,34 @@
       "sellerActorId": 3,
       "buyerActorId": 2,
       "unitPrice": 6,
-      "quantity": 43
+      "quantity": 43,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 7
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 6
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 6
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 6
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -2315,7 +2342,29 @@
       "sellerActorId": 2,
       "buyerActorId": 5,
       "unitPrice": 4,
-      "quantity": 8
+      "quantity": 8,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 3
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 4
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 4
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 4
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -4114,16 +4163,6 @@
       ]
     },
     {
-      "type": "delivery.fee",
-      "at": {
-        "day": 2,
-        "hour": 17
-      },
-      "dealId": 2,
-      "sellerActorId": 2,
-      "fee": 5
-    },
-    {
       "type": "deal.settled",
       "at": {
         "day": 2,
@@ -5022,7 +5061,29 @@
       "sellerActorId": 5,
       "buyerActorId": 3,
       "unitPrice": 5,
-      "quantity": 5
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 4
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 5
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -7403,7 +7464,29 @@
       "sellerActorId": 2,
       "buyerActorId": 4,
       "unitPrice": 4,
-      "quantity": 9
+      "quantity": 9,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 3
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 4
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 4
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 4
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -7649,7 +7732,24 @@
       "sellerActorId": 5,
       "buyerActorId": 4,
       "unitPrice": 5,
-      "quantity": 5
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 5
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -7750,7 +7850,34 @@
       "sellerActorId": 4,
       "buyerActorId": 5,
       "unitPrice": 16,
-      "quantity": 7
+      "quantity": 7,
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 18
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 14
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 16
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 16
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 16
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -9478,16 +9605,6 @@
       ]
     },
     {
-      "type": "delivery.fee",
-      "at": {
-        "day": 4,
-        "hour": 17
-      },
-      "dealId": 4,
-      "sellerActorId": 2,
-      "fee": 5
-    },
-    {
       "type": "deal.settled",
       "at": {
         "day": 4,
@@ -9645,16 +9762,6 @@
       },
       "actorId": 24,
       "toLocationId": 27
-    },
-    {
-      "type": "delivery.fee",
-      "at": {
-        "day": 4,
-        "hour": 18
-      },
-      "dealId": 6,
-      "sellerActorId": 4,
-      "fee": 20
     },
     {
       "type": "deal.settled",
@@ -10197,7 +10304,34 @@
       "sellerActorId": 3,
       "buyerActorId": 2,
       "unitPrice": 6,
-      "quantity": 3
+      "quantity": 3,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 7
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 6
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 6
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 6
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -10871,16 +11005,6 @@
       },
       "actorId": 5,
       "toLocationId": 7
-    },
-    {
-      "type": "delivery.fee",
-      "at": {
-        "day": 5,
-        "hour": 7
-      },
-      "dealId": 1,
-      "sellerActorId": 3,
-      "fee": 50
     },
     {
       "type": "deal.defaulted",
@@ -13285,7 +13409,19 @@
       },
       "sellerActorId": 4,
       "buyerActorId": 5,
-      "reason": "buyer at ceiling, seller's ask still above it"
+      "reason": "buyer at ceiling, seller's ask still above it",
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 8
+        },
+        {
+          "by": "buyer",
+          "action": "walk",
+          "unitPrice": null
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -13670,16 +13806,6 @@
       "toLocationId": 7
     },
     {
-      "type": "delivery.fee",
-      "at": {
-        "day": 6,
-        "hour": 7
-      },
-      "dealId": 7,
-      "sellerActorId": 3,
-      "fee": 50
-    },
-    {
       "type": "deal.settled",
       "at": {
         "day": 6,
@@ -14057,7 +14183,7 @@
       "bidders": [
         {
           "actorId": 3,
-          "ceiling": 1268
+          "ceiling": 1318
         }
       ]
     },
@@ -15802,7 +15928,39 @@
       "sellerActorId": 3,
       "buyerActorId": 4,
       "unitPrice": 19,
-      "quantity": 6
+      "quantity": 6,
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 23
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 17
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 21
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 19
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 19
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 19
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -18625,7 +18783,24 @@
       "sellerActorId": 4,
       "buyerActorId": 3,
       "unitPrice": 27,
-      "quantity": 3
+      "quantity": 3,
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 26
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 27
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 27
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -18726,7 +18901,29 @@
       "sellerActorId": 5,
       "buyerActorId": 4,
       "unitPrice": 5,
-      "quantity": 3
+      "quantity": 3,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 4
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 5
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -19098,16 +19295,6 @@
       },
       "actorId": 5,
       "toLocationId": 7
-    },
-    {
-      "type": "delivery.fee",
-      "at": {
-        "day": 8,
-        "hour": 7
-      },
-      "dealId": 8,
-      "sellerActorId": 3,
-      "fee": 50
     },
     {
       "type": "deal.settled",
@@ -20650,16 +20837,6 @@
       "toLocationId": 27
     },
     {
-      "type": "delivery.fee",
-      "at": {
-        "day": 8,
-        "hour": 18
-      },
-      "dealId": 9,
-      "sellerActorId": 4,
-      "fee": 20
-    },
-    {
       "type": "deal.settled",
       "at": {
         "day": 8,
@@ -21360,7 +21537,29 @@
       "sellerActorId": 4,
       "buyerActorId": 3,
       "unitPrice": 5,
-      "quantity": 5
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 6
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 5
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -23919,7 +24118,29 @@
       "sellerActorId": 3,
       "buyerActorId": 4,
       "unitPrice": 14,
-      "quantity": 8
+      "quantity": 8,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 12
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 13
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 14
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 14
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -24165,7 +24386,39 @@
       "sellerActorId": 5,
       "buyerActorId": 2,
       "unitPrice": 21,
-      "quantity": 5
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 16
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 22
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 19
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 20
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 21
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 21
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -27187,16 +27440,6 @@
       ]
     },
     {
-      "type": "delivery.fee",
-      "at": {
-        "day": 11,
-        "hour": 6
-      },
-      "dealId": 12,
-      "sellerActorId": 3,
-      "fee": 50
-    },
-    {
       "type": "deal.settled",
       "at": {
         "day": 11,
@@ -29504,7 +29747,34 @@
       "sellerActorId": 5,
       "buyerActorId": 2,
       "unitPrice": 23,
-      "quantity": 5
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 24
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 21
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 22
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 23
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 23
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -29590,7 +29860,29 @@
       "sellerActorId": 2,
       "buyerActorId": 5,
       "unitPrice": 5,
-      "quantity": 8
+      "quantity": 8,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 4
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 5
+        }
+      ]
     },
     {
       "type": "pubdeal.attempted",
@@ -29615,7 +29907,39 @@
       "sellerActorId": 5,
       "buyerActorId": 2,
       "unitPrice": 21,
-      "quantity": 5
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 16
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 22
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 19
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 20
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 21
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 21
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -29919,7 +30243,17 @@
       "day": 12
     },
     {
-      "type": "deal.defaulted",
+      "type": "delivery.fee",
+      "at": {
+        "day": 12,
+        "hour": 0
+      },
+      "dealId": 15,
+      "sellerActorId": 2,
+      "fee": 5
+    },
+    {
+      "type": "deal.settled",
       "at": {
         "day": 12,
         "hour": 0
@@ -29927,7 +30261,7 @@
       "dealId": 15,
       "buyerActorId": 5,
       "sellerActorId": 2,
-      "reason": "seller transport boot can't move van items"
+      "totalPrice": 40
     },
     {
       "type": "pool.claimed",
@@ -32095,32 +32429,29 @@
       "sellerActorId": 3,
       "buyerActorId": 4,
       "unitPrice": 5,
-      "quantity": 1
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 12,
-        "hour": 19
-      },
-      "locationId": 3,
-      "sellerActorId": 2,
-      "buyerActorId": 4,
-      "itemKindId": 11,
-      "qualityTier": "shoddy",
-      "quantity": 30
-    },
-    {
-      "type": "pubdeal.agreed",
-      "at": {
-        "day": 12,
-        "hour": 19
-      },
-      "dealId": 18,
-      "sellerActorId": 2,
-      "buyerActorId": 4,
-      "unitPrice": 5,
-      "quantity": 30
+      "quantity": 1,
+      "turns": [
+        {
+          "by": "seller",
+          "action": "open",
+          "unitPrice": 6
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 5
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 5
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -32186,11 +32517,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 34,
-            "estimatedUnitPrice": 10,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 6
@@ -32201,14 +32532,14 @@
           "toActorId": 11,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 6,
-            "sourceActorId": 5
+            "hopCount": 3,
+            "sourceActorId": 2
           }
         }
       ]
@@ -32237,11 +32568,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
+            "subjectItemKindId": 3,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 11,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
             "hopCount": 6,
             "sourceActorId": 6
@@ -32252,14 +32583,14 @@
           "toActorId": 15,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
             "counterpartyActorId": 2,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 25,
+            "estimatedQuantity": 21,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
-            "hopCount": 5,
-            "sourceActorId": 12
+            "hopCount": 3,
+            "sourceActorId": 22
           }
         }
       ]
@@ -32290,10 +32621,10 @@
       },
       "locationId": 3,
       "sellerActorId": 5,
-      "buyerActorId": 2,
-      "itemKindId": 41,
-      "qualityTier": "good",
-      "quantity": 2
+      "buyerActorId": 4,
+      "itemKindId": 11,
+      "qualityTier": "shoddy",
+      "quantity": 5
     },
     {
       "type": "pubdeal.agreed",
@@ -32301,11 +32632,33 @@
         "day": 12,
         "hour": 20
       },
-      "dealId": 19,
+      "dealId": 18,
       "sellerActorId": 5,
-      "buyerActorId": 2,
-      "unitPrice": 21,
-      "quantity": 2
+      "buyerActorId": 4,
+      "unitPrice": 7,
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 6
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 7
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 7
+        },
+        {
+          "by": "seller",
+          "action": "accept",
+          "unitPrice": 7
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -32343,11 +32696,11 @@
             "side": "supply",
             "subjectItemKindId": 20,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 2,
+            "hopCount": 6,
             "sourceActorId": 6
           }
         },
@@ -32356,15 +32709,67 @@
           "toActorId": 25,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
+            "subjectItemKindId": 29,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 5
+            "sourceActorId": 3
           }
+        }
+      ]
+    },
+    {
+      "type": "pubdeal.attempted",
+      "at": {
+        "day": 12,
+        "hour": 21
+      },
+      "locationId": 3,
+      "sellerActorId": 5,
+      "buyerActorId": 2,
+      "itemKindId": 11,
+      "qualityTier": "shoddy",
+      "quantity": 5
+    },
+    {
+      "type": "pubdeal.agreed",
+      "at": {
+        "day": 12,
+        "hour": 21
+      },
+      "dealId": 19,
+      "sellerActorId": 5,
+      "buyerActorId": 2,
+      "unitPrice": 6,
+      "quantity": 5,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 5
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 7
+        },
+        {
+          "by": "buyer",
+          "action": "counter",
+          "unitPrice": 6
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 6
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 6
         }
       ]
     },
@@ -32443,29 +32848,6 @@
       },
       "actorId": 15,
       "toLocationId": 25
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 12,
-        "hour": 22
-      },
-      "locationId": 3,
-      "sellerActorId": 4,
-      "buyerActorId": 5,
-      "itemKindId": 11,
-      "qualityTier": "shoddy",
-      "quantity": 8
-    },
-    {
-      "type": "pubdeal.walked",
-      "at": {
-        "day": 12,
-        "hour": 22
-      },
-      "sellerActorId": 4,
-      "buyerActorId": 5,
-      "reason": "buyer at ceiling, seller's ask still above it"
     },
     {
       "type": "actor.departed",
@@ -32704,15 +33086,26 @@
       "auctionLotId": 7
     },
     {
-      "type": "pool.claimed",
+      "type": "deal.settled",
       "at": {
         "day": 13,
         "hour": 0
       },
-      "poolId": 9,
-      "actorId": 3,
-      "quantity": 8,
-      "unitPrice": 9
+      "dealId": 18,
+      "buyerActorId": 4,
+      "sellerActorId": 5,
+      "totalPrice": 35
+    },
+    {
+      "type": "deal.defaulted",
+      "at": {
+        "day": 13,
+        "hour": 0
+      },
+      "dealId": 19,
+      "buyerActorId": 2,
+      "sellerActorId": 5,
+      "reason": "seller short on deal 19 line 19: have 3, need 5"
     },
     {
       "type": "pool.spawned",
@@ -32721,15 +33114,32 @@
         "hour": 0
       },
       "poolId": 11,
-      "itemKindId": 4,
-      "itemCode": "toasters",
-      "qualityTier": "fair",
-      "quantity": 198,
-      "openingUnitPrice": 13,
-      "closingUnitPrice": 5,
-      "expiryDay": 17,
+      "itemKindId": 35,
+      "itemCode": "puzzles",
+      "qualityTier": "good",
+      "quantity": 145,
+      "openingUnitPrice": 9,
+      "closingUnitPrice": 4,
+      "expiryDay": 14,
       "isEasterEgg": false,
       "flavourText": null
+    },
+    {
+      "type": "pool.spawned",
+      "at": {
+        "day": 13,
+        "hour": 0
+      },
+      "poolId": 12,
+      "itemKindId": 81,
+      "itemCode": "ee-anthem-watches",
+      "qualityTier": "fair",
+      "quantity": 22,
+      "openingUnitPrice": 37,
+      "closingUnitPrice": 15,
+      "expiryDay": 15,
+      "isEasterEgg": true,
+      "flavourText": "Play 36 different national anthems on the hour. Loudly."
     },
     {
       "type": "actor.departed",
@@ -33289,13 +33699,13 @@
           "toActorId": 17,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
+            "subjectItemKindId": 20,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 34,
-            "estimatedUnitPrice": 10,
+            "counterpartyActorId": 2,
+            "estimatedQuantity": 21,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 3,
             "sourceActorId": 17
           }
         },
@@ -33304,11 +33714,11 @@
           "toActorId": 5,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 5
@@ -33340,13 +33750,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 2,
+            "hopCount": 4,
             "sourceActorId": 6
           }
         },
@@ -33355,14 +33765,14 @@
           "toActorId": 11,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "subjectItemKindId": 9,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 37,
+            "estimatedUnitPrice": 16,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 2
+            "hopCount": 5,
+            "sourceActorId": 3
           }
         }
       ]
@@ -33391,13 +33801,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 17,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 8,
             "sourceActorId": 6
           }
         },
@@ -33406,11 +33816,11 @@
           "toActorId": 13,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 9,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 37,
-            "estimatedUnitPrice": 16,
+            "subjectItemKindId": 13,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 3,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 39,
             "confidence": "cold",
             "hopCount": 5,
             "sourceActorId": 3
@@ -33521,13 +33931,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 34,
-            "estimatedUnitPrice": 10,
+            "subjectItemKindId": 29,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 2,
+            "hopCount": 8,
             "sourceActorId": 6
           }
         },
@@ -33536,14 +33946,14 @@
           "toActorId": 2,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "subjectItemKindId": 4,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 3
+            "sourceActorId": 11
           }
         }
       ]
@@ -33581,13 +33991,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 9,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 37,
-            "estimatedUnitPrice": 16,
+            "subjectItemKindId": 13,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 3,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 39,
             "confidence": "cold",
-            "hopCount": 6,
+            "hopCount": 4,
             "sourceActorId": 6
           }
         },
@@ -33596,14 +34006,14 @@
           "toActorId": 8,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
+            "subjectItemKindId": 13,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "counterpartyActorId": 3,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 39,
             "confidence": "cold",
-            "hopCount": 11,
-            "sourceActorId": 13
+            "hopCount": 3,
+            "sourceActorId": 2
           }
         }
       ]
@@ -33632,13 +34042,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 34,
-            "estimatedUnitPrice": 10,
+            "subjectItemKindId": 29,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 7,
+            "hopCount": 8,
             "sourceActorId": 6
           }
         },
@@ -33647,14 +34057,14 @@
           "toActorId": 12,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 2,
+            "estimatedQuantity": 21,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
             "hopCount": 3,
-            "sourceActorId": 2
+            "sourceActorId": 8
           }
         }
       ]
@@ -33910,13 +34320,13 @@
           "toActorId": 17,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 21,
+            "subjectItemKindId": 20,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 23,
-            "estimatedQuantity": 10,
-            "estimatedUnitPrice": 7,
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 2,
+            "hopCount": 8,
             "sourceActorId": 17
           }
         },
@@ -33925,14 +34335,14 @@
           "toActorId": 23,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 21,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 23,
+            "estimatedQuantity": 10,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
-            "hopCount": 8,
-            "sourceActorId": 6
+            "hopCount": 3,
+            "sourceActorId": 23
           }
         }
       ]
@@ -34123,11 +34533,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "subjectItemKindId": 3,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 11,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 6
@@ -34138,28 +34548,17 @@
           "toActorId": 5,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
+            "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 9,
-            "sourceActorId": 12
+            "hopCount": 3,
+            "sourceActorId": 13
           }
         }
       ]
-    },
-    {
-      "type": "deal.settled",
-      "at": {
-        "day": 13,
-        "hour": 17
-      },
-      "dealId": 19,
-      "buyerActorId": 2,
-      "sellerActorId": 5,
-      "totalPrice": 42
     },
     {
       "type": "actor.departed",
@@ -34342,14 +34741,14 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
+            "subjectItemKindId": 12,
+            "subjectQualityTier": "fair",
             "counterpartyActorId": 2,
             "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
-            "confidence": "cold",
-            "hopCount": 6,
-            "sourceActorId": 6
+            "estimatedUnitPrice": 8,
+            "confidence": "warm",
+            "hopCount": 0,
+            "sourceActorId": null
           }
         },
         {
@@ -34357,14 +34756,14 @@
           "toActorId": 2,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 13
+            "hopCount": 9,
+            "sourceActorId": 22
           }
         }
       ]
@@ -34393,11 +34792,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
+            "subjectItemKindId": 9,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 37,
+            "estimatedUnitPrice": 16,
             "confidence": "cold",
             "hopCount": 6,
             "sourceActorId": 6
@@ -34408,14 +34807,14 @@
           "toActorId": 3,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 9,
-            "sourceActorId": 22
+            "hopCount": 5,
+            "sourceActorId": 25
           }
         }
       ]
@@ -34444,14 +34843,14 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
-            "confidence": "cold",
-            "hopCount": 6,
-            "sourceActorId": 6
+            "subjectItemKindId": 81,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 37,
+            "confidence": "warm",
+            "hopCount": 0,
+            "sourceActorId": null
           }
         },
         {
@@ -34459,14 +34858,14 @@
           "toActorId": 4,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
+            "subjectItemKindId": 13,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "counterpartyActorId": 3,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 39,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 25
+            "sourceActorId": 11
           }
         }
       ]
@@ -34495,13 +34894,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "subjectItemKindId": 3,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 11,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
-            "hopCount": 12,
+            "hopCount": 6,
             "sourceActorId": 6
           }
         },
@@ -34510,14 +34909,14 @@
           "toActorId": 8,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 37,
-            "subjectQualityTier": "fair",
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
             "counterpartyActorId": 8,
-            "estimatedQuantity": 30,
-            "estimatedUnitPrice": 5,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 15
+            "hopCount": 6,
+            "sourceActorId": 17
           }
         }
       ]
@@ -34546,13 +34945,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 10,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 39,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 4,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
-            "hopCount": 2,
+            "hopCount": 4,
             "sourceActorId": 6
           }
         },
@@ -34561,14 +34960,14 @@
           "toActorId": 9,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 4,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
-            "hopCount": 6,
-            "sourceActorId": 17
+            "hopCount": 5,
+            "sourceActorId": 11
           }
         }
       ]
@@ -34597,13 +34996,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 7,
             "sourceActorId": 6
           }
         },
@@ -34618,8 +35017,8 @@
             "estimatedQuantity": 29,
             "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 11,
-            "sourceActorId": 13
+            "hopCount": 7,
+            "sourceActorId": 11
           }
         }
       ]
@@ -34663,14 +35062,14 @@
           "toActorId": 13,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "subjectItemKindId": 29,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 7,
-            "sourceActorId": 15
+            "hopCount": 9,
+            "sourceActorId": 12
           }
         }
       ]
@@ -34708,13 +35107,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
+            "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 5,
+            "hopCount": 4,
             "sourceActorId": 5
           }
         },
@@ -34723,14 +35122,14 @@
           "toActorId": 17,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 9,
-            "sourceActorId": 12
+            "hopCount": 7,
+            "sourceActorId": 4
           }
         }
       ]
@@ -34774,14 +35173,14 @@
           "toActorId": 22,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 4,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 8
+            "hopCount": 5,
+            "sourceActorId": 12
           }
         }
       ]
@@ -34850,13 +35249,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
+            "subjectItemKindId": 29,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 10,
             "sourceActorId": 6
           }
         },
@@ -34865,14 +35264,14 @@
           "toActorId": 11,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "subjectItemKindId": 29,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 5,
-            "sourceActorId": 15
+            "hopCount": 7,
+            "sourceActorId": 11
           }
         }
       ]
@@ -34901,11 +35300,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 2,
+            "subjectItemKindId": 17,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 25,
             "estimatedQuantity": 31,
-            "estimatedUnitPrice": 25,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
             "hopCount": 6,
             "sourceActorId": 6
@@ -34916,14 +35315,14 @@
           "toActorId": 15,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 17,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
-            "hopCount": 5,
-            "sourceActorId": 13
+            "hopCount": 7,
+            "sourceActorId": 22
           }
         }
       ]
@@ -34953,10 +35352,10 @@
         "hour": 20
       },
       "locationId": 3,
-      "sellerActorId": 2,
+      "sellerActorId": 3,
       "buyerActorId": 4,
-      "itemKindId": 20,
-      "qualityTier": "good",
+      "itemKindId": 12,
+      "qualityTier": "fair",
       "quantity": 4
     },
     {
@@ -34966,33 +35365,27 @@
         "hour": 20
       },
       "dealId": 20,
-      "sellerActorId": 2,
+      "sellerActorId": 3,
       "buyerActorId": 4,
-      "unitPrice": 5,
-      "quantity": 4
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 13,
-        "hour": 20
-      },
-      "locationId": 3,
-      "sellerActorId": 2,
-      "buyerActorId": 4,
-      "itemKindId": 11,
-      "qualityTier": "shoddy",
-      "quantity": 15
-    },
-    {
-      "type": "pubdeal.walked",
-      "at": {
-        "day": 13,
-        "hour": 20
-      },
-      "sellerActorId": 2,
-      "buyerActorId": 4,
-      "reason": "buyer at ceiling, seller's ask still above it"
+      "unitPrice": 7,
+      "quantity": 4,
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 7
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 7
+        },
+        {
+          "by": "buyer",
+          "action": "accept",
+          "unitPrice": 7
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -35028,11 +35421,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 6
@@ -35043,69 +35436,19 @@
           "toActorId": 25,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 17
+            "sourceActorId": 2
           }
         }
       ]
     },
     {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 13,
-        "hour": 21
-      },
-      "locationId": 3,
-      "sellerActorId": 4,
-      "buyerActorId": 2,
-      "itemKindId": 11,
-      "qualityTier": "shoddy",
-      "quantity": 8
-    },
-    {
-      "type": "pubdeal.agreed",
-      "at": {
-        "day": 13,
-        "hour": 21
-      },
-      "dealId": 21,
-      "sellerActorId": 4,
-      "buyerActorId": 2,
-      "unitPrice": 6,
-      "quantity": 8
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 13,
-        "hour": 21
-      },
-      "locationId": 3,
-      "sellerActorId": 2,
-      "buyerActorId": 3,
-      "itemKindId": 48,
-      "qualityTier": "fair",
-      "quantity": 3
-    },
-    {
-      "type": "pubdeal.agreed",
-      "at": {
-        "day": 13,
-        "hour": 21
-      },
-      "dealId": 22,
-      "sellerActorId": 2,
-      "buyerActorId": 3,
-      "unitPrice": 31,
-      "quantity": 3
-    },
-    {
       "type": "actor.departed",
       "at": {
         "day": 13,
@@ -35180,31 +35523,6 @@
       },
       "actorId": 15,
       "toLocationId": 25
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 13,
-        "hour": 22
-      },
-      "locationId": 3,
-      "sellerActorId": 4,
-      "buyerActorId": 5,
-      "itemKindId": 7,
-      "qualityTier": "good",
-      "quantity": 3
-    },
-    {
-      "type": "pubdeal.agreed",
-      "at": {
-        "day": 13,
-        "hour": 22
-      },
-      "dealId": 23,
-      "sellerActorId": 4,
-      "buyerActorId": 5,
-      "unitPrice": 7,
-      "quantity": 3
     },
     {
       "type": "actor.departed",
@@ -35443,32 +35761,21 @@
       "auctionLotId": 8
     },
     {
-      "type": "pool.claimed",
-      "at": {
-        "day": 14,
-        "hour": 0
-      },
-      "poolId": 10,
-      "actorId": 4,
-      "quantity": 8,
-      "unitPrice": 6
-    },
-    {
       "type": "pool.spawned",
       "at": {
         "day": 14,
         "hour": 0
       },
-      "poolId": 12,
-      "itemKindId": 34,
-      "itemCode": "dolls",
+      "poolId": 13,
+      "itemKindId": 73,
+      "itemCode": "ee-romanian-riesling",
       "qualityTier": "fair",
-      "quantity": 198,
-      "openingUnitPrice": 12,
-      "closingUnitPrice": 5,
-      "expiryDay": 17,
-      "isEasterEgg": false,
-      "flavourText": null
+      "quantity": 19,
+      "openingUnitPrice": 80,
+      "closingUnitPrice": 32,
+      "expiryDay": 18,
+      "isEasterEgg": true,
+      "flavourText": "Dodgy enough that he had to lay low and skip the country."
     },
     {
       "type": "actor.departed",
@@ -35523,13 +35830,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 6,
+            "hopCount": 4,
             "sourceActorId": 6
           }
         },
@@ -35538,27 +35845,17 @@
           "toActorId": 3,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 37,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 30,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 8
+            "hopCount": 5,
+            "sourceActorId": 25
           }
         }
       ]
-    },
-    {
-      "type": "delivery.fee",
-      "at": {
-        "day": 14,
-        "hour": 6
-      },
-      "dealId": 17,
-      "sellerActorId": 3,
-      "fee": 50
     },
     {
       "type": "deal.settled",
@@ -35939,15 +36236,13 @@
         "hour": 10
       },
       "auctionLotId": 7,
-      "winnerActorId": 8,
-      "unitPrice": 29,
-      "totalPrice": 200,
+      "winnerActorId": 3,
+      "unitPrice": 21,
+      "totalPrice": 150,
       "floorPrice": 91,
       "effectiveFloor": 91,
       "openingAsk": 90,
       "attendees": [
-        2,
-        4,
         7,
         18,
         22,
@@ -35955,12 +36250,20 @@
       ],
       "bidders": [
         {
+          "actorId": 2,
+          "ceiling": 94
+        },
+        {
           "actorId": 3,
-          "ceiling": 181
+          "ceiling": 160
+        },
+        {
+          "actorId": 4,
+          "ceiling": 92
         },
         {
           "actorId": 8,
-          "ceiling": 200
+          "ceiling": 174
         }
       ]
     },
@@ -36161,11 +36464,11 @@
           "toActorId": 17,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "subjectItemKindId": 3,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 11,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 6
@@ -36176,14 +36479,14 @@
           "toActorId": 5,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 44,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 18,
-            "estimatedUnitPrice": 1,
+            "subjectItemKindId": 4,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
-            "hopCount": 2,
-            "sourceActorId": 6
+            "hopCount": 7,
+            "sourceActorId": 23
           }
         }
       ]
@@ -36212,13 +36515,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
+            "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "counterpartyActorId": 2,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 25,
             "confidence": "cold",
-            "hopCount": 10,
+            "hopCount": 6,
             "sourceActorId": 6
           }
         },
@@ -36229,12 +36532,12 @@
             "side": "supply",
             "subjectItemKindId": 20,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 2,
+            "estimatedQuantity": 21,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
-            "hopCount": 5,
-            "sourceActorId": 25
+            "hopCount": 3,
+            "sourceActorId": 22
           }
         }
       ]
@@ -36263,13 +36566,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 9,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 37,
+            "estimatedUnitPrice": 16,
             "confidence": "cold",
-            "hopCount": 8,
+            "hopCount": 6,
             "sourceActorId": 6
           }
         },
@@ -36278,14 +36581,14 @@
           "toActorId": 13,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 8
+            "sourceActorId": 3
           }
         }
       ]
@@ -36393,13 +36696,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
+            "subjectItemKindId": 21,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "counterpartyActorId": 23,
+            "estimatedQuantity": 10,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 5,
             "sourceActorId": 6
           }
         },
@@ -36408,14 +36711,14 @@
           "toActorId": 2,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 44,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 18,
-            "estimatedUnitPrice": 1,
+            "subjectItemKindId": 21,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 23,
+            "estimatedQuantity": 10,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 2
+            "hopCount": 6,
+            "sourceActorId": 9
           }
         }
       ]
@@ -36453,13 +36756,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 3,
+            "subjectItemKindId": 17,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 11,
-            "estimatedUnitPrice": 7,
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
-            "hopCount": 6,
+            "hopCount": 4,
             "sourceActorId": 6
           }
         },
@@ -36468,14 +36771,14 @@
           "toActorId": 8,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
+            "subjectItemKindId": 44,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 25,
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 18,
+            "estimatedUnitPrice": 1,
             "confidence": "cold",
-            "hopCount": 7,
-            "sourceActorId": 15
+            "hopCount": 3,
+            "sourceActorId": 2
           }
         }
       ]
@@ -36504,11 +36807,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 6
@@ -36519,14 +36822,14 @@
           "toActorId": 12,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
+            "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 11,
-            "sourceActorId": 13
+            "hopCount": 5,
+            "sourceActorId": 25
           }
         }
       ]
@@ -36797,14 +37100,14 @@
           "toActorId": 23,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 4,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
-            "hopCount": 8,
-            "sourceActorId": 6
+            "hopCount": 7,
+            "sourceActorId": 23
           }
         }
       ]
@@ -36950,17 +37253,7 @@
       },
       "actorId": 2,
       "fromLocationId": 5,
-      "toLocationId": 3
-    },
-    {
-      "type": "actor.departed",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "actorId": 4,
-      "fromLocationId": 2,
-      "toLocationId": 4
+      "toLocationId": 10
     },
     {
       "type": "actor.departed",
@@ -36979,58 +37272,7 @@
         "hour": 17
       },
       "actorId": 2,
-      "toLocationId": 3
-    },
-    {
-      "type": "gossip.exchanged",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "atLocationId": 3,
-      "visitorActorId": 2,
-      "proprietorActorId": 6,
-      "exchanges": [
-        {
-          "fromActorId": 2,
-          "toActorId": 6,
-          "lead": {
-            "side": "supply",
-            "subjectItemKindId": 12,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 8,
-            "confidence": "warm",
-            "hopCount": 0,
-            "sourceActorId": null
-          }
-        },
-        {
-          "fromActorId": 6,
-          "toActorId": 2,
-          "lead": {
-            "side": "supply",
-            "subjectItemKindId": 17,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
-            "confidence": "cold",
-            "hopCount": 7,
-            "sourceActorId": 22
-          }
-        }
-      ]
-    },
-    {
-      "type": "actor.travelled",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "actorId": 4,
-      "toLocationId": 4
+      "toLocationId": 10
     },
     {
       "type": "actor.travelled",
@@ -37056,13 +37298,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
+            "subjectItemKindId": 20,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 34,
-            "estimatedUnitPrice": 10,
+            "counterpartyActorId": 2,
+            "estimatedQuantity": 21,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 5,
             "sourceActorId": 17
           }
         },
@@ -37071,79 +37313,17 @@
           "toActorId": 5,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 12,
-            "estimatedQuantity": 34,
-            "estimatedUnitPrice": 10,
+            "subjectItemKindId": 10,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 39,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
-            "hopCount": 5,
-            "sourceActorId": 11
+            "hopCount": 3,
+            "sourceActorId": 9
           }
         }
       ]
-    },
-    {
-      "type": "delivery.fee",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "dealId": 20,
-      "sellerActorId": 2,
-      "fee": 5
-    },
-    {
-      "type": "deal.settled",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "dealId": 20,
-      "buyerActorId": 4,
-      "sellerActorId": 2,
-      "totalPrice": 20
-    },
-    {
-      "type": "delivery.fee",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "dealId": 22,
-      "sellerActorId": 2,
-      "fee": 5
-    },
-    {
-      "type": "deal.settled",
-      "at": {
-        "day": 14,
-        "hour": 17
-      },
-      "dealId": 22,
-      "buyerActorId": 3,
-      "sellerActorId": 2,
-      "totalPrice": 93
-    },
-    {
-      "type": "actor.departed",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "actorId": 2,
-      "fromLocationId": 3,
-      "toLocationId": 10
-    },
-    {
-      "type": "actor.departed",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "actorId": 4,
-      "fromLocationId": 4,
-      "toLocationId": 3
     },
     {
       "type": "actor.departed",
@@ -37181,66 +37361,6 @@
         "day": 14,
         "hour": 18
       },
-      "actorId": 2,
-      "toLocationId": 10
-    },
-    {
-      "type": "actor.travelled",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "actorId": 4,
-      "toLocationId": 3
-    },
-    {
-      "type": "gossip.exchanged",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "atLocationId": 3,
-      "visitorActorId": 4,
-      "proprietorActorId": 6,
-      "exchanges": [
-        {
-          "fromActorId": 4,
-          "toActorId": 6,
-          "lead": {
-            "side": "supply",
-            "subjectItemKindId": 4,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 198,
-            "estimatedUnitPrice": 13,
-            "confidence": "warm",
-            "hopCount": 0,
-            "sourceActorId": null
-          }
-        },
-        {
-          "fromActorId": 6,
-          "toActorId": 4,
-          "lead": {
-            "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
-            "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 8
-          }
-        }
-      ]
-    },
-    {
-      "type": "actor.travelled",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
       "actorId": 15,
       "toLocationId": 25
     },
@@ -37263,38 +37383,6 @@
       "toLocationId": 27
     },
     {
-      "type": "delivery.fee",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "dealId": 21,
-      "sellerActorId": 4,
-      "fee": 20
-    },
-    {
-      "type": "deal.settled",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "dealId": 21,
-      "buyerActorId": 2,
-      "sellerActorId": 4,
-      "totalPrice": 48
-    },
-    {
-      "type": "deal.settled",
-      "at": {
-        "day": 14,
-        "hour": 18
-      },
-      "dealId": 23,
-      "buyerActorId": 5,
-      "sellerActorId": 4,
-      "totalPrice": 21
-    },
-    {
       "type": "actor.departed",
       "at": {
         "day": 14,
@@ -37312,6 +37400,16 @@
       },
       "actorId": 3,
       "fromLocationId": 11,
+      "toLocationId": 3
+    },
+    {
+      "type": "actor.departed",
+      "at": {
+        "day": 14,
+        "hour": 19
+      },
+      "actorId": 4,
+      "fromLocationId": 2,
       "toLocationId": 3
     },
     {
@@ -37423,14 +37521,14 @@
           "toActorId": 2,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "subjectItemKindId": 29,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 7,
-            "sourceActorId": 22
+            "hopCount": 11,
+            "sourceActorId": 11
           }
         }
       ]
@@ -37459,12 +37557,12 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 4,
-            "subjectQualityTier": "fair",
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
             "counterpartyActorId": 3,
-            "estimatedQuantity": 198,
-            "estimatedUnitPrice": 13,
-            "confidence": "warm",
+            "estimatedQuantity": 48,
+            "estimatedUnitPrice": 5,
+            "confidence": "cold",
             "hopCount": 0,
             "sourceActorId": null
           }
@@ -37474,14 +37572,65 @@
           "toActorId": 3,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 37,
+            "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 30,
-            "estimatedUnitPrice": 5,
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
+            "confidence": "cold",
+            "hopCount": 5,
+            "sourceActorId": 11
+          }
+        }
+      ]
+    },
+    {
+      "type": "actor.travelled",
+      "at": {
+        "day": 14,
+        "hour": 19
+      },
+      "actorId": 4,
+      "toLocationId": 3
+    },
+    {
+      "type": "gossip.exchanged",
+      "at": {
+        "day": 14,
+        "hour": 19
+      },
+      "atLocationId": 3,
+      "visitorActorId": 4,
+      "proprietorActorId": 6,
+      "exchanges": [
+        {
+          "fromActorId": 4,
+          "toActorId": 6,
+          "lead": {
+            "side": "supply",
+            "subjectItemKindId": 35,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 145,
+            "estimatedUnitPrice": 9,
+            "confidence": "warm",
+            "hopCount": 0,
+            "sourceActorId": null
+          }
+        },
+        {
+          "fromActorId": 6,
+          "toActorId": 4,
+          "lead": {
+            "side": "supply",
+            "subjectItemKindId": 13,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 3,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 39,
             "confidence": "cold",
             "hopCount": 3,
-            "sourceActorId": 15
+            "sourceActorId": 8
           }
         }
       ]
@@ -37510,11 +37659,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
+            "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 6
@@ -37525,14 +37674,14 @@
           "toActorId": 8,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
+            "subjectItemKindId": 37,
+            "subjectQualityTier": "fair",
             "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "estimatedQuantity": 30,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 13
+            "hopCount": 5,
+            "sourceActorId": 25
           }
         }
       ]
@@ -37561,13 +37710,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 29,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 13,
-            "estimatedQuantity": 29,
-            "estimatedUnitPrice": 5,
+            "subjectItemKindId": 4,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 34,
+            "estimatedUnitPrice": 10,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 6,
             "sourceActorId": 6
           }
         },
@@ -37576,14 +37725,14 @@
           "toActorId": 9,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "subjectItemKindId": 17,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 2
+            "sourceActorId": 15
           }
         }
       ]
@@ -37612,13 +37761,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
+            "subjectItemKindId": 29,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 8,
             "sourceActorId": 6
           }
         },
@@ -37627,14 +37776,14 @@
           "toActorId": 12,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
+            "subjectItemKindId": 81,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
+            "counterpartyActorId": 4,
             "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "estimatedUnitPrice": 37,
             "confidence": "cold",
-            "hopCount": 5,
-            "sourceActorId": 12
+            "hopCount": 1,
+            "sourceActorId": 4
           }
         }
       ]
@@ -37663,13 +37812,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "subjectItemKindId": 29,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 13,
+            "estimatedQuantity": 29,
+            "estimatedUnitPrice": 5,
             "confidence": "cold",
-            "hopCount": 8,
+            "hopCount": 10,
             "sourceActorId": 6
           }
         },
@@ -37678,14 +37827,14 @@
           "toActorId": 13,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 13,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 3,
+            "estimatedQuantity": 22,
+            "estimatedUnitPrice": 39,
             "confidence": "cold",
-            "hopCount": 7,
-            "sourceActorId": 2
+            "hopCount": 5,
+            "sourceActorId": 11
           }
         }
       ]
@@ -37723,11 +37872,11 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 21,
-            "estimatedUnitPrice": 3,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
             "hopCount": 4,
             "sourceActorId": 5
@@ -37738,13 +37887,13 @@
           "toActorId": 17,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 21,
-            "subjectQualityTier": "good",
-            "counterpartyActorId": 23,
-            "estimatedQuantity": 10,
-            "estimatedUnitPrice": 7,
+            "subjectItemKindId": 48,
+            "subjectQualityTier": "fair",
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 5,
             "sourceActorId": 3
           }
         }
@@ -37774,13 +37923,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 48,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 4,
-            "estimatedQuantity": 13,
-            "estimatedUnitPrice": 17,
+            "subjectItemKindId": 17,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
-            "hopCount": 4,
+            "hopCount": 6,
             "sourceActorId": 6
           }
         },
@@ -37789,14 +37938,14 @@
           "toActorId": 22,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 3,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 12,
+            "estimatedQuantity": 11,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
-            "hopCount": 3,
-            "sourceActorId": 11
+            "hopCount": 7,
+            "sourceActorId": 8
           }
         }
       ]
@@ -37867,11 +38016,11 @@
             "side": "supply",
             "subjectItemKindId": 48,
             "subjectQualityTier": "fair",
-            "counterpartyActorId": 2,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 25,
+            "counterpartyActorId": 4,
+            "estimatedQuantity": 13,
+            "estimatedUnitPrice": 17,
             "confidence": "cold",
-            "hopCount": 6,
+            "hopCount": 4,
             "sourceActorId": 6
           }
         },
@@ -37880,14 +38029,14 @@
           "toActorId": 11,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 21,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 23,
+            "estimatedQuantity": 10,
+            "estimatedUnitPrice": 7,
             "confidence": "cold",
-            "hopCount": 7,
-            "sourceActorId": 13
+            "hopCount": 4,
+            "sourceActorId": 3
           }
         }
       ]
@@ -37931,13 +38080,13 @@
           "toActorId": 15,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 20,
+            "subjectItemKindId": 17,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 8,
-            "estimatedQuantity": 38,
-            "estimatedUnitPrice": 4,
+            "counterpartyActorId": 25,
+            "estimatedQuantity": 31,
+            "estimatedUnitPrice": 8,
             "confidence": "cold",
-            "hopCount": 7,
+            "hopCount": 9,
             "sourceActorId": 13
           }
         }
@@ -37960,6 +38109,46 @@
       },
       "actorId": 19,
       "toLocationId": 12
+    },
+    {
+      "type": "pubdeal.attempted",
+      "at": {
+        "day": 14,
+        "hour": 20
+      },
+      "locationId": 3,
+      "sellerActorId": 2,
+      "buyerActorId": 4,
+      "itemKindId": 12,
+      "qualityTier": "fair",
+      "quantity": 17
+    },
+    {
+      "type": "pubdeal.walked",
+      "at": {
+        "day": 14,
+        "hour": 20
+      },
+      "sellerActorId": 2,
+      "buyerActorId": 4,
+      "reason": "buyer at ceiling, seller's ask still above it",
+      "turns": [
+        {
+          "by": "buyer",
+          "action": "open",
+          "unitPrice": 6
+        },
+        {
+          "by": "seller",
+          "action": "counter",
+          "unitPrice": 8
+        },
+        {
+          "by": "buyer",
+          "action": "walk",
+          "unitPrice": null
+        }
+      ]
     },
     {
       "type": "actor.departed",
@@ -37995,13 +38184,13 @@
           "toActorId": 6,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 13,
-            "subjectQualityTier": "fair",
-            "counterpartyActorId": 3,
-            "estimatedQuantity": 22,
-            "estimatedUnitPrice": 39,
+            "subjectItemKindId": 20,
+            "subjectQualityTier": "good",
+            "counterpartyActorId": 8,
+            "estimatedQuantity": 38,
+            "estimatedUnitPrice": 4,
             "confidence": "cold",
-            "hopCount": 6,
+            "hopCount": 7,
             "sourceActorId": 6
           }
         },
@@ -38010,14 +38199,14 @@
           "toActorId": 25,
           "lead": {
             "side": "supply",
-            "subjectItemKindId": 17,
+            "subjectItemKindId": 20,
             "subjectQualityTier": "good",
-            "counterpartyActorId": 25,
-            "estimatedQuantity": 31,
-            "estimatedUnitPrice": 8,
+            "counterpartyActorId": 2,
+            "estimatedQuantity": 21,
+            "estimatedUnitPrice": 3,
             "confidence": "cold",
             "hopCount": 5,
-            "sourceActorId": 11
+            "sourceActorId": 17
           }
         }
       ]
@@ -38097,56 +38286,6 @@
       },
       "actorId": 15,
       "toLocationId": 25
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 14,
-        "hour": 22
-      },
-      "locationId": 3,
-      "sellerActorId": 5,
-      "buyerActorId": 4,
-      "itemKindId": 7,
-      "qualityTier": "good",
-      "quantity": 3
-    },
-    {
-      "type": "pubdeal.agreed",
-      "at": {
-        "day": 14,
-        "hour": 22
-      },
-      "dealId": 24,
-      "sellerActorId": 5,
-      "buyerActorId": 4,
-      "unitPrice": 10,
-      "quantity": 3
-    },
-    {
-      "type": "pubdeal.attempted",
-      "at": {
-        "day": 14,
-        "hour": 22
-      },
-      "locationId": 3,
-      "sellerActorId": 4,
-      "buyerActorId": 5,
-      "itemKindId": 41,
-      "qualityTier": "good",
-      "quantity": 9
-    },
-    {
-      "type": "pubdeal.agreed",
-      "at": {
-        "day": 14,
-        "hour": 22
-      },
-      "dealId": 25,
-      "sellerActorId": 4,
-      "buyerActorId": 5,
-      "unitPrice": 16,
-      "quantity": 9
     },
     {
       "type": "actor.departed",
@@ -38392,7 +38531,7 @@
       "id": 2,
       "code": "boyce",
       "displayName": "Boycie",
-      "cash": 4292,
+      "cash": 4324,
       "currentLocationId": 10,
       "homeLocationId": 10,
       "transportCapacity": "boot",
@@ -38405,7 +38544,7 @@
       "id": 3,
       "code": "denzil",
       "displayName": "Denzil",
-      "cash": 190,
+      "cash": 405,
       "currentLocationId": 11,
       "homeLocationId": 11,
       "transportCapacity": "truck",
@@ -38417,7 +38556,7 @@
       "id": 4,
       "code": "monkey-harris",
       "displayName": "Monkey Harris",
-      "cash": 164,
+      "cash": 188,
       "currentLocationId": 2,
       "homeLocationId": 2,
       "transportCapacity": "van",
@@ -38430,7 +38569,7 @@
       "id": 5,
       "code": "trigger",
       "displayName": "Trigger",
-      "cash": 222,
+      "cash": 196,
       "currentLocationId": 22,
       "homeLocationId": 22,
       "transportCapacity": "pocket",
@@ -38455,7 +38594,7 @@
       "id": 7,
       "code": "auction-house",
       "displayName": "Sotheby's",
-      "cash": 3682,
+      "cash": 3237,
       "currentLocationId": 4,
       "homeLocationId": 4,
       "transportCapacity": "none",
@@ -38467,7 +38606,7 @@
       "id": 8,
       "code": "rodney",
       "displayName": "Rodney Trotter",
-      "cash": 0,
+      "cash": 200,
       "currentLocationId": 1,
       "homeLocationId": 1,
       "transportCapacity": "van",
@@ -43416,7 +43555,7 @@
         },
         {
           "id": 2,
-          "cash": 5027,
+          "cash": 5032,
           "currentLocationId": 10,
           "heat": 0
         },
@@ -43446,7 +43585,7 @@
         },
         {
           "id": 7,
-          "cash": 5,
+          "cash": 0,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -43893,7 +44032,7 @@
         },
         {
           "id": 2,
-          "cash": 5027,
+          "cash": 5032,
           "currentLocationId": 10,
           "heat": 0
         },
@@ -43923,7 +44062,7 @@
         },
         {
           "id": 7,
-          "cash": 205,
+          "cash": 200,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -44443,7 +44582,7 @@
         },
         {
           "id": 2,
-          "cash": 5058,
+          "cash": 5068,
           "currentLocationId": 10,
           "heat": 0
         },
@@ -44455,7 +44594,7 @@
         },
         {
           "id": 4,
-          "cash": 791,
+          "cash": 811,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -44473,7 +44612,7 @@
         },
         {
           "id": 7,
-          "cash": 270,
+          "cash": 240,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -45083,7 +45222,7 @@
         },
         {
           "id": 2,
-          "cash": 5058,
+          "cash": 5068,
           "currentLocationId": 10,
           "heat": 0
         },
@@ -45095,7 +45234,7 @@
         },
         {
           "id": 4,
-          "cash": 727,
+          "cash": 747,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -45113,7 +45252,7 @@
         },
         {
           "id": 7,
-          "cash": 684,
+          "cash": 654,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -45767,19 +45906,19 @@
         },
         {
           "id": 2,
-          "cash": 4984,
+          "cash": 4994,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 668,
+          "cash": 718,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 671,
+          "cash": 691,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -45797,7 +45936,7 @@
         },
         {
           "id": 7,
-          "cash": 1696,
+          "cash": 1616,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -46539,19 +46678,19 @@
         },
         {
           "id": 2,
-          "cash": 4984,
+          "cash": 4994,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 668,
+          "cash": 718,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 623,
+          "cash": 643,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -46569,7 +46708,7 @@
         },
         {
           "id": 7,
-          "cash": 1744,
+          "cash": 1664,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -47363,19 +47502,19 @@
         },
         {
           "id": 2,
-          "cash": 4984,
+          "cash": 4994,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 571,
+          "cash": 671,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 555,
+          "cash": 595,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -47393,7 +47532,7 @@
         },
         {
           "id": 7,
-          "cash": 1894,
+          "cash": 1744,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -48253,19 +48392,19 @@
         },
         {
           "id": 2,
-          "cash": 4984,
+          "cash": 4994,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 530,
+          "cash": 630,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 548,
+          "cash": 588,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -48283,7 +48422,7 @@
         },
         {
           "id": 7,
-          "cash": 1942,
+          "cash": 1792,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -49245,19 +49384,19 @@
         },
         {
           "id": 2,
-          "cash": 4984,
+          "cash": 4994,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 530,
+          "cash": 630,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 500,
+          "cash": 540,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -49275,7 +49414,7 @@
         },
         {
           "id": 7,
-          "cash": 1990,
+          "cash": 1840,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -50271,19 +50410,19 @@
         },
         {
           "id": 2,
-          "cash": 4384,
+          "cash": 4394,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 432,
+          "cash": 582,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 388,
+          "cash": 428,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -50301,7 +50440,7 @@
         },
         {
           "id": 7,
-          "cash": 3050,
+          "cash": 2850,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -51417,25 +51556,25 @@
         },
         {
           "id": 2,
-          "cash": 4279,
+          "cash": 4324,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 400,
+          "cash": 550,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 188,
+          "cash": 228,
           "currentLocationId": 2,
           "heat": 0
         },
         {
           "id": 5,
-          "cash": 201,
+          "cash": 161,
           "currentLocationId": 22,
           "heat": 0
         },
@@ -51447,7 +51586,7 @@
         },
         {
           "id": 7,
-          "cash": 3282,
+          "cash": 3087,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -51828,16 +51967,6 @@
           "locationId": 4
         },
         {
-          "id": 28,
-          "ownerActorId": 2,
-          "itemKindId": 11,
-          "qualityTier": "shoddy",
-          "quantity": 8,
-          "acquiredUnitPrice": 7,
-          "acquiredDay": 6,
-          "locationId": 10
-        },
-        {
           "id": 29,
           "ownerActorId": 4,
           "itemKindId": 11,
@@ -51999,6 +52128,16 @@
         },
         {
           "id": 46,
+          "ownerActorId": 5,
+          "itemKindId": 11,
+          "qualityTier": "shoddy",
+          "quantity": 8,
+          "acquiredUnitPrice": 5,
+          "acquiredDay": 12,
+          "locationId": 3
+        },
+        {
+          "id": 47,
           "ownerActorId": 3,
           "itemKindId": 47,
           "qualityTier": "fair",
@@ -52008,7 +52147,7 @@
           "locationId": 11
         },
         {
-          "id": 47,
+          "id": 48,
           "ownerActorId": 4,
           "itemKindId": 7,
           "qualityTier": "good",
@@ -52018,7 +52157,7 @@
           "locationId": 4
         },
         {
-          "id": 48,
+          "id": 49,
           "ownerActorId": 2,
           "itemKindId": 41,
           "qualityTier": "good",
@@ -52327,13 +52466,13 @@
           "id": 15,
           "buyerActorId": 5,
           "sellerActorId": 2,
-          "state": "defaulted",
+          "state": "settled",
           "agreedDay": 11,
           "deadlineDay": 12,
           "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": 12,
-          "defaultReason": "seller transport boot can't move van items",
+          "settledDay": 12,
+          "defaultedDay": null,
+          "defaultReason": null,
           "totalPrice": 40,
           "lines": [
             {
@@ -52389,21 +52528,21 @@
         {
           "id": 18,
           "buyerActorId": 4,
-          "sellerActorId": 2,
+          "sellerActorId": 5,
           "state": "agreed",
           "agreedDay": 12,
-          "deadlineDay": 16,
+          "deadlineDay": 13,
           "deliveryLocationId": 3,
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 150,
+          "totalPrice": 35,
           "lines": [
             {
               "itemKindId": 11,
               "qualityTier": "shoddy",
-              "quantity": 30,
-              "unitPrice": 5
+              "quantity": 5,
+              "unitPrice": 7
             }
           ]
         },
@@ -52418,13 +52557,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 42,
+          "totalPrice": 30,
           "lines": [
             {
-              "itemKindId": 41,
-              "qualityTier": "good",
-              "quantity": 2,
-              "unitPrice": 21
+              "itemKindId": 11,
+              "qualityTier": "shoddy",
+              "quantity": 5,
+              "unitPrice": 6
             }
           ]
         }
@@ -52672,25 +52811,25 @@
         },
         {
           "id": 2,
-          "cash": 4237,
+          "cash": 4324,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 328,
+          "cash": 550,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 188,
+          "cash": 193,
           "currentLocationId": 2,
           "heat": 0
         },
         {
           "id": 5,
-          "cash": 243,
+          "cash": 196,
           "currentLocationId": 22,
           "heat": 0
         },
@@ -52702,7 +52841,7 @@
         },
         {
           "id": 7,
-          "cash": 3354,
+          "cash": 3087,
           "currentLocationId": 4,
           "heat": 0
         },
@@ -53053,6 +53192,16 @@
           "locationId": 3
         },
         {
+          "id": 25,
+          "ownerActorId": 5,
+          "itemKindId": 41,
+          "qualityTier": "good",
+          "quantity": 2,
+          "acquiredUnitPrice": 16,
+          "acquiredDay": 4,
+          "locationId": 3
+        },
+        {
           "id": 26,
           "ownerActorId": 4,
           "itemKindId": 11,
@@ -53071,16 +53220,6 @@
           "acquiredUnitPrice": 15,
           "acquiredDay": 5,
           "locationId": 4
-        },
-        {
-          "id": 28,
-          "ownerActorId": 2,
-          "itemKindId": 11,
-          "qualityTier": "shoddy",
-          "quantity": 8,
-          "acquiredUnitPrice": 7,
-          "acquiredDay": 6,
-          "locationId": 10
         },
         {
           "id": 29,
@@ -53244,6 +53383,16 @@
         },
         {
           "id": 46,
+          "ownerActorId": 5,
+          "itemKindId": 11,
+          "qualityTier": "shoddy",
+          "quantity": 3,
+          "acquiredUnitPrice": 5,
+          "acquiredDay": 12,
+          "locationId": 3
+        },
+        {
+          "id": 47,
           "ownerActorId": 3,
           "itemKindId": 47,
           "qualityTier": "fair",
@@ -53253,7 +53402,7 @@
           "locationId": 11
         },
         {
-          "id": 47,
+          "id": 48,
           "ownerActorId": 4,
           "itemKindId": 7,
           "qualityTier": "good",
@@ -53263,7 +53412,7 @@
           "locationId": 4
         },
         {
-          "id": 48,
+          "id": 49,
           "ownerActorId": 2,
           "itemKindId": 41,
           "qualityTier": "good",
@@ -53273,22 +53422,12 @@
           "locationId": 3
         },
         {
-          "id": 49,
-          "ownerActorId": 3,
-          "itemKindId": 42,
-          "qualityTier": "shoddy",
-          "quantity": 8,
-          "acquiredUnitPrice": 9,
-          "acquiredDay": 13,
-          "locationId": 11
-        },
-        {
           "id": 50,
-          "ownerActorId": 2,
-          "itemKindId": 41,
-          "qualityTier": "good",
-          "quantity": 2,
-          "acquiredUnitPrice": 21,
+          "ownerActorId": 4,
+          "itemKindId": 11,
+          "qualityTier": "shoddy",
+          "quantity": 5,
+          "acquiredUnitPrice": 7,
           "acquiredDay": 13,
           "locationId": 3
         }
@@ -53592,13 +53731,13 @@
           "id": 15,
           "buyerActorId": 5,
           "sellerActorId": 2,
-          "state": "defaulted",
+          "state": "settled",
           "agreedDay": 11,
           "deadlineDay": 12,
           "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": 12,
-          "defaultReason": "seller transport boot can't move van items",
+          "settledDay": 12,
+          "defaultedDay": null,
+          "defaultReason": null,
           "totalPrice": 40,
           "lines": [
             {
@@ -53654,27 +53793,6 @@
         {
           "id": 18,
           "buyerActorId": 4,
-          "sellerActorId": 2,
-          "state": "agreed",
-          "agreedDay": 12,
-          "deadlineDay": 16,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 150,
-          "lines": [
-            {
-              "itemKindId": 11,
-              "qualityTier": "shoddy",
-              "quantity": 30,
-              "unitPrice": 5
-            }
-          ]
-        },
-        {
-          "id": 19,
-          "buyerActorId": 2,
           "sellerActorId": 5,
           "state": "settled",
           "agreedDay": 12,
@@ -53683,96 +53801,54 @@
           "settledDay": 13,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 42,
+          "totalPrice": 35,
           "lines": [
             {
-              "itemKindId": 41,
-              "qualityTier": "good",
-              "quantity": 2,
-              "unitPrice": 21
+              "itemKindId": 11,
+              "qualityTier": "shoddy",
+              "quantity": 5,
+              "unitPrice": 7
+            }
+          ]
+        },
+        {
+          "id": 19,
+          "buyerActorId": 2,
+          "sellerActorId": 5,
+          "state": "defaulted",
+          "agreedDay": 12,
+          "deadlineDay": 13,
+          "deliveryLocationId": 3,
+          "settledDay": null,
+          "defaultedDay": 13,
+          "defaultReason": "seller short on deal 19 line 19: have 3, need 5",
+          "totalPrice": 30,
+          "lines": [
+            {
+              "itemKindId": 11,
+              "qualityTier": "shoddy",
+              "quantity": 5,
+              "unitPrice": 6
             }
           ]
         },
         {
           "id": 20,
           "buyerActorId": 4,
-          "sellerActorId": 2,
+          "sellerActorId": 3,
           "state": "agreed",
           "agreedDay": 13,
-          "deadlineDay": 14,
+          "deadlineDay": 15,
           "deliveryLocationId": 3,
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 20,
+          "totalPrice": 28,
           "lines": [
             {
-              "itemKindId": 20,
-              "qualityTier": "good",
-              "quantity": 4,
-              "unitPrice": 5
-            }
-          ]
-        },
-        {
-          "id": 21,
-          "buyerActorId": 2,
-          "sellerActorId": 4,
-          "state": "agreed",
-          "agreedDay": 13,
-          "deadlineDay": 14,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 48,
-          "lines": [
-            {
-              "itemKindId": 11,
-              "qualityTier": "shoddy",
-              "quantity": 8,
-              "unitPrice": 6
-            }
-          ]
-        },
-        {
-          "id": 22,
-          "buyerActorId": 3,
-          "sellerActorId": 2,
-          "state": "agreed",
-          "agreedDay": 13,
-          "deadlineDay": 14,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 93,
-          "lines": [
-            {
-              "itemKindId": 48,
+              "itemKindId": 12,
               "qualityTier": "fair",
-              "quantity": 3,
-              "unitPrice": 31
-            }
-          ]
-        },
-        {
-          "id": 23,
-          "buyerActorId": 5,
-          "sellerActorId": 4,
-          "state": "agreed",
-          "agreedDay": 13,
-          "deadlineDay": 14,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 21,
-          "lines": [
-            {
-              "itemKindId": 7,
-              "qualityTier": "good",
-              "quantity": 3,
+              "quantity": 4,
               "unitPrice": 7
             }
           ]
@@ -53907,7 +53983,7 @@
           "id": 9,
           "itemKindId": 42,
           "qualityTier": "shoddy",
-          "quantityRemaining": 40,
+          "quantityRemaining": 48,
           "createdDay": 11,
           "expiryDay": 15,
           "openingUnitPrice": 12,
@@ -53936,13 +54012,28 @@
         },
         {
           "id": 11,
-          "itemKindId": 4,
-          "qualityTier": "fair",
-          "quantityRemaining": 198,
+          "itemKindId": 35,
+          "qualityTier": "good",
+          "quantityRemaining": 145,
           "createdDay": 13,
-          "expiryDay": 17,
-          "openingUnitPrice": 13,
-          "closingUnitPrice": 5,
+          "expiryDay": 14,
+          "openingUnitPrice": 9,
+          "closingUnitPrice": 4,
+          "dumpDestination": "auction",
+          "flushedDay": null,
+          "reachableBy": [
+            4
+          ]
+        },
+        {
+          "id": 12,
+          "itemKindId": 81,
+          "qualityTier": "fair",
+          "quantityRemaining": 22,
+          "createdDay": 13,
+          "expiryDay": 15,
+          "openingUnitPrice": 37,
+          "closingUnitPrice": 15,
           "dumpDestination": "auction",
           "flushedDay": null,
           "reachableBy": [
@@ -54050,25 +54141,25 @@
         },
         {
           "id": 2,
-          "cash": 4292,
+          "cash": 4324,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 190,
+          "cash": 405,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 164,
+          "cash": 188,
           "currentLocationId": 2,
           "heat": 0
         },
         {
           "id": 5,
-          "cash": 222,
+          "cash": 196,
           "currentLocationId": 22,
           "heat": 0
         },
@@ -54080,13 +54171,13 @@
         },
         {
           "id": 7,
-          "cash": 3682,
+          "cash": 3237,
           "currentLocationId": 4,
           "heat": 0
         },
         {
           "id": 8,
-          "cash": 0,
+          "cash": 200,
           "currentLocationId": 1,
           "heat": 0
         },
@@ -54221,11 +54312,21 @@
           "locationId": 1
         },
         {
+          "id": 3,
+          "ownerActorId": 2,
+          "itemKindId": 20,
+          "qualityTier": "good",
+          "quantity": 4,
+          "acquiredUnitPrice": 3,
+          "acquiredDay": 1,
+          "locationId": 5
+        },
+        {
           "id": 4,
           "ownerActorId": 2,
           "itemKindId": 48,
           "qualityTier": "fair",
-          "quantity": 28,
+          "quantity": 31,
           "acquiredUnitPrice": 25,
           "acquiredDay": 1,
           "locationId": 5
@@ -54421,6 +54522,26 @@
           "locationId": 3
         },
         {
+          "id": 25,
+          "ownerActorId": 5,
+          "itemKindId": 41,
+          "qualityTier": "good",
+          "quantity": 2,
+          "acquiredUnitPrice": 16,
+          "acquiredDay": 4,
+          "locationId": 3
+        },
+        {
+          "id": 26,
+          "ownerActorId": 4,
+          "itemKindId": 11,
+          "qualityTier": "shoddy",
+          "quantity": 8,
+          "acquiredUnitPrice": 8,
+          "acquiredDay": 5,
+          "locationId": 2
+        },
+        {
           "id": 27,
           "ownerActorId": 18,
           "itemKindId": 54,
@@ -54429,16 +54550,6 @@
           "acquiredUnitPrice": 15,
           "acquiredDay": 5,
           "locationId": 4
-        },
-        {
-          "id": 28,
-          "ownerActorId": 2,
-          "itemKindId": 11,
-          "qualityTier": "shoddy",
-          "quantity": 8,
-          "acquiredUnitPrice": 7,
-          "acquiredDay": 6,
-          "locationId": 10
         },
         {
           "id": 29,
@@ -54575,7 +54686,7 @@
           "ownerActorId": 4,
           "itemKindId": 7,
           "qualityTier": "good",
-          "quantity": 5,
+          "quantity": 8,
           "acquiredUnitPrice": 14,
           "acquiredDay": 11,
           "locationId": 3
@@ -54602,6 +54713,16 @@
         },
         {
           "id": 46,
+          "ownerActorId": 5,
+          "itemKindId": 11,
+          "qualityTier": "shoddy",
+          "quantity": 3,
+          "acquiredUnitPrice": 5,
+          "acquiredDay": 12,
+          "locationId": 3
+        },
+        {
+          "id": 47,
           "ownerActorId": 3,
           "itemKindId": 47,
           "qualityTier": "fair",
@@ -54611,7 +54732,7 @@
           "locationId": 11
         },
         {
-          "id": 47,
+          "id": 48,
           "ownerActorId": 4,
           "itemKindId": 7,
           "qualityTier": "good",
@@ -54621,7 +54742,7 @@
           "locationId": 4
         },
         {
-          "id": 48,
+          "id": 49,
           "ownerActorId": 2,
           "itemKindId": 41,
           "qualityTier": "good",
@@ -54631,37 +54752,17 @@
           "locationId": 3
         },
         {
-          "id": 49,
-          "ownerActorId": 3,
-          "itemKindId": 42,
-          "qualityTier": "shoddy",
-          "quantity": 8,
-          "acquiredUnitPrice": 9,
-          "acquiredDay": 13,
-          "locationId": 11
-        },
-        {
           "id": 50,
-          "ownerActorId": 2,
-          "itemKindId": 41,
-          "qualityTier": "good",
-          "quantity": 2,
-          "acquiredUnitPrice": 21,
+          "ownerActorId": 4,
+          "itemKindId": 11,
+          "qualityTier": "shoddy",
+          "quantity": 5,
+          "acquiredUnitPrice": 7,
           "acquiredDay": 13,
           "locationId": 3
         },
         {
           "id": 51,
-          "ownerActorId": 4,
-          "itemKindId": 12,
-          "qualityTier": "fair",
-          "quantity": 8,
-          "acquiredUnitPrice": 6,
-          "acquiredDay": 14,
-          "locationId": 2
-        },
-        {
-          "id": 52,
           "ownerActorId": 4,
           "itemKindId": 47,
           "qualityTier": "fair",
@@ -54671,54 +54772,14 @@
           "locationId": 3
         },
         {
-          "id": 53,
-          "ownerActorId": 8,
+          "id": 52,
+          "ownerActorId": 3,
           "itemKindId": 19,
           "qualityTier": "fair",
           "quantity": 7,
-          "acquiredUnitPrice": 29,
+          "acquiredUnitPrice": 21,
           "acquiredDay": 14,
           "locationId": 4
-        },
-        {
-          "id": 54,
-          "ownerActorId": 4,
-          "itemKindId": 20,
-          "qualityTier": "good",
-          "quantity": 4,
-          "acquiredUnitPrice": 5,
-          "acquiredDay": 14,
-          "locationId": 3
-        },
-        {
-          "id": 55,
-          "ownerActorId": 3,
-          "itemKindId": 48,
-          "qualityTier": "fair",
-          "quantity": 3,
-          "acquiredUnitPrice": 31,
-          "acquiredDay": 14,
-          "locationId": 3
-        },
-        {
-          "id": 56,
-          "ownerActorId": 2,
-          "itemKindId": 11,
-          "qualityTier": "shoddy",
-          "quantity": 8,
-          "acquiredUnitPrice": 6,
-          "acquiredDay": 14,
-          "locationId": 3
-        },
-        {
-          "id": 57,
-          "ownerActorId": 5,
-          "itemKindId": 7,
-          "qualityTier": "good",
-          "quantity": 3,
-          "acquiredUnitPrice": 7,
-          "acquiredDay": 14,
-          "locationId": 3
         }
       ],
       "deals": [
@@ -55020,13 +55081,13 @@
           "id": 15,
           "buyerActorId": 5,
           "sellerActorId": 2,
-          "state": "defaulted",
+          "state": "settled",
           "agreedDay": 11,
           "deadlineDay": 12,
           "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": 12,
-          "defaultReason": "seller transport boot can't move van items",
+          "settledDay": 12,
+          "defaultedDay": null,
+          "defaultReason": null,
           "totalPrice": 40,
           "lines": [
             {
@@ -55082,27 +55143,6 @@
         {
           "id": 18,
           "buyerActorId": 4,
-          "sellerActorId": 2,
-          "state": "agreed",
-          "agreedDay": 12,
-          "deadlineDay": 16,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 150,
-          "lines": [
-            {
-              "itemKindId": 11,
-              "qualityTier": "shoddy",
-              "quantity": 30,
-              "unitPrice": 5
-            }
-          ]
-        },
-        {
-          "id": 19,
-          "buyerActorId": 2,
           "sellerActorId": 5,
           "state": "settled",
           "agreedDay": 12,
@@ -55111,139 +55151,55 @@
           "settledDay": 13,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 42,
+          "totalPrice": 35,
           "lines": [
             {
-              "itemKindId": 41,
-              "qualityTier": "good",
-              "quantity": 2,
-              "unitPrice": 21
+              "itemKindId": 11,
+              "qualityTier": "shoddy",
+              "quantity": 5,
+              "unitPrice": 7
+            }
+          ]
+        },
+        {
+          "id": 19,
+          "buyerActorId": 2,
+          "sellerActorId": 5,
+          "state": "defaulted",
+          "agreedDay": 12,
+          "deadlineDay": 13,
+          "deliveryLocationId": 3,
+          "settledDay": null,
+          "defaultedDay": 13,
+          "defaultReason": "seller short on deal 19 line 19: have 3, need 5",
+          "totalPrice": 30,
+          "lines": [
+            {
+              "itemKindId": 11,
+              "qualityTier": "shoddy",
+              "quantity": 5,
+              "unitPrice": 6
             }
           ]
         },
         {
           "id": 20,
           "buyerActorId": 4,
-          "sellerActorId": 2,
-          "state": "settled",
+          "sellerActorId": 3,
+          "state": "agreed",
           "agreedDay": 13,
-          "deadlineDay": 14,
+          "deadlineDay": 15,
           "deliveryLocationId": 3,
-          "settledDay": 14,
+          "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 20,
+          "totalPrice": 28,
           "lines": [
             {
-              "itemKindId": 20,
-              "qualityTier": "good",
-              "quantity": 4,
-              "unitPrice": 5
-            }
-          ]
-        },
-        {
-          "id": 21,
-          "buyerActorId": 2,
-          "sellerActorId": 4,
-          "state": "settled",
-          "agreedDay": 13,
-          "deadlineDay": 14,
-          "deliveryLocationId": 3,
-          "settledDay": 14,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 48,
-          "lines": [
-            {
-              "itemKindId": 11,
-              "qualityTier": "shoddy",
-              "quantity": 8,
-              "unitPrice": 6
-            }
-          ]
-        },
-        {
-          "id": 22,
-          "buyerActorId": 3,
-          "sellerActorId": 2,
-          "state": "settled",
-          "agreedDay": 13,
-          "deadlineDay": 14,
-          "deliveryLocationId": 3,
-          "settledDay": 14,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 93,
-          "lines": [
-            {
-              "itemKindId": 48,
+              "itemKindId": 12,
               "qualityTier": "fair",
-              "quantity": 3,
-              "unitPrice": 31
-            }
-          ]
-        },
-        {
-          "id": 23,
-          "buyerActorId": 5,
-          "sellerActorId": 4,
-          "state": "settled",
-          "agreedDay": 13,
-          "deadlineDay": 14,
-          "deliveryLocationId": 3,
-          "settledDay": 14,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 21,
-          "lines": [
-            {
-              "itemKindId": 7,
-              "qualityTier": "good",
-              "quantity": 3,
+              "quantity": 4,
               "unitPrice": 7
-            }
-          ]
-        },
-        {
-          "id": 24,
-          "buyerActorId": 4,
-          "sellerActorId": 5,
-          "state": "agreed",
-          "agreedDay": 14,
-          "deadlineDay": 15,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 30,
-          "lines": [
-            {
-              "itemKindId": 7,
-              "qualityTier": "good",
-              "quantity": 3,
-              "unitPrice": 10
-            }
-          ]
-        },
-        {
-          "id": 25,
-          "buyerActorId": 5,
-          "sellerActorId": 4,
-          "state": "agreed",
-          "agreedDay": 14,
-          "deadlineDay": 15,
-          "deliveryLocationId": 3,
-          "settledDay": null,
-          "defaultedDay": null,
-          "defaultReason": null,
-          "totalPrice": 144,
-          "lines": [
-            {
-              "itemKindId": 41,
-              "qualityTier": "good",
-              "quantity": 9,
-              "unitPrice": 16
             }
           ]
         }
@@ -55377,7 +55333,7 @@
           "id": 9,
           "itemKindId": 42,
           "qualityTier": "shoddy",
-          "quantityRemaining": 40,
+          "quantityRemaining": 48,
           "createdDay": 11,
           "expiryDay": 15,
           "openingUnitPrice": 12,
@@ -55392,7 +55348,7 @@
           "id": 10,
           "itemKindId": 12,
           "qualityTier": "fair",
-          "quantityRemaining": 13,
+          "quantityRemaining": 21,
           "createdDay": 12,
           "expiryDay": 17,
           "openingUnitPrice": 8,
@@ -55406,13 +55362,28 @@
         },
         {
           "id": 11,
-          "itemKindId": 4,
-          "qualityTier": "fair",
-          "quantityRemaining": 198,
+          "itemKindId": 35,
+          "qualityTier": "good",
+          "quantityRemaining": 145,
           "createdDay": 13,
-          "expiryDay": 17,
-          "openingUnitPrice": 13,
-          "closingUnitPrice": 5,
+          "expiryDay": 14,
+          "openingUnitPrice": 9,
+          "closingUnitPrice": 4,
+          "dumpDestination": "auction",
+          "flushedDay": null,
+          "reachableBy": [
+            4
+          ]
+        },
+        {
+          "id": 12,
+          "itemKindId": 81,
+          "qualityTier": "fair",
+          "quantityRemaining": 22,
+          "createdDay": 13,
+          "expiryDay": 15,
+          "openingUnitPrice": 37,
+          "closingUnitPrice": 15,
           "dumpDestination": "auction",
           "flushedDay": null,
           "reachableBy": [
@@ -55422,18 +55393,18 @@
           ]
         },
         {
-          "id": 12,
-          "itemKindId": 34,
+          "id": 13,
+          "itemKindId": 73,
           "qualityTier": "fair",
-          "quantityRemaining": 198,
+          "quantityRemaining": 19,
           "createdDay": 14,
-          "expiryDay": 17,
-          "openingUnitPrice": 12,
-          "closingUnitPrice": 5,
+          "expiryDay": 18,
+          "openingUnitPrice": 80,
+          "closingUnitPrice": 32,
           "dumpDestination": "auction",
           "flushedDay": null,
           "reachableBy": [
-            4
+            3
           ]
         }
       ],
@@ -55519,8 +55490,8 @@
           "floorPrice": 91,
           "listedDay": 13,
           "clearedDay": 14,
-          "clearedPrice": 200,
-          "clearedToActorId": 8
+          "clearedPrice": 150,
+          "clearedToActorId": 3
         },
         {
           "id": 8,

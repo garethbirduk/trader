@@ -113,6 +113,7 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
       sellerActorId: args.seller.actorId,
       buyerActorId: args.buyer.actorId,
       reason: negotiation.reason,
+      turns: negotiation.turns,
     });
     return { type: "walked", reason: negotiation.reason, negotiation };
   }
@@ -144,6 +145,7 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
     buyerActorId: args.buyer.actorId,
     unitPrice: negotiation.unitPrice,
     quantity: args.quantity,
+    turns: negotiation.turns,
   });
 
   return { type: "agreed", dealId: deal.id, unitPrice: negotiation.unitPrice, negotiation };

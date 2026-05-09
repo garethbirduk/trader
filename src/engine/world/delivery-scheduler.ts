@@ -137,60 +137,60 @@ export function registerDailyDelivery(
         continue;
       }
 
-      const sched = opts.getSchedulingInfo(seller.id);
-      if (sched === null) {
-        defaultDeal(world, deal.id, day, deal.buyerActorId, deal.sellerActorId, "no scheduling info");
-        continue;
-      }
-
-      // Determine pickup location: where this seller's stock for the deal
-      // currently sits. We pick the largest matching lot's location.
+      // Determine pickup location and required transport tier.
       const pickupLocId = pickPickupLocation(
         world,
         seller.id,
         lines.map((l) => l.itemKindId),
       );
-      // Required transport tier: max of all line items' size requirements.
       const requiredTier = requiredTierForDeal(world, lines.map((l) => l.itemKindId));
-      if (!tierSufficient(seller.transportCapacity, requiredTier)) {
-        defaultDeal(world, deal.id, day, deal.buyerActorId, deal.sellerActorId,
-          `seller transport ${seller.transportCapacity} can't move ${requiredTier} items`);
-        continue;
+      const sched = opts.getSchedulingInfo(seller.id);
+
+      // Try to plan a self-delivered trip. If the seller's transport
+      // can't move the items, or no flexible slot fits, fall back to
+      // abstract "magic" delivery — Sotheby's ships at a fee. Default
+      // only for true failures (no stock, can't pay) which surface
+      // inside settleDeal.
+      const canSelfDeliver = tierSufficient(seller.transportCapacity, requiredTier);
+      let plan: DeliveryPlan | null = null;
+      if (canSelfDeliver && sched !== null) {
+        const samePlace = pickupLocId === null || pickupLocId === dropoffLocId;
+        const slot = pickSlot(
+          sched,
+          samePlace ? 1 : 2,
+          samePlace ? [dropoffLocId] : [pickupLocId!, dropoffLocId],
+        );
+        if (slot !== null) {
+          plan = samePlace
+            ? {
+                dealId: deal.id,
+                sellerActorId: seller.id,
+                buyerActorId: deal.buyerActorId,
+                pickupLocationId: null,
+                pickupHour: null,
+                dropoffLocationId: dropoffLocId,
+                dropoffHour: slot[0]!,
+                day,
+              }
+            : {
+                dealId: deal.id,
+                sellerActorId: seller.id,
+                buyerActorId: deal.buyerActorId,
+                pickupLocationId: pickupLocId,
+                pickupHour: slot[0]!,
+                dropoffLocationId: dropoffLocId,
+                dropoffHour: slot[1]!,
+                day,
+              };
+        }
       }
 
-      const samePlace = pickupLocId === null || pickupLocId === dropoffLocId;
-      const slot = pickSlot(
-        sched,
-        samePlace ? 1 : 2,
-        samePlace ? [dropoffLocId] : [pickupLocId!, dropoffLocId],
-      );
-      if (slot === null) {
-        defaultDeal(world, deal.id, day, deal.buyerActorId, deal.sellerActorId, "no delivery slot");
-        continue;
+      if (plan !== null) {
+        opts.registry.set(plan);
+      } else {
+        // Magic delivery: settle abstractly at day-start with the fee.
+        magicDelivery(world, deal.id, day, deal.buyerActorId, deal.sellerActorId, opts.procurementProceedsActorId ?? null);
       }
-
-      const plan: DeliveryPlan = samePlace
-        ? {
-            dealId: deal.id,
-            sellerActorId: seller.id,
-            buyerActorId: deal.buyerActorId,
-            pickupLocationId: null,
-            pickupHour: null,
-            dropoffLocationId: dropoffLocId,
-            dropoffHour: slot[0]!,
-            day,
-          }
-        : {
-            dealId: deal.id,
-            sellerActorId: seller.id,
-            buyerActorId: deal.buyerActorId,
-            pickupLocationId: pickupLocId,
-            pickupHour: slot[0]!,
-            dropoffLocationId: dropoffLocId,
-            dropoffHour: slot[1]!,
-            day,
-          };
-      opts.registry.set(plan);
     }
   });
 
@@ -204,6 +204,7 @@ export function registerDailyDelivery(
           procurementProceedsActorId: opts.procurementProceedsActorId ?? null,
           events: world.events,
           atClock: clock,
+          sellerSelfDelivers: true,
         });
       } catch (e) {
         const reason = (e as Error).message;
@@ -255,23 +256,40 @@ function settleDealOrDefault(
   }
 }
 
-function defaultDeal(
+/**
+ * Abstract "magic" delivery — used when the seller can't physically do
+ * the trip (transport too small, or no flexible window). Sotheby's
+ * ships the goods at the seller's transport-tier fee, the deal settles
+ * at day-start, and no actor.travelled events fire. The fee path inside
+ * settleDeal is gated on `sellerSelfDelivers: false`.
+ */
+function magicDelivery(
   world: World,
   dealId: number,
   day: number,
   buyerActorId: number,
   sellerActorId: number,
-  reason: string,
+  procurementActor: number | null,
 ): void {
-  markDealDefaulted(world.db, dealId, day, reason);
-  world.events.emit({
-    type: "deal.defaulted",
-    at: world.clock,
-    dealId,
-    buyerActorId,
-    sellerActorId,
-    reason,
-  });
+  try {
+    settleDeal(world.db, dealId, day, {
+      procurementProceedsActorId: procurementActor,
+      events: world.events,
+      atClock: world.clock,
+      sellerSelfDelivers: false,
+    });
+  } catch (e) {
+    const reason = (e as Error).message;
+    markDealDefaulted(world.db, dealId, day, reason);
+    world.events.emit({
+      type: "deal.defaulted",
+      at: world.clock,
+      dealId,
+      buyerActorId,
+      sellerActorId,
+      reason,
+    });
+  }
 }
 
 function pickPickupLocation(
