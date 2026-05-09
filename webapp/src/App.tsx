@@ -42,8 +42,16 @@ const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
 export type SidebarTopTab = "actors" | "locations";
 export type SidebarLowerTab = "profile" | "diary" | "knows" | "inventory";
 
+export type SelectionKind =
+  | "actor"
+  | "location"
+  | "item"
+  | "deal"
+  | "lot"
+  | "pool";
+
 export interface Selection {
-  readonly kind: "actor" | "location";
+  readonly kind: SelectionKind;
   readonly id: number;
 }
 
@@ -352,16 +360,35 @@ function Loaded(props: LoadedProps) {
           </nav>
           <div className="tab-body">
             {props.tab === "events" && (
-              <EventList events={eventsAsOf} dump={dump} />
+              <EventList
+                events={eventsAsOf}
+                dump={dump}
+                onSelect={props.setSelection}
+              />
             )}
             {props.tab === "inventory" && (
-              <InventoryView dump={dump} day={day} snapshot={snapshot} />
+              <InventoryView
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
+                onSelect={props.setSelection}
+              />
             )}
             {props.tab === "deals" && (
-              <DealBook dump={dump} day={day} snapshot={snapshot} />
+              <DealBook
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
+                onSelect={props.setSelection}
+              />
             )}
             {props.tab === "pools" && (
-              <PoolBoard dump={dump} day={day} snapshot={snapshot} />
+              <PoolBoard
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
+                onSelect={props.setSelection}
+              />
             )}
             {props.tab === "map" && (
               <MapGraph
@@ -407,7 +434,12 @@ function Loaded(props: LoadedProps) {
       >
         <span className="right-resizer-grip" />
       </div>
-      <Summary dump={dump} day={day} snapshot={snapshot} />
+      <Summary
+        dump={dump}
+        day={day}
+        snapshot={snapshot}
+        onSelect={props.setSelection}
+      />
     </div>
   );
 }

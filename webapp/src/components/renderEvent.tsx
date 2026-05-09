@@ -1,22 +1,59 @@
 import type { RunDump, RunEvent } from "../types.js";
+import type { Selection } from "../App.js";
+import { ActorRef, DealRef, ItemRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
 
 /**
  * Translate one event into a human-readable React fragment, looking up
- * actor / item / location names from the dump.
+ * actor / item / location / deal / lot / pool names from the dump and
+ * rendering them as clickable refs.
  */
-export function renderEvent(e: RunEvent, dump: RunDump) {
-  const actor = (id: unknown) =>
-    typeof id === "number"
-      ? dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`
-      : String(id);
-  const loc = (id: unknown) =>
-    typeof id === "number"
-      ? dump.locations.find((l) => l.id === id)?.displayName ?? `loc ${id}`
-      : String(id);
-  const item = (id: unknown) =>
-    typeof id === "number"
-      ? dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`
-      : String(id);
+export function renderEvent(
+  e: RunEvent,
+  dump: RunDump,
+  onSelect: (s: Selection) => void,
+) {
+  const A = (id: unknown) =>
+    typeof id === "number" ? (
+      <ActorRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">{String(id)}</span>
+    );
+  const L = (id: unknown) =>
+    typeof id === "number" ? (
+      <LocationRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">{String(id)}</span>
+    );
+  const I = (id: unknown, qualityTier?: string) =>
+    typeof id === "number" ? (
+      <ItemRef
+        dump={dump}
+        id={id}
+        onSelect={onSelect}
+        variant="inline"
+        qualityTier={qualityTier}
+      />
+    ) : (
+      <span className="muted">{String(id)}</span>
+    );
+  const Deal = (id: unknown) =>
+    typeof id === "number" ? (
+      <DealRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">deal {String(id)}</span>
+    );
+  const Lot = (id: unknown) =>
+    typeof id === "number" ? (
+      <LotRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">lot {String(id)}</span>
+    );
+  const Pool = (id: unknown) =>
+    typeof id === "number" ? (
+      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">pool {String(id)}</span>
+    );
 
   switch (e.type) {
     case "pool.spawned": {
@@ -29,7 +66,7 @@ export function renderEvent(e: RunEvent, dump: RunDump) {
       return (
         <>
           {tag}
-          {item(e.itemKindId)} ({String(e.qualityTier)}) — qty {String(e.quantity)},
+          {I(e.itemKindId, String(e.qualityTier))} — qty {String(e.quantity)},
           window £{String(e.openingUnitPrice)}→£{String(e.closingUnitPrice)},
           expires D{String(e.expiryDay).padStart(2, "0")}
           {flavour}
@@ -39,110 +76,114 @@ export function renderEvent(e: RunEvent, dump: RunDump) {
     case "pool.flushed":
       return (
         <>
-          pool {String(e.poolId)} qty {String(e.quantity)} → {String(e.destination)}
-          {e.auctionLotId !== null && e.auctionLotId !== undefined
-            ? ` (lot ${String(e.auctionLotId)})`
-            : ""}
+          {Pool(e.poolId)} qty {String(e.quantity)} → {String(e.destination)}
+          {e.auctionLotId !== null && e.auctionLotId !== undefined ? (
+            <>
+              {" ("}
+              {Lot(e.auctionLotId)}
+              {")"}
+            </>
+          ) : null}
         </>
       );
     case "pool.claimed":
       return (
         <>
-          {actor(e.actorId)} grabbed {String(e.quantity)} units @ £{String(e.unitPrice)} from pool {String(e.poolId)}
+          {A(e.actorId)} grabbed {String(e.quantity)} units @ £{String(e.unitPrice)} from {Pool(e.poolId)}
         </>
       );
     case "auction.cleared":
       return (
         <>
-          lot {String(e.auctionLotId)} → {actor(e.winnerActorId)}: total £{String(e.totalPrice)} (≈ £{String(e.unitPrice)}/unit)
+          {Lot(e.auctionLotId)} → {A(e.winnerActorId)}: total £{String(e.totalPrice)} (≈ £{String(e.unitPrice)}/unit)
         </>
       );
     case "auction.unsold":
       return (
         <>
-          lot {String(e.auctionLotId)} unsold ({String(e.reason)})
+          {Lot(e.auctionLotId)} unsold ({String(e.reason)})
         </>
       );
     case "auction.written_off":
       return (
         <>
-          lot {String(e.auctionLotId)} written off after {String(e.daysOpen)} days
+          {Lot(e.auctionLotId)} written off after {String(e.daysOpen)} days
         </>
       );
     case "deal.settled":
       return (
         <>
-          deal {String(e.dealId)}: {actor(e.sellerActorId)} → {actor(e.buyerActorId)} for £{String(e.totalPrice)}
+          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} for £{String(e.totalPrice)}
         </>
       );
     case "deal.defaulted":
       return (
         <>
           <span className="tag-warn">⚠</span>
-          deal {String(e.dealId)}: {actor(e.sellerActorId)} → {actor(e.buyerActorId)} —{" "}
+          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} —{" "}
           <em>{String(e.reason)}</em>
         </>
       );
     case "delivery.fee":
       return (
         <>
-          deal {String(e.dealId)} — {actor(e.sellerActorId)} paid £{String(e.fee)} delivery
+          {Deal(e.dealId)} — {A(e.sellerActorId)} paid £{String(e.fee)} delivery
         </>
       );
     case "settlement.lead-claim":
       return (
         <>
-          {actor(e.sellerActorId)} sourced {String(e.quantity)}@£{String(e.unitPrice)} from pool {String(e.poolId)} for deal {String(e.dealId)} (lead {String(e.throughLeadId)})
+          {A(e.sellerActorId)} sourced {String(e.quantity)}@£{String(e.unitPrice)} from {Pool(e.poolId)} for {Deal(e.dealId)} (lead {String(e.throughLeadId)})
         </>
       );
     case "pubdeal.attempted":
       return (
         <>
-          {actor(e.sellerActorId)} → {actor(e.buyerActorId)}: {item(e.itemKindId)} ({String(e.qualityTier)}) ×{String(e.quantity)}
+          {A(e.sellerActorId)} → {A(e.buyerActorId)}: {I(e.itemKindId, String(e.qualityTier))} ×{String(e.quantity)}
         </>
       );
     case "pubdeal.agreed":
       return (
         <>
-          deal {String(e.dealId)}: {actor(e.sellerActorId)} → {actor(e.buyerActorId)} — {String(e.quantity)} @ £{String(e.unitPrice)}/unit
+          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} — {String(e.quantity)} @ £{String(e.unitPrice)}/unit
         </>
       );
     case "pubdeal.walked":
       return (
         <>
-          {actor(e.sellerActorId)} ↔ {actor(e.buyerActorId)} couldn't agree —{" "}
+          {A(e.sellerActorId)} ↔ {A(e.buyerActorId)} couldn't agree —{" "}
           <em>{String(e.reason)}</em>
         </>
       );
     case "pubdeal.skipped-low-trust":
       return (
         <>
-          {actor(e.buyerActorId)} won't deal with {actor(e.sellerActorId)} (trust {String(e.trustScore)})
+          {A(e.buyerActorId)} won't deal with {A(e.sellerActorId)} (trust {String(e.trustScore)})
         </>
       );
     case "gossip.exchanged":
       return (
         <>
-          {actor(e.visitorActorId)} ↔ {actor(e.proprietorActorId)} at {loc(e.atLocationId)}
+          {A(e.visitorActorId)} ↔ {A(e.proprietorActorId)} at {L(e.atLocationId)}
         </>
       );
     case "actor.travelled":
       return (
         <>
-          {actor(e.actorId)} → {loc(e.toLocationId)}
+          {A(e.actorId)} → {L(e.toLocationId)}
         </>
       );
     case "heat.raised":
       return (
         <>
-          {actor(e.actorId)} +{String(e.delta)} heat → {String(e.score)} ({String(e.reason)})
+          {A(e.actorId)} +{String(e.delta)} heat → {String(e.score)} ({String(e.reason)})
         </>
       );
     case "authority.raid":
       return (
         <>
           <span className="tag-warn">🚨</span>
-          {actor(e.actorId)}: {String(e.unitsSeized)} units seized, £{String(e.fine)} fine (heat was {String(e.heatBefore)})
+          {A(e.actorId)}: {String(e.unitsSeized)} units seized, £{String(e.fine)} fine (heat was {String(e.heatBefore)})
         </>
       );
     case "world.started":

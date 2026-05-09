@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent, SnapshotDeal } from "../types.js";
+import type { Selection } from "../App.js";
 import { renderEvent } from "./renderEvent.js";
+import { ItemRef, LocationRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
   readonly snapshot: DaySnapshot | null;
+  readonly onSelect: (s: Selection) => void;
 }
 
 interface CategorySpec {
@@ -48,6 +51,7 @@ function renderDealEnrichment(
   event: RunEvent,
   dump: RunDump,
   snapshot: DaySnapshot | null,
+  onSelect: (s: Selection) => void,
 ) {
   if (event.type !== "deal.settled" && event.type !== "deal.defaulted") {
     return null;
@@ -59,26 +63,34 @@ function renderDealEnrichment(
     (d) => d.id === dealId,
   );
   if (deal === undefined || deal.lines.length === 0) return null;
-  const itemName = (id: number) =>
-    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
-  const locName = (id: number | null) =>
-    id === null
-      ? null
-      : dump.locations.find((l) => l.id === id)?.displayName ?? `loc ${id}`;
-  const drop = locName(deal.deliveryLocationId);
   return (
     <div className="right-detail-deal">
       <div className="muted">
         agreed D{deal.agreedDay} · deadline D{deal.deadlineDay}
-        {drop !== null ? ` · drop @ ${drop}` : ""}
+        {deal.deliveryLocationId !== null ? (
+          <>
+            {" · drop @ "}
+            <LocationRef
+              dump={dump}
+              id={deal.deliveryLocationId}
+              onSelect={onSelect}
+              variant="inline"
+            />
+          </>
+        ) : null}
       </div>
       <ul className="right-detail-deal-lines">
         {deal.lines.map((line, i) => (
           <li key={i}>
             <span className="cat-child-stamp">{line.quantity}</span>
             <span>
-              {itemName(line.itemKindId)}{" "}
-              <span className="muted">({line.qualityTier})</span>{" "}
+              <ItemRef
+                dump={dump}
+                id={line.itemKindId}
+                onSelect={onSelect}
+                variant="inline"
+                qualityTier={line.qualityTier}
+              />{" "}
               <span className="muted">@ £{line.unitPrice}</span>
             </span>
           </li>
@@ -88,7 +100,7 @@ function renderDealEnrichment(
   );
 }
 
-export function Summary({ dump, day, snapshot }: Props) {
+export function Summary({ dump, day, snapshot, onSelect }: Props) {
   // Index events into per-category buckets, filtered to "as of day".
   // We carry the original event index so detail clicks can re-render
   // identically even after sorting or filtering.
@@ -230,7 +242,7 @@ export function Summary({ dump, day, snapshot }: Props) {
                             D{pad(event.at.day)} {pad(event.at.hour)}:00
                           </span>
                           <span className="cat-child-body">
-                            {renderEvent(event, dump)}
+                            {renderEvent(event, dump, onSelect)}
                           </span>
                         </button>
                       </li>
@@ -270,9 +282,9 @@ export function Summary({ dump, day, snapshot }: Props) {
               <code>{selectedEvent.type}</code>
             </header>
             <div className="right-detail-body">
-              {renderEvent(selectedEvent, dump)}
+              {renderEvent(selectedEvent, dump, onSelect)}
             </div>
-            {renderDealEnrichment(selectedEvent, dump, snapshot)}
+            {renderDealEnrichment(selectedEvent, dump, snapshot, onSelect)}
             <details className="right-detail-raw">
               <summary className="muted">Raw payload</summary>
               <pre>{JSON.stringify(selectedEvent, null, 2)}</pre>

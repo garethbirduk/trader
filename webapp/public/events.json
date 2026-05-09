@@ -2118,11 +2118,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 6
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 6
         }
@@ -2356,11 +2351,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 4
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 4
         }
@@ -5075,11 +5065,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 5
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 5
         }
@@ -7478,11 +7463,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 4
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 4
         }
@@ -7741,11 +7721,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 5
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 5
         }
@@ -7869,11 +7844,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 16
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 16
         }
@@ -10323,11 +10293,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 6
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 6
         }
@@ -15952,11 +15917,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 19
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 19
         }
@@ -18782,7 +18742,7 @@
       "dealId": 9,
       "sellerActorId": 4,
       "buyerActorId": 3,
-      "unitPrice": 27,
+      "unitPrice": 26,
       "quantity": 3,
       "turns": [
         {
@@ -18792,13 +18752,8 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 27
-        },
-        {
-          "by": "seller",
           "action": "accept",
-          "unitPrice": 27
+          "unitPrice": 26
         }
       ]
     },
@@ -18915,11 +18870,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 5
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 5
         }
@@ -20845,7 +20795,7 @@
       "dealId": 9,
       "buyerActorId": 3,
       "sellerActorId": 4,
-      "totalPrice": 81
+      "totalPrice": 78
     },
     {
       "type": "actor.departed",
@@ -21551,11 +21501,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 5
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 5
         }
@@ -24117,7 +24062,7 @@
       "dealId": 12,
       "sellerActorId": 3,
       "buyerActorId": 4,
-      "unitPrice": 14,
+      "unitPrice": 13,
       "quantity": 8,
       "turns": [
         {
@@ -24132,13 +24077,8 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 14
-        },
-        {
-          "by": "seller",
           "action": "accept",
-          "unitPrice": 14
+          "unitPrice": 13
         }
       ]
     },
@@ -24385,7 +24325,7 @@
       "dealId": 13,
       "sellerActorId": 5,
       "buyerActorId": 2,
-      "unitPrice": 21,
+      "unitPrice": 20,
       "quantity": 5,
       "turns": [
         {
@@ -24410,13 +24350,8 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 21
-        },
-        {
-          "by": "seller",
           "action": "accept",
-          "unitPrice": 21
+          "unitPrice": 20
         }
       ]
     },
@@ -27448,7 +27383,7 @@
       "dealId": 12,
       "buyerActorId": 4,
       "sellerActorId": 3,
-      "totalPrice": 112
+      "totalPrice": 104
     },
     {
       "type": "actor.departed",
@@ -29746,7 +29681,7 @@
       "dealId": 14,
       "sellerActorId": 5,
       "buyerActorId": 2,
-      "unitPrice": 23,
+      "unitPrice": 22,
       "quantity": 5,
       "turns": [
         {
@@ -29766,13 +29701,8 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 23
-        },
-        {
-          "by": "seller",
           "action": "accept",
-          "unitPrice": 23
+          "unitPrice": 22
         }
       ]
     },
@@ -29874,11 +29804,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 5
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 5
         }
@@ -29906,7 +29831,7 @@
       "dealId": 16,
       "sellerActorId": 5,
       "buyerActorId": 2,
-      "unitPrice": 21,
+      "unitPrice": 20,
       "quantity": 5,
       "turns": [
         {
@@ -29931,13 +29856,8 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 21
-        },
-        {
-          "by": "seller",
           "action": "accept",
-          "unitPrice": 21
+          "unitPrice": 20
         }
       ]
     },
@@ -31757,7 +31677,7 @@
       "dealId": 13,
       "buyerActorId": 2,
       "sellerActorId": 5,
-      "totalPrice": 105
+      "totalPrice": 100
     },
     {
       "type": "deal.defaulted",
@@ -32443,11 +32363,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 5
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 5
         }
@@ -32650,11 +32565,6 @@
         },
         {
           "by": "buyer",
-          "action": "counter",
-          "unitPrice": 7
-        },
-        {
-          "by": "seller",
           "action": "accept",
           "unitPrice": 7
         }
@@ -32763,11 +32673,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 6
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 6
         }
@@ -35377,11 +35282,6 @@
         },
         {
           "by": "seller",
-          "action": "counter",
-          "unitPrice": 7
-        },
-        {
-          "by": "buyer",
           "action": "accept",
           "unitPrice": 7
         }
@@ -38531,7 +38431,7 @@
       "id": 2,
       "code": "boyce",
       "displayName": "Boycie",
-      "cash": 4324,
+      "cash": 4329,
       "currentLocationId": 10,
       "homeLocationId": 10,
       "transportCapacity": "boot",
@@ -38544,7 +38444,7 @@
       "id": 3,
       "code": "denzil",
       "displayName": "Denzil",
-      "cash": 405,
+      "cash": 400,
       "currentLocationId": 11,
       "homeLocationId": 11,
       "transportCapacity": "truck",
@@ -38556,7 +38456,7 @@
       "id": 4,
       "code": "monkey-harris",
       "displayName": "Monkey Harris",
-      "cash": 188,
+      "cash": 193,
       "currentLocationId": 2,
       "homeLocationId": 2,
       "transportCapacity": "van",
@@ -38569,7 +38469,7 @@
       "id": 5,
       "code": "trigger",
       "displayName": "Trigger",
-      "cash": 196,
+      "cash": 191,
       "currentLocationId": 22,
       "homeLocationId": 22,
       "transportCapacity": "pocket",
@@ -47339,13 +47239,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -47508,13 +47408,13 @@
         },
         {
           "id": 3,
-          "cash": 671,
+          "cash": 674,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 595,
+          "cash": 592,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -48008,7 +47908,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         }
@@ -48193,13 +48093,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -48398,13 +48298,13 @@
         },
         {
           "id": 3,
-          "cash": 630,
+          "cash": 633,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 588,
+          "cash": 585,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -48898,7 +48798,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         },
@@ -49113,13 +49013,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -49176,13 +49076,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 112,
+          "totalPrice": 104,
           "lines": [
             {
               "itemKindId": 7,
               "qualityTier": "good",
               "quantity": 8,
-              "unitPrice": 14
+              "unitPrice": 13
             }
           ]
         },
@@ -49197,13 +49097,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         }
@@ -49390,13 +49290,13 @@
         },
         {
           "id": 3,
-          "cash": 630,
+          "cash": 633,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 540,
+          "cash": 537,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -49890,7 +49790,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         },
@@ -50115,13 +50015,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -50178,13 +50078,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 112,
+          "totalPrice": 104,
           "lines": [
             {
               "itemKindId": 7,
               "qualityTier": "good",
               "quantity": 8,
-              "unitPrice": 14
+              "unitPrice": 13
             }
           ]
         },
@@ -50199,13 +50099,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         }
@@ -50416,13 +50316,13 @@
         },
         {
           "id": 3,
-          "cash": 582,
+          "cash": 577,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 428,
+          "cash": 433,
           "currentLocationId": 2,
           "heat": 0
         },
@@ -50906,7 +50806,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         },
@@ -50966,7 +50866,7 @@
           "itemKindId": 7,
           "qualityTier": "good",
           "quantity": 8,
-          "acquiredUnitPrice": 14,
+          "acquiredUnitPrice": 13,
           "acquiredDay": 11,
           "locationId": 3
         },
@@ -51171,13 +51071,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -51234,13 +51134,13 @@
           "settledDay": 11,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 112,
+          "totalPrice": 104,
           "lines": [
             {
               "itemKindId": 7,
               "qualityTier": "good",
               "quantity": 8,
-              "unitPrice": 14
+              "unitPrice": 13
             }
           ]
         },
@@ -51255,13 +51155,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },
@@ -51276,13 +51176,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 115,
+          "totalPrice": 110,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 23
+              "unitPrice": 22
             }
           ]
         },
@@ -51318,13 +51218,13 @@
           "settledDay": null,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         }
@@ -51556,25 +51456,25 @@
         },
         {
           "id": 2,
-          "cash": 4324,
+          "cash": 4329,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 550,
+          "cash": 545,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 228,
+          "cash": 233,
           "currentLocationId": 2,
           "heat": 0
         },
         {
           "id": 5,
-          "cash": 161,
+          "cash": 156,
           "currentLocationId": 22,
           "heat": 0
         },
@@ -52042,7 +51942,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         },
@@ -52102,7 +52002,7 @@
           "itemKindId": 7,
           "qualityTier": "good",
           "quantity": 8,
-          "acquiredUnitPrice": 14,
+          "acquiredUnitPrice": 13,
           "acquiredDay": 11,
           "locationId": 3
         },
@@ -52162,7 +52062,7 @@
           "itemKindId": 41,
           "qualityTier": "good",
           "quantity": 5,
-          "acquiredUnitPrice": 21,
+          "acquiredUnitPrice": 20,
           "acquiredDay": 12,
           "locationId": 3
         }
@@ -52347,13 +52247,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -52410,13 +52310,13 @@
           "settledDay": 11,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 112,
+          "totalPrice": 104,
           "lines": [
             {
               "itemKindId": 7,
               "qualityTier": "good",
               "quantity": 8,
-              "unitPrice": 14
+              "unitPrice": 13
             }
           ]
         },
@@ -52431,13 +52331,13 @@
           "settledDay": 12,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },
@@ -52452,13 +52352,13 @@
           "settledDay": null,
           "defaultedDay": 12,
           "defaultReason": "seller short on deal 14 line 14: have 2, need 5",
-          "totalPrice": 115,
+          "totalPrice": 110,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 23
+              "unitPrice": 22
             }
           ]
         },
@@ -52494,13 +52394,13 @@
           "settledDay": null,
           "defaultedDay": 12,
           "defaultReason": "seller short on deal 16 line 16: have 2, need 5",
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },
@@ -52811,25 +52711,25 @@
         },
         {
           "id": 2,
-          "cash": 4324,
+          "cash": 4329,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 550,
+          "cash": 545,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 193,
+          "cash": 198,
           "currentLocationId": 2,
           "heat": 0
         },
         {
           "id": 5,
-          "cash": 196,
+          "cash": 191,
           "currentLocationId": 22,
           "heat": 0
         },
@@ -53297,7 +53197,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         },
@@ -53357,7 +53257,7 @@
           "itemKindId": 7,
           "qualityTier": "good",
           "quantity": 8,
-          "acquiredUnitPrice": 14,
+          "acquiredUnitPrice": 13,
           "acquiredDay": 11,
           "locationId": 3
         },
@@ -53417,7 +53317,7 @@
           "itemKindId": 41,
           "qualityTier": "good",
           "quantity": 5,
-          "acquiredUnitPrice": 21,
+          "acquiredUnitPrice": 20,
           "acquiredDay": 12,
           "locationId": 3
         },
@@ -53612,13 +53512,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -53675,13 +53575,13 @@
           "settledDay": 11,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 112,
+          "totalPrice": 104,
           "lines": [
             {
               "itemKindId": 7,
               "qualityTier": "good",
               "quantity": 8,
-              "unitPrice": 14
+              "unitPrice": 13
             }
           ]
         },
@@ -53696,13 +53596,13 @@
           "settledDay": 12,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },
@@ -53717,13 +53617,13 @@
           "settledDay": null,
           "defaultedDay": 12,
           "defaultReason": "seller short on deal 14 line 14: have 2, need 5",
-          "totalPrice": 115,
+          "totalPrice": 110,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 23
+              "unitPrice": 22
             }
           ]
         },
@@ -53759,13 +53659,13 @@
           "settledDay": null,
           "defaultedDay": 12,
           "defaultReason": "seller short on deal 16 line 16: have 2, need 5",
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },
@@ -54141,25 +54041,25 @@
         },
         {
           "id": 2,
-          "cash": 4324,
+          "cash": 4329,
           "currentLocationId": 10,
           "heat": 0
         },
         {
           "id": 3,
-          "cash": 405,
+          "cash": 400,
           "currentLocationId": 11,
           "heat": 0
         },
         {
           "id": 4,
-          "cash": 188,
+          "cash": 193,
           "currentLocationId": 2,
           "heat": 0
         },
         {
           "id": 5,
-          "cash": 196,
+          "cash": 191,
           "currentLocationId": 22,
           "heat": 0
         },
@@ -54627,7 +54527,7 @@
           "itemKindId": 48,
           "qualityTier": "fair",
           "quantity": 3,
-          "acquiredUnitPrice": 27,
+          "acquiredUnitPrice": 26,
           "acquiredDay": 8,
           "locationId": 3
         },
@@ -54687,7 +54587,7 @@
           "itemKindId": 7,
           "qualityTier": "good",
           "quantity": 8,
-          "acquiredUnitPrice": 14,
+          "acquiredUnitPrice": 13,
           "acquiredDay": 11,
           "locationId": 3
         },
@@ -54747,7 +54647,7 @@
           "itemKindId": 41,
           "qualityTier": "good",
           "quantity": 5,
-          "acquiredUnitPrice": 21,
+          "acquiredUnitPrice": 20,
           "acquiredDay": 12,
           "locationId": 3
         },
@@ -54962,13 +54862,13 @@
           "settledDay": 8,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 81,
+          "totalPrice": 78,
           "lines": [
             {
               "itemKindId": 48,
               "qualityTier": "fair",
               "quantity": 3,
-              "unitPrice": 27
+              "unitPrice": 26
             }
           ]
         },
@@ -55025,13 +54925,13 @@
           "settledDay": 11,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 112,
+          "totalPrice": 104,
           "lines": [
             {
               "itemKindId": 7,
               "qualityTier": "good",
               "quantity": 8,
-              "unitPrice": 14
+              "unitPrice": 13
             }
           ]
         },
@@ -55046,13 +54946,13 @@
           "settledDay": 12,
           "defaultedDay": null,
           "defaultReason": null,
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },
@@ -55067,13 +54967,13 @@
           "settledDay": null,
           "defaultedDay": 12,
           "defaultReason": "seller short on deal 14 line 14: have 2, need 5",
-          "totalPrice": 115,
+          "totalPrice": 110,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 23
+              "unitPrice": 22
             }
           ]
         },
@@ -55109,13 +55009,13 @@
           "settledDay": null,
           "defaultedDay": 12,
           "defaultReason": "seller short on deal 16 line 16: have 2, need 5",
-          "totalPrice": 105,
+          "totalPrice": 100,
           "lines": [
             {
               "itemKindId": 41,
               "qualityTier": "good",
               "quantity": 5,
-              "unitPrice": 21
+              "unitPrice": 20
             }
           ]
         },

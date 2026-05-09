@@ -68,6 +68,13 @@ export function runRuleBasedNegotiation(
           turns,
         };
       }
+      // If our concession would land at or below the buyer's last
+      // offer, just accept their price — no point in countering at the
+      // same number and waiting for them to nod.
+      if (next <= buyerPos) {
+        turns.push({ by: "seller", action: "accept", unitPrice: buyerPos });
+        return { type: "agreed", unitPrice: buyerPos, turns };
+      }
       sellerPos = next;
       turns.push({ by: "seller", action: "counter", unitPrice: sellerPos });
     } else {
@@ -84,6 +91,12 @@ export function runRuleBasedNegotiation(
           reason: "buyer at ceiling, seller's ask still above it",
           turns,
         };
+      }
+      // Our concession would meet or cross the seller's ask — accept
+      // their price rather than counter at the same number.
+      if (next >= sellerPos) {
+        turns.push({ by: "buyer", action: "accept", unitPrice: sellerPos });
+        return { type: "agreed", unitPrice: sellerPos, turns };
       }
       buyerPos = next;
       turns.push({ by: "buyer", action: "counter", unitPrice: buyerPos });

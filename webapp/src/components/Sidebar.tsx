@@ -12,6 +12,10 @@ import { ActorKnows } from "./ActorKnows.js";
 import { ActorInventory } from "./ActorInventory.js";
 import { LocationProfile } from "./LocationProfile.js";
 import { LocationDiary } from "./LocationDiary.js";
+import { ItemProfile } from "./ItemProfile.js";
+import { DealProfile } from "./DealProfile.js";
+import { LotProfile } from "./LotProfile.js";
+import { PoolProfile } from "./PoolProfile.js";
 
 const LOWER_HEIGHT_KEY = "trader-sidebar-lower-px";
 const DEFAULT_LOWER_PX = 320;
@@ -106,13 +110,17 @@ export function Sidebar(props: Props) {
     writeFilterSet(LOC_TYPE_FILTER_KEY, locTypeFilter);
   }, [locTypeFilter]);
 
-  // Knows and Inventory are actor-only — snap back to Profile if a
-  // location gets selected while one of those is active.
+  // Knows and Inventory are actor-only; Diary is actor+location.
+  // Snap back to Profile if a non-applicable selection gets focused
+  // while one of those tabs is active.
   useEffect(() => {
-    if (
-      (lowerTab === "knows" || lowerTab === "inventory") &&
-      selection?.kind === "location"
-    ) {
+    if (selection === null) return;
+    const isActor = selection.kind === "actor";
+    const isLocation = selection.kind === "location";
+    if ((lowerTab === "knows" || lowerTab === "inventory") && !isActor) {
+      setLowerTab("profile");
+    }
+    if (lowerTab === "diary" && !isActor && !isLocation) {
       setLowerTab("profile");
     }
   }, [lowerTab, selection, setLowerTab]);
@@ -296,7 +304,17 @@ export function Sidebar(props: Props) {
           <button
             className={`side-tab ${lowerTab === "diary" ? "side-tab-active" : ""}`}
             onClick={() => setLowerTab("diary")}
-            disabled={selection === null}
+            disabled={
+              selection === null ||
+              (selection.kind !== "actor" && selection.kind !== "location")
+            }
+            title={
+              selection !== null &&
+              selection.kind !== "actor" &&
+              selection.kind !== "location"
+                ? "Diary only applies to actors and locations"
+                : "Per-day events"
+            }
           >
             Diary
           </button>
@@ -337,7 +355,7 @@ export function Sidebar(props: Props) {
         <div className="side-lower-body">
           {selection === null ? (
             <div className="side-lower-empty muted">
-              Select an actor or location to view details.
+              Select an actor, location, item, deal, lot, or pool to view details.
             </div>
           ) : (
             <>
@@ -392,6 +410,42 @@ export function Sidebar(props: Props) {
                   hour={hour}
                   locationId={selection.id}
                   onChangeDay={onChangeDay}
+                  onSelect={setSelection}
+                />
+              )}
+              {selection.kind === "item" && lowerTab === "profile" && (
+                <ItemProfile
+                  dump={dump}
+                  day={day}
+                  snapshot={snapshot}
+                  itemId={selection.id}
+                  onSelect={setSelection}
+                />
+              )}
+              {selection.kind === "deal" && lowerTab === "profile" && (
+                <DealProfile
+                  dump={dump}
+                  day={day}
+                  snapshot={snapshot}
+                  dealId={selection.id}
+                  onSelect={setSelection}
+                />
+              )}
+              {selection.kind === "lot" && lowerTab === "profile" && (
+                <LotProfile
+                  dump={dump}
+                  day={day}
+                  snapshot={snapshot}
+                  lotId={selection.id}
+                  onSelect={setSelection}
+                />
+              )}
+              {selection.kind === "pool" && lowerTab === "profile" && (
+                <PoolProfile
+                  dump={dump}
+                  day={day}
+                  snapshot={snapshot}
+                  poolId={selection.id}
                   onSelect={setSelection}
                 />
               )}

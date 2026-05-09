@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
+import { ActorRef, DealRef, ItemRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -112,7 +113,7 @@ export function ActorDiary({
                   {row.events.map((e, i) => (
                     <div key={i} className={`diary-event diary-event-${e.type.replace(/\./g, "-")}`}>
                       <span className="muted">{e.type}</span>{" "}
-                      <span>{summarizeEvent(e, dump, actorId)}</span>
+                      <span>{summarizeEvent(e, dump, actorId, onSelect)}</span>
                     </div>
                   ))}
                 </div>
@@ -144,54 +145,133 @@ function summarizeEvent(
   e: RunEvent,
   dump: RunDump,
   actorId: number,
-): string {
-  const actorName = (id: unknown) =>
-    typeof id === "number"
-      ? dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`
-      : "?";
-  const locName = (id: unknown) =>
-    typeof id === "number"
-      ? dump.locations.find((l) => l.id === id)?.displayName ?? `loc ${id}`
-      : "?";
-  const itemName = (id: unknown) =>
-    typeof id === "number"
-      ? dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`
-      : "?";
+  onSelect: (s: Selection) => void,
+): JSX.Element {
+  const A = (id: unknown) =>
+    typeof id === "number" ? (
+      <ActorRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">?</span>
+    );
+  const L = (id: unknown) =>
+    typeof id === "number" ? (
+      <LocationRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">?</span>
+    );
+  const I = (id: unknown) =>
+    typeof id === "number" ? (
+      <ItemRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">?</span>
+    );
+  const Lot = (id: unknown) =>
+    typeof id === "number" ? (
+      <LotRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">lot ?</span>
+    );
+  const Deal = (id: unknown) =>
+    typeof id === "number" ? (
+      <DealRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">deal ?</span>
+    );
+  const Pool = (id: unknown) =>
+    typeof id === "number" ? (
+      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">pool ?</span>
+    );
 
   switch (e.type) {
     case "actor.travelled":
-      return `→ ${locName(e.toLocationId)}`;
+      return <>→ {L(e.toLocationId)}</>;
     case "pool.claimed":
-      return `claimed ${e.quantity} units @ £${e.unitPrice} from pool ${e.poolId}`;
+      return (
+        <>
+          claimed {String(e.quantity)} units @ £{String(e.unitPrice)} from {Pool(e.poolId)}
+        </>
+      );
     case "auction.cleared":
-      return e.winnerActorId === actorId
-        ? `won lot ${e.auctionLotId} for £${e.totalPrice}`
-        : `lot ${e.auctionLotId} sold`;
+      return e.winnerActorId === actorId ? (
+        <>
+          won {Lot(e.auctionLotId)} for £{String(e.totalPrice)}
+        </>
+      ) : (
+        <>{Lot(e.auctionLotId)} sold</>
+      );
     case "deal.settled":
-      return e.sellerActorId === actorId
-        ? `sold to ${actorName(e.buyerActorId)} for £${e.totalPrice}`
-        : `bought from ${actorName(e.sellerActorId)} for £${e.totalPrice}`;
+      return e.sellerActorId === actorId ? (
+        <>
+          sold to {A(e.buyerActorId)} for £{String(e.totalPrice)}
+        </>
+      ) : (
+        <>
+          bought from {A(e.sellerActorId)} for £{String(e.totalPrice)}
+        </>
+      );
     case "deal.defaulted":
-      return `defaulted with ${actorName(e.sellerActorId === actorId ? e.buyerActorId : e.sellerActorId)} — ${e.reason}`;
+      return (
+        <>
+          defaulted with {A(e.sellerActorId === actorId ? e.buyerActorId : e.sellerActorId)} — {String(e.reason)}
+        </>
+      );
     case "delivery.fee":
-      return `paid £${e.fee} delivery for deal ${e.dealId}`;
+      return (
+        <>
+          paid £{String(e.fee)} delivery for {Deal(e.dealId)}
+        </>
+      );
     case "settlement.lead-claim":
-      return `sourced ${e.quantity} @ £${e.unitPrice} from pool ${e.poolId}`;
+      return (
+        <>
+          sourced {String(e.quantity)} @ £{String(e.unitPrice)} from {Pool(e.poolId)}
+        </>
+      );
     case "pubdeal.attempted":
-      return `pubdeal vs ${actorName(e.sellerActorId === actorId ? e.buyerActorId : e.sellerActorId)}${typeof e.itemKindId === "number" ? ` — ${itemName(e.itemKindId)} ×${e.quantity}` : ` ×${e.quantity}`}`;
+      return (
+        <>
+          pubdeal vs {A(e.sellerActorId === actorId ? e.buyerActorId : e.sellerActorId)}
+          {typeof e.itemKindId === "number" ? (
+            <>
+              {" — "}
+              {I(e.itemKindId)} ×{String(e.quantity)}
+            </>
+          ) : (
+            <> ×{String(e.quantity)}</>
+          )}
+        </>
+      );
     case "pubdeal.agreed":
-      return `agreed deal ${e.dealId} ×${e.quantity} @ £${e.unitPrice}`;
+      return (
+        <>
+          agreed {Deal(e.dealId)} ×{String(e.quantity)} @ £{String(e.unitPrice)}
+        </>
+      );
     case "pubdeal.walked":
-      return `walked away — ${e.reason}`;
+      return <>walked away — {String(e.reason)}</>;
     case "pubdeal.skipped-low-trust":
-      return `wouldn't deal (trust ${e.trustScore})`;
+      return <>wouldn't deal (trust {String(e.trustScore)})</>;
     case "gossip.exchanged":
-      return `gossip with ${actorName(e.proprietorActorId === actorId ? e.visitorActorId : e.proprietorActorId)} at ${locName(e.atLocationId)}`;
+      return (
+        <>
+          gossip with {A(e.proprietorActorId === actorId ? e.visitorActorId : e.proprietorActorId)} at {L(e.atLocationId)}
+        </>
+      );
     case "heat.raised":
-      return `+${e.delta} heat → ${e.score} (${e.reason})`;
+      return (
+        <>
+          +{String(e.delta)} heat → {String(e.score)} ({String(e.reason)})
+        </>
+      );
     case "authority.raid":
-      return `🚨 raid — £${e.fine} fine, ${e.unitsSeized} units seized`;
+      return (
+        <>
+          🚨 raid — £{String(e.fine)} fine, {String(e.unitsSeized)} units seized
+        </>
+      );
     default:
-      return "";
+      return <></>;
   }
 }

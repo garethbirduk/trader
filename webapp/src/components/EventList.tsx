@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import type { RunDump, RunEvent } from "../types.js";
+import type { Selection } from "../App.js";
 import { renderEvent } from "./renderEvent.js";
 
 interface Props {
   readonly events: readonly RunEvent[];
   readonly dump: RunDump;
+  readonly onSelect: (s: Selection) => void;
 }
 
 const HIDE_BY_DEFAULT = new Set([
@@ -16,7 +18,7 @@ const HIDE_BY_DEFAULT = new Set([
   "day.ended",
 ]);
 
-export function EventList({ events, dump }: Props) {
+export function EventList({ events, dump, onSelect }: Props) {
   const [showChatter, setShowChatter] = useState(false);
 
   const visible = useMemo(
@@ -45,7 +47,7 @@ export function EventList({ events, dump }: Props) {
       ) : (
         <div className="events">
           {visible.map((e, i) => (
-            <Event key={i} event={e} dump={dump} />
+            <Event key={i} event={e} dump={dump} onSelect={onSelect} />
           ))}
         </div>
       )}
@@ -53,10 +55,18 @@ export function EventList({ events, dump }: Props) {
   );
 }
 
-function Event({ event, dump }: { event: RunEvent; dump: RunDump }) {
+function Event({
+  event,
+  dump,
+  onSelect,
+}: {
+  event: RunEvent;
+  dump: RunDump;
+  onSelect: (s: Selection) => void;
+}) {
   const cls = `event event-${event.type.replace(/\./g, "-").replace(/_/g, "_")}`;
   const stamp = `${String(event.at.day).padStart(2, "0")}:${String(event.at.hour).padStart(2, "0")}`;
-  const rendered = renderEvent(event, dump);
+  const rendered = renderEvent(event, dump, onSelect);
   return (
     <div className={cls}>
       <span className="stamp">D{stamp}</span>

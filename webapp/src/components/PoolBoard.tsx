@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
 import type { DaySnapshot, RunDump, SnapshotPool } from "../types.js";
+import type { Selection } from "../App.js";
+import { ActorRef, ItemRef, PoolRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
   readonly snapshot: DaySnapshot | null;
+  readonly onSelect: (s: Selection) => void;
 }
 
-export function PoolBoard({ dump, day, snapshot }: Props) {
+export function PoolBoard({ dump, day, snapshot, onSelect }: Props) {
   const [includeFlushed, setIncludeFlushed] = useState(false);
 
   const pools = useMemo(() => {
@@ -27,11 +30,6 @@ export function PoolBoard({ dump, day, snapshot }: Props) {
       </div>
     );
   }
-
-  const itemName = (id: number) =>
-    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
-  const actorName = (id: number) =>
-    dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`;
 
   if (pools.length === 0) {
     return <div className="empty-state">no pools to show</div>;
@@ -63,8 +61,8 @@ export function PoolBoard({ dump, day, snapshot }: Props) {
             key={p.id}
             pool={p}
             day={day}
-            itemName={itemName(p.itemKindId)}
-            reachableNames={p.reachableBy.map(actorName)}
+            dump={dump}
+            onSelect={onSelect}
           />
         ))}
       </div>
@@ -75,13 +73,13 @@ export function PoolBoard({ dump, day, snapshot }: Props) {
 function PoolCard({
   pool,
   day,
-  itemName,
-  reachableNames,
+  dump,
+  onSelect,
 }: {
   pool: SnapshotPool;
   day: number;
-  itemName: string;
-  reachableNames: readonly string[];
+  dump: RunDump;
+  onSelect: (s: Selection) => void;
 }) {
   const isFlushed = pool.flushedDay !== null;
   const isExpired = !isFlushed && pool.expiryDay < day;
@@ -102,10 +100,23 @@ function PoolCard({
   return (
     <article className={`pool pool-${isFlushed ? "flushed" : isExpired ? "expired" : "live"}`}>
       <header className="pool-head">
-        <span className="pool-id">pool {pool.id}</span>
+        <span className="pool-id">
+          <PoolRef
+            dump={dump}
+            id={pool.id}
+            onSelect={onSelect}
+            variant="inline"
+          />
+        </span>
         <span className="pool-status">{status}</span>
         <span className="pool-item">
-          {itemName} <span className={`tier tier-${pool.qualityTier}`}>{pool.qualityTier}</span>
+          <ItemRef
+            dump={dump}
+            id={pool.itemKindId}
+            onSelect={onSelect}
+            variant="inline"
+            qualityTier={pool.qualityTier}
+          />
         </span>
         <span className="pool-qty">qty {pool.quantityRemaining}</span>
       </header>
@@ -121,7 +132,22 @@ function PoolCard({
         {!isFlushed && !isExpired ? ` · today ≈ £${currentUnitPrice}/u` : ""}
       </div>
       <div className="pool-reach muted">
-        reachable: {reachableNames.length === 0 ? "—" : reachableNames.join(", ")}
+        reachable:{" "}
+        {pool.reachableBy.length === 0 ? (
+          "—"
+        ) : (
+          pool.reachableBy.map((aid, i) => (
+            <span key={aid}>
+              {i > 0 ? ", " : ""}
+              <ActorRef
+                dump={dump}
+                id={aid}
+                onSelect={onSelect}
+                variant="inline"
+              />
+            </span>
+          ))
+        )}
       </div>
     </article>
   );

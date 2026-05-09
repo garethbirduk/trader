@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { RunDump, RunEvent, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip } from "./Links.js";
+import { ActorRef, DealRef, ItemRef, LotRef, PoolRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -248,7 +249,7 @@ export function LocationDiary({
                     {events.map((e, i) => (
                       <div key={i} className={`diary-event diary-event-${e.type.replace(/\./g, "-")}`}>
                         <span className="muted">{e.type}</span>{" "}
-                        <span>{summarizeLocEvent(e, dump)}</span>
+                        <span>{summarizeLocEvent(e, dump, onSelect)}</span>
                       </div>
                     ))}
                   </div>
@@ -329,32 +330,34 @@ function AuctionLotRow({
   dump: RunDump;
   onSelect: (s: Selection) => void;
 }) {
-  const item = dump.items.find((i) => i.id === lot.itemKindId);
-  const cleared =
-    lot.clearedDay !== null && lot.clearedToActorId !== null
-      ? `→ ${dump.actors.find((a) => a.id === lot.clearedToActorId)?.displayName ?? `actor ${lot.clearedToActorId}`} for £${lot.clearedPrice}`
-      : lot.clearedDay !== null
-        ? "unsold"
-        : "live";
   return (
     <li>
-      <strong>{item?.displayName ?? `item ${lot.itemKindId}`}</strong>{" "}
-      <span className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</span>{" "}
+      <LotRef dump={dump} id={lot.id} onSelect={onSelect} variant="inline" />{" "}
+      <ItemRef
+        dump={dump}
+        id={lot.itemKindId}
+        onSelect={onSelect}
+        variant="inline"
+        qualityTier={lot.qualityTier}
+      />{" "}
       ×{lot.quantity}{" "}
       <span className="muted">floor £{lot.floorPrice}</span>{" "}
-      <span className="muted">— {cleared}</span>
-      {lot.clearedToActorId !== null ? (
-        <>
-          {" "}
-          <ActorChip
+      {lot.clearedDay !== null && lot.clearedToActorId !== null ? (
+        <span className="muted">
+          —{" → "}
+          <ActorRef
             dump={dump}
-            actorId={lot.clearedToActorId}
+            id={lot.clearedToActorId}
             onSelect={onSelect}
-            size={16}
-            showName={false}
-          />
-        </>
-      ) : null}
+            variant="inline"
+          />{" "}
+          for £{lot.clearedPrice}
+        </span>
+      ) : lot.clearedDay !== null ? (
+        <span className="muted">— unsold</span>
+      ) : (
+        <span className="muted">— live</span>
+      )}
     </li>
   );
 }
@@ -410,40 +413,106 @@ function sortByPlayerFirst(ids: number[], playerId: number): number[] {
   });
 }
 
-function summarizeLocEvent(e: RunEvent, dump: RunDump): string {
-  const actorName = (id: unknown) =>
-    typeof id === "number"
-      ? dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`
-      : "?";
-  const itemName = (id: unknown) =>
-    typeof id === "number"
-      ? dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`
-      : "?";
+function summarizeLocEvent(
+  e: RunEvent,
+  dump: RunDump,
+  onSelect: (s: Selection) => void,
+): JSX.Element {
+  const A = (id: unknown) =>
+    typeof id === "number" ? (
+      <ActorRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">?</span>
+    );
+  const I = (id: unknown) =>
+    typeof id === "number" ? (
+      <ItemRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">?</span>
+    );
+  const Lot = (id: unknown) =>
+    typeof id === "number" ? (
+      <LotRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">lot ?</span>
+    );
+  const Deal = (id: unknown) =>
+    typeof id === "number" ? (
+      <DealRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">deal ?</span>
+    );
+  const Pool = (id: unknown) =>
+    typeof id === "number" ? (
+      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+    ) : (
+      <span className="muted">pool ?</span>
+    );
 
   switch (e.type) {
     case "actor.travelled":
-      return `${actorName(e.actorId)} arrived`;
+      return <>{A(e.actorId)} arrived</>;
     case "gossip.exchanged":
-      return `${actorName(e.visitorActorId)} ↔ ${actorName(e.proprietorActorId)}`;
+      return (
+        <>
+          {A(e.visitorActorId)} ↔ {A(e.proprietorActorId)}
+        </>
+      );
     case "pubdeal.attempted":
-      return `${actorName(e.sellerActorId)} → ${actorName(e.buyerActorId)} re ${itemName(e.itemKindId)} ×${e.quantity}`;
+      return (
+        <>
+          {A(e.sellerActorId)} → {A(e.buyerActorId)} re {I(e.itemKindId)} ×{String(e.quantity)}
+        </>
+      );
     case "pubdeal.agreed":
-      return `${actorName(e.sellerActorId)} → ${actorName(e.buyerActorId)} agreed deal ${e.dealId} @£${e.unitPrice}`;
+      return (
+        <>
+          {A(e.sellerActorId)} → {A(e.buyerActorId)} agreed {Deal(e.dealId)} @£{String(e.unitPrice)}
+        </>
+      );
     case "pubdeal.walked":
-      return `${actorName(e.sellerActorId)} & ${actorName(e.buyerActorId)} couldn't agree`;
+      return (
+        <>
+          {A(e.sellerActorId)} &amp; {A(e.buyerActorId)} couldn't agree
+        </>
+      );
     case "auction.cleared":
-      return `lot ${e.auctionLotId} → ${actorName(e.winnerActorId)} for £${e.totalPrice}`;
+      return (
+        <>
+          {Lot(e.auctionLotId)} → {A(e.winnerActorId)} for £{String(e.totalPrice)}
+        </>
+      );
     case "auction.unsold":
-      return `lot ${e.auctionLotId} unsold (${e.reason})`;
+      return (
+        <>
+          {Lot(e.auctionLotId)} unsold ({String(e.reason)})
+        </>
+      );
     case "deal.settled":
-      return `deal ${e.dealId}: ${actorName(e.sellerActorId)} → ${actorName(e.buyerActorId)} for £${e.totalPrice}`;
+      return (
+        <>
+          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} for £{String(e.totalPrice)}
+        </>
+      );
     case "deal.defaulted":
-      return `deal ${e.dealId} defaulted — ${e.reason}`;
+      return (
+        <>
+          {Deal(e.dealId)} defaulted — {String(e.reason)}
+        </>
+      );
     case "pool.claimed":
-      return `${actorName(e.actorId)} claimed pool ${e.poolId} ×${e.quantity}`;
+      return (
+        <>
+          {A(e.actorId)} claimed {Pool(e.poolId)} ×{String(e.quantity)}
+        </>
+      );
     case "authority.raid":
-      return `🚨 ${actorName(e.actorId)} raided — £${e.fine} fine`;
+      return (
+        <>
+          🚨 {A(e.actorId)} raided — £{String(e.fine)} fine
+        </>
+      );
     default:
-      return "";
+      return <></>;
   }
 }

@@ -1,13 +1,16 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
+import type { Selection } from "../App.js";
+import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
   readonly snapshot: DaySnapshot | null;
+  readonly onSelect: (s: Selection) => void;
 }
 
-export function InventoryView({ dump, day, snapshot }: Props) {
+export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
   const grouped = useMemo(() => {
     if (snapshot === null) return null;
     const byOwner = new Map<number, SnapshotStockLot[]>();
@@ -34,10 +37,6 @@ export function InventoryView({ dump, day, snapshot }: Props) {
 
   const itemName = (id: number) =>
     dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
-  const locName = (id: number | null) =>
-    id === null
-      ? "— (no location)"
-      : dump.locations.find((l) => l.id === id)?.displayName ?? `loc ${id}`;
   const actorName = (id: number) =>
     dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`;
 
@@ -58,7 +57,12 @@ export function InventoryView({ dump, day, snapshot }: Props) {
         return (
           <section key={ownerId} className="inventory-actor">
             <header className="inventory-actor-header">
-              <span>{actorName(ownerId)}</span>
+              <ActorRef
+                dump={dump}
+                id={ownerId}
+                onSelect={onSelect}
+                variant="inline"
+              />
               <span className="muted">
                 {totalUnits} units · cost £{totalCost}
               </span>
@@ -80,12 +84,30 @@ export function InventoryView({ dump, day, snapshot }: Props) {
                   .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
                   .map((lot) => (
                     <tr key={lot.id}>
-                      <td>{itemName(lot.itemKindId)}</td>
+                      <td>
+                        <ItemRef
+                          dump={dump}
+                          id={lot.itemKindId}
+                          onSelect={onSelect}
+                          variant="inline"
+                        />
+                      </td>
                       <td className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</td>
                       <td className="num">{lot.quantity}</td>
                       <td className="num">£{lot.acquiredUnitPrice}</td>
                       <td className="num muted">D{lot.acquiredDay}</td>
-                      <td className="muted">{locName(lot.locationId)}</td>
+                      <td className="muted">
+                        {lot.locationId === null ? (
+                          "— (no location)"
+                        ) : (
+                          <LocationRef
+                            dump={dump}
+                            id={lot.locationId}
+                            onSelect={onSelect}
+                            variant="inline"
+                          />
+                        )}
+                      </td>
                     </tr>
                   ))}
               </tbody>

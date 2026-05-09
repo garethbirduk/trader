@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent, SnapshotAuctionLot, SnapshotDeal } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
+import { ActorRef } from "./Refs.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 
 interface Props {
@@ -513,7 +514,7 @@ function AuctionLotPlayer({
   // bid frames + a final hammer; "drops" are implicit (we don't say
   // 'X pulls out' — we just stop hearing from them).
   const log = frames.slice(0, frameIdx + 1).map((f) =>
-    describeLogEntry(f, cleared, finalPrice, winnerId, actorName, reason),
+    describeLogEntry(f, cleared, finalPrice, winnerId, dump, onSelect, reason),
   );
 
   const stepBack = () => {
@@ -669,7 +670,7 @@ function AuctionLotPlayer({
 
 interface LogEntry {
   readonly price: number;
-  readonly text: string;
+  readonly text: JSX.Element;
 }
 
 function describeCall(
@@ -708,21 +709,57 @@ function describeLogEntry(
   cleared: boolean,
   finalPrice: number | null,
   winnerId: number | null,
-  actorName: (id: number) => string,
+  dump: RunDump,
+  onSelect: (s: Selection) => void,
   unsoldReason: string,
 ): LogEntry {
   if (frame.kind === "unsold") {
-    return { price: frame.price, text: `unsold (${unsoldReason || "no clear"})` };
+    return {
+      price: frame.price,
+      text: <span>unsold ({unsoldReason || "no clear"})</span>,
+    };
   }
   if (frame.kind === "hammer") {
     if (cleared && winnerId !== null && finalPrice !== null) {
-      return { price: finalPrice, text: `★ HAMMER — ${actorName(winnerId)} wins` };
+      return {
+        price: finalPrice,
+        text: (
+          <span>
+            ★ HAMMER —{" "}
+            <ActorRef
+              dump={dump}
+              id={winnerId}
+              onSelect={onSelect}
+              variant="inline"
+            />{" "}
+            wins
+          </span>
+        ),
+      };
     }
-    return { price: frame.price, text: `unsold (${unsoldReason || "no clear"})` };
+    return {
+      price: frame.price,
+      text: <span>unsold ({unsoldReason || "no clear"})</span>,
+    };
   }
   // bid frame
-  const bidderName = frame.bidder !== null ? actorName(frame.bidder) : "—";
-  return { price: frame.price, text: `${bidderName} bids` };
+  return {
+    price: frame.price,
+    text:
+      frame.bidder !== null ? (
+        <span>
+          <ActorRef
+            dump={dump}
+            id={frame.bidder}
+            onSelect={onSelect}
+            variant="inline"
+          />{" "}
+          bids
+        </span>
+      ) : (
+        <span className="muted">— bids</span>
+      ),
+  };
 }
 
 interface NegotiationTurn {
@@ -788,8 +825,6 @@ function PubdealHagglePlayer({
 
   const itemName = (id: number) =>
     dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
-  const actorName = (id: number) =>
-    dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`;
 
   // Frame index 0..turns.length. The final frame (index === turns.length)
   // is the "deal struck" / "walked" stamp.
@@ -808,7 +843,7 @@ function PubdealHagglePlayer({
     if (frameIdx >= total - 1) return;
     timerRef.current = window.setTimeout(() => {
       setFrameIdx((i) => Math.min(i + 1, total - 1));
-    }, 600);
+    }, FRAME_INTERVAL_MS);
     return () => {
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     };
@@ -817,6 +852,23 @@ function PubdealHagglePlayer({
   const isFinal = frameIdx >= total - 1;
   const currentTurn: NegotiationTurn | null =
     !isFinal && turns[frameIdx] !== undefined ? turns[frameIdx]! : null;
+
+  // Each party's most recent offer up to (and including) the current
+  // frame. Used by the parties/room panel so the user can see how each
+  // side is moving — analogous to the auction's bidder roster.
+  const lastOffers = useMemo(() => {
+    let lastSeller: number | null = null;
+    let lastBuyer: number | null = null;
+    const upTo = Math.min(frameIdx, turns.length - 1);
+    for (let i = 0; i <= upTo; i += 1) {
+      const t = turns[i];
+      if (t === undefined) break;
+      if (t.unitPrice === null) continue;
+      if (t.by === "seller") lastSeller = t.unitPrice;
+      else lastBuyer = t.unitPrice;
+    }
+    return { seller: lastSeller, buyer: lastBuyer };
+  }, [turns, frameIdx]);
 
   const stepBack = () => {
     setPlaying(false);
@@ -835,6 +887,20 @@ function PubdealHagglePlayer({
     }
   };
 
+  // State class on the card mirrors the auction lot's chrome:
+  //   live → accent border; agreed final → accent-2 (cleared);
+  //   walked final → muted (unsold).
+  const cardClass = isFinal
+    ? `lot-card lot-card-final ${kind === "agreed" ? "lot-cleared" : "lot-unsold"}`
+    : "lot-card lot-card-live";
+
+  const currentSpeakerId =
+    currentTurn !== null
+      ? currentTurn.by === "seller"
+        ? sellerId
+        : buyerId
+      : null;
+
   return (
     <section className={`scene scene-pubdeal ${kind === "walked" ? "scene-walked" : ""}`}>
       <header className="scene-header">
@@ -850,115 +916,244 @@ function PubdealHagglePlayer({
         ) : null}
       </header>
 
-      <div className="scene-parties">
-        <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={20} />
-        <span className="muted">{kind === "walked" && isFinal ? "↮" : "↔"}</span>
-        <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={20} />
-        {itemId !== undefined ? (
-          <span className="muted">
-            · {qty} {itemName(itemId)}
-            {tier !== undefined ? ` (${tier})` : ""}
-          </span>
-        ) : null}
-      </div>
+      <article className={cardClass}>
+        <div className="lot-line">
+          <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={20} />
+          <span className="muted">{kind === "walked" && isFinal ? "↮" : "↔"}</span>
+          <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={20} />
+          {itemId !== undefined ? (
+            <>
+              <span className="muted">·</span>
+              <span>×{qty}</span>
+              <strong>{itemName(itemId)}</strong>
+              {tier !== undefined ? (
+                <span className={`tier tier-${tier}`}>{tier}</span>
+              ) : null}
+            </>
+          ) : null}
+        </div>
 
-      {/* Big price line: current offer if mid-haggle, agreed price on final. */}
-      <div className="lot-bidline">
-        {currentTurn !== null && currentTurn.unitPrice !== null ? (
-          <>
-            <span className="lot-price">£{currentTurn.unitPrice}</span>
-            <span className="muted">
-              from <ActorChip
+        {/* Big price line: current offer if mid-haggle, agreed price on final. */}
+        <div className="lot-bidline">
+          {currentTurn !== null && currentTurn.unitPrice !== null ? (
+            <>
+              <span className="lot-price">£{currentTurn.unitPrice}</span>
+              <span className="muted">
+                from{" "}
+                <ActorChip
+                  dump={dump}
+                  actorId={currentTurn.by === "seller" ? sellerId : buyerId}
+                  onSelect={onSelect}
+                  size={14}
+                />
+              </span>
+            </>
+          ) : isFinal && kind === "agreed" && unitPrice !== null ? (
+            <>
+              <span className="lot-price">£{unitPrice}</span>
+              <span className="lot-hammer">
+                ★ DEAL ·{" "}
+                <ActorChip
+                  dump={dump}
+                  actorId={buyerId}
+                  onSelect={onSelect}
+                  size={14}
+                />{" "}
+                @ £{unitPrice}
+                {deal !== undefined ? ` · total £${deal.totalPrice}` : ""}
+              </span>
+            </>
+          ) : (
+            <span className="lot-hammer lot-hammer-unsold">
+              walked ({reason || "no overlap"})
+            </span>
+          )}
+        </div>
+
+        {/* Dialogue for the current turn — script-like, with chips. */}
+        <blockquote className="lot-call">
+          {renderHaggleQuote(
+            currentTurn,
+            isFinal,
+            kind,
+            sellerId,
+            buyerId,
+            unitPrice,
+            qty,
+            itemId !== undefined && itemName(itemId).length > 0
+              ? itemName(itemId)
+              : null,
+            dump,
+            onSelect,
+            frameIdx,
+          )}
+        </blockquote>
+
+        {/* Parties / room panel — mirrors the auction's lot-room. Each
+            side's last offer is shown beside its chip so the reader can
+            see the gap closing (or not). The chip whose side just spoke
+            gets the "in" highlight. */}
+        <div className="lot-room">
+          <span className="lot-room-label muted">Seller:</span>
+          <ul className="lot-bidders">
+            <li
+              className={`lot-bidder ${
+                isFinal && kind === "agreed"
+                  ? "lot-bidder-winner"
+                  : currentSpeakerId === sellerId
+                    ? "lot-bidder-in"
+                    : ""
+              }`}
+            >
+              <ActorChip
                 dump={dump}
-                actorId={currentTurn.by === "seller" ? sellerId : buyerId}
+                actorId={sellerId}
                 onSelect={onSelect}
                 size={14}
               />
-            </span>
-          </>
-        ) : isFinal && kind === "agreed" && unitPrice !== null ? (
-          <>
-            <span className="lot-price">£{unitPrice}</span>
-            <span className="lot-hammer">
-              ★ DEAL · qty {qty} @ £{unitPrice}
-              {deal !== undefined ? ` · total £${deal.totalPrice}` : ""}
-            </span>
-          </>
-        ) : (
-          <span className="lot-hammer lot-hammer-unsold">walked ({reason || "no overlap"})</span>
-        )}
-      </div>
-
-      {/* Auctioneer-style line: dialogue for the current turn. */}
-      <blockquote className="lot-call">
-        {renderHaggleQuote(currentTurn, isFinal, kind, sellerId, buyerId, unitPrice, actorName)}
-      </blockquote>
-
-      {/* Controls */}
-      {turns.length > 0 ? (
-        <div className="lot-controls muted">
-          <button
-            onClick={() => {
-              setFrameIdx(0);
-              setPlaying(true);
-            }}
-            title="restart and play"
-          >
-            ↺
-          </button>
-          <button onClick={stepBack} disabled={frameIdx === 0} title="back one step">
-            ◀
-          </button>
-          <button onClick={togglePlay} title={playing ? "pause" : isFinal ? "replay" : "play"}>
-            {playing ? "⏸" : "▶"}
-          </button>
-          <button onClick={stepFwd} disabled={isFinal} title="forward one step">
-            ▶|
-          </button>
-          <button
-            onClick={() => {
-              setPlaying(false);
-              setFrameIdx(total - 1);
-            }}
-            disabled={isFinal}
-            title="skip to end"
-          >
-            ⏭
-          </button>
-          <span>
-            {frameIdx + 1}/{total}
-          </span>
+              <span className="muted">
+                {lastOffers.seller !== null
+                  ? `last £${lastOffers.seller}`
+                  : "—"}
+              </span>
+            </li>
+          </ul>
+          <span className="lot-room-label muted">Buyer:</span>
+          <ul className="lot-bidders">
+            <li
+              className={`lot-bidder ${
+                isFinal && kind === "agreed"
+                  ? "lot-bidder-winner"
+                  : currentSpeakerId === buyerId
+                    ? "lot-bidder-in"
+                    : ""
+              }`}
+            >
+              <ActorChip
+                dump={dump}
+                actorId={buyerId}
+                onSelect={onSelect}
+                size={14}
+              />
+              <span className="muted">
+                {lastOffers.buyer !== null
+                  ? `last £${lastOffers.buyer}`
+                  : "—"}
+              </span>
+            </li>
+          </ul>
         </div>
-      ) : null}
 
-      {/* Turn log */}
-      {turns.length > 0 ? (
-        <ol className="lot-log">
-          {turns.slice(0, frameIdx + 1).map((t, i) => (
-            <li key={i} className={i === Math.min(frameIdx, turns.length - 1) ? "lot-log-current" : ""}>
-              <span className="lot-log-price">
-                {t.unitPrice !== null ? `£${t.unitPrice}` : "—"}
-              </span>
-              <span className="lot-log-text">
-                {t.by} {t.action === "open" ? "opens" : t.action === "counter" ? "counters" : t.action === "accept" ? "accepts" : "walks"}
-                {t.action === "walk" ? "" : "."}
-              </span>
-            </li>
-          ))}
-          {isFinal ? (
-            <li className="lot-log-current">
-              <span className="lot-log-price">
-                {kind === "agreed" && unitPrice !== null ? `£${unitPrice}` : "—"}
-              </span>
-              <span className="lot-log-text">
-                {kind === "agreed" ? `★ DEAL — ${actorName(sellerId)} → ${actorName(buyerId)}` : `walked — ${reason || "no overlap"}`}
-              </span>
-            </li>
-          ) : null}
-        </ol>
-      ) : null}
+        {/* Controls */}
+        {turns.length > 0 ? (
+          <div className="lot-controls muted">
+            <button
+              onClick={() => {
+                setFrameIdx(0);
+                setPlaying(true);
+              }}
+              title="restart and play"
+            >
+              ↺
+            </button>
+            <button onClick={stepBack} disabled={frameIdx === 0} title="back one step">
+              ◀
+            </button>
+            <button onClick={togglePlay} title={playing ? "pause" : isFinal ? "replay" : "play"}>
+              {playing ? "⏸" : "▶"}
+            </button>
+            <button onClick={stepFwd} disabled={isFinal} title="forward one step">
+              ▶|
+            </button>
+            <button
+              onClick={() => {
+                setPlaying(false);
+                setFrameIdx(total - 1);
+              }}
+              disabled={isFinal}
+              title="skip to end"
+            >
+              ⏭
+            </button>
+            <span>
+              {frameIdx + 1}/{total}
+            </span>
+          </div>
+        ) : null}
 
-      {/* Deal details once agreed */}
+        {/* Turn log */}
+        {turns.length > 0 ? (
+          <ol className="lot-log">
+            {turns.slice(0, frameIdx + 1).map((t, i) => {
+              const speakerId = t.by === "seller" ? sellerId : buyerId;
+              const verb =
+                t.action === "open"
+                  ? "opens"
+                  : t.action === "counter"
+                    ? "counters"
+                    : t.action === "accept"
+                      ? "accepts"
+                      : "walks";
+              return (
+                <li
+                  key={i}
+                  className={
+                    i === Math.min(frameIdx, turns.length - 1)
+                      ? "lot-log-current"
+                      : ""
+                  }
+                >
+                  <span className="lot-log-price">
+                    {t.unitPrice !== null ? `£${t.unitPrice}` : "—"}
+                  </span>
+                  <span className="lot-log-text">
+                    <ActorRef
+                      dump={dump}
+                      id={speakerId}
+                      onSelect={onSelect}
+                      variant="inline"
+                    />{" "}
+                    {verb}
+                    {t.action === "walk" ? "" : "."}
+                  </span>
+                </li>
+              );
+            })}
+            {isFinal ? (
+              <li className="lot-log-current">
+                <span className="lot-log-price">
+                  {kind === "agreed" && unitPrice !== null ? `£${unitPrice}` : "—"}
+                </span>
+                <span className="lot-log-text">
+                  {kind === "agreed" ? (
+                    <>
+                      ★ DEAL —{" "}
+                      <ActorRef
+                        dump={dump}
+                        id={sellerId}
+                        onSelect={onSelect}
+                        variant="inline"
+                      />
+                      {" → "}
+                      <ActorRef
+                        dump={dump}
+                        id={buyerId}
+                        onSelect={onSelect}
+                        variant="inline"
+                      />
+                    </>
+                  ) : (
+                    `walked — ${reason || "no overlap"}`
+                  )}
+                </span>
+              </li>
+            ) : null}
+          </ol>
+        ) : null}
+      </article>
+
+      {/* Deal details once agreed — sits outside the card, like an
+          auction footer. */}
       {isFinal && kind === "agreed" && deal !== undefined ? (
         <div className="scene-row muted">
           deal {dealId} · deadline D{deal.deadlineDay}
@@ -981,27 +1176,85 @@ function renderHaggleQuote(
   sellerId: number,
   buyerId: number,
   finalPrice: number | null,
-  actorName: (id: number) => string,
-): string {
+  qty: number | undefined,
+  itemLabel: string | null,
+  dump: RunDump,
+  onSelect: (s: Selection) => void,
+  frameIdx: number,
+): JSX.Element {
+  const seller = (
+    <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={14} />
+  );
+  const buyer = (
+    <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={14} />
+  );
   if (turn === null) {
     if (kind === "agreed" && finalPrice !== null) {
-      return `Done. ${actorName(sellerId)} → ${actorName(buyerId)} at £${finalPrice}.`;
+      return (
+        <span>
+          {seller} and {buyer} shake on it — £{finalPrice} each.
+        </span>
+      );
     }
-    return `No deal — neither would budge.`;
+    return <span>No deal — neither would budge.</span>;
   }
-  const speaker = turn.by === "seller" ? actorName(sellerId) : actorName(buyerId);
+  const speakerChip = turn.by === "seller" ? seller : buyer;
   const price = turn.unitPrice;
+  // A small library of phrasings, picked deterministically from the
+  // frame index so each turn reads slightly differently.
+  const variant = frameIdx % 3;
   switch (turn.action) {
     case "open":
-      return turn.by === "buyer"
-        ? `${speaker}: "How much?${price !== null ? ` I'd say £${price}."` : `"`}`
-        : `${speaker}: "${price !== null ? `For you, £${price}.` : `Make me an offer.`}"`;
+      if (turn.by === "buyer") {
+        const opening = price !== null
+          ? variant === 0
+            ? `: "How much? I'd give you £${price} each${qty !== undefined && itemLabel ? ` for ${qty} ${itemLabel}` : ""}."`
+            : variant === 1
+              ? `: "Talk to me. £${price} a piece?"`
+              : `: "I'll go £${price}${qty !== undefined ? ` for ${qty}` : ""}."`
+          : `: "How much you after?"`;
+        return <span>{speakerChip}{opening}</span>;
+      }
+      return (
+        <span>
+          {speakerChip}
+          {price !== null
+            ? `: "For you, £${price} each${qty !== undefined && itemLabel ? ` — ${qty} ${itemLabel}` : ""}."`
+            : `: "Make me an offer."`}
+        </span>
+      );
     case "counter":
-      return `${speaker}: "${price !== null ? `£${price}.` : `Pass.`}"`;
+      return (
+        <span>
+          {speakerChip}
+          {price !== null
+            ? variant === 0
+              ? `: "£${price}."`
+              : variant === 1
+                ? `: "Make it £${price}."`
+                : `: "I can do £${price}."`
+            : `: "Pass."`}
+        </span>
+      );
     case "accept":
-      return `${speaker}: "${price !== null ? `£${price}? Done.` : `Done.`}"`;
+      return (
+        <span>
+          {speakerChip}
+          {price !== null
+            ? variant === 0
+              ? `: "£${price}? Done."`
+              : variant === 1
+                ? `: "Alright, £${price}. Sold."`
+                : `: "£${price} it is."`
+            : `: "Done."`}
+        </span>
+      );
     case "walk":
-      return `${speaker} walks away.`;
+      return (
+        <span>
+          {speakerChip} walks away.
+        </span>
+      );
   }
 }
 
