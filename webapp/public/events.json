@@ -569,29 +569,6 @@
       }
     },
     {
-      "type": "market.hour-summary",
-      "at": {
-        "day": 1,
-        "hour": 9
-      },
-      "sellerActorId": 23,
-      "atLocationId": 8,
-      "stockLotId": 17,
-      "itemKindId": 13,
-      "qualityTier": "fair",
-      "pricePerUnit": 72,
-      "unitsOffered": 18,
-      "unitsSold": 0,
-      "revenue": 0,
-      "footfall": 4,
-      "customerMix": {
-        "old-dears": 1,
-        "mums": 2,
-        "dads": 1
-      },
-      "soldByPersona": {}
-    },
-    {
       "type": "actor.departed",
       "at": {
         "day": 1,
@@ -18182,29 +18159,6 @@
       }
     },
     {
-      "type": "market.hour-summary",
-      "at": {
-        "day": 8,
-        "hour": 9
-      },
-      "sellerActorId": 13,
-      "atLocationId": 8,
-      "stockLotId": 14,
-      "itemKindId": 9,
-      "qualityTier": "good",
-      "pricePerUnit": 24,
-      "unitsOffered": 15,
-      "unitsSold": 0,
-      "revenue": 0,
-      "footfall": 6,
-      "customerMix": {
-        "old-dears": 3,
-        "dads": 1,
-        "mums": 2
-      },
-      "soldByPersona": {}
-    },
-    {
       "type": "actor.departed",
       "at": {
         "day": 8,
@@ -21002,29 +20956,6 @@
         "dads": 1,
         "old-dears": 1
       }
-    },
-    {
-      "type": "market.hour-summary",
-      "at": {
-        "day": 9,
-        "hour": 9
-      },
-      "sellerActorId": 4,
-      "atLocationId": 8,
-      "stockLotId": 8,
-      "itemKindId": 41,
-      "qualityTier": "good",
-      "pricePerUnit": 28,
-      "unitsOffered": 18,
-      "unitsSold": 0,
-      "revenue": 0,
-      "footfall": 5,
-      "customerMix": {
-        "mums": 3,
-        "dads": 1,
-        "old-dears": 1
-      },
-      "soldByPersona": {}
     },
     {
       "type": "actor.departed",
@@ -26525,30 +26456,6 @@
       },
       "actorId": 7,
       "auctionLotId": 4
-    },
-    {
-      "type": "market.hour-summary",
-      "at": {
-        "day": 11,
-        "hour": 9
-      },
-      "sellerActorId": 2,
-      "atLocationId": 8,
-      "stockLotId": 33,
-      "itemKindId": 12,
-      "qualityTier": "fair",
-      "pricePerUnit": 10,
-      "unitsOffered": 8,
-      "unitsSold": 0,
-      "revenue": 0,
-      "footfall": 4,
-      "customerMix": {
-        "students": 1,
-        "dads": 1,
-        "mums": 1,
-        "old-dears": 1
-      },
-      "soldByPersona": {}
     },
     {
       "type": "market.hour-summary",
@@ -35666,30 +35573,6 @@
         "students": 1,
         "old-dears": 1
       }
-    },
-    {
-      "type": "market.hour-summary",
-      "at": {
-        "day": 14,
-        "hour": 10
-      },
-      "sellerActorId": 13,
-      "atLocationId": 8,
-      "stockLotId": 32,
-      "itemKindId": 33,
-      "qualityTier": "broken",
-      "pricePerUnit": 2,
-      "unitsOffered": 47,
-      "unitsSold": 0,
-      "revenue": 0,
-      "footfall": 10,
-      "customerMix": {
-        "students": 1,
-        "dads": 3,
-        "old-dears": 4,
-        "mums": 2
-      },
-      "soldByPersona": {}
     },
     {
       "type": "actor.departed",

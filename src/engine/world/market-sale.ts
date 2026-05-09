@@ -127,14 +127,14 @@ export function registerMarketSale(
         remainingByPersona[personaId] = n;
       }
 
-      if (unitsSold > 0) {
-        decrementLotQuantity(world.db, displayed.id, unitsSold);
-        adjustActorCash(world.db, seller.id, revenue);
-      }
+      if (unitsSold === 0) continue;
+      decrementLotQuantity(world.db, displayed.id, unitsSold);
+      adjustActorCash(world.db, seller.id, revenue);
 
-      // Always emit the summary so the diary captures empty hours too —
-      // useful when debugging a "why did Boycie sell nothing today"
-      // question.
+      // Only emit when something actually sold. Zero-sale hours would
+      // be no-ops — they'd clutter diaries and the event list with
+      // rows that read "stall was open, nothing happened". The
+      // *absence* of a market event speaks for itself.
       world.events.emit({
         type: "market.hour-summary",
         at: clock,
