@@ -19,6 +19,7 @@ import { registerDailyAuction } from "../engine/world/daily-auction.js";
 import { registerAuctionListingKnowledge } from "../engine/world/auction-listing-knowledge.js";
 import { registerAuctionInspection } from "../engine/world/auction-inspection.js";
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
+import { resolveEconomicsConfig } from "../engine/economics/config.js";
 import { registerTrustReactions } from "../engine/world/trust-reactions.js";
 import { registerPolicyHourTick } from "../engine/world/policy-tick.js";
 import { registerPoolClaimAutonomy } from "../engine/world/pool-claim-autonomy.js";
@@ -82,6 +83,17 @@ function main(): void {
       ...(opts.days !== null ? { runLengthDays: opts.days } : {}),
       hourOverrideForActor: (actorId) => (clock) =>
         deliveryRegistry.getOverride(actorId, clock.hour),
+      // Tunable economy knobs. Edit these to retune the price chain.
+      economics: resolveEconomicsConfig({
+        // Wholesale prices at ~25% of retail mid — enough headroom for
+        // a two-link middleman chain to clear at 50% margins.
+        poolOpeningFraction: 0.25,
+        // Stale stock falls to ~half opening price near expiry.
+        poolClosingFraction: 0.5,
+        // Pub buyers can't see actual condition — they assume 'fair'.
+        // Sellers who know they have shoddy stock can take advantage.
+        pubBuyerTierMode: "assumed",
+      }),
     });
 
     const world = new World({
