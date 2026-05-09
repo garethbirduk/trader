@@ -279,7 +279,15 @@ function runOneAttempt(args: {
   const buyer = getActorById(world.db, buyerId);
   if (!buyer) return;
 
-  const buyerTotalCeiling = Math.min(appraisal.valuation, buyer.cash);
+  // The appraisal is the buyer's noisy estimate of *retail* value (what
+  // they think they can resell the lot for). At the pub the buyer is
+  // sourcing for onward sale, so they aim to pay around half of that —
+  // leaving margin for transport, risk, and profit. Cash still caps it.
+  const PUBDEAL_CEILING_FRACTION = 0.5;
+  const buyerTotalCeiling = Math.min(
+    Math.round(appraisal.valuation * PUBDEAL_CEILING_FRACTION),
+    buyer.cash,
+  );
   if (buyerTotalCeiling < proposalQty) return; // can't even bid £1/unit
 
   const buyerCeilingPerUnit = Math.floor(buyerTotalCeiling / proposalQty);

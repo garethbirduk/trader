@@ -255,16 +255,30 @@ function main(): void {
         runLengthDays: skin.runLengthDays,
         tally,
         events: eventLog,
-        actors: listActors(db).map((a) => ({
-          id: a.id,
-          code: a.code,
-          displayName: a.displayName,
-          cash: a.cash,
-          currentLocationId: a.currentLocationId,
-          homeLocationId: a.homeLocationId,
-          transportCapacity: a.transportCapacity,
-          roles: skin.rolesByActorId.get(a.id) ?? [],
-        })),
+        actors: listActors(db).map((a) => {
+          const profile = skin.bidderProfiles.get(a.id);
+          return {
+            id: a.id,
+            code: a.code,
+            displayName: a.displayName,
+            cash: a.cash,
+            currentLocationId: a.currentLocationId,
+            homeLocationId: a.homeLocationId,
+            transportCapacity: a.transportCapacity,
+            roles: skin.rolesByActorId.get(a.id) ?? [],
+            ...(profile !== undefined
+              ? {
+                  bidderProfile: {
+                    appraisalAccuracy: Object.fromEntries(profile.appraisalAccuracy),
+                    defaultAppraisalAccuracy: profile.defaultAppraisalAccuracy,
+                    flawTypeDetection: Object.fromEntries(profile.flawTypeDetection),
+                    defaultFlawTypeDetection: profile.defaultFlawTypeDetection,
+                    customerTypes: profile.customerTypes ?? [],
+                  },
+                }
+              : {}),
+          };
+        }),
         actorRoutines: routineEntries,
         items: listItemKinds(db).map((it) => ({
           id: it.id,
@@ -313,6 +327,15 @@ interface RunDump {
     homeLocationId: number | null;
     transportCapacity: string;
     roles: readonly string[];
+    /** Bidder profile snapshot — used by the webapp to compute per-trader
+     *  retail estimates client-side. Optional for actors without one. */
+    bidderProfile?: {
+      appraisalAccuracy: Record<string, number>;
+      defaultAppraisalAccuracy: number;
+      flawTypeDetection: Record<string, number>;
+      defaultFlawTypeDetection: number;
+      customerTypes: readonly string[];
+    };
   }[];
   readonly actorRoutines: readonly {
     actorId: number;

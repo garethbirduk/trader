@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
+import { estimateUnitRetail, formatRetailEstimate } from "../lib/retail-estimate.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -54,6 +55,8 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
           (s, l) => s + l.quantity * l.acquiredUnitPrice,
           0,
         );
+        const owner = dump.actors.find((a) => a.id === ownerId);
+        const profile = owner?.bidderProfile;
         return (
           <section key={ownerId} className="inventory-actor">
             <header className="inventory-actor-header">
@@ -73,7 +76,8 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                   <th>Item</th>
                   <th>Tier</th>
                   <th>Qty</th>
-                  <th>£/u</th>
+                  <th>£/u cost</th>
+                  <th>£/u retail</th>
                   <th>Acquired</th>
                   <th>Location</th>
                 </tr>
@@ -82,34 +86,51 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                 {lots
                   .slice()
                   .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
-                  .map((lot) => (
-                    <tr key={lot.id}>
-                      <td>
-                        <ItemRef
-                          dump={dump}
-                          id={lot.itemKindId}
-                          onSelect={onSelect}
-                          variant="inline"
-                        />
-                      </td>
-                      <td className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</td>
-                      <td className="num">{lot.quantity}</td>
-                      <td className="num">£{lot.acquiredUnitPrice}</td>
-                      <td className="num muted">D{lot.acquiredDay}</td>
-                      <td className="muted">
-                        {lot.locationId === null ? (
-                          "— (no location)"
-                        ) : (
-                          <LocationRef
+                  .map((lot) => {
+                    const item = dump.items.find((i) => i.id === lot.itemKindId);
+                    const retail =
+                      profile !== undefined && item !== undefined
+                        ? estimateUnitRetail(profile, item, lot.qualityTier)
+                        : null;
+                    return (
+                      <tr key={lot.id}>
+                        <td>
+                          <ItemRef
                             dump={dump}
-                            id={lot.locationId}
+                            id={lot.itemKindId}
                             onSelect={onSelect}
                             variant="inline"
                           />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</td>
+                        <td className="num">{lot.quantity}</td>
+                        <td className="num">£{lot.acquiredUnitPrice}</td>
+                        <td
+                          className="num muted"
+                          title={
+                            retail !== null
+                              ? `${owner?.displayName ?? "owner"}'s estimate based on category accuracy`
+                              : "no bidder profile for owner"
+                          }
+                        >
+                          {retail !== null ? formatRetailEstimate(retail) : "—"}
+                        </td>
+                        <td className="num muted">D{lot.acquiredDay}</td>
+                        <td className="muted">
+                          {lot.locationId === null ? (
+                            "— (no location)"
+                          ) : (
+                            <LocationRef
+                              dump={dump}
+                              id={lot.locationId}
+                              onSelect={onSelect}
+                              variant="inline"
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </section>

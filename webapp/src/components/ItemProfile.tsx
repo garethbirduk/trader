@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
+import { estimateUnitRetail, formatRetailEstimate } from "../lib/retail-estimate.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -119,6 +120,7 @@ export function ItemProfile({ dump, day, snapshot, itemId, onSelect }: Props) {
           ))}
         </div>
       ) : null}
+      <RetailEstimateTable item={item} dump={dump} onSelect={onSelect} />
       {item.flavourText !== null && item.flavourText.length > 0 ? (
         <div className="loc-people">
           <div className="profile-section-label">Flavour</div>
@@ -128,5 +130,67 @@ export function ItemProfile({ dump, day, snapshot, itemId, onSelect }: Props) {
         </div>
       ) : null}
     </section>
+  );
+}
+
+const TIERS_FOR_TABLE: readonly string[] = ["good", "fair", "shoddy"];
+
+function RetailEstimateTable({
+  item,
+  dump,
+  onSelect,
+}: {
+  item: RunDump["items"][number];
+  dump: RunDump;
+  onSelect: (s: Selection) => void;
+}) {
+  // Show estimates only for actors who have a bidder profile and one
+  // of the dealer-ish roles — civilians' "estimates" aren't meaningful.
+  const traders = dump.actors.filter(
+    (a) =>
+      a.bidderProfile !== undefined &&
+      (a.roles ?? []).some((r) =>
+        ["dealer", "fence", "player"].includes(r),
+      ),
+  );
+  if (traders.length === 0) return null;
+  return (
+    <div className="loc-people">
+      <div className="profile-section-label">Retail estimates per unit</div>
+      <table className="estimate-table">
+        <thead>
+          <tr>
+            <th>Trader</th>
+            {TIERS_FOR_TABLE.map((t) => (
+              <th key={t} className={`tier tier-${t}`}>
+                {t}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {traders.map((a) => (
+            <tr key={a.id}>
+              <td>
+                <ActorRef
+                  dump={dump}
+                  id={a.id}
+                  onSelect={onSelect}
+                  variant="inline"
+                />
+              </td>
+              {TIERS_FOR_TABLE.map((t) => {
+                const est = estimateUnitRetail(a.bidderProfile!, item, t);
+                return (
+                  <td key={t} className="num muted">
+                    {formatRetailEstimate(est)}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

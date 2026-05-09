@@ -26,6 +26,16 @@ export interface RunActor {
   /** Descriptive tags ("dealer", "civilian", "police", …). Optional
    *  so dumps generated before this field still load. */
   readonly roles?: readonly string[];
+  /** Bidder profile snapshot — used to compute retail estimates. */
+  readonly bidderProfile?: BidderProfileDump;
+}
+
+export interface BidderProfileDump {
+  readonly appraisalAccuracy: Readonly<Record<string, number>>;
+  readonly defaultAppraisalAccuracy: number;
+  readonly flawTypeDetection: Readonly<Record<string, number>>;
+  readonly defaultFlawTypeDetection: number;
+  readonly customerTypes: readonly string[];
 }
 
 export interface RunActorRoutine {
