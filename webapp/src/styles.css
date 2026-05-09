@@ -1182,6 +1182,28 @@ button.actor-row.actor-row-selected {
   align-items: center;
   gap: 16px;
 }
+.history-nav {
+  display: flex;
+  gap: 1px;
+}
+.history-nav-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px 9px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.history-nav-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.history-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 .playback {
   display: flex;
   align-items: center;

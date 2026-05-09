@@ -11,6 +11,7 @@ import { MapGraph } from "./components/MapGraph.js";
 import { MapEditor } from "./components/MapEditor.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
 import { SceneDeck } from "./components/SceneDeck.js";
+import { useSelectionHistory } from "./lib/selection-history.js";
 
 const DEV = import.meta.env.DEV;
 
@@ -62,7 +63,7 @@ export function App() {
   const [tab, setTab] = useState<TabId>("events");
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
   const [lowerTab, setLowerTab] = useState<SidebarLowerTab>("profile");
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const selectionApi = useSelectionHistory(null);
 
   useEffect(() => {
     fetch("/events.json")
@@ -103,8 +104,12 @@ export function App() {
       setTopTab={setTopTab}
       lowerTab={lowerTab}
       setLowerTab={setLowerTab}
-      selection={selection}
-      setSelection={setSelection}
+      selection={selectionApi.selection}
+      setSelection={selectionApi.setSelection}
+      goBack={selectionApi.goBack}
+      goForward={selectionApi.goForward}
+      canGoBack={selectionApi.canGoBack}
+      canGoForward={selectionApi.canGoForward}
     />
   );
 }
@@ -123,6 +128,10 @@ interface LoadedProps {
   readonly setLowerTab: (t: SidebarLowerTab) => void;
   readonly selection: Selection | null;
   readonly setSelection: (s: Selection | null) => void;
+  readonly goBack: () => void;
+  readonly goForward: () => void;
+  readonly canGoBack: boolean;
+  readonly canGoForward: boolean;
 }
 
 const RIGHT_PANEL_KEY = "trader-right-panel-px";
@@ -299,6 +308,28 @@ function Loaded(props: LoadedProps) {
       <header className="header">
         <h1>TRADER · sim viewer</h1>
         <div className="header-controls">
+          <div className="history-nav" role="toolbar" aria-label="Selection history">
+            <button
+              type="button"
+              className="history-nav-btn"
+              onClick={props.goBack}
+              disabled={!props.canGoBack}
+              title="Back (previous selection)"
+              aria-label="Back"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              className="history-nav-btn"
+              onClick={props.goForward}
+              disabled={!props.canGoForward}
+              title="Forward (next selection)"
+              aria-label="Forward"
+            >
+              →
+            </button>
+          </div>
           <TimeStepper
             day={day}
             hour={hour}
