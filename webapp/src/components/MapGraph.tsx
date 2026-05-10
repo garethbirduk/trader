@@ -8,7 +8,6 @@ import { isHourInAuctionWindow } from "../lib/auction-window.js";
 import {
   MapBasemap,
   NodeLabel,
-  NodePopBadge,
   WORLD_W,
   WORLD_H,
   NODE_R,
@@ -391,9 +390,12 @@ export function MapGraph(props: Props) {
       const idx = list.indexOf(a.id);
       const total = list.length;
       if (total <= 1) {
-        // Single actor: small hint-offset below the node so the dot
-        // doesn't perfectly cover the node circle.
-        map.set(a.id, { x: 0, y: NODE_R + AVATAR_R + 4 });
+        // Single actor: sit centred on the node. The previous
+        // hint-offset (26 px below) caused the avatar to drift below
+        // the road during the 320 ms inner-CSS transition back to 0
+        // when the next hour kicked off transit, making routes appear
+        // to miss the avatar.
+        map.set(a.id, { x: 0, y: 0 });
         continue;
       }
       const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
@@ -692,7 +694,6 @@ export function MapGraph(props: Props) {
             const strokeWidth = isSel || isStar ? 2.5 : 1.5;
             const label = (isStar ? "★ " : "") +
               (SHORT_LABELS[loc.code] ?? loc.displayName);
-            const pop = stackedAt.get(loc.code)?.length ?? 0;
             return (
               <g
                 key={loc.id}
@@ -712,7 +713,6 @@ export function MapGraph(props: Props) {
                   strokeWidth={strokeWidth}
                 />
                 <NodeLabel text={label} />
-                {pop > 0 ? <NodePopBadge text={String(pop)} /> : null}
               </g>
             );
           })}
@@ -760,7 +760,6 @@ export function MapGraph(props: Props) {
                 <g
                   style={{
                     transform: `translate(${off.x}px, ${off.y}px)`,
-                    transition: "transform 320ms ease-out",
                   }}
                 >
                   <circle
