@@ -12,6 +12,7 @@ import {
   WORLD_H,
   NODE_R,
 } from "./map-shared.js";
+import { dayLabel } from "../lib/calendar.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -897,8 +898,8 @@ export function MapGraph(props: Props) {
         })}
       </div>
       <div className="map-legend muted">
-        Day {day} · {String(hour).padStart(2, "0")}:00 · scroll to zoom · drag
-        empty space to pan · routes path through intermediate nodes
+        {dayLabel(day)} · {String(hour).padStart(2, "0")}:00 · scroll to zoom ·
+        drag empty space to pan · routes path through intermediate nodes
       </div>
     </div>
   );

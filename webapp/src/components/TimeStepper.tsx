@@ -1,3 +1,5 @@
+import { dayLabel, isWeekend } from "../lib/calendar.js";
+
 interface Props {
   readonly day: number;
   readonly hour: number;
@@ -39,8 +41,8 @@ export function TimeStepper({ day, hour, maxDay, onChange }: Props) {
           onChange(next.day, next.hour);
         }}
       />
-      <span className="day-label">
-        D{String(day).padStart(2, "0")} · {String(hour).padStart(2, "0")}:00
+      <span className={`day-label ${isWeekend(day) ? "is-weekend" : ""}`}>
+        {dayLabel(day)} · {String(hour).padStart(2, "0")}:00
       </span>
       <button onClick={() => step(24)} disabled={m + 24 > total} title="+1 day">day›</button>
       <button onClick={() => step(1)} disabled={m >= total} title="+1 hour">››</button>

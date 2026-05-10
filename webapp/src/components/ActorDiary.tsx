@@ -3,6 +3,7 @@ import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
 import { ActorRef, DealRef, ItemRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { dayLabel, isWeekend } from "../lib/calendar.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -33,12 +34,19 @@ export function ActorDiary({
 
   const routine = dump.actorRoutines?.find((r) => r.actorId === actorId);
   const awake = routine?.awakeHours ?? { start: 6, end: 23 };
+  // Pick the schedule that matches the displayed day-of-week. Weekend
+  // schedules are optional — when an actor doesn't ship one, the
+  // weekday schedule applies all week (legacy behaviour).
   const scheduleByHour = useMemo(() => {
     const m = new Map<number, number>();
-    if (routine !== undefined)
-      for (const e of routine.schedule) m.set(e.hour, e.locationId);
+    if (routine !== undefined) {
+      const useWeekend =
+        isWeekend(day) && routine.weekendSchedule !== undefined;
+      const src = useWeekend ? routine.weekendSchedule! : routine.schedule;
+      for (const e of src) m.set(e.hour, e.locationId);
+    }
     return m;
-  }, [routine]);
+  }, [routine, day]);
 
   // Diary is a turn-by-turn replay — only events at-or-before the
   // cursor hour have "happened" yet.
@@ -75,7 +83,7 @@ export function ActorDiary({
     <section className="diary">
       <header className="diary-nav">
         <button onClick={() => onChangeDay(day - 1)} disabled={day <= 1} title="prev day">‹</button>
-        <span className="diary-day">Day {day} · {actor.displayName}</span>
+        <span className="diary-day">{dayLabel(day)} · {actor.displayName}</span>
         <button
           onClick={() => onChangeDay(day + 1)}
           disabled={day >= dump.runLengthDays}

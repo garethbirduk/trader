@@ -49,6 +49,10 @@ export interface RunActorRoutine {
   readonly actorId: number;
   readonly homeLocationId: number | null;
   readonly schedule: readonly { hour: number; locationId: number }[];
+  /** Optional weekend (Sat/Sun) schedule. When present, the diary uses
+   *  it for weekend days instead of the weekday `schedule`. Fixed-job
+   *  actors whose venue closes on weekends ship one of these. */
+  readonly weekendSchedule?: readonly { hour: number; locationId: number }[];
   readonly awakeHours: { start: number; end: number };
 }
 

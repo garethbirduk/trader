@@ -120689,6 +120689,104 @@
           "locationId": 22
         }
       ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 22
+        },
+        {
+          "hour": 1,
+          "locationId": 22
+        },
+        {
+          "hour": 2,
+          "locationId": 22
+        },
+        {
+          "hour": 3,
+          "locationId": 22
+        },
+        {
+          "hour": 4,
+          "locationId": 22
+        },
+        {
+          "hour": 5,
+          "locationId": 22
+        },
+        {
+          "hour": 6,
+          "locationId": 22
+        },
+        {
+          "hour": 7,
+          "locationId": 22
+        },
+        {
+          "hour": 8,
+          "locationId": 22
+        },
+        {
+          "hour": 9,
+          "locationId": 22
+        },
+        {
+          "hour": 10,
+          "locationId": 22
+        },
+        {
+          "hour": 11,
+          "locationId": 16
+        },
+        {
+          "hour": 12,
+          "locationId": 16
+        },
+        {
+          "hour": 13,
+          "locationId": 9
+        },
+        {
+          "hour": 14,
+          "locationId": 16
+        },
+        {
+          "hour": 15,
+          "locationId": 16
+        },
+        {
+          "hour": 16,
+          "locationId": 16
+        },
+        {
+          "hour": 17,
+          "locationId": 3
+        },
+        {
+          "hour": 18,
+          "locationId": 3
+        },
+        {
+          "hour": 19,
+          "locationId": 3
+        },
+        {
+          "hour": 20,
+          "locationId": 3
+        },
+        {
+          "hour": 21,
+          "locationId": 3
+        },
+        {
+          "hour": 22,
+          "locationId": 3
+        },
+        {
+          "hour": 23,
+          "locationId": 22
+        }
+      ],
       "awakeHours": {
         "start": 6,
         "end": 23
@@ -121743,6 +121841,104 @@
         {
           "hour": 22,
           "locationId": 25
+        },
+        {
+          "hour": 23,
+          "locationId": 25
+        }
+      ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 25
+        },
+        {
+          "hour": 1,
+          "locationId": 25
+        },
+        {
+          "hour": 2,
+          "locationId": 25
+        },
+        {
+          "hour": 3,
+          "locationId": 25
+        },
+        {
+          "hour": 4,
+          "locationId": 25
+        },
+        {
+          "hour": 5,
+          "locationId": 25
+        },
+        {
+          "hour": 6,
+          "locationId": 25
+        },
+        {
+          "hour": 7,
+          "locationId": 25
+        },
+        {
+          "hour": 8,
+          "locationId": 25
+        },
+        {
+          "hour": 9,
+          "locationId": 25
+        },
+        {
+          "hour": 10,
+          "locationId": 25
+        },
+        {
+          "hour": 11,
+          "locationId": 25
+        },
+        {
+          "hour": 12,
+          "locationId": 25
+        },
+        {
+          "hour": 13,
+          "locationId": 25
+        },
+        {
+          "hour": 14,
+          "locationId": 25
+        },
+        {
+          "hour": 15,
+          "locationId": 25
+        },
+        {
+          "hour": 16,
+          "locationId": 25
+        },
+        {
+          "hour": 17,
+          "locationId": 25
+        },
+        {
+          "hour": 18,
+          "locationId": 25
+        },
+        {
+          "hour": 19,
+          "locationId": 25
+        },
+        {
+          "hour": 20,
+          "locationId": 3
+        },
+        {
+          "hour": 21,
+          "locationId": 3
+        },
+        {
+          "hour": 22,
+          "locationId": 3
         },
         {
           "hour": 23,
@@ -123021,6 +123217,104 @@
           "locationId": 28
         }
       ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
       "awakeHours": {
         "start": 8,
         "end": 18
@@ -123097,6 +123391,104 @@
         {
           "hour": 16,
           "locationId": 30
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
         },
         {
           "hour": 17,
@@ -123233,6 +123625,104 @@
           "locationId": 28
         }
       ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
       "awakeHours": {
         "start": 8,
         "end": 18
@@ -123309,6 +123799,104 @@
         {
           "hour": 16,
           "locationId": 32
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
         },
         {
           "hour": 17,
@@ -123445,6 +124033,104 @@
           "locationId": 28
         }
       ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
       "awakeHours": {
         "start": 8,
         "end": 18
@@ -123521,6 +124207,104 @@
         {
           "hour": 16,
           "locationId": 34
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
         },
         {
           "hour": 17,
@@ -123657,6 +124441,104 @@
           "locationId": 28
         }
       ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
       "awakeHours": {
         "start": 8,
         "end": 18
@@ -123733,6 +124615,104 @@
         {
           "hour": 16,
           "locationId": 36
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
         },
         {
           "hour": 17,
@@ -123869,6 +124849,104 @@
           "locationId": 28
         }
       ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
       "awakeHours": {
         "start": 8,
         "end": 18
@@ -123945,6 +125023,104 @@
         {
           "hour": 16,
           "locationId": 38
+        },
+        {
+          "hour": 17,
+          "locationId": 28
+        },
+        {
+          "hour": 18,
+          "locationId": 28
+        },
+        {
+          "hour": 19,
+          "locationId": 28
+        },
+        {
+          "hour": 20,
+          "locationId": 28
+        },
+        {
+          "hour": 21,
+          "locationId": 28
+        },
+        {
+          "hour": 22,
+          "locationId": 28
+        },
+        {
+          "hour": 23,
+          "locationId": 28
+        }
+      ],
+      "weekendSchedule": [
+        {
+          "hour": 0,
+          "locationId": 28
+        },
+        {
+          "hour": 1,
+          "locationId": 28
+        },
+        {
+          "hour": 2,
+          "locationId": 28
+        },
+        {
+          "hour": 3,
+          "locationId": 28
+        },
+        {
+          "hour": 4,
+          "locationId": 28
+        },
+        {
+          "hour": 5,
+          "locationId": 28
+        },
+        {
+          "hour": 6,
+          "locationId": 28
+        },
+        {
+          "hour": 7,
+          "locationId": 28
+        },
+        {
+          "hour": 8,
+          "locationId": 28
+        },
+        {
+          "hour": 9,
+          "locationId": 28
+        },
+        {
+          "hour": 10,
+          "locationId": 28
+        },
+        {
+          "hour": 11,
+          "locationId": 28
+        },
+        {
+          "hour": 12,
+          "locationId": 28
+        },
+        {
+          "hour": 13,
+          "locationId": 28
+        },
+        {
+          "hour": 14,
+          "locationId": 28
+        },
+        {
+          "hour": 15,
+          "locationId": 28
+        },
+        {
+          "hour": 16,
+          "locationId": 28
         },
         {
           "hour": 17,

@@ -4,6 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip } from "./Links.js";
 import { ActorRef, DealRef, ItemRef, LotRef, PoolRef } from "./Refs.js";
 import { resolveAuctionWindow } from "../lib/auction-window.js";
+import { dayLabel } from "../lib/calendar.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -151,7 +152,7 @@ export function LocationDiary({
       <header className="diary-nav">
         <button onClick={() => onChangeDay(day - 1)} disabled={day <= 1} title="prev day">‹</button>
         <span className="diary-day">
-          Day {day} · {loc.displayName}
+          {dayLabel(day)} · {loc.displayName}
         </span>
         <button
           onClick={() => onChangeDay(day + 1)}

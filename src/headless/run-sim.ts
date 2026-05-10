@@ -399,6 +399,13 @@ function main(): void {
             hour,
             locationId,
           })),
+          ...(info.weekendSchedule !== undefined
+            ? {
+                weekendSchedule: [...info.weekendSchedule.entries()].map(
+                  ([hour, locationId]) => ({ hour, locationId }),
+                ),
+              }
+            : {}),
           awakeHours: { start: info.awakeHours.start, end: info.awakeHours.end },
         }),
       );
@@ -501,6 +508,7 @@ interface RunDump {
     actorId: number;
     homeLocationId: number | null;
     schedule: readonly { hour: number; locationId: number }[];
+    weekendSchedule?: readonly { hour: number; locationId: number }[];
     awakeHours: { start: number; end: number };
   }[];
   readonly items: readonly {

@@ -108,10 +108,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .day-label {
-  min-width: 80px;
+  min-width: 110px;
   text-align: center;
   font-weight: bold;
   color: var(--accent);
+}
+.day-label.is-weekend {
+  color: #ffb84d;
 }
 
 .panel {
