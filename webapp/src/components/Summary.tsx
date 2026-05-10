@@ -34,6 +34,7 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "market.hour-summary", label: "Market hours", types: ["market.hour-summary"] },
   { key: "gossip.exchanged", label: "Gossip exchanges", types: ["gossip.exchanged"] },
   { key: "actor.planned", label: "Planner picks", types: ["actor.planned"] },
+  { key: "off-map.resold", label: "Off-map resales", types: ["off-map.resold"] },
   { key: "heat.raised", label: "Heat raises", types: ["heat.raised"] },
   { key: "authority.raid", label: "🚨 Raids", types: ["authority.raid"], warn: true },
 ];

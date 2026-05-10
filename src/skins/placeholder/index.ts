@@ -64,6 +64,15 @@ export interface SkinSeedResult {
   /** Locations that carry the morning paper (Sid's + high-street
    *  newsagents). Auction-listing-knowledge propagates here. */
   readonly newspaperLocationIds: readonly number[];
+  /** The wider trade scene — actors who travel in from neighbouring
+   *  areas to bid at Sotheby's. Capped per lot via
+   *  `economics.offMapAuction.maxBiddersPerLot`. */
+  readonly offMapDealerActorIds: readonly number[];
+  /** Synthetic external-economy account that buys whatever the
+   *  off-map dealers bring home each night. Exempted from the cash
+   *  conservation invariant — represents the economy outside our
+   *  simulated bubble. */
+  readonly offMapMarketActorId: number;
   /** Where the daily auction is held; bidders must be physically present. */
   readonly auctionLocationId: number;
   /** First and last hour of the daily auction window. One lot per hour
@@ -483,7 +492,88 @@ const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {
     defaultFlawDetection: 0.7,
     customerTypes: ["yuppies", "businesses"],
   },
+  // ─── off-map dealers (the wider trade scene) ─────────────────────────
+  // Sharp inside their lane, generalist-noisy outside it. Each appears
+  // at Sotheby's during gallery+auction hours on weekdays, bids on
+  // categories they specialise in, and resells whatever they buy
+  // overnight (off-map resale handler) so they're back tomorrow with
+  // replenished cash.
+  "slough-stan": {
+    defaultAccuracy: 0.3,
+    perCategory: { electrical: 0.95, tools: 0.85 },
+    defaultFlawDetection: 0.65,
+    customerTypes: ["tradesmen"],
+  },
+  "croydon-carl": {
+    defaultAccuracy: 0.3,
+    perCategory: { vehicles: 0.95, furniture: 0.85 },
+    defaultFlawDetection: 0.6,
+    customerTypes: ["yuppies"],
+  },
+  "maidstone-maureen": {
+    defaultAccuracy: 0.3,
+    perCategory: { decor: 0.95, novelty: 0.85 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["yuppies", "old-dears"],
+  },
+  "wandsworth-wally": {
+    defaultAccuracy: 0.3,
+    perCategory: { clothing: 0.95, food: 0.85 },
+    defaultFlawDetection: 0.5,
+    customerTypes: ["market-punters"],
+  },
+  "brighton-bernie": {
+    defaultAccuracy: 0.3,
+    perCategory: { toys: 0.95, novelty: 0.85 },
+    defaultFlawDetection: 0.6,
+    customerTypes: ["families"],
+  },
+  "watford-wendy": {
+    defaultAccuracy: 0.3,
+    perCategory: { electrical: 0.85, decor: 0.85 },
+    defaultFlawDetection: 0.65,
+    customerTypes: ["yuppies"],
+  },
+  "romford-reg": {
+    defaultAccuracy: 0.3,
+    perCategory: { furniture: 0.95, tools: 0.85 },
+    defaultFlawDetection: 0.6,
+    customerTypes: ["tradesmen", "families"],
+  },
+  "kingston-kev": {
+    defaultAccuracy: 0.3,
+    perCategory: { decor: 0.85, toys: 0.85 },
+    defaultFlawDetection: 0.55,
+    customerTypes: ["families"],
+  },
 };
+
+const OFF_MAP_DEALER_DISPLAY_NAMES: Readonly<Record<string, string>> = {
+  "slough-stan": "Slough Stan",
+  "croydon-carl": "Croydon Carl",
+  "maidstone-maureen": "Maidstone Maureen",
+  "wandsworth-wally": "Wandsworth Wally",
+  "brighton-bernie": "Brighton Bernie",
+  "watford-wendy": "Watford Wendy",
+  "romford-reg": "Romford Reg",
+  "kingston-kev": "Kingston Kev",
+};
+
+const OFF_MAP_DEALER_CODES: readonly string[] = [
+  "slough-stan",
+  "croydon-carl",
+  "maidstone-maureen",
+  "wandsworth-wally",
+  "brighton-bernie",
+  "watford-wendy",
+  "romford-reg",
+  "kingston-kev",
+];
+
+/** Synthetic external-economy account — receives stock the off-map
+ *  dealers buy and pays them out at end-of-day. Exempted from cash
+ *  conservation by the invariants test. */
+const OFF_MAP_MARKET_CODE = "off-map-market";
 
 const ACTORS: readonly ActorSpec[] = [
   // ─── core trader cast ────────────────────────────────────────────────
@@ -923,6 +1013,39 @@ const ACTORS: readonly ActorSpec[] = [
     transportCapacity: "none",
     awakeHours: { start: 8, end: 18 },
   })),
+  // ─── off-map dealers ─────────────────────────────────────────────────
+  // The wider trade scene from neighbouring areas. Each travels to
+  // Sotheby's during gallery (8-11) + auction (11-16) hours on
+  // weekdays, bids on lots in their specialty, then returns off-map
+  // overnight. The off-map resale handler liquidates whatever they
+  // bought at end-of-day so they're back tomorrow with replenished
+  // capital. Weekends they stay off-map (auction's closed anyway).
+  ...OFF_MAP_DEALER_CODES.map((code): ActorSpec => ({
+    code,
+    displayName: OFF_MAP_DEALER_DISPLAY_NAMES[code] ?? code,
+    cash: 4000,
+    ...makeRoutineFromSpans("off-map", [
+      { from: 8, to: 17, location: "auction-house" },
+    ]),
+    ...weekendSpans("off-map", []),
+    defaultLocation: "off-map",
+    homeLocation: "off-map",
+    transportCapacity: "boot",
+    awakeHours: { start: 7, end: 19 },
+  })),
+  // The synthetic external-economy account — pays the off-map dealers
+  // for their stock at end-of-day. Stays off-map; no schedule needed
+  // (it's purely an accounting actor).
+  {
+    code: OFF_MAP_MARKET_CODE,
+    displayName: "Off-map Market",
+    cash: 0,
+    ...makeRoutineFromSpans("off-map", []),
+    defaultLocation: "off-map",
+    homeLocation: "off-map",
+    transportCapacity: "none",
+    awakeHours: { start: 0, end: 24 },
+  },
 ];
 
 // Which actor codes participate in pub-deal / pool-claim autonomy. The
@@ -998,6 +1121,17 @@ const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
   "brian-yardley": ["shopkeeper"],
   "doris-whittle": ["shopkeeper"],
   "reg-throne": ["shopkeeper"],
+  // Off-map dealers — wider trade scene tag for the filter rail.
+  "slough-stan": ["off-map-dealer"],
+  "croydon-carl": ["off-map-dealer"],
+  "maidstone-maureen": ["off-map-dealer"],
+  "wandsworth-wally": ["off-map-dealer"],
+  "brighton-bernie": ["off-map-dealer"],
+  "watford-wendy": ["off-map-dealer"],
+  "romford-reg": ["off-map-dealer"],
+  "kingston-kev": ["off-map-dealer"],
+  // External-economy account — invisible, used by the resale handler.
+  "off-map-market": ["off-map-market"],
 };
 
 export interface SkinSeedOptions {
@@ -1241,6 +1375,20 @@ export function seedPlaceholderSkin(
     if (id !== undefined) newspaperLocationIds.push(id);
   }
 
+  // Off-map dealer ids resolved from codes; market actor id resolved
+  // for cash-flow plumbing. Both flow through to run-sim wiring.
+  const offMapDealerActorIds: number[] = [];
+  for (const code of OFF_MAP_DEALER_CODES) {
+    const id = actorByCode.get(code);
+    if (id !== undefined) offMapDealerActorIds.push(id);
+  }
+  const offMapMarketActorId = actorByCode.get(OFF_MAP_MARKET_CODE);
+  if (offMapMarketActorId === undefined) {
+    throw new Error(
+      "placeholder skin must seed the off-map-market accounting actor",
+    );
+  }
+
   const mikeId = actorByCode.get("mike");
   if (nagsId !== undefined && mikeId !== undefined) {
     setLocationProprietor(db, nagsId, mikeId);
@@ -1317,6 +1465,8 @@ export function seedPlaceholderSkin(
     shopSpecialtiesByLocation,
     shopkeeperActorIds,
     newspaperLocationIds,
+    offMapDealerActorIds,
+    offMapMarketActorId,
     auctionLocationId,
     auctionStartHour: AUCTION_START_HOUR,
     auctionEndHour: AUCTION_END_HOUR,

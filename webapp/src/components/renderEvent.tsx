@@ -161,6 +161,14 @@ export function renderEvent(
           </span>
         </>
       );
+    case "off-map.resold":
+      return (
+        <>
+          {A(e.dealerActorId)} liquidated {String(e.lotsSold)} lot
+          {e.lotsSold === 1 ? "" : "s"} ({String(e.unitsSold)} units) →{" "}
+          <span className="muted">£{String(e.totalValue)}</span>
+        </>
+      );
     case "market.hour-summary": {
       const sold = Number(e.unitsSold);
       const offered = Number(e.unitsOffered);

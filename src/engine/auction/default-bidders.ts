@@ -63,6 +63,14 @@ export interface BidderOptions {
    * pass an override via `resolveEconomicsConfig({...})`.
    */
   readonly economics?: EconomicsConfig;
+  /**
+   * Actor ids of off-map dealers (the wider trade scene from
+   * neighbouring areas). When set, off-map bidders are capped per lot
+   * by `economics.offMapAuction.maxBiddersPerLot` — locals are
+   * unfiltered. Off-map dealers above the cap are randomly subsampled
+   * via the world RNG.
+   */
+  readonly offMapDealerActorIds?: ReadonlySet<number>;
 }
 
 /**
@@ -95,6 +103,8 @@ export function makeBidders(
   const requireKnowledge = opts.requireKnowledge ?? false;
   const assumedTier: QualityTier =
     opts.assumedTierWhenUninspected ?? economics.pubAssumedTier;
+  const offMapIds = opts.offMapDealerActorIds ?? null;
+  const maxOffMap = economics.offMapAuction.maxBiddersPerLot;
 
   return (db, lot, _day, rng) => {
     const item = getItemKindById(db, lot.itemKindId);
@@ -167,6 +177,25 @@ export function makeBidders(
 
       if (ceiling < lot.floorPrice) continue;
       bidders.push({ actorId: a.id, ceiling });
+    }
+    // Cap off-map bidders per lot. Locals are unaffected; if more
+    // off-map dealers qualify than `maxOffMap`, pick randomly.
+    if (offMapIds !== null && maxOffMap >= 0) {
+      const locals: AuctionBidder[] = [];
+      const offMap: AuctionBidder[] = [];
+      for (const b of bidders) {
+        if (offMapIds.has(b.actorId)) offMap.push(b);
+        else locals.push(b);
+      }
+      if (offMap.length > maxOffMap) {
+        // Fisher-Yates partial shuffle: pick `maxOffMap` distinct entries.
+        for (let i = 0; i < maxOffMap; i += 1) {
+          const j = i + Math.floor(rng.next() * (offMap.length - i));
+          [offMap[i]!, offMap[j]!] = [offMap[j]!, offMap[i]!];
+        }
+        offMap.length = maxOffMap;
+      }
+      return [...locals, ...offMap];
     }
     return bidders;
   };

@@ -102,7 +102,16 @@ export type WorldEvent =
       readonly soldByPersona: Readonly<Record<string, number>>;
     }
   | { readonly type: "pool.claimed"; readonly at: Clock; readonly poolId: number; readonly actorId: number; readonly quantity: number; readonly unitPrice: number }
-  | { readonly type: "pool.spawned"; readonly at: Clock; readonly poolId: number; readonly itemKindId: number; readonly itemCode: string; readonly qualityTier: string; readonly quantity: number; readonly openingUnitPrice: number; readonly closingUnitPrice: number; readonly expiryDay: number; readonly isEasterEgg: boolean; readonly flavourText: string | null };
+  | { readonly type: "pool.spawned"; readonly at: Clock; readonly poolId: number; readonly itemKindId: number; readonly itemCode: string; readonly qualityTier: string; readonly quantity: number; readonly openingUnitPrice: number; readonly closingUnitPrice: number; readonly expiryDay: number; readonly isEasterEgg: boolean; readonly flavourText: string | null }
+  | {
+      readonly type: "off-map.resold";
+      readonly at: Clock;
+      readonly dealerActorId: number;
+      readonly marketActorId: number;
+      readonly lotsSold: number;
+      readonly unitsSold: number;
+      readonly totalValue: number;
+    };
 
 export type EventHandler = (event: WorldEvent) => void;
 
@@ -220,6 +229,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "actor.planned":
         console.log(`[${stamp}] actor.planned actor=${e.actorId} → D${String(e.targetDay).padStart(2,"0")} ${String(e.targetHour).padStart(2,"0")}:00 ${e.kind} loc=${e.locationId} (score=${e.score})`);
+        break;
+      case "off-map.resold":
+        console.log(`[${stamp}] off-map.resold dealer=${e.dealerActorId} ${e.lotsSold} lot${e.lotsSold===1?"":"s"} (${e.unitsSold} units) → £${e.totalValue}`);
         break;
       case "pool.claimed":
         console.log(`[${stamp}] pool.claimed pool=${e.poolId} actor=${e.actorId} ${e.quantity}@£${e.unitPrice}`);

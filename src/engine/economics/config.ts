@@ -115,6 +115,30 @@ export interface EconomicsConfig {
    * offloading at Sparks Electrical."
    */
   readonly planner: PlannerConfig;
+
+  /**
+   * Off-map auction populism. Controls how the wider trade scene
+   * (named NPCs from neighbouring areas — Slough Stan, Croydon Carl,
+   * etc.) participates in Sotheby's auctions and what they do with
+   * what they buy. The off-map cast is pure auction-presence in v1:
+   * they bid, they take stock home, and the daily off-map resale
+   * handler liquidates that stock against a synthetic external-economy
+   * account at the configured `resellMargin`.
+   */
+  readonly offMapAuction: OffMapAuctionConfig;
+}
+
+export interface OffMapAuctionConfig {
+  /** Maximum number of off-map dealers eligible to bid on any single
+   *  lot. Locals' presence is unchanged; only off-map bidders are
+   *  capped. Set to 0 to suppress off-map participation entirely. */
+  readonly maxBiddersPerLot: number;
+  /** End-of-day liquidation multiplier applied to stock held by
+   *  off-map dealers. Stock value = `item.baseValue × tierMult ×
+   *  qty × resellMargin`. 1.0 = breakeven on retail; <1.0 imposes a
+   *  small "transaction cost" so successful trades net positive but
+   *  overbids still hurt. Default 0.95. */
+  readonly resellMargin: number;
 }
 
 export type PlannerCandidateKind =
@@ -354,6 +378,10 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     hourlyFootfall: DEFAULT_MARKET_HOURLY_FOOTFALL,
   },
   planner: DEFAULT_PLANNER,
+  offMapAuction: {
+    maxBiddersPerLot: 3,
+    resellMargin: 0.95,
+  },
 };
 
 /**
@@ -400,6 +428,10 @@ export function resolveEconomicsConfig(
         ...DEFAULT_ECONOMICS_CONFIG.planner.weekendModifier,
         ...(partial.planner?.weekendModifier ?? {}),
       },
+    },
+    offMapAuction: {
+      ...DEFAULT_ECONOMICS_CONFIG.offMapAuction,
+      ...(partial.offMapAuction ?? {}),
     },
   };
 }

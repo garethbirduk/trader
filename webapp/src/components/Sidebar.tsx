@@ -38,6 +38,9 @@ const ROLE_LABEL: Record<string, string> = {
   police: "Police",
   villain: "Villains",
   official: "Officials",
+  shopkeeper: "Shopkeepers",
+  "off-map-dealer": "Off-map dealers",
+  "off-map-market": "Off-map market",
 };
 
 const LOC_TYPE_LABEL: Record<string, string> = {

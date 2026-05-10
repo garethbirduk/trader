@@ -18,6 +18,7 @@ import { registerPoolExpiry } from "../engine/world/pool-expiry.js";
 import { registerDailyAuction } from "../engine/world/daily-auction.js";
 import { registerAuctionListingKnowledge } from "../engine/world/auction-listing-knowledge.js";
 import { registerAuctionInspection } from "../engine/world/auction-inspection.js";
+import { registerOffMapResale } from "../engine/world/off-map-resale.js";
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
 import { registerMarketSale } from "../engine/world/market-sale.js";
 import {
@@ -232,6 +233,11 @@ function main(): void {
         // have learned about the lot to participate.
         requireKnowledge: true,
         economics: skin.economics,
+        // Off-map dealers attend Sotheby's via their schedules; cap
+        // their per-lot participation so auctions feel busy without
+        // crowding out the local cast. Configurable via
+        // `economics.offMapAuction.maxBiddersPerLot`.
+        offMapDealerActorIds: new Set(skin.offMapDealerActorIds),
       }),
     });
     // Per-hour actor planner — replaces the legacy day-mode picker.
@@ -368,6 +374,16 @@ function main(): void {
       bidderProfiles: skin.bidderProfiles,
       economics: skin.economics,
     });
+    // Off-map resale: at day-end, off-map dealers liquidate whatever
+    // they bought today against the synthetic external-economy
+    // account. Keeps them solvent for tomorrow's auction.
+    if (skin.offMapDealerActorIds.length > 0) {
+      registerOffMapResale(world, {
+        offMapDealerActorIds: new Set(skin.offMapDealerActorIds),
+        offMapMarketActorId: skin.offMapMarketActorId,
+        economics: skin.economics,
+      });
+    }
 
     // Trust/heat reactions are event-driven (subscribe to other
     // events) — registration order doesn't pin them to a phase.
