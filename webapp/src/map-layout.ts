@@ -122,7 +122,7 @@ export const DEFAULT_LAYOUT: MapLayout = {
 // fallback for the brief window before the fetch resolves, or if the
 // file is missing.
 
-const LAYOUT_URL = "/map.json";
+const LAYOUT_URL = `${import.meta.env.BASE_URL}map.json`;
 const SAVE_URL = "/__map";
 
 let _layout: MapLayout = DEFAULT_LAYOUT;

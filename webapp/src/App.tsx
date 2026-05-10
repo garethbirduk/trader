@@ -84,7 +84,7 @@ export function App() {
         .then((dump) => setState({ status: "loaded", dump }))
         .catch((e) => setState({ status: "error", error: (e as Error).message }));
     } else {
-      fetch("./events.json")
+      fetch(`${import.meta.env.BASE_URL}events.json`)
         .then(async (res) => {
           if (!res.ok) {
             throw new Error(

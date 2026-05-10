@@ -46,7 +46,7 @@ export function MapBasemap({ visible = true }: { visible?: boolean }) {
   if (!visible) return null;
   return (
     <image
-      href="/map-bg.jpg"
+      href={`${import.meta.env.BASE_URL}map-bg.jpg`}
       x={0}
       y={0}
       width={WORLD_W}
