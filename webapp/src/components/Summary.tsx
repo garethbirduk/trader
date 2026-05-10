@@ -33,7 +33,7 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "pubdeal.trust-blocked", label: "· trust-blocked", types: ["pubdeal.skipped-low-trust"] },
   { key: "market.hour-summary", label: "Market hours", types: ["market.hour-summary"] },
   { key: "gossip.exchanged", label: "Gossip exchanges", types: ["gossip.exchanged"] },
-  { key: "dealer.day-mode", label: "Day-mode picks", types: ["dealer.day-mode"] },
+  { key: "actor.planned", label: "Planner picks", types: ["actor.planned"] },
   { key: "heat.raised", label: "Heat raises", types: ["heat.raised"] },
   { key: "authority.raid", label: "🚨 Raids", types: ["authority.raid"], warn: true },
 ];

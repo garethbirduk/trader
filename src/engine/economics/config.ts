@@ -106,39 +106,75 @@ export interface EconomicsConfig {
   readonly marketSale: MarketSaleConfig;
 
   /**
-   * Daily mode picker for "flexible" dealers — actors who don't have
-   * a fixed venue (Boycie, Denzil, Monkey, Mickey, Jevon, Rodney,
-   * Paddy, the Player). Each morning they roll a mode (auction /
-   * market / pub / home) which overrides their hourly schedule for
-   * that day. Auction weight is reactive: it bumps when today's
-   * docket has items in the actor's category-skill set.
+   * Per-hour planner for "flexible" actors. Each hour the planner picks
+   * each actor's *next-hour* destination by scoring candidate locations
+   * (auction / market / each shop / each pub / newspaper / home) with
+   * inputs from inventory, cash, known docket lots, intrinsic
+   * preferences, and travel cost. Replaces the older one-mode-per-day
+   * picker — gives composed days like "morning at Sotheby's, afternoon
+   * offloading at Sparks Electrical."
    */
-  readonly dealerDayMode: DealerDayModeConfig;
+  readonly planner: PlannerConfig;
 }
 
-export type DealerDayModeKey = "auction" | "market" | "pub" | "home";
+export type PlannerCandidateKind =
+  | "auction"
+  | "market"
+  | "pub"
+  | "shop"
+  | "newspaper"
+  | "home";
 
-export interface DealerDayModeConfig {
-  /** Base weight per mode before reactive adjustment. Relative;
-   *  normalised at draw time. */
-  readonly baseWeights: Readonly<Record<DealerDayModeKey, number>>;
-  /** Added to the 'auction' weight when today's docket has at least
-   *  one lot in a category the actor's profile rates >= interestThreshold. */
-  readonly auctionInterestBoost: number;
-  /** Category-accuracy threshold above which the actor counts a docket
-   *  category as "interesting". Default 0.6. */
+export interface PlannerConfig {
+  /** Intrinsic base weight per candidate kind. Relative; the highest
+   *  scoring candidate wins (no normalisation, no random draw — this
+   *  is a deterministic argmax with optional jitter). */
+  readonly baseWeights: Readonly<Record<PlannerCandidateKind, number>>;
+  /** Bonus per known docket lot that falls in a category the actor's
+   *  profile rates >= interestThreshold. Pulls strongly toward auction
+   *  when an actor knows interesting lots are on. */
+  readonly lotInterestWeight: number;
+  /** Category-accuracy threshold above which a docket lot counts as
+   *  "interesting". Default 0.6 (matches the legacy mode picker). */
   readonly interestThreshold: number;
-  /**
-   * Hour-of-day → location-code map per mode. The day-mode handler
-   * applies these as overrides to the actor's regular schedule for
-   * the day. Hours not in the map fall through to the actor's normal
-   * schedule (or the delivery override, which still wins). Skin
-   * resolves the codes against its location table.
-   */
-  readonly modeSchedules: Readonly<Record<
-    DealerDayModeKey,
-    Readonly<Record<number, string>>
-  >>;
+  /** Auction baseline applied when the actor knows nothing about today's
+   *  docket but a docket exists — "go and see" curiosity. Set to 0 to
+   *  disable speculative attendance. */
+  readonly speculativeAuctionWeight: number;
+  /** Bonus to "go sell" candidates (market, shops) per unit of stock the
+   *  actor currently holds. Encourages full-bag dealers to find buyers. */
+  readonly inventoryFullDrive: number;
+  /** Bonus to acquisition-side candidates (auction, market footfall) when
+   *  the actor's inventory is below `inventoryEmptyThreshold` units.
+   *  Reserved for future tuning; defaults to 0. */
+  readonly inventoryEmptyDrive: number;
+  /** Inventory-units threshold below which inventoryEmptyDrive applies. */
+  readonly inventoryEmptyThreshold: number;
+  /** Bonus to "go earn" candidates (market, shops) when actor cash is
+   *  below `cashLowThreshold`. */
+  readonly cashLowDrive: number;
+  /** Cash-pence threshold below which cashLowDrive applies. */
+  readonly cashLowThreshold: number;
+  /** Bonus to a shop candidate per unit of stock the actor holds in a
+   *  category the shop's keeper specialises in. The big lever for
+   *  steering Boycie's furniture haul to Comfy Corner / Throne & Co. */
+  readonly shopSpecialtyMatchWeight: number;
+  /** Bonus to a newspaper candidate when the actor doesn't yet know
+   *  today's docket. Combined with travel cost, keeps actors
+   *  passively reading the paper if they happen to be passing through
+   *  Sid's, but pulls them on a deliberate trip when curiosity bites. */
+  readonly newspaperRunWeight: number;
+  /** Per-unit penalty on Euclidean travel distance from the actor's
+   *  current location to the candidate. Discourages cross-map detours
+   *  unless the destination scores high. */
+  readonly travelCostWeight: number;
+  /** Per-kind weekend score modifier (added to base weight when
+   *  planning for a Saturday or Sunday hour). Positive = more popular
+   *  on weekends; negative = less. */
+  readonly weekendModifier: Partial<Readonly<Record<PlannerCandidateKind, number>>>;
+  /** Symmetric ±jitter added to each candidate score, drawn from the
+   *  world RNG. Set to 0 for fully deterministic argmax. */
+  readonly jitter: number;
 }
 
 export interface MarketSaleConfig {
@@ -249,47 +285,40 @@ const DEFAULT_MARKET_HOURLY_FOOTFALL: Record<number, number> = {
   14: 8,
 };
 
-/** Default mode schedules: keys are hours of day, values are location
- *  codes (resolved by the skin to ids). Modes leave non-listed hours
- *  alone — actors fall back to their base schedule outside these. */
-const DEFAULT_MODE_SCHEDULES: Record<
-  "auction" | "market" | "pub" | "home",
-  Record<number, string>
-> = {
-  // Auction-day: paper run + the auction window.
-  auction: {
-    6: "sids-cafe",
-    11: "auction-house",
-    12: "auction-house",
-    13: "auction-house",
-    14: "auction-house",
-    15: "auction-house",
-    16: "auction-house",
+const DEFAULT_PLANNER: PlannerConfig = {
+  // Intrinsic prefs — market and pub are the bread & butter, auction is
+  // a draw when info exists, shops are deliberate trips, home is the
+  // fallback. Newspaper sits between home and pub: not a destination
+  // unless there's a reason.
+  baseWeights: {
+    auction: 0.4,
+    market: 0.6,
+    pub: 0.45,
+    shop: 0.35,
+    newspaper: 0.2,
+    home: 0.1,
   },
-  // Market-day: stall during market hours.
-  market: {
-    9: "peckham-market",
-    10: "peckham-market",
-    11: "peckham-market",
-    12: "peckham-market",
-    13: "peckham-market",
-    14: "peckham-market",
+  lotInterestWeight: 0.6,
+  interestThreshold: 0.6,
+  speculativeAuctionWeight: 0.15,
+  inventoryFullDrive: 0.04,
+  inventoryEmptyDrive: 0.0,
+  inventoryEmptyThreshold: 5,
+  cashLowDrive: 0.4,
+  cashLowThreshold: 200,
+  shopSpecialtyMatchWeight: 0.05,
+  newspaperRunWeight: 0.4,
+  // Map is roughly 1500 px wide; 0.001/px means a full-map detour costs
+  // ~1.5 score (enough to override a weak draw, not a strong one).
+  travelCostWeight: 0.0015,
+  weekendModifier: {
+    market: -0.4,    // Peckham Market is closed weekends in v1.
+    auction: -0.4,   // Sotheby's likewise.
+    shop: -0.3,      // Most shops shut weekends; specialty bonus still pulls.
+    pub: 0.3,        // Pubs busier.
+    home: 0.2,       // More likely to chill at home.
   },
-  // Pub-day: linger longer at the Nag's for haggling.
-  pub: {
-    13: "nags",
-    14: "nags",
-    15: "nags",
-    16: "nags",
-    17: "nags",
-    18: "nags",
-    19: "nags",
-    20: "nags",
-    21: "nags",
-  },
-  // Home-day: no overrides — fall through to the actor's home/lockup
-  // default. Empty map = "leave the schedule alone".
-  home: {},
+  jitter: 0.05,
 };
 
 /**
@@ -324,13 +353,7 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     customerTypes: DEFAULT_MARKET_CUSTOMER_TYPES,
     hourlyFootfall: DEFAULT_MARKET_HOURLY_FOOTFALL,
   },
-  dealerDayMode: {
-    // Market dominates; pub and auction roughly equal; rare home day.
-    baseWeights: { auction: 0.15, market: 0.45, pub: 0.30, home: 0.10 },
-    auctionInterestBoost: 0.25,
-    interestThreshold: 0.6,
-    modeSchedules: DEFAULT_MODE_SCHEDULES,
-  },
+  planner: DEFAULT_PLANNER,
 };
 
 /**
@@ -366,16 +389,16 @@ export function resolveEconomicsConfig(
         ...(partial.marketSale?.hourlyFootfall ?? {}),
       },
     },
-    dealerDayMode: {
-      ...DEFAULT_ECONOMICS_CONFIG.dealerDayMode,
-      ...(partial.dealerDayMode ?? {}),
+    planner: {
+      ...DEFAULT_ECONOMICS_CONFIG.planner,
+      ...(partial.planner ?? {}),
       baseWeights: {
-        ...DEFAULT_ECONOMICS_CONFIG.dealerDayMode.baseWeights,
-        ...(partial.dealerDayMode?.baseWeights ?? {}),
+        ...DEFAULT_ECONOMICS_CONFIG.planner.baseWeights,
+        ...(partial.planner?.baseWeights ?? {}),
       },
-      modeSchedules: {
-        ...DEFAULT_ECONOMICS_CONFIG.dealerDayMode.modeSchedules,
-        ...(partial.dealerDayMode?.modeSchedules ?? {}),
+      weekendModifier: {
+        ...DEFAULT_ECONOMICS_CONFIG.planner.weekendModifier,
+        ...(partial.planner?.weekendModifier ?? {}),
       },
     },
   };

@@ -72,11 +72,18 @@ export type WorldEvent =
   | { readonly type: "auction.knowledge-acquired"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number; readonly via: "paper" | "gallery" | "gossip" | "attended"; readonly fromActorId: number | null }
   | { readonly type: "auction.lot-inspected"; readonly at: Clock; readonly actorId: number; readonly auctionLotId: number }
   | {
-      readonly type: "dealer.day-mode";
+      readonly type: "actor.planned";
       readonly at: Clock;
       readonly actorId: number;
-      readonly mode: "auction" | "market" | "pub" | "home";
-      readonly auctionInterested: boolean;
+      /** The day the planned destination applies to. Almost always
+       *  `at.day`, except at the day rollover (planned at 23:00 → next day 00:00). */
+      readonly targetDay: number;
+      /** The hour the planned destination applies to. */
+      readonly targetHour: number;
+      readonly locationId: number;
+      readonly kind: "auction" | "market" | "pub" | "shop" | "newspaper" | "home";
+      /** Argmax score (rounded to 2dp) — useful for explaining ties in the trace. */
+      readonly score: number;
     }
   | {
       readonly type: "market.hour-summary";
@@ -211,8 +218,8 @@ export function consoleHandler(): EventHandler {
       case "market.hour-summary":
         console.log(`[${stamp}] market.hour-summary seller=${e.sellerActorId} sold=${e.unitsSold}/${e.unitsOffered} @£${e.pricePerUnit}/u rev=£${e.revenue} footfall=${e.footfall}`);
         break;
-      case "dealer.day-mode":
-        console.log(`[${stamp}] dealer.day-mode actor=${e.actorId} mode=${e.mode}${e.auctionInterested ? " (auction-interest+)" : ""}`);
+      case "actor.planned":
+        console.log(`[${stamp}] actor.planned actor=${e.actorId} → D${String(e.targetDay).padStart(2,"0")} ${String(e.targetHour).padStart(2,"0")}:00 ${e.kind} loc=${e.locationId} (score=${e.score})`);
         break;
       case "pool.claimed":
         console.log(`[${stamp}] pool.claimed pool=${e.poolId} actor=${e.actorId} ${e.quantity}@£${e.unitPrice}`);

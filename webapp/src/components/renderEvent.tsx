@@ -150,13 +150,15 @@ export function renderEvent(
           {A(e.actorId)} inspected {Lot(e.auctionLotId)}
         </>
       );
-    case "dealer.day-mode":
+    case "actor.planned":
       return (
         <>
-          {A(e.actorId)} picks {String(e.mode)} day
-          {e.auctionInterested === true ? (
-            <span className="muted"> (docket interest)</span>
-          ) : null}
+          {A(e.actorId)} plans {String(e.kind)} → {L(e.locationId)}
+          <span className="muted">
+            {" "}
+            (D{String(e.targetDay).padStart(2, "0")}{" "}
+            {String(e.targetHour).padStart(2, "0")}:00)
+          </span>
         </>
       );
     case "market.hour-summary": {

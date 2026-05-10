@@ -48,12 +48,22 @@ export interface SkinSeedResult {
   readonly defaultReachableActorIds: readonly number[];
   /** Locations where pub-deal autonomy fires (e.g. the Nag's Head). */
   readonly pubLocationIds: readonly number[];
+  /** All pub-type locations — used by the planner as candidates,
+   *  separate from `pubLocationIds` (which is just for autonomy). */
+  readonly allPubLocationIds: readonly number[];
   /** High-street shop locations — pub-deal mechanism reused with a
    *  higher buyer-ceiling and a buyer constrained to shopkeepers. */
   readonly shopLocationIds: readonly number[];
+  /** Per-shop category specialties (shop locId → category list) so the
+   *  planner can score "matched stock" bonuses for steering dealers
+   *  to the right shop. */
+  readonly shopSpecialtiesByLocation: ReadonlyMap<number, ReadonlyArray<string>>;
   /** Actor ids of shopkeepers that own the high-street shops. The
    *  shop-deal autonomy uses this set to force the buyer side. */
   readonly shopkeeperActorIds: readonly number[];
+  /** Locations that carry the morning paper (Sid's + high-street
+   *  newsagents). Auction-listing-knowledge propagates here. */
+  readonly newspaperLocationIds: readonly number[];
   /** Where the daily auction is held; bidders must be physically present. */
   readonly auctionLocationId: number;
   /** First and last hour of the daily auction window. One lot per hour
@@ -67,11 +77,10 @@ export interface SkinSeedResult {
   /** Actor ids eligible to run a market stall (dealer / fence /
    *  player). Civilians passing through aren't sellers. */
   readonly marketSellerActorIds: readonly number[];
-  /** Actor ids whose daily routines are picked by the dealer-day-mode
-   *  handler (auction / market / pub / home). */
+  /** Actor ids whose flex hours are filled in by the per-hour planner
+   *  (auction / market / each shop / each pub / newspaper / home). */
   readonly flexibleDailyModeActorIds: readonly number[];
-  /** Location code → id map, used by the day-mode handler to resolve
-   *  the schedules in `EconomicsConfig.dealerDayMode.modeSchedules`. */
+  /** Location code → id map. Skins use codes; engine uses ids. */
   readonly locationByCode: ReadonlyMap<string, number>;
   /** Hour from which the paper is on the table at Sid's. */
   readonly paperFromHour: number;
@@ -109,6 +118,11 @@ export interface ActorRoutineInfo {
   readonly homeLocationId: number | null;
   readonly schedule: ReadonlyMap<number, number>;
   readonly flexibleHours: ReadonlySet<number>;
+  /** Optional weekend overrides. When `weekendSchedule` is set, the
+   *  policy callback uses it for Saturday/Sunday hours; otherwise the
+   *  weekday `schedule` applies all week. */
+  readonly weekendSchedule?: ReadonlyMap<number, number>;
+  readonly weekendFlexibleHours?: ReadonlySet<number>;
   readonly awakeHours: { readonly start: number; readonly end: number };
 }
 
@@ -116,21 +130,28 @@ interface ActorSpec {
   readonly code: string;
   readonly displayName: string;
   readonly cash: number;
+  /** Weekday schedule (Mon-Fri). */
   readonly schedule: ReadonlyMap<number, string>;
   /** Hours where the actor's routine is flexible (defaults to home but
    *  can be repurposed for ad-hoc tasks like delivery trips). Filled in
    *  automatically by makeRoutineFromSpans(). */
   readonly flexibleHours: ReadonlySet<number>;
+  /** Optional weekend (Sat/Sun) schedule. If omitted, weekday schedule
+   *  applies all week. Fixed-job actors with closed venues on weekends
+   *  (council yard, banks, shops) supply this to "stay home / pub". */
+  readonly weekendSchedule?: ReadonlyMap<number, string>;
+  /** Optional weekend flexibleHours set. Defaults to `flexibleHours`. */
+  readonly weekendFlexibleHours?: ReadonlySet<number>;
   readonly defaultLocation: string;
   readonly homeLocation: string;
   /** Where this actor stores stock. Defaults to homeLocation. */
   readonly lockupLocation?: string;
   readonly transportCapacity: TransportCapacity;
   readonly awakeHours: { readonly start: number; readonly end: number };
-  /** When true, the dealer-day-mode picker assigns a fresh mode each
-   *  morning (auction / market / pub / home) and rewrites their hours
-   *  for that day. Fixed-job actors (Mike, Sid, Slater, …) leave this
-   *  unset and their routine runs as written. */
+  /** When true, the per-hour planner picks this actor's next-hour
+   *  destination during their flexible hours. Fixed-job actors
+   *  (Mike, Sid, Slater, shopkeepers, …) leave this unset and their
+   *  routine runs as written. */
   readonly flexibleDailyMode?: boolean;
 }
 
@@ -221,6 +242,27 @@ const SHOPKEEPER_DISPLAY_NAMES: Readonly<Record<string, string>> = {
 };
 
 /**
+ * The item categories each shop "deals in" — drives the planner's
+ * per-shop matched-stock bonus, so a dealer with a bag of drills steers
+ * to Sparks Electrical / Hi-Tech Hut rather than the jeweller. Mirrors
+ * the corresponding shopkeeper's bidder-profile high-accuracy slots.
+ * Generalist shops (Patel's, Corner Shop) get a wide net so any stock
+ * matches a little.
+ */
+const SHOP_SPECIALTIES_BY_CODE: Readonly<Record<string, readonly string[]>> = {
+  goldfingers: ["decor", "novelty"],
+  "ratners-peckham": ["decor", "novelty"],
+  patels: ["food", "novelty", "clothing"],
+  "corner-shop": ["food", "novelty", "clothing", "tools", "safety"],
+  "wooden-soldier": ["toys", "novelty"],
+  toyland: ["toys", "novelty"],
+  "sparks-electrical": ["electrical", "tools"],
+  "hi-tech-hut": ["electrical", "tools"],
+  "comfy-corner": ["furniture", "decor"],
+  "throne-co": ["furniture", "decor"],
+};
+
+/**
  * Daily auction window. The engine picks up to (END-START+1) lots
  * randomly each morning and runs them one per hour during this range.
  * Combined with the listing knowledge mechanic, dealers must visit
@@ -259,6 +301,27 @@ interface BuiltRoutine {
    *  default to home, but the engine is free to override these for
    *  ad-hoc tasks like delivery trips. */
   readonly flexibleHours: ReadonlySet<number>;
+}
+
+/**
+ * Build the weekend half of a spec — returns the keys
+ * `weekendSchedule` + `weekendFlexibleHours` that get spread into
+ * an ActorSpec alongside the weekday `schedule` and `flexibleHours`.
+ * Use for actors whose weekday venue closes Sat/Sun (Trigger's
+ * council yard, Cassandra's bank, the high-street shops).
+ */
+function weekendSpans(
+  homeCode: string,
+  spans: readonly ScheduleSpan[],
+): {
+  weekendSchedule: Map<number, string>;
+  weekendFlexibleHours: ReadonlySet<number>;
+} {
+  const built = makeRoutineFromSpans(homeCode, spans);
+  return {
+    weekendSchedule: built.schedule,
+    weekendFlexibleHours: built.flexibleHours,
+  };
 }
 
 function makeRoutineFromSpans(
@@ -514,6 +577,14 @@ const ACTORS: readonly ActorSpec[] = [
       { from: 17, to: 23, location: "nags" },
       { from: 23, to: 7, location: "trigger-flat" },
     ]),
+    // Council yard closed weekends — Trigger goes nowhere for work,
+    // mooches at the bookies / Nag's instead.
+    ...weekendSpans("trigger-flat", [
+      { from: 11, to: 13, location: "betting-shop" },
+      { from: 13, to: 14, location: "sids-cafe" },
+      { from: 14, to: 17, location: "betting-shop" },
+      { from: 17, to: 23, location: "nags" },
+    ]),
     defaultLocation: "lambeth-council-yard",
     homeLocation: "trigger-flat",
     lockupLocation: "lockup",
@@ -667,6 +738,10 @@ const ACTORS: readonly ActorSpec[] = [
       { from: 18, to: 20, location: "FLEXIBLE" },
       { from: 20, to: 22.5, location: "nags" },
       { from: 22.5, to: 7.5, location: "cassandra-flat" },
+    ]),
+    // Bank closed weekends — chill at home, evening pub.
+    ...weekendSpans("cassandra-flat", [
+      { from: 20, to: 22.5, location: "nags" },
     ]),
     defaultLocation: "cassandra-bank",
     homeLocation: "cassandra-flat",
@@ -841,6 +916,8 @@ const ACTORS: readonly ActorSpec[] = [
     ...makeRoutineFromSpans("off-map", [
       { from: 9, to: 17, location: shopCode },
     ]),
+    // Shops shut Saturday and Sunday — keeper stays off-map.
+    ...weekendSpans("off-map", []),
     defaultLocation: shopCode,
     homeLocation: "off-map",
     transportCapacity: "none",
@@ -1016,19 +1093,50 @@ export function seedPlaceholderSkin(
       scheduleByHour.set(hour, locId);
     }
 
+    let weekendScheduleByHour: Map<number, number> | undefined;
+    if (spec.weekendSchedule !== undefined) {
+      weekendScheduleByHour = new Map();
+      for (const [hour, locCode] of spec.weekendSchedule) {
+        const locId = locByCode.get(locCode);
+        if (locId === undefined) {
+          throw new Error(
+            `unknown location in weekendSchedule for ${spec.code}: ${locCode}`,
+          );
+        }
+        weekendScheduleByHour.set(hour, locId);
+      }
+    }
+
     actorRoutines.set(a.id, {
       homeLocationId: homeId,
       schedule: scheduleByHour,
       flexibleHours: spec.flexibleHours,
       awakeHours: spec.awakeHours,
+      ...(weekendScheduleByHour !== undefined
+        ? { weekendSchedule: weekendScheduleByHour }
+        : {}),
+      ...(spec.weekendFlexibleHours !== undefined
+        ? { weekendFlexibleHours: spec.weekendFlexibleHours }
+        : {}),
     });
 
     if (spec.code !== "player") {
       const hourOverride = opts.hourOverrideForActor?.(a.id) ?? null;
-      const policyOpts =
-        hourOverride !== null
-          ? { schedule: scheduleByHour, defaultLocationId: defaultLocId, hourOverride }
-          : { schedule: scheduleByHour, defaultLocationId: defaultLocId };
+      const policyOpts: {
+        schedule: Map<number, number>;
+        weekendSchedule?: Map<number, number>;
+        defaultLocationId: number | null;
+        hourOverride?: (clock: { day: number; hour: number }) => number | null;
+      } = {
+        schedule: scheduleByHour,
+        defaultLocationId: defaultLocId,
+      };
+      if (weekendScheduleByHour !== undefined) {
+        policyOpts.weekendSchedule = weekendScheduleByHour;
+      }
+      if (hourOverride !== null) {
+        policyOpts.hourOverride = hourOverride;
+      }
       policies.set(
         a.id,
         new RuleBasedAIPolicy(`policy-${spec.code}`, policyOpts),
@@ -1097,8 +1205,20 @@ export function seedPlaceholderSkin(
   const nagsId = locByCode.get("nags");
   const pubLocationIds = nagsId !== undefined ? [nagsId] : [];
 
+  // All pub-type locations — exposed separately so the planner can use
+  // them as candidate destinations even though pub-deal autonomy
+  // currently only fires at the Nag's.
+  const allPubLocationIds: number[] = [];
+  for (const spec of LOCATIONS) {
+    if (spec.type === "pub") {
+      const id = locByCode.get(spec.code);
+      if (id !== undefined) allPubLocationIds.push(id);
+    }
+  }
+
   const shopLocationIds: number[] = [];
   const shopkeeperActorIds: number[] = [];
+  const shopSpecialtiesByLocation = new Map<number, ReadonlyArray<string>>();
   for (const { shopCode, keeperCode } of HIGH_STREET_SHOPS) {
     const shopId = locByCode.get(shopCode);
     const keeperId = actorByCode.get(keeperCode);
@@ -1106,7 +1226,19 @@ export function seedPlaceholderSkin(
       shopLocationIds.push(shopId);
       shopkeeperActorIds.push(keeperId);
       setLocationProprietor(db, shopId, keeperId);
+      const specialties = SHOP_SPECIALTIES_BY_CODE[shopCode];
+      if (specialties !== undefined) {
+        shopSpecialtiesByLocation.set(shopId, specialties);
+      }
     }
+  }
+
+  // Locations carrying the morning paper. Sid's is the original drop;
+  // newsagent-style high-street shops also stock it.
+  const newspaperLocationIds: number[] = [];
+  for (const code of ["sids-cafe", "patels", "corner-shop"]) {
+    const id = locByCode.get(code);
+    if (id !== undefined) newspaperLocationIds.push(id);
   }
 
   const mikeId = actorByCode.get("mike");
@@ -1180,8 +1312,11 @@ export function seedPlaceholderSkin(
     reachableByCategory,
     defaultReachableActorIds,
     pubLocationIds,
+    allPubLocationIds,
     shopLocationIds,
+    shopSpecialtiesByLocation,
     shopkeeperActorIds,
+    newspaperLocationIds,
     auctionLocationId,
     auctionStartHour: AUCTION_START_HOUR,
     auctionEndHour: AUCTION_END_HOUR,

@@ -21,9 +21,10 @@ import { registerAuctionInspection } from "../engine/world/auction-inspection.js
 import { registerLeadDecay } from "../engine/world/lead-decay.js";
 import { registerMarketSale } from "../engine/world/market-sale.js";
 import {
-  DayModeRegistry,
-  registerDealerDayMode,
-} from "../engine/world/dealer-day-mode.js";
+  PlannerRegistry,
+  registerActorPlanner,
+  type CandidateLocation,
+} from "../engine/world/actor-planner.js";
 import { resolveEconomicsConfig } from "../engine/economics/config.js";
 import { registerTrustReactions } from "../engine/world/trust-reactions.js";
 import { registerPolicyHourTick } from "../engine/world/policy-tick.js";
@@ -87,7 +88,7 @@ function main(): void {
     // picker; both are consulted in priority order by the override
     // callback (delivery > daymode > base schedule).
     const deliveryRegistry = new DeliveryRegistry();
-    const dayModeRegistry = new DayModeRegistry();
+    const plannerRegistry = new PlannerRegistry();
     const skin = seedPlaceholderSkin(db, rng, {
       ...(opts.days !== null ? { runLengthDays: opts.days } : {}),
       hourOverrideForActor: (actorId) => (clock) => {
@@ -95,8 +96,8 @@ function main(): void {
         // override anything else.
         const fromDelivery = deliveryRegistry.getOverride(actorId, clock.hour);
         if (fromDelivery !== null) return fromDelivery;
-        // Then today's chosen mode (auction / market / pub / home).
-        return dayModeRegistry.getOverride(actorId, clock.day, clock.hour);
+        // Then the planner's per-hour pick (or null → fall through to base schedule).
+        return plannerRegistry.getOverride(actorId, clock.day, clock.hour);
       },
       // Tunable economy knobs. Edit these to retune the price chain.
       economics: resolveEconomicsConfig({
@@ -203,7 +204,7 @@ function main(): void {
     // arrive at the gallery this hour learn the docket in time to act
     // on it within the same hour.
     registerAuctionListingKnowledge(world, {
-      newspaperLocationId: skin.newspaperLocationId,
+      newspaperLocationIds: skin.newspaperLocationIds,
       paperFromHour: skin.paperFromHour,
       galleryLocationId: skin.auctionLocationId,
       galleryFromHour: skin.galleryFromHour,
@@ -233,16 +234,98 @@ function main(): void {
         economics: skin.economics,
       }),
     });
-    // Dealer day-mode picker — runs at day-start AFTER the auction's
-    // docket-publish handler (registration order). Reads the docket
-    // and rolls today's mode for each flexible dealer.
-    registerDealerDayMode(world, {
-      flexibleActorIds: new Set(skin.flexibleDailyModeActorIds),
-      bidderProfiles: skin.bidderProfiles,
-      locationByCode: skin.locationByCode,
-      registry: dayModeRegistry,
-      economics: skin.economics,
-    });
+    // Per-hour actor planner — replaces the legacy day-mode picker.
+    // For each flexible actor, every hour, picks where they should be
+    // *next* hour by scoring auction / market / each shop / each pub /
+    // newspaper / home against inventory, cash, known docket lots, and
+    // travel cost. Writes to `plannerRegistry`; the actor's policy
+    // callback consults it before falling through to the base schedule.
+    {
+      const candidates: CandidateLocation[] = [];
+      const locByCode = skin.locationByCode;
+      const allLocations = listLocations(db);
+      const openHoursByCode = new Map<string, { start: number; end: number } | null>();
+      const codeById = new Map<number, string>();
+      for (const l of allLocations) {
+        openHoursByCode.set(l.code, l.openHours);
+        codeById.set(l.id, l.code);
+      }
+
+      const auctionId = locByCode.get("auction-house");
+      if (auctionId !== undefined) {
+        candidates.push({
+          locId: auctionId,
+          code: "auction-house",
+          kind: "auction",
+          position: null,
+          openHours: openHoursByCode.get("auction-house") ?? null,
+        });
+      }
+      const marketId = locByCode.get("peckham-market");
+      if (marketId !== undefined) {
+        candidates.push({
+          locId: marketId,
+          code: "peckham-market",
+          kind: "market",
+          position: null,
+          openHours: openHoursByCode.get("peckham-market") ?? null,
+        });
+      }
+      for (const id of skin.allPubLocationIds) {
+        const code = codeById.get(id) ?? `loc-${id}`;
+        candidates.push({
+          locId: id,
+          code,
+          kind: "pub",
+          position: null,
+          openHours: openHoursByCode.get(code) ?? null,
+        });
+      }
+      for (const id of skin.shopLocationIds) {
+        const code = codeById.get(id) ?? `loc-${id}`;
+        const specs = skin.shopSpecialtiesByLocation.get(id) ?? [];
+        candidates.push({
+          locId: id,
+          code,
+          kind: "shop",
+          position: null,
+          openHours: openHoursByCode.get(code) ?? null,
+          specialties: new Set(specs),
+        });
+      }
+      for (const id of skin.newspaperLocationIds) {
+        const code = codeById.get(id) ?? `loc-${id}`;
+        candidates.push({
+          locId: id,
+          code,
+          kind: "newspaper",
+          position: null,
+          openHours: openHoursByCode.get(code) ?? null,
+        });
+      }
+
+      const flexibleActorIds = new Set(skin.flexibleDailyModeActorIds);
+      const awakeHoursByActor = new Map<number, { start: number; end: number }>();
+      const flexibleHoursByActor = new Map<number, ReadonlySet<number>>();
+      const homeLocationByActor = new Map<number, number>();
+      for (const [actorId, info] of skin.actorRoutines) {
+        if (info.awakeHours) awakeHoursByActor.set(actorId, info.awakeHours);
+        if (info.flexibleHours) flexibleHoursByActor.set(actorId, info.flexibleHours);
+        if (info.homeLocationId !== null)
+          homeLocationByActor.set(actorId, info.homeLocationId);
+      }
+
+      registerActorPlanner(world, {
+        flexibleActorIds,
+        bidderProfiles: skin.bidderProfiles,
+        awakeHoursByActor,
+        flexibleHoursByActor,
+        homeLocationByActor,
+        candidates,
+        registry: plannerRegistry,
+        economics: skin.economics,
+      });
+    }
     const tradingIds = skin.tradingActorIds;
     registerPoolClaimAutonomy(world, {
       claimingActorIds: tradingIds,

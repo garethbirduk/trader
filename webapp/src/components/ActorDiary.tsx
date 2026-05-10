@@ -293,13 +293,11 @@ function summarizeEvent(
           {" "}<span className="muted">(rev £{String(e.revenue)})</span>
         </>
       );
-    case "dealer.day-mode":
+    case "actor.planned":
       return (
         <>
-          today: {String(e.mode)}
-          {e.auctionInterested === true ? (
-            <span className="muted"> (docket interest)</span>
-          ) : null}
+          plans {String(e.kind)} for{" "}
+          {String(e.targetHour).padStart(2, "0")}:00
         </>
       );
     default:

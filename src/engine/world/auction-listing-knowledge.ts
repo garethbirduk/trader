@@ -8,11 +8,15 @@ import {
 } from "../auction/knowledge-repo.js";
 
 export interface AuctionListingKnowledgeOptions {
-  /** The newspaper drop — typically Sid's Café. Actors present from
+  /** Locations that carry today's paper — typically Sid's Café plus
+   *  any high-street newsagents. Actors present at any of these from
    *  `paperFromHour` onward learn the day's docket. */
-  readonly newspaperLocationId: number;
-  /** Hour of day from which the paper is available at the newspaper
-   *  location. Sid's opens 06:00, so this is 6. */
+  readonly newspaperLocationIds: ReadonlyArray<number>;
+  /** Hour of day from which the paper is available. Sid's opens 06:00,
+   *  so this is 6. The high-street newsagents open at 9 — the engine
+   *  only checks "actor is at a paper-drop location during/after this
+   *  hour", so the per-location open-hour gate is enforced upstream by
+   *  the location-presence check (actors aren't there before they open). */
   readonly paperFromHour: number;
   /** The auction gallery — Sotheby's. Actors present from
    *  `galleryFromHour` onward learn the day's docket. */
@@ -52,6 +56,8 @@ export function registerAuctionListingKnowledge(
     );
   };
 
+  const newspaperSet = new Set(opts.newspaperLocationIds);
+
   const unsubHour = world.onHour((clock) => {
     const docket = todaysDocket(clock.day);
     if (docket.length === 0) return;
@@ -60,7 +66,7 @@ export function registerAuctionListingKnowledge(
       const loc = actor.currentLocationId;
       if (loc === null) continue;
       let via: LearnedVia | null = null;
-      if (loc === opts.newspaperLocationId && clock.hour >= opts.paperFromHour) {
+      if (newspaperSet.has(loc) && clock.hour >= opts.paperFromHour) {
         via = "paper";
       } else if (loc === opts.galleryLocationId && clock.hour >= opts.galleryFromHour) {
         via =

@@ -1,12 +1,20 @@
 import type { ActorPolicy, Action, ActorView } from "./types.js";
+import { isWeekend } from "../core/calendar.js";
 
 export interface RuleBasedAIPolicyOptions {
   /**
-   * Hourly schedule mapping in-game hour (0..23) to a desired location id.
-   * Hours not present fall back to `defaultLocationId`. Missing entries are
-   * fine — `idle` is the safe default.
+   * Hourly schedule mapping in-game hour (0..23) to a desired location id
+   * for weekdays (Mon-Fri). Hours not present fall back to
+   * `defaultLocationId`. Missing entries are fine — `idle` is the safe default.
    */
   readonly schedule?: ReadonlyMap<number, number>;
+  /**
+   * Optional Saturday/Sunday schedule. When set, weekend hours read from
+   * this map instead of the weekday `schedule`. Used for fixed-job actors
+   * whose venue closes on weekends (Trigger's council yard, Cassandra's
+   * bank, the high-street shops).
+   */
+  readonly weekendSchedule?: ReadonlyMap<number, number>;
   /** Where to be when the schedule doesn't say. May be null. */
   readonly defaultLocationId?: number | null;
   /**
@@ -32,6 +40,7 @@ export interface RuleBasedAIPolicyOptions {
 export class RuleBasedAIPolicy implements ActorPolicy {
   readonly id: string;
   private readonly schedule: ReadonlyMap<number, number> | null;
+  private readonly weekendSchedule: ReadonlyMap<number, number> | null;
   private readonly defaultLocationId: number | null;
   private readonly hourOverride:
     | ((clock: { day: number; hour: number }) => number | null)
@@ -40,15 +49,20 @@ export class RuleBasedAIPolicy implements ActorPolicy {
   constructor(id: string, opts: RuleBasedAIPolicyOptions = {}) {
     this.id = id;
     this.schedule = opts.schedule ?? null;
+    this.weekendSchedule = opts.weekendSchedule ?? null;
     this.defaultLocationId = opts.defaultLocationId ?? null;
     this.hourOverride = opts.hourOverride ?? null;
   }
 
   decide(view: ActorView): Action {
     const override = this.hourOverride?.(view.clock) ?? null;
+    const dailySchedule =
+      this.weekendSchedule !== null && isWeekend(view.clock.day)
+        ? this.weekendSchedule
+        : this.schedule;
     const targetLocationId =
       override ??
-      this.schedule?.get(view.clock.hour) ??
+      dailySchedule?.get(view.clock.hour) ??
       this.defaultLocationId;
 
     if (targetLocationId == null) return { type: "idle" };
