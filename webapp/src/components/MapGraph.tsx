@@ -611,7 +611,6 @@ export function MapGraph(props: Props) {
           y={0}
           width={WORLD_W}
           height={WORLD_H}
-          opacity={0.45}
           preserveAspectRatio="none"
           style={{ pointerEvents: "none" }}
         />
@@ -723,18 +722,54 @@ export function MapGraph(props: Props) {
                   stroke={stroke}
                   strokeWidth={strokeWidth}
                 />
-                <text
-                  className="node-label"
-                  textAnchor="middle"
-                  y={-NODE_R - 6}
-                >
-                  {hashLabel(label)}
-                </text>
-                {pop > 0 ? (
-                  <text className="node-pop" textAnchor="middle" y={-NODE_R - 18}>
-                    {pop}
-                  </text>
-                ) : null}
+                {(() => {
+                  const labelStr = hashLabel(label);
+                  // Approximate text width — 12px monospace ≈ 7.2 px/char.
+                  const w = labelStr.length * 7.2 + 8;
+                  return (
+                    <>
+                      <rect
+                        className="node-label-bg"
+                        x={-w / 2}
+                        y={-NODE_R - 17}
+                        width={w}
+                        height={14}
+                        rx={7}
+                      />
+                      <text
+                        className="node-label"
+                        textAnchor="middle"
+                        y={-NODE_R - 7}
+                      >
+                        {labelStr}
+                      </text>
+                    </>
+                  );
+                })()}
+                {pop > 0 ? (() => {
+                  const popStr = String(pop);
+                  // 11px monospace ≈ 6.6 px/char.
+                  const w = popStr.length * 6.6 + 8;
+                  return (
+                    <>
+                      <rect
+                        className="node-pop-bg"
+                        x={-w / 2}
+                        y={-NODE_R - 30}
+                        width={w}
+                        height={13}
+                        rx={6.5}
+                      />
+                      <text
+                        className="node-pop"
+                        textAnchor="middle"
+                        y={-NODE_R - 21}
+                      >
+                        {popStr}
+                      </text>
+                    </>
+                  );
+                })() : null}
               </g>
             );
           })}

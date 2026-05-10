@@ -37,8 +37,14 @@ export interface PubDealAutonomyOptions {
   readonly pairChance?: number;
   /** Days from today until the deal's delivery deadline (normal sales). */
   readonly deadlineDaysOut?: number;
-  /** Seller's mark-up over their acquisition cost as their target ask. */
+  /** Seller's mark-up over their acquisition cost as their opening ask. */
   readonly sellerTargetMarkup?: number;
+  /**
+   * Buyer's opening offer as a fraction of their per-unit ceiling.
+   * Lower = bigger anchoring move = more counter-offer rounds before
+   * meeting in the middle. Default 0.2.
+   */
+  readonly buyerTargetFraction?: number;
   /**
    * Probability (0..1) that an attempt becomes a forward-sale — the seller
    * commits to a quantity larger than they currently hold of that lot,
@@ -102,7 +108,8 @@ export function registerPubDealAutonomy(
   const attemptsPerHour = opts.attemptsPerHour ?? 3;
   const pairChance = opts.pairChance ?? 0.5;
   const deadlineDaysOut = opts.deadlineDaysOut ?? 1;
-  const sellerTargetMarkup = opts.sellerTargetMarkup ?? 1.5;
+  const sellerTargetMarkup = opts.sellerTargetMarkup ?? 2.5;
+  const buyerTargetFraction = opts.buyerTargetFraction ?? 0.2;
   const forwardSellChance = opts.forwardSellChance ?? 0.25;
   const forwardSellQtyRange =
     opts.forwardSellQtyMultiplierRange ?? ([1.5, 3] as const);
@@ -130,6 +137,7 @@ export function registerPubDealAutonomy(
           profiles: opts.bidderProfiles,
           normalDeadlineDay: clock.day + deadlineDaysOut,
           sellerTargetMarkup,
+          buyerTargetFraction,
           forwardSellChance,
           forwardSellQtyRange,
           forwardSellDeadlineRange,
@@ -149,6 +157,7 @@ function runOneAttempt(args: {
   profiles: ReadonlyMap<number, BidderProfile>;
   normalDeadlineDay: number;
   sellerTargetMarkup: number;
+  buyerTargetFraction: number;
   forwardSellChance: number;
   forwardSellQtyRange: readonly [number, number];
   forwardSellDeadlineRange: readonly [number, number];
@@ -312,16 +321,31 @@ function runOneAttempt(args: {
   const sellerFloorPerUnit = Math.max(1, lot.acquiredUnitPrice);
   if (sellerFloorPerUnit > buyerCeilingPerUnit) return; // no overlap
 
+  // Seller opens high, buyer opens low — wide opening anchors create
+  // room for visible back-and-forth instead of insta-accepting an
+  // already-reasonable opener.
   const sellerTargetPerUnit = Math.max(
     sellerFloorPerUnit,
     Math.round(lot.acquiredUnitPrice * args.sellerTargetMarkup),
   );
+  // Buyer opens at a small fraction of their ceiling — deliberately
+  // *not* clamped up to the seller's floor, so the buyer can anchor
+  // below cost and force the seller to climb down through real rounds.
+  // Floor of £1/unit just to keep arithmetic well-defined.
   const buyerTargetPerUnit = Math.min(
     buyerCeilingPerUnit,
-    Math.max(sellerFloorPerUnit, Math.round(buyerCeilingPerUnit * 0.6)),
+    Math.max(1, Math.round(buyerCeilingPerUnit * args.buyerTargetFraction)),
   );
 
   const initiator: "seller" | "buyer" = world.rng.next() < 0.5 ? "seller" : "buyer";
+
+  // Concession rates per attempt: smaller mean (~0.15) gives more
+  // visible back-and-forth than the old flat 0.3, and per-attempt RNG
+  // jitter stops every haggle reading like the same arithmetic sequence.
+  // Range ~0.08–0.22 — enough to occasionally produce a hard bargainer
+  // (low rate, slow concession) opposite a soft one (high rate, quick fold).
+  const sellerConcedeRate = 0.08 + world.rng.next() * 0.14;
+  const buyerConcedeRate = 0.08 + world.rng.next() * 0.14;
 
   attemptPubDeal({
     db: world.db,
@@ -333,13 +357,13 @@ function runOneAttempt(args: {
       actorId: sellerId,
       floor: sellerFloorPerUnit,
       target: sellerTargetPerUnit,
-      concedeRate: 0.3,
+      concedeRate: sellerConcedeRate,
     },
     buyer: {
       actorId: buyerId,
       ceiling: buyerCeilingPerUnit,
       target: buyerTargetPerUnit,
-      concedeRate: 0.3,
+      concedeRate: buyerConcedeRate,
     },
     itemKindId: item.id,
     qualityTier: lot.qualityTier,

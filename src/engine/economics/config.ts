@@ -307,8 +307,10 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
   // Starter stock used `0.4 + rng() * 0.4` of baseValue.
   starterStockAcquisitionFractionMin: 0.4,
   starterStockAcquisitionFractionMax: 0.8,
-  // Pub deals — recently introduced; 0.5 is the user-stated target.
-  pubBuyerCeilingFraction: 0.5,
+  // Pub deals — bumped from 0.5 to widen the zone-of-agreement so more
+  // negotiations actually get a back-and-forth instead of insta-walking
+  // when seller floor sits just above buyer ceiling.
+  pubBuyerCeilingFraction: 0.6,
   // Default keeps current behaviour (tests rely on this).
   pubBuyerTierMode: "real",
   pubAssumedTier: "fair",
