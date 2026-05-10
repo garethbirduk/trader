@@ -19,6 +19,7 @@ interface LoadState {
   readonly status: "loading" | "loaded" | "error";
   readonly dump?: RunDump;
   readonly error?: string;
+  readonly progress?: string;
 }
 
 type TabId =
@@ -66,21 +67,43 @@ export function App() {
   const selectionApi = useSelectionHistory(null);
 
   useEffect(() => {
-    fetch("/events.json")
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(
-            `events.json not found (HTTP ${res.status}). Run \`npm run sim -- --out webapp/public/events.json\` from the project root.`,
-          );
-        }
-        return (await res.json()) as RunDump;
-      })
-      .then((dump) => setState({ status: "loaded", dump }))
-      .catch((e) => setState({ status: "error", error: (e as Error).message }));
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get("mode") ?? "static";
+    if (mode === "live") {
+      const seed = params.get("seed") ?? "default";
+      const days = Number.parseInt(params.get("days") ?? "14", 10);
+      import("./live-mode.js")
+        .then(({ runLive }) =>
+          runLive({
+            seed,
+            days: Number.isFinite(days) && days > 0 ? days : 14,
+            onProgress: (progress) =>
+              setState({ status: "loading", progress }),
+          }),
+        )
+        .then((dump) => setState({ status: "loaded", dump }))
+        .catch((e) => setState({ status: "error", error: (e as Error).message }));
+    } else {
+      fetch("./events.json")
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error(
+              `events.json not found (HTTP ${res.status}). Run \`npm run sim -- --out webapp/public/events.json\` from the project root, or load this page with \`?mode=live\` to simulate in the browser.`,
+            );
+          }
+          return (await res.json()) as RunDump;
+        })
+        .then((dump) => setState({ status: "loaded", dump }))
+        .catch((e) => setState({ status: "error", error: (e as Error).message }));
+    }
   }, []);
 
   if (state.status === "loading") {
-    return <div className="empty-state">loading…</div>;
+    return (
+      <div className="empty-state">
+        {state.progress ? `loading… ${state.progress}` : "loading…"}
+      </div>
+    );
   }
   if (state.status === "error" || !state.dump) {
     return (

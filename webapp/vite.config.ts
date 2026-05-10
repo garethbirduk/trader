@@ -36,6 +36,9 @@ function mapWritePlugin(): Plugin {
 }
 
 export default defineConfig({
+  // Honour BASE_URL so the same build serves correctly from a subpath
+  // on GitHub Pages (e.g. /trader/) and from / in local dev.
+  base: process.env.BASE_URL ?? "/",
   plugins: [react(), mapWritePlugin()],
   server: {
     port: 5173,

@@ -31,4 +31,40 @@ src/skins/          Content packs (item kinds, actors, locations, prices).
 src/drivers/        ActorPolicy + NegotiationDriver implementations.
 src/headless/       CLI runner for self-running simulations.
 tests/              Invariant + scenario tests.
+webapp/             React viewer (static and live modes).
 ```
+
+## Hosting
+
+The webapp ships in two modes:
+
+- **Static mode** (default): the page loads a pre-baked `events.json`
+  produced by the headless sim. Cheap to host — the whole thing is a
+  static bundle. Default behavior at `/`.
+- **Live mode**: the engine runs in the browser via sql.js (SQLite
+  compiled to WebAssembly). Activated with `?mode=live` — supports
+  `?seed=foo&days=N`. The engine code is code-split so static-mode
+  visitors don't pay for it.
+
+The same DB interface (`src/engine/core/db.ts`) backs both: Node uses
+`db-better-sqlite3.ts` (native), browser uses `db-sqljs.ts` (WASM).
+Engine code on top is driver-agnostic; the entry point picks.
+
+### Local
+
+```sh
+npm install
+npm run sim -- --quiet --out webapp/public/events.json
+cd webapp && npm install && npm run dev
+```
+
+Open http://localhost:5173/ for static mode or
+http://localhost:5173/?mode=live&seed=test&days=5 for live mode.
+
+### GitHub Pages
+
+`.github/workflows/deploy.yml` runs the sim, builds the webapp with
+`BASE_URL=/trader/`, and deploys `webapp/dist/` to GitHub Pages on
+every push to `main`. To use it on a fork, enable Pages in the repo
+settings (source: GitHub Actions) and update `BASE_URL` to match your
+repo name.

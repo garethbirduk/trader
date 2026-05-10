@@ -1,0 +1,66 @@
+name: Deploy webapp to GitHub Pages
+
+# Builds the webapp on every push to main, runs the headless sim to
+# produce a default events.json (so the static viewer mode works
+# out-of-the-box), then deploys to GitHub Pages. Live mode (?mode=live)
+# also works on the deployed site — the engine ships in a code-split
+# chunk and runs in the browser via sql.js.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            webapp/package-lock.json
+
+      - name: Install root deps (engine + sim)
+        run: npm ci
+
+      - name: Install webapp deps
+        run: npm ci
+        working-directory: webapp
+
+      - name: Run sim to produce default events.json
+        run: npm run sim -- --quiet --out webapp/public/events.json
+
+      - name: Build webapp
+        run: npm run build
+        working-directory: webapp
+        env:
+          # Repo name is the GH Pages subpath. Update if you fork/rename.
+          BASE_URL: /trader/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: webapp/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
