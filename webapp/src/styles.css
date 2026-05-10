@@ -1746,9 +1746,6 @@ svg.graph-map:active { cursor: grabbing; }
   stroke-dasharray: 3 2;
   fill: #2a221a;
 }
-.editor-svg .editor-loc-offmap-label {
-  fill: #ffb84d;
-}
 .editor-svg .editor-waypoint {
   fill: #2a3140;
   stroke: #555;

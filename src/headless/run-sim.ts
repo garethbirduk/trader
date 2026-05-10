@@ -256,6 +256,29 @@ function main(): void {
       bidderProfiles: skin.bidderProfiles,
       economics: skin.economics,
     });
+    // High-street shop sales — same negotiation mechanism, but the
+    // buyer must be a shopkeeper, the seller must be a dealer, and
+    // shopkeepers pay a higher fraction of retail (75%) since they
+    // sell direct to customers rather than re-trading.
+    if (skin.shopLocationIds.length > 0 && skin.shopkeeperActorIds.length > 0) {
+      const shopEconomics = {
+        ...skin.economics,
+        pubBuyerCeilingFraction: 0.75,
+      };
+      const shopkeeperSet = new Set(skin.shopkeeperActorIds);
+      const dealerSet = new Set(tradingIds);
+      registerPubDealAutonomy(world, {
+        pubLocationIds: skin.shopLocationIds,
+        npcActorIds: [...tradingIds, ...skin.shopkeeperActorIds],
+        bidderProfiles: skin.bidderProfiles,
+        economics: shopEconomics,
+        requireSellerFrom: dealerSet,
+        requireBuyerFrom: shopkeeperSet,
+        // Shops are open 9-17, so haggling only makes sense in that window.
+        startHour: 9,
+        endHour: 17,
+      });
+    }
     registerMarketSale(world, {
       marketLocationId: skin.marketLocationId,
       sellerActorIds: new Set(skin.marketSellerActorIds),

@@ -363,6 +363,7 @@ export function Sidebar(props: Props) {
                 <ActorProfile
                   dump={dump}
                   day={day}
+                  hour={hour}
                   snapshot={snapshot}
                   actorId={selection.id}
                 />

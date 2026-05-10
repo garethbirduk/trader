@@ -48,6 +48,12 @@ export interface SkinSeedResult {
   readonly defaultReachableActorIds: readonly number[];
   /** Locations where pub-deal autonomy fires (e.g. the Nag's Head). */
   readonly pubLocationIds: readonly number[];
+  /** High-street shop locations — pub-deal mechanism reused with a
+   *  higher buyer-ceiling and a buyer constrained to shopkeepers. */
+  readonly shopLocationIds: readonly number[];
+  /** Actor ids of shopkeepers that own the high-street shops. The
+   *  shop-deal autonomy uses this set to force the buyer side. */
+  readonly shopkeeperActorIds: readonly number[];
   /** Where the daily auction is held; bidders must be physically present. */
   readonly auctionLocationId: number;
   /** First and last hour of the daily auction window. One lot per hour
@@ -166,7 +172,53 @@ const LOCATIONS: readonly LocationSpec[] = [
   { code: "parry-house", displayName: "Parry's", type: "home" },
   { code: "slater-flat", displayName: "Slater's", type: "home" },
   { code: "off-map", displayName: "Off-map", type: "abstract" },
+  // ─── high-street shops (sell-direct destinations for dealers) ──────
+  // Two of each type to foster choice and competition. Each runs 9-17;
+  // their shopkeeper lives off-map and is at the shop during these hours.
+  { code: "goldfingers", displayName: "Goldfingers", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "ratners-peckham", displayName: "Ratners of Peckham", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "patels", displayName: "Patel's Newsagent", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "corner-shop", displayName: "The Corner Shop", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "wooden-soldier", displayName: "Wooden Soldier", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "toyland", displayName: "Toyland", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "sparks-electrical", displayName: "Sparks Electrical", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "hi-tech-hut", displayName: "Hi-Tech Hut", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "comfy-corner", displayName: "Comfy Corner", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "throne-co", displayName: "Throne & Co", type: "business", openHours: { start: 9, end: 17 } },
 ];
+
+/**
+ * High-street shop codes paired with their resident shopkeeper code.
+ * Both are seeded together — one shopkeeper per shop, working 9-17,
+ * living off-map. The pub-deal autonomy uses the location list to
+ * decide where shop-sale attempts can fire, and the actor list to
+ * constrain who can be the *buyer* (dealer-sells-to-shopkeeper only).
+ */
+const HIGH_STREET_SHOPS: readonly { readonly shopCode: string; readonly keeperCode: string }[] = [
+  { shopCode: "goldfingers", keeperCode: "cyril-diamond" },
+  { shopCode: "ratners-peckham", keeperCode: "margaret-bracelet" },
+  { shopCode: "patels", keeperCode: "ranjit-patel" },
+  { shopCode: "corner-shop", keeperCode: "doreen-wicks" },
+  { shopCode: "wooden-soldier", keeperCode: "albert-pickering" },
+  { shopCode: "toyland", keeperCode: "linda-beasley" },
+  { shopCode: "sparks-electrical", keeperCode: "eric-sparks" },
+  { shopCode: "hi-tech-hut", keeperCode: "brian-yardley" },
+  { shopCode: "comfy-corner", keeperCode: "doris-whittle" },
+  { shopCode: "throne-co", keeperCode: "reg-throne" },
+];
+
+const SHOPKEEPER_DISPLAY_NAMES: Readonly<Record<string, string>> = {
+  "cyril-diamond": "Cyril Diamond",
+  "margaret-bracelet": "Margaret Bracelet",
+  "ranjit-patel": "Ranjit Patel",
+  "doreen-wicks": "Doreen Wicks",
+  "albert-pickering": "Albert Pickering",
+  "linda-beasley": "Linda Beasley",
+  "eric-sparks": "Eric Sparks",
+  "brian-yardley": "Brian Yardley",
+  "doris-whittle": "Doris Whittle",
+  "reg-throne": "Reg Throne",
+};
 
 /**
  * Daily auction window. The engine picks up to (END-START+1) lots
@@ -301,6 +353,72 @@ const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {
   "auction-house": {
     defaultAccuracy: 0.5,
     defaultFlawDetection: 0.5,
+  },
+  // ─── shopkeeper profiles ────────────────────────────────────────────
+  // Specialists are sharp inside their lane and noisy outside it. The
+  // wider buyer-ceiling fraction (75%, set per-call in run-sim.ts) plus
+  // accurate appraisals on their category means dealers can offload
+  // matched stock at near-RRP. General-store keepers are generalists
+  // with moderate accuracy across the board.
+  "cyril-diamond": {
+    defaultAccuracy: 0.3,
+    perCategory: { decor: 0.95, novelty: 0.85, clothing: 0.5 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["yuppies"],
+  },
+  "margaret-bracelet": {
+    defaultAccuracy: 0.3,
+    perCategory: { decor: 0.95, novelty: 0.85, clothing: 0.5 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["yuppies", "old-dears"],
+  },
+  "ranjit-patel": {
+    defaultAccuracy: 0.65,
+    defaultFlawDetection: 0.5,
+    customerTypes: ["market-punters", "families"],
+  },
+  "doreen-wicks": {
+    defaultAccuracy: 0.65,
+    defaultFlawDetection: 0.5,
+    customerTypes: ["market-punters", "old-dears"],
+  },
+  "albert-pickering": {
+    defaultAccuracy: 0.3,
+    perCategory: { toys: 0.95, novelty: 0.8 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["families"],
+  },
+  "linda-beasley": {
+    defaultAccuracy: 0.3,
+    perCategory: { toys: 0.95, novelty: 0.8 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["families"],
+  },
+  "eric-sparks": {
+    defaultAccuracy: 0.3,
+    perCategory: { electrical: 0.95, tools: 0.7 },
+    defaultFlawDetection: 0.8,
+    perFlawDetection: { dangerous: 0.9, faulty: 0.8 },
+    customerTypes: ["tradesmen", "businesses"],
+  },
+  "brian-yardley": {
+    defaultAccuracy: 0.3,
+    perCategory: { electrical: 0.95, tools: 0.7 },
+    defaultFlawDetection: 0.8,
+    perFlawDetection: { dangerous: 0.9, faulty: 0.8 },
+    customerTypes: ["yuppies", "tradesmen"],
+  },
+  "doris-whittle": {
+    defaultAccuracy: 0.3,
+    perCategory: { furniture: 0.95, decor: 0.7 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["families", "old-dears"],
+  },
+  "reg-throne": {
+    defaultAccuracy: 0.3,
+    perCategory: { furniture: 0.95, decor: 0.7 },
+    defaultFlawDetection: 0.7,
+    customerTypes: ["yuppies", "businesses"],
   },
 };
 
@@ -712,6 +830,22 @@ const ACTORS: readonly ActorSpec[] = [
     transportCapacity: "boot",
     awakeHours: { start: 14, end: 23 },
   },
+  // ─── high-street shopkeepers ─────────────────────────────────────────
+  // All keep the same 9-17 schedule at their respective shop and
+  // overnight off-map. They're buyers in shop-deal autonomy; their
+  // category specialisation lives in their bidder profile, not here.
+  ...HIGH_STREET_SHOPS.map(({ shopCode, keeperCode }): ActorSpec => ({
+    code: keeperCode,
+    displayName: SHOPKEEPER_DISPLAY_NAMES[keeperCode] ?? keeperCode,
+    cash: 2500,
+    ...makeRoutineFromSpans("off-map", [
+      { from: 9, to: 17, location: shopCode },
+    ]),
+    defaultLocation: shopCode,
+    homeLocation: "off-map",
+    transportCapacity: "none",
+    awakeHours: { start: 8, end: 18 },
+  })),
 ];
 
 // Which actor codes participate in pub-deal / pool-claim autonomy. The
@@ -776,6 +910,17 @@ const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
   slater: ["police"],
   "dirty-barry": ["fence", "villain"],
   "eugene-mccarthy": ["villain"],
+  // High-street shopkeepers — buyers in shop-deal autonomy.
+  "cyril-diamond": ["shopkeeper"],
+  "margaret-bracelet": ["shopkeeper"],
+  "ranjit-patel": ["shopkeeper"],
+  "doreen-wicks": ["shopkeeper"],
+  "albert-pickering": ["shopkeeper"],
+  "linda-beasley": ["shopkeeper"],
+  "eric-sparks": ["shopkeeper"],
+  "brian-yardley": ["shopkeeper"],
+  "doris-whittle": ["shopkeeper"],
+  "reg-throne": ["shopkeeper"],
 };
 
 export interface SkinSeedOptions {
@@ -952,6 +1097,18 @@ export function seedPlaceholderSkin(
   const nagsId = locByCode.get("nags");
   const pubLocationIds = nagsId !== undefined ? [nagsId] : [];
 
+  const shopLocationIds: number[] = [];
+  const shopkeeperActorIds: number[] = [];
+  for (const { shopCode, keeperCode } of HIGH_STREET_SHOPS) {
+    const shopId = locByCode.get(shopCode);
+    const keeperId = actorByCode.get(keeperCode);
+    if (shopId !== undefined && keeperId !== undefined) {
+      shopLocationIds.push(shopId);
+      shopkeeperActorIds.push(keeperId);
+      setLocationProprietor(db, shopId, keeperId);
+    }
+  }
+
   const mikeId = actorByCode.get("mike");
   if (nagsId !== undefined && mikeId !== undefined) {
     setLocationProprietor(db, nagsId, mikeId);
@@ -1023,6 +1180,8 @@ export function seedPlaceholderSkin(
     reachableByCategory,
     defaultReachableActorIds,
     pubLocationIds,
+    shopLocationIds,
+    shopkeeperActorIds,
     auctionLocationId,
     auctionStartHour: AUCTION_START_HOUR,
     auctionEndHour: AUCTION_END_HOUR,

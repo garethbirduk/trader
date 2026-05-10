@@ -8,16 +8,21 @@ import {
   useLayout,
   type MapLayout,
 } from "../map-layout.js";
+import {
+  MapBasemap,
+  NodeLabel,
+  WORLD_W,
+  WORLD_H,
+  NODE_R,
+  WAYPOINT_R,
+  clientToWorld,
+} from "./map-shared.js";
 
 interface Props {
   readonly dump: RunDump;
 }
 
-const WORLD_W = 1600;
-const WORLD_H = 1080;
 const SNAP_GRID = 10;
-const NODE_R = 9;
-const WAYPOINT_R = 5;
 
 type Tool = "move" | "addWp" | "edge" | "delete" | "deleteEdge" | "offMap";
 interface ViewState { x: number; y: number; w: number; h: number }
@@ -45,7 +50,6 @@ export function MapEditor({ dump }: Props) {
   const [edgeFirst, setEdgeFirst] = useState<string | null>(null);
   const [view, setView] = useState<ViewState>(DEFAULT_VIEW);
   const [bgVisible, setBgVisible] = useState(true);
-  const [bgOpacity, setBgOpacity] = useState(0.7);
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<
     | { kind: "node"; nodeId: string; ox: number; oy: number }
@@ -232,17 +236,6 @@ export function MapEditor({ dump }: Props) {
           />
           basemap
         </label>
-        <input
-          type="range"
-          min={0.1}
-          max={1}
-          step={0.05}
-          value={bgOpacity}
-          disabled={!bgVisible}
-          onChange={(e) => setBgOpacity(Number(e.target.value))}
-          title="basemap opacity"
-          style={{ width: 80 }}
-        />
         <span className="editor-toolbar-info muted">
           {Object.keys(draft.locations).length} loc · {Object.keys(draft.waypoints).length} wp · {draft.edges.length} edges
           {dirty ? " · unsaved" : ""}
@@ -308,20 +301,7 @@ export function MapEditor({ dump }: Props) {
                   : "grab",
         }}
       >
-        {/* Cartoon basemap — sits under everything in the editor too,
-            so node positions can be eyeballed against real roads. */}
-        {bgVisible ? (
-          <image
-            href="/map-bg.jpg"
-            x={0}
-            y={0}
-            width={WORLD_W}
-            height={WORLD_H}
-            opacity={bgOpacity}
-            preserveAspectRatio="none"
-            style={{ pointerEvents: "none" }}
-          />
-        ) : null}
+        <MapBasemap visible={bgVisible} />
         {/* Edges. In deleteEdge mode each visible line is paired
             with a transparent thicker hit-line so the user can click
             anywhere along the road to remove it. */}
@@ -412,13 +392,10 @@ export function MapEditor({ dump }: Props) {
                   r={NODE_R}
                   className={`editor-loc ${isEdgeFirst ? "editor-edge-first" : ""} ${isOff ? "editor-loc-offmap" : ""}`}
                 />
-                <text
-                  className={`node-label ${isOff ? "editor-loc-offmap-label" : ""}`}
-                  textAnchor="middle"
-                  y={-NODE_R - 6}
-                >
-                  {(isOff ? "⌧ " : "") + (labelByCode.get(code) ?? code)}
-                </text>
+                <NodeLabel
+                  text={(isOff ? "⌧ " : "") + (labelByCode.get(code) ?? code)}
+                />
+                {isOff ? <title>off-map (perimeter cluster)</title> : null}
               </g>
             );
           })}
@@ -517,26 +494,6 @@ function toggleOffMap(layout: MapLayout, code: string): MapLayout {
     next[code] = true;
   }
   return { ...layout, offMap: next };
-}
-
-/**
- * Convert a client-space (window) coordinate into the SVG's user
- * coordinate space (viewBox / world). Uses getScreenCTM so it correctly
- * accounts for `preserveAspectRatio="xMidYMid meet"` letterbox /
- * pillarbox padding when the canvas aspect doesn't match the viewBox.
- */
-function clientToWorld(
-  svg: SVGSVGElement,
-  clientX: number,
-  clientY: number,
-): { x: number; y: number } | null {
-  const ctm = svg.getScreenCTM();
-  if (ctm === null) return null;
-  const pt = svg.createSVGPoint();
-  pt.x = clientX;
-  pt.y = clientY;
-  const local = pt.matrixTransform(ctm.inverse());
-  return { x: local.x, y: local.y };
 }
 
 function deepClone<T>(x: T): T {

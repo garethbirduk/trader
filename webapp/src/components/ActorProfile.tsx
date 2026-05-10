@@ -1,15 +1,16 @@
 import { useMemo } from "react";
-import type { DaySnapshot, RunDump } from "../types.js";
+import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import { Avatar } from "./Avatar.js";
 
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
+  readonly hour: number;
   readonly snapshot: DaySnapshot | null;
   readonly actorId: number;
 }
 
-export function ActorProfile({ dump, day, snapshot, actorId }: Props) {
+export function ActorProfile({ dump, day, hour, snapshot, actorId }: Props) {
   const actor = dump.actors.find((a) => a.id === actorId);
   if (actor === undefined) return null;
   const isPlayer = actor.id === dump.playerActorId;
@@ -17,7 +18,31 @@ export function ActorProfile({ dump, day, snapshot, actorId }: Props) {
   const sa = snapshot?.actors.find((a) => a.id === actorId) ?? null;
   const cash = sa?.cash ?? actor.cash;
   const heat = sa?.heat ?? 0;
-  const locId = sa?.currentLocationId ?? actor.currentLocationId;
+  // Resolve the actor's current location by replaying actor.travelled
+  // events from the previous-day snapshot up to (and including) the
+  // current hour — same logic the map uses, so the two views agree.
+  // The dump's snapshot.currentLocationId is end-of-day state and gives
+  // the wrong answer for any intra-day hour.
+  const locId = useMemo<number | null>(() => {
+    const startSnap =
+      dump.snapshots?.find((s) => s.day === day - 1) ??
+      dump.snapshots?.find((s) => s.day === day) ?? null;
+    let loc: number | null;
+    if (startSnap !== null) {
+      const startActor = startSnap.actors.find((a) => a.id === actorId);
+      loc = startActor ? startActor.currentLocationId : actor.currentLocationId;
+    } else {
+      loc = actor.currentLocationId;
+    }
+    for (const e of dump.events as readonly RunEvent[]) {
+      if (e.at.day !== day) continue;
+      if (e.at.hour > hour) break;
+      if (e.type !== "actor.travelled") continue;
+      if ((e.actorId as number) !== actorId) continue;
+      loc = (e.toLocationId as number) ?? null;
+    }
+    return loc;
+  }, [dump, day, hour, actorId, actor.currentLocationId]);
 
   const locName = (id: number | null) =>
     id === null

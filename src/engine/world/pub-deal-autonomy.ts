@@ -73,6 +73,18 @@ export interface PubDealAutonomyOptions {
    * tier or assumes the listing's `pubAssumedTier`) all read from here.
    */
   readonly economics?: EconomicsConfig;
+  /**
+   * If set, the seller side must come from this set of actor ids.
+   * Used by the shop-deal wiring to force dealer-sells-to-shopkeeper
+   * direction (seller = dealer). When unset, any present actor in
+   * `npcActorIds` may be the seller (the original pub behaviour).
+   */
+  readonly requireSellerFrom?: ReadonlySet<number>;
+  /**
+   * If set, the buyer side must come from this set of actor ids.
+   * Used by the shop-deal wiring (buyer = shopkeeper).
+   */
+  readonly requireBuyerFrom?: ReadonlySet<number>;
 }
 
 
@@ -143,6 +155,8 @@ export function registerPubDealAutonomy(
           forwardSellDeadlineRange,
           trustGatingThreshold,
           economics,
+          requireSellerFrom: opts.requireSellerFrom ?? null,
+          requireBuyerFrom: opts.requireBuyerFrom ?? null,
         });
       }
     }
@@ -163,13 +177,23 @@ function runOneAttempt(args: {
   forwardSellDeadlineRange: readonly [number, number];
   trustGatingThreshold: number;
   economics: EconomicsConfig;
+  requireSellerFrom: ReadonlySet<number> | null;
+  requireBuyerFrom: ReadonlySet<number> | null;
 }): void {
   const { world, clock, locId, present, profiles, economics } = args;
 
   if (present.length < 2) return;
-  const sellerId = world.rng.pick(present);
-  const buyerId = world.rng.pick(present);
-  if (sellerId === buyerId) return;
+  const sellerCandidates = args.requireSellerFrom
+    ? present.filter((id) => args.requireSellerFrom!.has(id))
+    : present;
+  if (sellerCandidates.length === 0) return;
+  const sellerId = world.rng.pick(sellerCandidates);
+  const buyerCandidates = (args.requireBuyerFrom
+    ? present.filter((id) => args.requireBuyerFrom!.has(id))
+    : present
+  ).filter((id) => id !== sellerId);
+  if (buyerCandidates.length === 0) return;
+  const buyerId = world.rng.pick(buyerCandidates);
 
   // Trust gate — buyer won't even sit down with a chronic defaulter.
   const trust = getTrust(world.db, buyerId, sellerId);

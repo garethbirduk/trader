@@ -5,6 +5,14 @@ import { getActorColor, getInitials } from "../avatar.js";
 import { combinedPositions, useLayout, type MapLayout } from "../map-layout.js";
 import { getPlaybackSpeed, setMapBusy } from "../anim-state.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
+import {
+  MapBasemap,
+  NodeLabel,
+  NodePopBadge,
+  WORLD_W,
+  WORLD_H,
+  NODE_R,
+} from "./map-shared.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -14,9 +22,6 @@ interface Props {
   readonly selection: Selection | null;
   readonly onSelect: (s: Selection | null) => void;
 }
-
-const WORLD_W = 1600;
-const WORLD_H = 1080;
 
 // Layout (positions + edges) lives in map-layout.ts so the editor and
 // the runtime view share one source of truth. We mirror the latest
@@ -84,12 +89,7 @@ const TYPE_STROKE: Record<string, string> = {
 };
 
 const HEX_PLAYER = "#ffb84d";
-const NODE_R = 9;
 const AVATAR_R = 13;
-
-function hashLabel(name: string): string {
-  return name;
-}
 
 interface Adjacency {
   readonly graph: Map<string, ReadonlyArray<{ to: string; cost: number }>>;
@@ -602,18 +602,7 @@ export function MapGraph(props: Props) {
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* Cartoon basemap (CC0 — Geographia Pictorial plan of
-            London, Wikimedia Commons). Sits under everything; the
-            graph + avatars float on top. */}
-        <image
-          href="/map-bg.jpg"
-          x={0}
-          y={0}
-          width={WORLD_W}
-          height={WORLD_H}
-          preserveAspectRatio="none"
-          style={{ pointerEvents: "none" }}
-        />
+        <MapBasemap />
         {/* Base edges — always plain grey. */}
         <g className="edges">
           {EDGES.map(([a, b]) => {
@@ -722,54 +711,8 @@ export function MapGraph(props: Props) {
                   stroke={stroke}
                   strokeWidth={strokeWidth}
                 />
-                {(() => {
-                  const labelStr = hashLabel(label);
-                  // Approximate text width — 12px monospace ≈ 7.2 px/char.
-                  const w = labelStr.length * 7.2 + 8;
-                  return (
-                    <>
-                      <rect
-                        className="node-label-bg"
-                        x={-w / 2}
-                        y={-NODE_R - 17}
-                        width={w}
-                        height={14}
-                        rx={7}
-                      />
-                      <text
-                        className="node-label"
-                        textAnchor="middle"
-                        y={-NODE_R - 7}
-                      >
-                        {labelStr}
-                      </text>
-                    </>
-                  );
-                })()}
-                {pop > 0 ? (() => {
-                  const popStr = String(pop);
-                  // 11px monospace ≈ 6.6 px/char.
-                  const w = popStr.length * 6.6 + 8;
-                  return (
-                    <>
-                      <rect
-                        className="node-pop-bg"
-                        x={-w / 2}
-                        y={-NODE_R - 30}
-                        width={w}
-                        height={13}
-                        rx={6.5}
-                      />
-                      <text
-                        className="node-pop"
-                        textAnchor="middle"
-                        y={-NODE_R - 21}
-                      >
-                        {popStr}
-                      </text>
-                    </>
-                  );
-                })() : null}
+                <NodeLabel text={label} />
+                {pop > 0 ? <NodePopBadge text={String(pop)} /> : null}
               </g>
             );
           })}
