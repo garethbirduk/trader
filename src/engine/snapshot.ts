@@ -109,6 +109,15 @@ export interface DaySnapshot {
     source: string;
     createdDay: number;
   }[];
+  /**
+   * Snapshot of every non-zero trust pair. Powers the Relations tab.
+   */
+  readonly trustPairs: readonly {
+    holderActorId: number;
+    targetActorId: number;
+    score: number;
+    lastEventDay: number | null;
+  }[];
 }
 
 export interface RunTally {
@@ -462,7 +471,34 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
     createdDay: r.created_day,
   }));
 
-  return { day, actors, stockLots, deals, pools, auctionLots, pendingPayouts };
+  const trustRows = db
+    .prepare(
+      `SELECT holder_actor_id, target_actor_id, score, last_event_day
+       FROM actor_trust ORDER BY holder_actor_id, target_actor_id`,
+    )
+    .all() as ReadonlyArray<{
+      holder_actor_id: number;
+      target_actor_id: number;
+      score: number;
+      last_event_day: number | null;
+    }>;
+  const trustPairs = trustRows.map((r) => ({
+    holderActorId: r.holder_actor_id,
+    targetActorId: r.target_actor_id,
+    score: r.score,
+    lastEventDay: r.last_event_day,
+  }));
+
+  return {
+    day,
+    actors,
+    stockLots,
+    deals,
+    pools,
+    auctionLots,
+    pendingPayouts,
+    trustPairs,
+  };
 }
 
 export interface BuildRunDumpInput {

@@ -10,6 +10,7 @@ import { ActorProfile } from "./ActorProfile.js";
 import { ActorDiary } from "./ActorDiary.js";
 import { ActorKnows } from "./ActorKnows.js";
 import { ActorInventory } from "./ActorInventory.js";
+import { ActorRelations } from "./ActorRelations.js";
 import { LocationProfile } from "./LocationProfile.js";
 import { LocationDiary } from "./LocationDiary.js";
 import { ItemProfile } from "./ItemProfile.js";
@@ -121,7 +122,12 @@ export function Sidebar(props: Props) {
     if (selection === null) return;
     const isActor = selection.kind === "actor";
     const isLocation = selection.kind === "location";
-    if ((lowerTab === "knows" || lowerTab === "inventory") && !isActor) {
+    if (
+      (lowerTab === "knows" ||
+        lowerTab === "inventory" ||
+        lowerTab === "relations") &&
+      !isActor
+    ) {
       setLowerTab("profile");
     }
     if (lowerTab === "diary" && !isActor && !isLocation) {
@@ -346,6 +352,18 @@ export function Sidebar(props: Props) {
           >
             Inventory
           </button>
+          <button
+            className={`side-tab ${lowerTab === "relations" ? "side-tab-active" : ""}`}
+            onClick={() => setLowerTab("relations")}
+            disabled={selection === null || selection.kind !== "actor"}
+            title={
+              selection?.kind === "location"
+                ? "Locations don't have relationships"
+                : "Per-counterparty trust scores + change history"
+            }
+          >
+            Relations
+          </button>
           {selection !== null ? (
             <button
               className="side-close"
@@ -396,6 +414,16 @@ export function Sidebar(props: Props) {
                 <ActorInventory
                   dump={dump}
                   day={day}
+                  snapshot={snapshot}
+                  actorId={selection.id}
+                  onSelect={setSelection}
+                />
+              )}
+              {selection.kind === "actor" && lowerTab === "relations" && (
+                <ActorRelations
+                  dump={dump}
+                  day={day}
+                  hour={hour}
                   snapshot={snapshot}
                   actorId={selection.id}
                   onSelect={setSelection}

@@ -43,7 +43,7 @@ const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
 ];
 
 export type SidebarTopTab = "actors" | "locations";
-export type SidebarLowerTab = "profile" | "diary" | "knows" | "inventory";
+export type SidebarLowerTab = "profile" | "diary" | "knows" | "inventory" | "relations";
 
 export type SelectionKind =
   | "actor"

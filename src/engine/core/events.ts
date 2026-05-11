@@ -195,6 +195,18 @@ export type WorldEvent =
       readonly quantity: number;
       readonly feePaid: number;
       readonly reason: string;
+    }
+  | {
+      readonly type: "trust.adjusted";
+      readonly at: Clock;
+      readonly holderActorId: number;
+      readonly targetActorId: number;
+      readonly delta: number;
+      readonly newScore: number;
+      /** What event triggered the change. 'settled' = a clean deal,
+       *  'defaulted' = the wronged buyer side. */
+      readonly reason: "settled" | "defaulted";
+      readonly dealId: number;
     };
 
 export type EventHandler = (event: WorldEvent) => void;
@@ -307,6 +319,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "stock.written-off":
         console.log(`[${stamp}] stock.written-off owner=${e.ownerActorId} lot=${e.stockLotId} ${e.quantity}×${e.qualityTier} fee=£${e.feePaid} (${e.reason})`);
+        break;
+      case "trust.adjusted":
+        console.log(`[${stamp}] trust.adjusted holder=${e.holderActorId} target=${e.targetActorId} ${e.delta >= 0 ? "+" : ""}${e.delta} → ${e.newScore} (${e.reason} deal=${e.dealId})`);
         break;
       case "authority.raid":
         console.log(`[${stamp}] 🚨 authority.raid actor=${e.actorId} seized=${e.unitsSeized} units fine=£${e.fine} heat-was=${e.heatBefore}`);

@@ -21422,6 +21422,32 @@
       "fee": 5
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 4,
+        "hour": 0
+      },
+      "holderActorId": 30,
+      "targetActorId": 2,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 2
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 4,
+        "hour": 0
+      },
+      "holderActorId": 2,
+      "targetActorId": 30,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 2
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 4,
@@ -23228,6 +23254,32 @@
       },
       "actorId": 22,
       "toLocationId": 4
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 4,
+        "hour": 10
+      },
+      "holderActorId": 29,
+      "targetActorId": 4,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 1
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 4,
+        "hour": 10
+      },
+      "holderActorId": 4,
+      "targetActorId": 29,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 1
     },
     {
       "type": "deal.settled",
@@ -38039,6 +38091,32 @@
       "toLocationId": 3
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 6,
+        "hour": 6
+      },
+      "holderActorId": 4,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 3
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 6,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 4,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 3
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 6,
@@ -38061,6 +38139,32 @@
       "quantity": 2,
       "unitPrice": 5,
       "throughLeadId": 609
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 6,
+        "hour": 6
+      },
+      "holderActorId": 4,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 4
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 6,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 4,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 4
     },
     {
       "type": "deal.settled",
@@ -49341,6 +49445,32 @@
       },
       "actorId": 5,
       "toLocationId": 7
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 8,
+        "hour": 7
+      },
+      "holderActorId": 2,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 5
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 8,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 2,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 5
     },
     {
       "type": "deal.settled",
@@ -66336,6 +66466,19 @@
       "throughLeadId": 609
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 6
+      },
+      "holderActorId": 36,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": -10,
+      "reason": "defaulted",
+      "dealId": 9
+    },
+    {
       "type": "rep.spawned",
       "at": {
         "day": 10,
@@ -66358,6 +66501,32 @@
       "buyerActorId": 36,
       "sellerActorId": 3,
       "reason": "seller short on deal 9 line 9: have 49, need 110"
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 6
+      },
+      "holderActorId": 4,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 6,
+      "reason": "settled",
+      "dealId": 13
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 4,
+      "delta": 2,
+      "newScore": 6,
+      "reason": "settled",
+      "dealId": 13
     },
     {
       "type": "deal.settled",
@@ -66526,6 +66695,32 @@
       "toLocationId": 7
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 36,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -8,
+      "reason": "settled",
+      "dealId": 6
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 36,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 6
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 10,
@@ -66535,6 +66730,19 @@
       "buyerActorId": 36,
       "sellerActorId": 3,
       "totalPrice": 21
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 36,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": -18,
+      "reason": "defaulted",
+      "dealId": 7
     },
     {
       "type": "deal.defaulted",
@@ -66548,6 +66756,32 @@
       "reason": "seller short on deal 7 line 7: have 0, need 2"
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 10
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 10
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 10,
@@ -66559,6 +66793,32 @@
       "totalPrice": 18
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 11
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 11
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 10,
@@ -66568,6 +66828,19 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "totalPrice": 8
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": -6,
+      "reason": "defaulted",
+      "dealId": 12
     },
     {
       "type": "rep.spawned",
@@ -66592,6 +66865,32 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "reason": "seller short on deal 12 line 12: have 0, need 3"
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 4,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 8,
+      "reason": "settled",
+      "dealId": 14
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 10,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 4,
+      "delta": 2,
+      "newScore": 8,
+      "reason": "settled",
+      "dealId": 14
     },
     {
       "type": "deal.settled",
@@ -76768,6 +77067,32 @@
       "toLocationId": 4
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 6
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -4,
+      "reason": "settled",
+      "dealId": 21
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 6,
+      "reason": "settled",
+      "dealId": 21
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 11,
@@ -76945,6 +77270,19 @@
       "toLocationId": 7
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 36,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": -28,
+      "reason": "defaulted",
+      "dealId": 8
+    },
+    {
       "type": "deal.defaulted",
       "at": {
         "day": 11,
@@ -76954,6 +77292,32 @@
       "buyerActorId": 36,
       "sellerActorId": 3,
       "reason": "seller short on deal 8 line 8: have 0, need 5"
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -2,
+      "reason": "settled",
+      "dealId": 15
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 8,
+      "reason": "settled",
+      "dealId": 15
     },
     {
       "type": "deal.settled",
@@ -76967,6 +77331,32 @@
       "totalPrice": 18
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 0,
+      "reason": "settled",
+      "dealId": 16
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 10,
+      "reason": "settled",
+      "dealId": 16
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 11,
@@ -76976,6 +77366,19 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "totalPrice": 2
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": -10,
+      "reason": "defaulted",
+      "dealId": 17
     },
     {
       "type": "deal.defaulted",
@@ -76989,6 +77392,32 @@
       "reason": "seller short on deal 17 line 17: have 0, need 3"
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -8,
+      "reason": "settled",
+      "dealId": 18
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 12,
+      "reason": "settled",
+      "dealId": 18
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 11,
@@ -77000,6 +77429,32 @@
       "totalPrice": 4
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -6,
+      "reason": "settled",
+      "dealId": 20
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 14,
+      "reason": "settled",
+      "dealId": 20
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 11,
@@ -77009,6 +77464,32 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "totalPrice": 2
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -4,
+      "reason": "settled",
+      "dealId": 22
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 16,
+      "reason": "settled",
+      "dealId": 22
     },
     {
       "type": "deal.settled",
@@ -79181,6 +79662,32 @@
       "toLocationId": 4
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 10
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 23
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 10
+      },
+      "holderActorId": 2,
+      "targetActorId": 29,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 23
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 11,
@@ -79190,6 +79697,32 @@
       "buyerActorId": 29,
       "sellerActorId": 2,
       "totalPrice": 8
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 10
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 24
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 11,
+        "hour": 10
+      },
+      "holderActorId": 2,
+      "targetActorId": 29,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 24
     },
     {
       "type": "deal.settled",
@@ -86141,6 +86674,32 @@
       "fee": 5
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 0
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": 2,
+      "newScore": 6,
+      "reason": "settled",
+      "dealId": 30
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 0
+      },
+      "holderActorId": 2,
+      "targetActorId": 29,
+      "delta": 2,
+      "newScore": 6,
+      "reason": "settled",
+      "dealId": 30
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 12,
@@ -86150,6 +86709,19 @@
       "buyerActorId": 29,
       "sellerActorId": 2,
       "totalPrice": 32
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 0
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": -10,
+      "newScore": -4,
+      "reason": "defaulted",
+      "dealId": 36
     },
     {
       "type": "rep.spawned",
@@ -86176,6 +86748,19 @@
       "reason": "seller short on deal 36 line 36: have 0, need 4"
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 0
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": -10,
+      "newScore": -14,
+      "reason": "defaulted",
+      "dealId": 37
+    },
+    {
       "type": "deal.defaulted",
       "at": {
         "day": 12,
@@ -86185,6 +86770,19 @@
       "buyerActorId": 29,
       "sellerActorId": 2,
       "reason": "seller short on deal 37 line 37: have 0, need 4"
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 0
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": -10,
+      "newScore": -24,
+      "reason": "defaulted",
+      "dealId": 40
     },
     {
       "type": "deal.defaulted",
@@ -86534,6 +87132,32 @@
       "toLocationId": 7
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": -2,
+      "reason": "settled",
+      "dealId": 26
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 18,
+      "reason": "settled",
+      "dealId": 26
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 12,
@@ -86543,6 +87167,32 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "totalPrice": 10
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 0,
+      "reason": "settled",
+      "dealId": 27
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 20,
+      "reason": "settled",
+      "dealId": 27
     },
     {
       "type": "deal.settled",
@@ -86556,6 +87206,32 @@
       "totalPrice": 8
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 5,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 28
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 5,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 28
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 12,
@@ -86565,6 +87241,19 @@
       "buyerActorId": 5,
       "sellerActorId": 3,
       "totalPrice": 10
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 12,
+        "hour": 7
+      },
+      "holderActorId": 4,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": -2,
+      "reason": "defaulted",
+      "dealId": 29
     },
     {
       "type": "rep.spawned",
@@ -95592,6 +96281,32 @@
       "toLocationId": 37
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 6
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 33
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 22,
+      "reason": "settled",
+      "dealId": 33
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 13,
@@ -95616,6 +96331,32 @@
       "throughLeadId": 1206
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 6
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 35
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 24,
+      "reason": "settled",
+      "dealId": 35
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 13,
@@ -95638,6 +96379,32 @@
       "quantity": 2,
       "unitPrice": 1,
       "throughLeadId": 1206
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 6
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 6,
+      "reason": "settled",
+      "dealId": 41
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 6
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 26,
+      "reason": "settled",
+      "dealId": 41
     },
     {
       "type": "deal.settled",
@@ -95708,6 +96475,32 @@
       "score": 0.39
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 8,
+      "reason": "settled",
+      "dealId": 31
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 28,
+      "reason": "settled",
+      "dealId": 31
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 13,
@@ -95717,6 +96510,32 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "totalPrice": 8
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 10,
+      "reason": "settled",
+      "dealId": 32
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 30,
+      "reason": "settled",
+      "dealId": 32
     },
     {
       "type": "deal.settled",
@@ -95730,6 +96549,32 @@
       "totalPrice": 8
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 12,
+      "reason": "settled",
+      "dealId": 34
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 32,
+      "reason": "settled",
+      "dealId": 34
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 13,
@@ -95739,6 +96584,32 @@
       "buyerActorId": 35,
       "sellerActorId": 3,
       "totalPrice": 4
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 14,
+      "reason": "settled",
+      "dealId": 38
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 35,
+      "delta": 2,
+      "newScore": 34,
+      "reason": "settled",
+      "dealId": 38
     },
     {
       "type": "deal.settled",
@@ -96506,6 +97377,19 @@
       },
       "actorId": 22,
       "toLocationId": 4
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 13,
+        "hour": 10
+      },
+      "holderActorId": 29,
+      "targetActorId": 2,
+      "delta": -10,
+      "newScore": -34,
+      "reason": "defaulted",
+      "dealId": 25
     },
     {
       "type": "deal.defaulted",
@@ -102025,6 +102909,32 @@
       "auctionLotId": 42
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 14,
+        "hour": 0
+      },
+      "holderActorId": 4,
+      "targetActorId": 5,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 42
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 14,
+        "hour": 0
+      },
+      "holderActorId": 5,
+      "targetActorId": 4,
+      "delta": 2,
+      "newScore": 2,
+      "reason": "settled",
+      "dealId": 42
+    },
+    {
       "type": "deal.settled",
       "at": {
         "day": 14,
@@ -102268,6 +103178,19 @@
       "toLocationId": 3
     },
     {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 14,
+        "hour": 7
+      },
+      "holderActorId": 35,
+      "targetActorId": 3,
+      "delta": -10,
+      "newScore": 4,
+      "reason": "defaulted",
+      "dealId": 19
+    },
+    {
       "type": "deal.defaulted",
       "at": {
         "day": 14,
@@ -102290,6 +103213,32 @@
       "quantity": 3,
       "unitPrice": 1,
       "throughLeadId": 1206
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 14,
+        "hour": 7
+      },
+      "holderActorId": 2,
+      "targetActorId": 3,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 43
+    },
+    {
+      "type": "trust.adjusted",
+      "at": {
+        "day": 14,
+        "hour": 7
+      },
+      "holderActorId": 3,
+      "targetActorId": 2,
+      "delta": 2,
+      "newScore": 4,
+      "reason": "settled",
+      "dealId": 43
     },
     {
       "type": "deal.settled",
@@ -117124,7 +118073,8 @@
       "deals": [],
       "pools": [],
       "auctionLots": [],
-      "pendingPayouts": []
+      "pendingPayouts": [],
+      "trustPairs": []
     },
     {
       "day": 1,
@@ -117769,7 +118719,8 @@
           "provenance": "Sevenoaks auction overflow"
         }
       ],
-      "pendingPayouts": []
+      "pendingPayouts": [],
+      "trustPairs": []
     },
     {
       "day": 2,
@@ -118638,7 +119589,8 @@
           "provenance": "Bromley bankruptcy stock"
         }
       ],
-      "pendingPayouts": []
+      "pendingPayouts": [],
+      "trustPairs": []
     },
     {
       "day": 3,
@@ -119763,7 +120715,8 @@
           "source": "off-map-resale",
           "createdDay": 2
         }
-      ]
+      ],
+      "trustPairs": []
     },
     {
       "day": 4,
@@ -121066,6 +122019,32 @@
           "availableDay": 5,
           "source": "off-map-resale",
           "createdDay": 3
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
         }
       ]
     },
@@ -122572,6 +123551,32 @@
           "availableDay": 6,
           "source": "off-map-resale",
           "createdDay": 4
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
         }
       ]
     },
@@ -124211,6 +125216,44 @@
           "availableDay": 7,
           "source": "off-map-resale",
           "createdDay": 5
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
         }
       ]
     },
@@ -125948,7 +126991,45 @@
           "provenance": null
         }
       ],
-      "pendingPayouts": []
+      "pendingPayouts": [],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        }
+      ]
     },
     {
       "day": 8,
@@ -128126,7 +129207,57 @@
           "provenance": "Croydon warehouse closure"
         }
       ],
-      "pendingPayouts": []
+      "pendingPayouts": [],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        }
+      ]
     },
     {
       "day": 9,
@@ -130711,6 +131842,56 @@
           "availableDay": 10,
           "source": "off-map-resale",
           "createdDay": 8
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": 4,
+          "lastEventDay": 6
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
         }
       ]
     },
@@ -133706,6 +134887,80 @@
           "availableDay": 11,
           "source": "off-map-resale",
           "createdDay": 9
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 35,
+          "score": 4,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 36,
+          "score": 2,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 35,
+          "targetActorId": 3,
+          "score": -6,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 36,
+          "targetActorId": 3,
+          "score": -18,
+          "lastEventDay": 10
         }
       ]
     },
@@ -137283,6 +138538,92 @@
           "availableDay": 12,
           "source": "off-map-resale",
           "createdDay": 10
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 29,
+          "score": 4,
+          "lastEventDay": 11
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 35,
+          "score": 16,
+          "lastEventDay": 11
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 36,
+          "score": 2,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 2,
+          "score": 4,
+          "lastEventDay": 11
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 35,
+          "targetActorId": 3,
+          "score": -4,
+          "lastEventDay": 11
+        },
+        {
+          "holderActorId": 36,
+          "targetActorId": 3,
+          "score": -28,
+          "lastEventDay": 11
         }
       ]
     },
@@ -141129,6 +142470,104 @@
           "availableDay": 13,
           "source": "off-map-resale",
           "createdDay": 11
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 29,
+          "score": 6,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 5,
+          "score": 2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 35,
+          "score": 20,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 36,
+          "score": 2,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": -2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 5,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 2,
+          "score": -24,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 35,
+          "targetActorId": 3,
+          "score": 0,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 36,
+          "targetActorId": 3,
+          "score": -28,
+          "lastEventDay": 11
         }
       ]
     },
@@ -145086,6 +146525,104 @@
           "availableDay": 14,
           "source": "off-map-resale",
           "createdDay": 12
+        }
+      ],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 29,
+          "score": 6,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 8
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 5,
+          "score": 2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 35,
+          "score": 34,
+          "lastEventDay": 13
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 36,
+          "score": 2,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": -2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 5,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 2,
+          "score": -34,
+          "lastEventDay": 13
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 35,
+          "targetActorId": 3,
+          "score": 14,
+          "lastEventDay": 13
+        },
+        {
+          "holderActorId": 36,
+          "targetActorId": 3,
+          "score": -28,
+          "lastEventDay": 11
         }
       ]
     },
@@ -149073,7 +150610,117 @@
           "provenance": null
         }
       ],
-      "pendingPayouts": []
+      "pendingPayouts": [],
+      "trustPairs": [
+        {
+          "holderActorId": 2,
+          "targetActorId": 3,
+          "score": 4,
+          "lastEventDay": 14
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 29,
+          "score": 6,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 2,
+          "targetActorId": 30,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 2,
+          "score": 4,
+          "lastEventDay": 14
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 4,
+          "score": 8,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 5,
+          "score": 2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 35,
+          "score": 34,
+          "lastEventDay": 13
+        },
+        {
+          "holderActorId": 3,
+          "targetActorId": 36,
+          "score": 2,
+          "lastEventDay": 10
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 3,
+          "score": -2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 5,
+          "score": 2,
+          "lastEventDay": 14
+        },
+        {
+          "holderActorId": 4,
+          "targetActorId": 29,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 5,
+          "targetActorId": 3,
+          "score": 2,
+          "lastEventDay": 12
+        },
+        {
+          "holderActorId": 5,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 14
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 2,
+          "score": -34,
+          "lastEventDay": 13
+        },
+        {
+          "holderActorId": 29,
+          "targetActorId": 4,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 30,
+          "targetActorId": 2,
+          "score": 2,
+          "lastEventDay": 4
+        },
+        {
+          "holderActorId": 35,
+          "targetActorId": 3,
+          "score": 4,
+          "lastEventDay": 14
+        },
+        {
+          "holderActorId": 36,
+          "targetActorId": 3,
+          "score": -28,
+          "lastEventDay": 11
+        }
+      ]
     }
   ],
   "playerActorId": 1,

@@ -206,6 +206,13 @@ export interface SnapshotPendingPayout {
   readonly createdDay: number;
 }
 
+export interface SnapshotTrustPair {
+  readonly holderActorId: number;
+  readonly targetActorId: number;
+  readonly score: number;
+  readonly lastEventDay: number | null;
+}
+
 export interface DaySnapshot {
   readonly day: number;
   readonly actors: readonly SnapshotActor[];
@@ -215,6 +222,9 @@ export interface DaySnapshot {
   readonly auctionLots: readonly SnapshotAuctionLot[];
   /** Stage 7 — cash-in-transit (lagged off-map resale payouts). */
   readonly pendingPayouts?: readonly SnapshotPendingPayout[];
+  /** Trust scores — every pair where score != 0. Powers the
+   *  Relations tab. Optional for back-compat with older dumps. */
+  readonly trustPairs?: readonly SnapshotTrustPair[];
 }
 
 export interface RunDump {

@@ -26,12 +26,33 @@ export function registerTrustReactions(
 ): Unsubscribe {
   const cfg: TrustReactionConfig = { ...DEFAULTS, ...config };
 
+  const apply = (
+    holderId: number,
+    targetId: number,
+    delta: number,
+    reason: "settled" | "defaulted",
+    dealId: number,
+    at: import("../core/clock.js").Clock,
+  ): void => {
+    const updated = adjustTrust(world.db, holderId, targetId, delta, at.day);
+    world.events.emit({
+      type: "trust.adjusted",
+      at,
+      holderActorId: holderId,
+      targetActorId: targetId,
+      delta,
+      newScore: updated.score,
+      reason,
+      dealId,
+    });
+  };
+
   return world.events.subscribe((e) => {
     if (e.type === "deal.settled") {
-      adjustTrust(world.db, e.buyerActorId, e.sellerActorId, cfg.settleDelta, e.at.day);
-      adjustTrust(world.db, e.sellerActorId, e.buyerActorId, cfg.settleDelta, e.at.day);
+      apply(e.buyerActorId, e.sellerActorId, cfg.settleDelta, "settled", e.dealId, e.at);
+      apply(e.sellerActorId, e.buyerActorId, cfg.settleDelta, "settled", e.dealId, e.at);
     } else if (e.type === "deal.defaulted") {
-      adjustTrust(world.db, e.buyerActorId, e.sellerActorId, cfg.defaultDelta, e.at.day);
+      apply(e.buyerActorId, e.sellerActorId, cfg.defaultDelta, "defaulted", e.dealId, e.at);
     }
   });
 }
