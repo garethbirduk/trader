@@ -1204,6 +1204,16 @@ button.actor-row.actor-row-selected {
 .avatar-clickable:hover svg rect { stroke: #fff; }
 .avatar-selected svg circle,
 .avatar-selected svg rect { stroke: #fff; stroke-width: 2.5 !important; }
+/* Closed venues read as dim — colour stays the same hue so you can
+ * still tell a pub from a shop, but it's clearly inactive. */
+.avatar-closed { opacity: 0.45; }
+.avatar-closed.avatar-clickable:hover { opacity: 0.7; }
+
+/* Map location node dimming when the venue is closed at the current
+ * hour. Applied to the whole group so both the rect and the initials
+ * fade together. */
+.loc-node-closed { opacity: 0.45; }
+.loc-node-closed:hover { opacity: 0.7; }
 .map-avatar { cursor: pointer; }
 .map-avatar:hover circle { stroke: #fff; }
 

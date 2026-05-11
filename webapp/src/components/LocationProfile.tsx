@@ -3,6 +3,8 @@ import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
 import { LocationAvatar } from "./LocationAvatar.js";
+import { useCurrentTime } from "../lib/current-time.js";
+import { isLocationOpenAt } from "../lib/location-open.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -13,8 +15,10 @@ interface Props {
 }
 
 export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: Props) {
+  const { hour } = useCurrentTime();
   const loc = dump.locations.find((l) => l.id === locationId);
   if (loc === undefined) return null;
+  const isOpen = isLocationOpenAt(loc.openHours, hour);
 
   const hereIds = useMemo<readonly number[]>(() => {
     if (snapshot === null) return [];
@@ -50,10 +54,16 @@ export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: P
           code={loc.code}
           type={loc.type}
           size={28}
+          isOpen={isOpen}
         />
         <div className="profile-title">
           <div className="profile-name">{loc.displayName}</div>
-          <div className="profile-code muted">{loc.code}</div>
+          <div className="profile-code muted">
+            {loc.code}
+            {loc.openHours
+              ? ` · ${isOpen ? "open" : "closed"}`
+              : ""}
+          </div>
         </div>
       </header>
       <dl className="profile-stats">

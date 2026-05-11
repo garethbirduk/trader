@@ -8,6 +8,10 @@ interface Props {
   readonly selected?: boolean;
   readonly onClick?: () => void;
   readonly title?: string;
+  /** Open right now? `false` dims the avatar (closed shop / pub etc.).
+   *  Default `true` — i.e. always open if the caller doesn't know
+   *  or doesn't care. */
+  readonly isOpen?: boolean;
 }
 
 /**
@@ -15,7 +19,8 @@ interface Props {
  * circular actor `<Avatar />`. Square is the visual cue for "this is a
  * venue, not a person." Fill colour comes from the location's `type`
  * (pub / home / business / auction / civic / street) so a glance hints
- * at the kind of place.
+ * at the kind of place. When `isOpen` is `false`, the avatar dims so
+ * closed venues read as unavailable at the current hour.
  */
 export function LocationAvatar({
   displayName,
@@ -25,14 +30,16 @@ export function LocationAvatar({
   selected,
   onClick,
   title,
+  isOpen,
 }: Props) {
   const colour = getLocationColor({ code, type });
   const initials = getInitials(displayName);
   const fontSize = Math.round(size * 0.42);
   const rx = Math.max(2, Math.round(size * 0.22));
+  const closed = isOpen === false;
   return (
     <span
-      className={`avatar avatar-square ${selected ? "avatar-selected" : ""} ${onClick ? "avatar-clickable" : ""}`}
+      className={`avatar avatar-square ${closed ? "avatar-closed" : ""} ${selected ? "avatar-selected" : ""} ${onClick ? "avatar-clickable" : ""}`}
       style={{ width: size, height: size }}
       onClick={onClick}
       title={title ?? displayName}

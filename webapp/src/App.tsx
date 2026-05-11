@@ -12,6 +12,7 @@ import { MapEditor } from "./components/MapEditor.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
 import { SceneDeck } from "./components/SceneDeck.js";
 import { useSelectionHistory } from "./lib/selection-history.js";
+import { CurrentTimeProvider } from "./lib/current-time.js";
 
 const DEV = import.meta.env.DEV;
 
@@ -320,6 +321,7 @@ function Loaded(props: LoadedProps) {
   }, [dump, day]);
 
   return (
+    <CurrentTimeProvider value={{ day, hour }}>
     <div
       className="app"
       ref={appRef}
@@ -495,6 +497,7 @@ function Loaded(props: LoadedProps) {
         onSelect={props.setSelection}
       />
     </div>
+    </CurrentTimeProvider>
   );
 }
 

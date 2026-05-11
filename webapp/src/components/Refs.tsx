@@ -2,6 +2,8 @@ import type { RunDump } from "../types.js";
 import type { Selection, SelectionKind } from "../App.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
+import { useCurrentTime } from "../lib/current-time.js";
+import { isLocationOpenAt } from "../lib/location-open.js";
 
 export type RefVariant = "chip" | "inline";
 
@@ -125,24 +127,29 @@ export function LocationRef({
   variant = "inline",
   size = 18,
 }: LocationRefProps) {
+  const { hour } = useCurrentTime();
   const loc = dump.locations.find((l) => l.id === id);
   if (loc === undefined) {
     return <span className="ref-missing muted">loc {id}</span>;
   }
   if (variant === "chip") {
+    const isOpen = isLocationOpenAt(loc.openHours, hour);
     return (
       <RefButton
         kind="location"
         id={id}
         onSelect={onSelect}
         variant="chip"
-        title={loc.displayName}
+        title={
+          isOpen ? loc.displayName : `${loc.displayName} (closed)`
+        }
       >
         <LocationAvatar
           displayName={loc.displayName}
           code={loc.code}
           type={loc.type}
           size={size}
+          isOpen={isOpen}
         />
         <span>{loc.displayName}</span>
       </RefButton>

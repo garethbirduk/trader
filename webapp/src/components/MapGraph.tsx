@@ -6,6 +6,7 @@ import { LocationAvatar } from "./LocationAvatar.js";
 import { combinedPositions, useLayout, type MapLayout } from "../map-layout.js";
 import { getPlaybackSpeed, setMapBusy } from "../anim-state.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
+import { isLocationOpenAt } from "../lib/location-open.js";
 import {
   MapBasemap,
   NodeLabel,
@@ -696,6 +697,7 @@ export function MapGraph(props: Props) {
               (loc as { type?: string }).type === "auction";
             const isStar = isAuction && isHourInAuctionWindow(dump, hour);
             const t = (loc as { type?: string }).type ?? "business";
+            const isOpen = isLocationOpenAt(loc.openHours, hour);
             const fill = getLocationColor({ code: loc.code, type: t });
             const stroke = isSel || isStar ? HEX_PLAYER : "rgba(0,0,0,0.4)";
             const strokeWidth = isSel || isStar ? 2.5 : 1;
@@ -707,6 +709,7 @@ export function MapGraph(props: Props) {
                 key={loc.id}
                 transform={`translate(${pos.x}, ${pos.y})`}
                 data-clickable
+                className={isOpen ? "loc-node" : "loc-node loc-node-closed"}
                 style={{ cursor: "pointer" }}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
@@ -715,6 +718,7 @@ export function MapGraph(props: Props) {
                 }}
               >
                 <rect
+                  className="loc-node-rect"
                   x={-sq / 2}
                   y={-sq / 2}
                   width={sq}
@@ -842,6 +846,7 @@ export function MapGraph(props: Props) {
                 code={loc.code}
                 type={(loc as { type?: string }).type}
                 size={14}
+                isOpen={isLocationOpenAt(loc.openHours, hour)}
               />
               <span className="offmap-label">
                 {SHORT_LABELS[loc.code] ?? loc.displayName}
