@@ -331,7 +331,7 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
                       dump={dump}
                       id={r.lotId}
                       onSelect={onSelect}
-                      variant="inline"
+                      variant="chip"
                     />{" "}
                     <span className="muted">
                       via {r.via}

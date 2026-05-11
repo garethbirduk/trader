@@ -105,7 +105,7 @@ function PoolCard({
             dump={dump}
             id={pool.id}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
           />
         </span>
         <span className="pool-status">{status}</span>
@@ -114,7 +114,7 @@ function PoolCard({
             dump={dump}
             id={pool.itemKindId}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
             qualityTier={pool.qualityTier}
           />
         </span>

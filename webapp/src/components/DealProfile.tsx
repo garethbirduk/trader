@@ -115,7 +115,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                 dump={dump}
                 id={l.itemKindId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
                 qualityTier={l.qualityTier}
               />
               <span className="muted">×{l.quantity}</span>

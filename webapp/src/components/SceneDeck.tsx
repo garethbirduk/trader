@@ -1152,7 +1152,8 @@ function PubdealHagglePlayer({
                       dump={dump}
                       id={speakerId}
                       onSelect={onSelect}
-                      variant="inline"
+                      variant="chip"
+                      size={14}
                     />{" "}
                     {verb}
                     {t.action === "walk" ? "" : "."}
@@ -1173,14 +1174,16 @@ function PubdealHagglePlayer({
                         dump={dump}
                         id={sellerId}
                         onSelect={onSelect}
-                        variant="inline"
+                        variant="chip"
+                        size={14}
                       />
-                      {" → "}
+                      <span className="ref-arrow">→</span>
                       <ActorRef
                         dump={dump}
                         id={buyerId}
                         onSelect={onSelect}
-                        variant="inline"
+                        variant="chip"
+                        size={14}
                       />
                     </>
                   ) : (

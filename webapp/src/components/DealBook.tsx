@@ -66,7 +66,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                     dump={dump}
                     id={d.id}
                     onSelect={onSelect}
-                    variant="inline"
+                    variant="chip"
                   />
                 </span>
                 <span className={`deal-state state-${d.state}`}>{d.state}</span>
@@ -113,7 +113,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                           dump={dump}
                           id={l.itemKindId}
                           onSelect={onSelect}
-                          variant="inline"
+                          variant="chip"
                         />
                       </td>
                       <td className={`tier tier-${l.qualityTier}`}>{l.qualityTier}</td>

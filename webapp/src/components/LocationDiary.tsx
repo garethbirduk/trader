@@ -357,12 +357,12 @@ function AuctionLotRow({
 }) {
   return (
     <li>
-      <LotRef dump={dump} id={lot.id} onSelect={onSelect} variant="inline" />{" "}
+      <LotRef dump={dump} id={lot.id} onSelect={onSelect} variant="chip" />{" "}
       <ItemRef
         dump={dump}
         id={lot.itemKindId}
         onSelect={onSelect}
-        variant="inline"
+        variant="chip"
         qualityTier={lot.qualityTier}
       />{" "}
       ×{lot.quantity}{" "}
@@ -459,25 +459,25 @@ function summarizeLocEvent(
     );
   const I = (id: unknown) =>
     typeof id === "number" ? (
-      <ItemRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <ItemRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">?</span>
     );
   const Lot = (id: unknown) =>
     typeof id === "number" ? (
-      <LotRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <LotRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">lot ?</span>
     );
   const Deal = (id: unknown) =>
     typeof id === "number" ? (
-      <DealRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <DealRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">deal ?</span>
     );
   const Pool = (id: unknown) =>
     typeof id === "number" ? (
-      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">pool ?</span>
     );

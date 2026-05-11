@@ -92,7 +92,7 @@ function renderDealEnrichment(
                 dump={dump}
                 id={line.itemKindId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
                 qualityTier={line.qualityTier}
               />{" "}
               <span className="muted">@ £{line.unitPrice}</span>

@@ -100,7 +100,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                             dump={dump}
                             id={lot.itemKindId}
                             onSelect={onSelect}
-                            variant="inline"
+                            variant="chip"
                           />
                         </td>
                         <td className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</td>

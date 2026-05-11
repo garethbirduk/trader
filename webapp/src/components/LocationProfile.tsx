@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
+import { LocationAvatar } from "./LocationAvatar.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -44,7 +45,12 @@ export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: P
   return (
     <section className="actor-profile">
       <header className="profile-head">
-        <div className="loc-icon">📍</div>
+        <LocationAvatar
+          displayName={loc.displayName}
+          code={loc.code}
+          type={loc.type}
+          size={28}
+        />
         <div className="profile-title">
           <div className="profile-name">{loc.displayName}</div>
           <div className="profile-code muted">{loc.code}</div>

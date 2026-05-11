@@ -42,7 +42,7 @@ export function renderEvent(
         dump={dump}
         id={id}
         onSelect={onSelect}
-        variant="inline"
+        variant="chip"
         qualityTier={qualityTier}
       />
     ) : (
@@ -50,19 +50,19 @@ export function renderEvent(
     );
   const Deal = (id: unknown) =>
     typeof id === "number" ? (
-      <DealRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <DealRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">deal {String(id)}</span>
     );
   const Lot = (id: unknown) =>
     typeof id === "number" ? (
-      <LotRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <LotRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">lot {String(id)}</span>
     );
   const Pool = (id: unknown) =>
     typeof id === "number" ? (
-      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <PoolRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
     ) : (
       <span className="muted">pool {String(id)}</span>
     );

@@ -60,7 +60,7 @@ export function PoolProfile({ dump, day, snapshot, poolId, onSelect }: Props) {
             dump={dump}
             id={pool.itemKindId}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
             qualityTier={pool.qualityTier}
           />
         </dd>

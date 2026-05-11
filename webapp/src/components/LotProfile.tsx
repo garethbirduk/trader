@@ -51,7 +51,7 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
             dump={dump}
             id={lot.itemKindId}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
             qualityTier={lot.qualityTier}
           />
           <span className="muted"> ×{lot.quantity}</span>
@@ -88,7 +88,7 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
                 dump={dump}
                 id={lot.sourcePoolId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
               />
             </dd>
           </>
@@ -107,7 +107,8 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
                 dump={dump}
                 id={lot.clearedToActorId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
+                size={16}
               />
             </dd>
           </>
