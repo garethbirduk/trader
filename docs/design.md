@@ -586,12 +586,23 @@ Ledger unification (merging `auctionHouseActorId` and
 two accounts are tractable separately and the cash-conservation
 test relies on the off-map exemption.
 
-**Stage 8 — shop turnover, write-off, routine travel cost.**
-Close the remaining asymmetries. Shop customer histogram. "Skip it"
-sink for unsellable rubbish. Decide on routine travel petrol/fare.
-- Engine: shop-side market-sale handler, write-off mechanic, optional
-  travel-cost.
-- Viewer: shop turnover surface; write-off events.
+**Stage 8 — shop turnover, write-off, routine travel cost.** ✅ Done.
+Two new handlers close the longstanding asymmetries:
+`shop-sale.ts` (per high-street shop, per open hour, a small
+household-customer histogram against the keeper's displayed lot —
+shops are no longer infinite sinks); `write-off-rubbish.ts`
+(`onDayStart` sweep of broken/shoddy lots aged past `minDaysHeld`,
+charging a per-unit fee to the off-map ledger and deleting the
+stock; fee waived for owners below `skipFeeBelowCash` so we don't
+push the skint into debt). Both wired into
+`EconomicsConfig.shopSale` / `EconomicsConfig.writeOff`. Routine
+travel cost was the third item but the design's "either is fine —
+just be deliberate" line is taken at its word: routines stay free
+in v1, time-cost only. A skin can override later by deducting in
+a custom hour handler. Viewer: `stock.written-off` rendered in
+Diary / Summary / EventList; shop sales already use the existing
+`market.hour-summary` event shape so no viewer change was needed
+beyond the implicit "atLocationId is a shop, not the market".
 
 **Stage 9 — sweep infrastructure.**
 Script: takes a config matrix × N seeds, runs headless sims, dumps a
@@ -611,13 +622,13 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 8 — shop turnover, write-off,
-   routine travel cost** (the remaining asymmetries from
-   design.md:418–448): verify shops actually move bought stock
-   back out (or fix them so they do); add a "skip it" sink for
-   stock too broken even for auction (small fee, stock leaves the
-   world); decide on routine travel petrol/fare. Each item is
-   surgical against the existing schema and subsystems.
+3. Next engine work is **Stage 9 — sweep infrastructure**:
+   a thin headless-runner wrapper that takes a config matrix × N
+   seeds, runs each cell, and dumps a CSV of per-run metrics
+   (wealth distribution, clearance rates, deal volume, bankruptcy
+   count, heat events). Defines which metrics measure "better
+   gameplay" so tuning has objective signal. Optional viewer
+   addition: a "compare runs" page that overlays metric trajectories.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

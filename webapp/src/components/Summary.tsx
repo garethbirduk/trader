@@ -41,6 +41,7 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "off-map.resold", label: "Off-map resales", types: ["off-map.resold"] },
   { key: "payout.released", label: "Payouts released", types: ["payout.released"] },
   { key: "regional-clearance.listed", label: "Regional lots listed", types: ["regional-clearance.listed"] },
+  { key: "stock.written-off", label: "Stock written off", types: ["stock.written-off"] },
   { key: "heat.raised", label: "Heat raises", types: ["heat.raised"] },
   { key: "authority.raid", label: "🚨 Raids", types: ["authority.raid"], warn: true },
 ];

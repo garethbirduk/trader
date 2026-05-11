@@ -308,6 +308,15 @@ export function renderEvent(
           ) : null}
         </>
       );
+    case "stock.written-off":
+      return (
+        <>
+          {A(e.ownerActorId)} skipped {String(e.quantity)}× {I(e.itemKindId)}{" "}
+          <span className="muted">
+            ({String(e.qualityTier)} · fee £{String(e.feePaid)})
+          </span>
+        </>
+      );
     case "gossip.exchanged": {
       const participants = (e.participantActorIds as readonly number[]) ?? [];
       const a = participants[0];

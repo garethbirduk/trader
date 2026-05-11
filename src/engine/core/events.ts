@@ -184,6 +184,17 @@ export type WorldEvent =
       readonly quantity: number;
       readonly floorPrice: number;
       readonly provenance: string | null;
+    }
+  | {
+      readonly type: "stock.written-off";
+      readonly at: Clock;
+      readonly ownerActorId: number;
+      readonly stockLotId: number;
+      readonly itemKindId: number;
+      readonly qualityTier: string;
+      readonly quantity: number;
+      readonly feePaid: number;
+      readonly reason: string;
     };
 
 export type EventHandler = (event: WorldEvent) => void;
@@ -293,6 +304,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "regional-clearance.listed":
         console.log(`[${stamp}] regional-clearance.listed lot=${e.auctionLotId} ${e.quantity}×${e.qualityTier} floor=£${e.floorPrice}${e.provenance ? ` "${e.provenance}"` : ""}`);
+        break;
+      case "stock.written-off":
+        console.log(`[${stamp}] stock.written-off owner=${e.ownerActorId} lot=${e.stockLotId} ${e.quantity}×${e.qualityTier} fee=£${e.feePaid} (${e.reason})`);
         break;
       case "authority.raid":
         console.log(`[${stamp}] 🚨 authority.raid actor=${e.actorId} seized=${e.unitsSeized} units fine=£${e.fine} heat-was=${e.heatBefore}`);

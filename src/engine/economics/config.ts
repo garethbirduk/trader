@@ -143,6 +143,51 @@ export interface EconomicsConfig {
    * the rest. Disable by setting `lotsPerDay` to 0.
    */
   readonly regionalClearance: RegionalClearanceConfig;
+
+  /**
+   * Stage 8 — shop turnover. Mirrors `marketSale` but with a
+   * smaller, less category-diverse footfall: a couple of customers
+   * per hour wandering into the high-street shops. Without this
+   * shops would be infinite sinks — dealers sell to keepers, keepers
+   * never move it on. Set `enabled: false` to disable.
+   */
+  readonly shopSale: ShopSaleConfig;
+
+  /**
+   * Stage 8 — automatic write-off of unsellable rubbish. Lots in
+   * broken/shoddy tier sitting in dealer bags past a threshold age
+   * get written off: the dealer pays a small per-unit fee to the
+   * off-map ledger and the stock leaves the world. Stops dealers
+   * hoarding rubbish that no one will buy at any price.
+   */
+  readonly writeOff: WriteOffConfig;
+}
+
+export interface ShopSaleConfig {
+  /** Set false to skip the shop-sale handler entirely. */
+  readonly enabled: boolean;
+  /** Per-shop hourly footfall. A small number per hour during open
+   *  hours — these are high-street shops, not the Saturday market. */
+  readonly hourlyFootfall: Readonly<Record<number, number>>;
+  /** Price as a fraction of the keeper's retail mid. Higher than
+   *  market because shop overhead is real but you get a proper
+   *  shop-front. Default 1.1. */
+  readonly pricePerUnitFraction: number;
+}
+
+export interface WriteOffConfig {
+  /** Set false to skip the write-off handler. */
+  readonly enabled: boolean;
+  /** Tiers eligible for auto write-off. Default ["broken", "shoddy"]. */
+  readonly eligibleTiers: readonly QualityTier[];
+  /** Lots must have been acquired at least this many days ago. */
+  readonly minDaysHeld: number;
+  /** Per-unit fee paid by the owner to the off-map ledger. */
+  readonly feePerUnit: number;
+  /** Owners with cash below this won't be charged — their stock just
+   *  disappears with the fee waived. Avoids pushing them into debt
+   *  for what was already worthless. */
+  readonly skipFeeBelowCash: number;
 }
 
 export interface RegionalClearanceConfig {
@@ -467,6 +512,31 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
       "Sidcup garage clearout",
     ],
   },
+  shopSale: {
+    enabled: true,
+    // Sparse footfall — a couple of customers per open hour. Smaller
+    // than the market by design; the shop's specialty + persona
+    // interest filter does most of the work.
+    hourlyFootfall: {
+      9: 1,
+      10: 2,
+      11: 3,
+      12: 4,
+      13: 4,
+      14: 3,
+      15: 3,
+      16: 2,
+      17: 1,
+    },
+    pricePerUnitFraction: 1.1,
+  },
+  writeOff: {
+    enabled: true,
+    eligibleTiers: ["broken", "shoddy"],
+    minDaysHeld: 7,
+    feePerUnit: 2,
+    skipFeeBelowCash: 50,
+  },
 };
 
 /**
@@ -525,6 +595,18 @@ export function resolveEconomicsConfig(
     regionalClearance: {
       ...DEFAULT_ECONOMICS_CONFIG.regionalClearance,
       ...(partial.regionalClearance ?? {}),
+    },
+    shopSale: {
+      ...DEFAULT_ECONOMICS_CONFIG.shopSale,
+      ...(partial.shopSale ?? {}),
+      hourlyFootfall: {
+        ...DEFAULT_ECONOMICS_CONFIG.shopSale.hourlyFootfall,
+        ...(partial.shopSale?.hourlyFootfall ?? {}),
+      },
+    },
+    writeOff: {
+      ...DEFAULT_ECONOMICS_CONFIG.writeOff,
+      ...(partial.writeOff ?? {}),
     },
   };
 }

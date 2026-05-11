@@ -145,6 +145,7 @@ function eventInvolvesActor(e: RunEvent, actorId: number): boolean {
     "brokerActorId",
     "producerActorId",
     "blockerActorId",
+    "ownerActorId",
   ] as const;
   for (const f of idFields) {
     if ((e as Record<string, unknown>)[f] === actorId) return true;
@@ -341,6 +342,17 @@ function summarizeEvent(
             ({String(e.source)} from D{String(e.originatedDay)})
           </span>
         </>
+      );
+    case "stock.written-off":
+      return e.ownerActorId === actorId ? (
+        <>
+          skipped {String(e.quantity)}× {I(e.itemKindId)}{" "}
+          <span className="muted">
+            ({String(e.qualityTier)} · fee £{String(e.feePaid)})
+          </span>
+        </>
+      ) : (
+        <></>
       );
     case "gossip.exchanged": {
       const others = (e.participantActorIds as readonly number[]).filter(

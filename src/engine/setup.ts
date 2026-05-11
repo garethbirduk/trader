@@ -31,7 +31,9 @@ import { registerOffMapResale } from "./world/off-map-resale.js";
 import { registerLeadDecay } from "./world/lead-decay.js";
 import { registerPendingPayouts } from "./world/pending-payouts.js";
 import { registerRegionalClearance } from "./world/regional-clearance.js";
+import { registerWriteOffRubbish } from "./world/write-off-rubbish.js";
 import { registerMarketSale } from "./world/market-sale.js";
+import { registerShopSale, type ShopSpec } from "./world/shop-sale.js";
 import {
   PlannerRegistry,
   registerActorPlanner,
@@ -407,6 +409,59 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     economics: skin.economics,
   });
 
+  // Stage 8 — shop turnover. Each high-street shop runs its own small
+  // household-customer histogram each open hour. Pair every shop
+  // location with its keeper actor; the skin's shop-specialty map
+  // becomes the per-shop category bias.
+  if (skin.shopLocationIds.length > 0 && skin.shopkeeperActorIds.length > 0) {
+    const codeToKeeperId = new Map<string, number>();
+    // Trust the skin: keepers and shop locations zip by order in the
+    // HIGH_STREET_SHOPS list. The keeper actor's `currentLocationId`
+    // becomes the shop during their open hours, and that's the field
+    // shop-sale checks.
+    const shops: ShopSpec[] = [];
+    for (const shopId of skin.shopLocationIds) {
+      // The skin doesn't expose a direct shop→keeper map. Find a
+      // shopkeeper whose schedule places them at this shop. (The
+      // placeholder skin's keepers each have their shop as their
+      // default location.)
+      for (const keeperId of skin.shopkeeperActorIds) {
+        const routine = skin.actorRoutines.get(keeperId);
+        if (!routine) continue;
+        // Any hour in the keeper's schedule that points at this shop
+        // is enough to associate them.
+        let matches = false;
+        for (const locId of routine.schedule.values()) {
+          if (locId === shopId) {
+            matches = true;
+            break;
+          }
+        }
+        if (matches) {
+          codeToKeeperId.set(`shop-${shopId}`, keeperId);
+          break;
+        }
+      }
+    }
+    for (const shopId of skin.shopLocationIds) {
+      const keeperId = codeToKeeperId.get(`shop-${shopId}`);
+      if (keeperId === undefined) continue;
+      const specialties = skin.shopSpecialtiesByLocation.get(shopId) ?? [];
+      shops.push({
+        locationId: shopId,
+        keeperActorId: keeperId,
+        specialties: [...specialties],
+      });
+    }
+    if (shops.length > 0) {
+      registerShopSale(world, {
+        shops,
+        bidderProfiles: skin.bidderProfiles,
+        economics: skin.economics,
+      });
+    }
+  }
+
   // Off-map resale: at day-end, off-map dealers liquidate today's
   // purchases against the synthetic external-economy account.
   if (skin.offMapDealerActorIds.length > 0) {
@@ -425,8 +480,13 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   // Day-scoped bookkeeping. Pending-payouts drains first so any cash
   // arriving today is in actors' hands before they decide where to
   // be (planner) or what to bid (auction). Regional-clearance lists
-  // its lots before the daily auction picks the docket.
+  // its lots before the daily auction picks the docket. Write-off
+  // runs early so the cleared rubbish doesn't clutter today's planner.
   registerPendingPayouts(world);
+  registerWriteOffRubbish(world, {
+    economics: skin.economics,
+    feeProceedsActorId: skin.auctionHouseActorId,
+  });
   registerRegionalClearance(world, { economics: skin.economics });
   registerLeadDecay(world);
   registerHeatDecay(world);
