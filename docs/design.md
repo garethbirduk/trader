@@ -285,6 +285,57 @@ below is surgical against the existing schema and subsystems. Every
 numeric knob stays in `EconomicsConfig` so combinations can be swept
 later.
 
+### Already in place (shipped alongside Stage 1)
+
+These exist today — don't re-do, but lean on them for the next
+stages.
+
+**Engine:**
+- `location-gossip.ts` skips identical retransmissions — only emits
+  a lead when the receiver doesn't already hold the same fact
+  verbatim. Different qty/price still goes through as a refinement.
+- Per-location opening schedules with multi-session support. Each
+  location can ship `openSessions: { daysOfWeek, start, end }[]` —
+  multiple windows on different weekdays, `end > 24` wraps past
+  midnight. Used by the viewer's open/closed dimming.
+- Random-per-day lunch destinations for employed civilians.
+  `ActorSpec.lunchSlot: { hours, daysOfWeek, candidateCodes }`
+  rolled once per (actor, day) in `setup.ts` using the world RNG.
+  Wired in `hourOverrideForActor` between delivery and planner.
+  Currently applied to Cassandra and Alan Parry.
+
+**Viewer:**
+- Stage 1 gossip ledger viewer (`ActorKnows`): Timeline / By item /
+  By person views, conflict highlighting on diverging qty/price for
+  the same subject, source chain (immediate prior + hop +
+  confidence) in the meta line.
+- Entity-reference chip standardisation. Every actor/location/item/
+  deal/lot/pool reference renders as a single clickable hyperlink
+  (avatar/icon + name). Actors get circular `<Avatar>`, locations
+  get rounded-square `<LocationAvatar>` (type-coloured fill — pub
+  amber, home green, business blue, auction purple, civic grey).
+- Open/closed dimming. Locations dim across map + chips + profile
+  header when closed at the current viewer hour, respecting per-day
+  schedules. See `webapp/src/lib/location-open.ts`.
+- Shared `<StockLine fact={...} meta={...} />` component (and
+  `<StockValue divergent={...} />`) — the visual mould for any
+  "subject + qty + item(tier) + price + meta" row. Used by
+  inventory (ground truth) and gossip (claimed values). Gossip rows
+  show receiver-perspective retail estimate based on the receiver's
+  bidder profile and the claimed tier. Future inspection mechanics
+  refine the estimate without touching the layout.
+- `CurrentTimeProvider` context exposes `{day, hour}` to any leaf
+  component that needs it (LocationRef chip, LocationProfile
+  header). Avoids prop-drilling.
+- Map: location nodes render as rounded squares with initials,
+  type-coloured; actors orbit around them (including solo actors
+  and transit-arriving actors, so single-actor venues don't get
+  obscured by the avatar landing on the node).
+- Player display name is "Del Boy" — the cast now reads OFAH
+  consistently. Internal code stays `"player"` (load-bearing).
+- Dev server pinned to port 6173 with `strictPort: true` to avoid
+  silent fallback when another project is on 5173.
+
 ### Design principles
 
 - **Parity.** Anything an NPC does, a player can do with the same time
@@ -400,15 +451,13 @@ Each is small and surgical.
 Each stage is a small addition with a visible debugging surface.
 Engine work and viewer work move together.
 
-**Stage 1 — gossip ledger viewer.**
-Extend `ActorKnows` from a flat list into grouped views: by item, by
-person (subject), by person (informant). Conflict rendering when
-multiple leads about the same subject disagree. Source chain and
-confidence visible. Read-only against current data.
-- Engine: none.
-- Viewer: new grouping logic, side-by-side conflict rendering, chain
-  display.
-- Payoff: visible state for everything that follows.
+**Stage 1 — gossip ledger viewer.** ✅ Done.
+Shipped as the grouped `ActorKnows` (Timeline / By item / By
+person) with conflict highlighting and the source chain. Surfaced
+that gossip was identically retransmitting; that engine fix shipped
+alongside (`location-gossip.ts` novelty filter). See the "Already
+in place" list above for the broader UI work that landed in the
+same window.
 
 **Stage 2 — visitor-to-visitor interaction.**
 Add a `chat` hour-activity (vs the existing `deal` and implicit
@@ -479,3 +528,26 @@ volume, bankruptcy count, heat events). Lets you hammer combinations.
 Stages 1–4 are largely independent of each other once Stage 1 lands
 and can be parallelised if useful. Stage 5 onward composes on the
 earlier work.
+
+### Picking up after a context clear
+
+1. Read this doc top to bottom — the "Already in place" subsection
+   is the load-bearing one for "what exists right now."
+2. Working tree is clean and pushed; current `main` is what's
+   running locally and on Pages.
+3. Next engine work is **Stage 2 — visitor↔visitor chat**. Spec
+   above. Key files when you start: `src/engine/world/location-
+   gossip.ts` (the existing visitor↔proprietor handler — the
+   visitor↔visitor flow is the same shape one step over), and
+   `webapp/src/components/ActorDiary.tsx` (where the new
+   chat-activity needs to surface).
+4. Smaller follow-ups parked outside the stages:
+   - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
+     depot, council yard, Starlight Rooms, Shamrock Club, Police
+     Station. The mechanism is `openSessions` — see Cassandra's
+     bank or the 111 Club for the pattern.
+   - Loose root-level data files (`more character routines.txt`,
+     `profiles.json`, `eastereggs.json`) are OFAH source material
+     not yet integrated into the skin.
+5. Dev: `npm run dev` from `webapp/` (port 6173). `npm test` from
+   the repo root (30 files, 237 tests, ~55s).
