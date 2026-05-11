@@ -142,6 +142,9 @@ function eventInvolvesActor(e: RunEvent, actorId: number): boolean {
     "winnerActorId",
     "holderActorId",
     "subjectTargetActorId",
+    "brokerActorId",
+    "producerActorId",
+    "blockerActorId",
   ] as const;
   for (const f of idFields) {
     if ((e as Record<string, unknown>)[f] === actorId) return true;
@@ -295,6 +298,37 @@ function summarizeEvent(
       ) : e.subjectTargetActorId === actorId ? (
         <>
           burned {A(e.holderActorId)} for £{String(e.damage)}
+        </>
+      ) : (
+        <></>
+      );
+    case "broker.materialised":
+      return e.brokerActorId === actorId ? (
+        <>
+          brought {A(e.producerActorId)} in to {L(e.locationId)}{" "}
+          <span className="muted">(fee £{String(e.fee)})</span>
+        </>
+      ) : e.producerActorId === actorId ? (
+        <>
+          walked into {L(e.locationId)} on {A(e.brokerActorId)}'s arrangement
+        </>
+      ) : (
+        <>
+          {A(e.brokerActorId)} brought {A(e.producerActorId)} in
+        </>
+      );
+    case "broker.materialisation-aborted":
+      return e.brokerActorId === actorId ? (
+        <>
+          {A(e.producerActorId)} clocked {A(e.blockerActorId)} and walked
+        </>
+      ) : e.producerActorId === actorId ? (
+        <>
+          spotted {A(e.blockerActorId)} at {L(e.locationId)} and left
+        </>
+      ) : e.blockerActorId === actorId ? (
+        <>
+          {A(e.producerActorId)} clocked you and turned around
         </>
       ) : (
         <></>

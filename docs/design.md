@@ -547,10 +547,21 @@ Viewer: virtual-producer profile (owned pools + brokers +
 provenance phrase bank), "Source" + "Provenance" rows on
 PoolProfile, "Brokered by" relabel, "virtual-producer" role tag
 in the sidebar filter.
-Stage 6b (deferred): materialisation — a broker brings their
-producer to the Nag's for an hour for face-to-face access, with
-the Stage 5 rep-gate composing as the "Bob walks in, clocks Del,
-walks out" abort-on-sight moment.
+Stage 6b ✅ Done — broker materialisation. New handler
+`broker-materialisation.ts`: at each configured venue, brokers
+present have a small per-hour chance to "bring in" one of their
+producers. The broker pays a fee (default £25 → auction-house
+ledger), and the producer's `current_location_id` is set to the
+venue for one hour. The `isReachableBy` check picks up the
+implicit co-location reach (`pool_reachability` row OR
+co-located owner) so any actor present can claim from the
+producer's pool during that hour with no schema change.
+Symmetric rep-gate composes Stage 5: warm rep within hop ceiling
+and damage threshold either direction → `broker.materialisation-
+aborted` with the blocker identified. Teardown clears the
+producer's location at the start of the next hour; a per-tick
+guard stops the producer from immediately re-materialising in the
+same hour. Viewer surfaces in diary / renderEvent / Summary.
 
 **Stage 7 — boundary unification + auction always-on.**
 Unify the "outside Peckham" ledger node. Regional-clearance lot
@@ -586,15 +597,14 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 6b — broker materialisation**, or
-   one of the asymmetry-punch-list items (design.md:418–448). The
-   materialisation path turns the broker's relationship into an
-   action: spend the broker fee and an hour at the pub, the virtual
-   producer gets a temporary `current_location_id`, and any actor
-   present can pubdeal with them for that window. Stage 5's rep
-   gate composes naturally — if Bob's rep ledger says Del burned
-   him, Bob walks back out. A new "broker.materialised" event
-   surfaces the cinematic moment in the scene deck.
+3. Next engine work is **Stage 7 — boundary unification +
+   auction always-on**, or one of the asymmetry-punch-list items
+   (design.md:418–448). Stage 7 unifies the "outside Peckham"
+   ledger node, adds regional-clearance lots flowing into Sotheby's
+   independent of local pool flushes (so the auction is busy every
+   day), and gives whales finite daily budgets that replenish from
+   yesterday's resale revenue with a lag — finite appetite, real
+   outbidding consequences.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

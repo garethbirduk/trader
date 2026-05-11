@@ -94,6 +94,31 @@ export type WorldEvent =
   | { readonly type: "delivery.fee"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly fee: number }
   | { readonly type: "heat.raised"; readonly at: Clock; readonly actorId: number; readonly delta: number; readonly score: number; readonly reason: string }
   | { readonly type: "rep.spawned"; readonly at: Clock; readonly leadId: number; readonly holderActorId: number; readonly subjectTargetActorId: number; readonly counterpartyActorId: number; readonly dealId: number; readonly damage: number }
+  | {
+      readonly type: "broker.materialised";
+      readonly at: Clock;
+      readonly brokerActorId: number;
+      readonly producerActorId: number;
+      readonly locationId: number;
+      readonly untilHour: number;
+      readonly fee: number;
+      /** Actors present at the venue when the producer arrives. The
+       *  scene deck uses this to render the room. */
+      readonly attendees: readonly number[];
+    }
+  | {
+      readonly type: "broker.materialisation-aborted";
+      readonly at: Clock;
+      readonly brokerActorId: number;
+      readonly producerActorId: number;
+      readonly locationId: number;
+      /** The actor whose rep ledger blocked the encounter — either the
+       *  producer holds rep about them, or they hold rep about the
+       *  producer. Surfaces in the diary/scene. */
+      readonly blockerActorId: number;
+      readonly repLeadId: number;
+      readonly direction: "producer-knows-blocker" | "blocker-knows-producer";
+    }
   | { readonly type: "authority.raid"; readonly at: Clock; readonly actorId: number; readonly unitsSeized: number; readonly seizedItemCodes: readonly string[]; readonly fine: number; readonly heatBefore: number }
   | { readonly type: "auction.cleared"; readonly at: Clock; readonly auctionLotId: number; readonly winnerActorId: number; readonly unitPrice: number; readonly totalPrice: number; readonly floorPrice: number; readonly effectiveFloor: number; readonly openingAsk: number; readonly attendees: readonly number[]; readonly bidders: readonly AuctionBidderSnapshot[] }
   | { readonly type: "auction.unsold"; readonly at: Clock; readonly auctionLotId: number; readonly reason: string; readonly floorPrice: number; readonly effectiveFloor: number; readonly openingAsk: number; readonly attendees: readonly number[]; readonly bidders: readonly AuctionBidderSnapshot[] }
@@ -238,6 +263,12 @@ export function consoleHandler(): EventHandler {
         break;
       case "rep.spawned":
         console.log(`[${stamp}] rep.spawned holder=${e.holderActorId} target=${e.subjectTargetActorId} damage=£${e.damage} (deal=${e.dealId})`);
+        break;
+      case "broker.materialised":
+        console.log(`[${stamp}] broker.materialised broker=${e.brokerActorId} producer=${e.producerActorId} loc=${e.locationId} until=${String(e.untilHour).padStart(2,"0")}:00 fee=£${e.fee} (${e.attendees.length} present)`);
+        break;
+      case "broker.materialisation-aborted":
+        console.log(`[${stamp}] broker.materialisation-aborted broker=${e.brokerActorId} producer=${e.producerActorId} blocked-by=${e.blockerActorId} (${e.direction})`);
         break;
       case "authority.raid":
         console.log(`[${stamp}] 🚨 authority.raid actor=${e.actorId} seized=${e.unitsSeized} units fine=£${e.fine} heat-was=${e.heatBefore}`);

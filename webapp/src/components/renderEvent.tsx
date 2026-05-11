@@ -276,6 +276,19 @@ export function renderEvent(
           {A(e.holderActorId)} learns: {A(e.subjectTargetActorId)} burned them for £{String(e.damage)}
         </>
       );
+    case "broker.materialised":
+      return (
+        <>
+          {A(e.brokerActorId)} brings {A(e.producerActorId)} to {L(e.locationId)}{" "}
+          <span className="muted">(£{String(e.fee)} fee · until {String(e.untilHour).padStart(2,"0")}:00)</span>
+        </>
+      );
+    case "broker.materialisation-aborted":
+      return (
+        <>
+          {A(e.producerActorId)} clocks {A(e.blockerActorId)} at {L(e.locationId)} and walks
+        </>
+      );
     case "gossip.exchanged": {
       const participants = (e.participantActorIds as readonly number[]) ?? [];
       const a = participants[0];

@@ -106,6 +106,29 @@ export function getPoolById(db: DB, id: number): WorldPool | null {
   return row ? rowToPool(row) : null;
 }
 
+/**
+ * Live, owned pools belonging to a specific virtual producer. Used by
+ * the broker-materialisation handler to skip when there's nothing to
+ * actually transact about — no live stock, no point bringing Bob in.
+ */
+export function listActivePoolsByOwner(
+  db: DB,
+  ownerActorId: number,
+  today: number,
+): WorldPool[] {
+  return db
+    .prepare<PoolRow>(
+      `SELECT * FROM world_pools
+       WHERE owner_actor_id = @owner
+         AND flushed_day IS NULL
+         AND created_day <= @today
+         AND expiry_day  >= @today
+       ORDER BY id ASC`,
+    )
+    .all({ owner: ownerActorId, today })
+    .map(rowToPool);
+}
+
 export function listActivePools(db: DB, today: number): WorldPool[] {
   return db
     .prepare<PoolRow>(
@@ -154,13 +177,40 @@ export function isReachableBy(
   poolId: number,
   actorId: number,
 ): boolean {
+  // Standard route: explicit row in pool_reachability (broker list,
+  // or seeded ambient-pool reach set).
   const row = db
     .prepare<{ n: number }>(
       `SELECT COUNT(*) AS n FROM pool_reachability
        WHERE pool_id = @pool AND actor_id = @actor`,
     )
     .get({ pool: poolId, actor: actorId });
-  return (row?.n ?? 0) > 0;
+  if ((row?.n ?? 0) > 0) return true;
+
+  // Stage 6b — implicit access during materialisation. If the pool has
+  // a named owner and that owner is currently co-located with the
+  // claimant (the producer has been "brought to the pub" by a broker),
+  // anyone in the room can transact with them for the materialised
+  // hour. We don't seed temporary pool_reachability rows for this
+  // because the materialisation flow has no clean teardown for those
+  // — co-location is the canonical signal.
+  const ownerRow = db
+    .prepare<{ owner_actor_id: number | null }>(
+      `SELECT owner_actor_id FROM world_pools WHERE id = @pool`,
+    )
+    .get({ pool: poolId });
+  const ownerId = ownerRow?.owner_actor_id ?? null;
+  if (ownerId === null) return false;
+  const colocated = db
+    .prepare<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM actors a
+       INNER JOIN actors o ON o.id = @owner
+       WHERE a.id = @actor
+         AND a.current_location_id IS NOT NULL
+         AND a.current_location_id = o.current_location_id`,
+    )
+    .get({ owner: ownerId, actor: actorId });
+  return (colocated?.n ?? 0) > 0;
 }
 
 export class PoolUnreachableError extends Error {}

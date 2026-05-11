@@ -33,6 +33,8 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "pubdeal.trust-blocked", label: "· trust-blocked", types: ["pubdeal.skipped-low-trust"] },
   { key: "pubdeal.rep-blocked", label: "· rep-blocked", types: ["pubdeal.skipped-rep"] },
   { key: "rep.spawned", label: "Rep warnings spawned", types: ["rep.spawned"] },
+  { key: "broker.materialised", label: "Broker face-to-faces", types: ["broker.materialised"] },
+  { key: "broker.materialisation-aborted", label: "· walked-out", types: ["broker.materialisation-aborted"], warn: true },
   { key: "market.hour-summary", label: "Market hours", types: ["market.hour-summary"] },
   { key: "gossip.exchanged", label: "Gossip exchanges", types: ["gossip.exchanged"] },
   { key: "actor.planned", label: "Planner picks", types: ["actor.planned"] },

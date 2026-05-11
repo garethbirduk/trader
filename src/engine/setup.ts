@@ -50,6 +50,7 @@ import { registerPubDealAutonomy } from "./world/pub-deal-autonomy.js";
 import { registerLocationGossip } from "./world/location-gossip.js";
 import { registerVisitorChat } from "./world/visitor-chat.js";
 import { registerPubDealGossip } from "./world/pub-deal-gossip.js";
+import { registerBrokerMaterialisation } from "./world/broker-materialisation.js";
 import { registerHeatReactions } from "./world/heat-reactions.js";
 import { registerHeatDecay } from "./world/heat-decay.js";
 import { registerAuthoritySweep } from "./world/authority-sweep.js";
@@ -227,6 +228,26 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   // Deal-adjacent gossip. Every pubdeal — agreed or walked — leaks a
   // piece of news between the two would-be counterparties.
   registerPubDealGossip(world, { economics: skin.economics });
+
+  // Broker materialisation — at the pubs, brokers occasionally bring
+  // their virtual producer in for an hour. Invert the per-producer
+  // broker list into a per-broker producer list so the handler can do
+  // a quick lookup.
+  const producersByBroker = new Map<number, number[]>();
+  for (const p of skin.virtualProducers) {
+    for (const brokerId of p.brokerActorIds) {
+      const list = producersByBroker.get(brokerId) ?? [];
+      list.push(p.actorId);
+      producersByBroker.set(brokerId, list);
+    }
+  }
+  if (skin.allPubLocationIds.length > 0 && producersByBroker.size > 0) {
+    registerBrokerMaterialisation(world, {
+      venueLocationIds: skin.allPubLocationIds,
+      producersByBroker,
+      feeProceedsActorId: skin.auctionHouseActorId,
+    });
+  }
   registerAuctionListingKnowledge(world, {
     newspaperLocationIds: skin.newspaperLocationIds,
     paperFromHour: skin.paperFromHour,
