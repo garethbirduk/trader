@@ -96,6 +96,18 @@ export interface SkinSeedResult {
    *  scheduling data — absent codes fall back to the engine's
    *  `openHours` plus a type-based weekend heuristic in the viewer. */
   readonly openSessionsByCode: ReadonlyMap<string, readonly OpenSession[]>;
+  /** Per-actor lunch destinations to roll at run-setup time. Keyed by
+   *  actor id; each entry says "on these weekdays, at these hours,
+   *  roll one of these locations". Setup.ts consumes this with the
+   *  world RNG and writes overrides into the schedule registry. */
+  readonly lunchSpecsByActorId: ReadonlyMap<
+    number,
+    {
+      readonly hours: readonly number[];
+      readonly daysOfWeek: readonly number[];
+      readonly candidateLocIds: readonly number[];
+    }
+  >;
   /** Hour from which the paper is on the table at Sid's. */
   readonly paperFromHour: number;
   /** Hour from which the listing is on display at Sotheby's. */
@@ -167,6 +179,18 @@ interface ActorSpec {
    *  (Mike, Sid, Slater, shopkeepers, …) leave this unset and their
    *  routine runs as written. */
   readonly flexibleDailyMode?: boolean;
+  /** Per-day random lunch destination for employed civilians whose
+   *  schedule is otherwise fixed. On each day in `daysOfWeek` the
+   *  seed rolls one pick from `candidateCodes` and applies it to
+   *  every hour in `hours` for that day. Lets Cassandra alternate
+   *  between staying at the bank, going home, hitting Sid's, or
+   *  popping into the Nag's without making her a fully-flexible
+   *  actor. */
+  readonly lunchSlot?: {
+    readonly hours: readonly number[];
+    readonly daysOfWeek: readonly number[];
+    readonly candidateCodes: readonly string[];
+  };
 }
 
 interface LocationSpec {
@@ -256,8 +280,8 @@ const LOCATIONS: readonly LocationSpec[] = [
   // their shopkeeper lives off-map and is at the shop during these hours.
   { code: "goldfingers", displayName: "Goldfingers", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "ratners-peckham", displayName: "Ratners of Peckham", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "patels", displayName: "Patel's Newsagent", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "corner-shop", displayName: "The Corner Shop", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "patels", displayName: "Patel's Newsagent", type: "business", openHours: { start: 7, end: 18 }, openDaysOfWeek: DAYS_MON_SAT },
+  { code: "corner-shop", displayName: "The Corner Shop", type: "business", openHours: { start: 7, end: 18 }, openDaysOfWeek: DAYS_MON_SAT },
   { code: "wooden-soldier", displayName: "Wooden Soldier", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "toyland", displayName: "Toyland", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "sparks-electrical", displayName: "Sparks Electrical", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
@@ -886,6 +910,11 @@ const ACTORS: readonly ActorSpec[] = [
     homeLocation: "cassandra-flat",
     transportCapacity: "boot",
     awakeHours: { start: 7, end: 22 },
+    lunchSlot: {
+      hours: [13],
+      daysOfWeek: DAYS_MON_FRI,
+      candidateCodes: ["cassandra-bank", "cassandra-flat", "sids-cafe", "nags"],
+    },
   },
   {
     code: "alan-parry",
@@ -903,6 +932,11 @@ const ACTORS: readonly ActorSpec[] = [
     lockupLocation: "parry-printers",
     transportCapacity: "boot",
     awakeHours: { start: 8, end: 22 },
+    lunchSlot: {
+      hours: [13, 14],
+      daysOfWeek: DAYS_MON_FRI,
+      candidateCodes: ["parry-printers", "parry-house", "sids-cafe", "nags"],
+    },
   },
   {
     code: "sid",
@@ -1520,6 +1554,34 @@ export function seedPlaceholderSkin(
     }
   }
 
+  // Lunch-slot specs: resolve candidate codes → ids so setup.ts can
+  // just roll an index. Spec entries with unresolvable codes are
+  // skipped silently (e.g. if a skin tweak drops a venue).
+  const lunchSpecsByActorId = new Map<
+    number,
+    {
+      hours: readonly number[];
+      daysOfWeek: readonly number[];
+      candidateLocIds: readonly number[];
+    }
+  >();
+  for (const spec of ACTORS) {
+    if (spec.lunchSlot === undefined) continue;
+    const actorId = actorByCode.get(spec.code);
+    if (actorId === undefined) continue;
+    const candidateLocIds: number[] = [];
+    for (const code of spec.lunchSlot.candidateCodes) {
+      const locId = locByCode.get(code);
+      if (locId !== undefined) candidateLocIds.push(locId);
+    }
+    if (candidateLocIds.length === 0) continue;
+    lunchSpecsByActorId.set(actorId, {
+      hours: spec.lunchSlot.hours,
+      daysOfWeek: spec.lunchSlot.daysOfWeek,
+      candidateLocIds,
+    });
+  }
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -1546,6 +1608,7 @@ export function seedPlaceholderSkin(
     flexibleDailyModeActorIds,
     locationByCode: locByCode,
     openSessionsByCode,
+    lunchSpecsByActorId,
     runLengthDays,
     tradingActorIds,
     economics,

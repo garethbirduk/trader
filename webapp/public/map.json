@@ -1,8 +1,8 @@
 {
   "locations": {
     "lambeth-council-yard": {
-      "x": 1250,
-      "y": 10
+      "x": 1280,
+      "y": 20
     },
     "trigger-flat": {
       "x": 350,
@@ -85,8 +85,8 @@
       "y": 1040
     },
     "parry-printers": {
-      "x": 1330,
-      "y": 250
+      "x": 1310,
+      "y": 170
     },
     "parry-house": {
       "x": 1430,
@@ -117,8 +117,8 @@
       "y": 620
     },
     "ratners-peckham": {
-      "x": 620,
-      "y": 660
+      "x": 730,
+      "y": 300
     },
     "patels": {
       "x": 450,
@@ -129,7 +129,7 @@
       "y": 880
     },
     "wooden-soldier": {
-      "x": 1030,
+      "x": 980,
       "y": 620
     },
     "toyland": {
@@ -154,14 +154,6 @@
     }
   },
   "waypoints": {
-    "wp_2": {
-      "x": 980,
-      "y": 620
-    },
-    "wp_4": {
-      "x": 720,
-      "y": 300
-    },
     "wp_5": {
       "x": 590,
       "y": 850
@@ -225,24 +217,32 @@
     "wp_3": {
       "x": 460,
       "y": 600
+    },
+    "wp_6": {
+      "x": 1330,
+      "y": 250
+    },
+    "wp_20": {
+      "x": 1340,
+      "y": 270
+    },
+    "wp_21": {
+      "x": 1220,
+      "y": 10
+    },
+    "wp_22": {
+      "x": 610,
+      "y": 490
+    },
+    "wp_23": {
+      "x": 430,
+      "y": 370
     }
   },
   "edges": [
     [
       "one-eleven-club",
       "lockup"
-    ],
-    [
-      "lockup",
-      "wp_2"
-    ],
-    [
-      "wp_4",
-      "albert-legion"
-    ],
-    [
-      "albert-legion",
-      "trigger-flat"
     ],
     [
       "trigger-flat",
@@ -277,10 +277,6 @@
       "wp_9"
     ],
     [
-      "wp_2",
-      "wp_13"
-    ],
-    [
       "slater-flat",
       "wp_13"
     ],
@@ -297,20 +293,12 @@
       "cassandra-flat"
     ],
     [
-      "parry-printers",
-      "wp_10"
-    ],
-    [
       "wp_10",
       "cassandra-flat"
     ],
     [
       "cassandra-flat",
       "shamrock-club"
-    ],
-    [
-      "shamrock-club",
-      "parry-printers"
     ],
     [
       "shamrock-club",
@@ -321,20 +309,12 @@
       "lambeth-council-yard"
     ],
     [
-      "lambeth-council-yard",
-      "starlight-rooms"
-    ],
-    [
       "starlight-rooms",
       "one-eleven-club"
     ],
     [
       "starlight-rooms",
       "wp_10"
-    ],
-    [
-      "parry-printers",
-      "transworld-depot"
     ],
     [
       "dirty-barrys",
@@ -363,14 +343,6 @@
     [
       "wp_15",
       "betting-shop"
-    ],
-    [
-      "wp_15",
-      "albert-legion"
-    ],
-    [
-      "wp_4",
-      "wp_18"
     ],
     [
       "wp_18",
@@ -405,14 +377,6 @@
       "nags"
     ],
     [
-      "betting-shop",
-      "ratners-peckham"
-    ],
-    [
-      "ratners-peckham",
-      "post-office"
-    ],
-    [
       "peckham-market",
       "police-station"
     ],
@@ -423,18 +387,6 @@
     [
       "wp_11",
       "sparks-electrical"
-    ],
-    [
-      "sparks-electrical",
-      "wp_2"
-    ],
-    [
-      "wp_4",
-      "sparks-electrical"
-    ],
-    [
-      "wp_2",
-      "wooden-soldier"
     ],
     [
       "wooden-soldier",
@@ -507,6 +459,90 @@
     [
       "wp_3",
       "wp_7"
+    ],
+    [
+      "wp_10",
+      "wp_6"
+    ],
+    [
+      "wp_6",
+      "parry-printers"
+    ],
+    [
+      "parry-printers",
+      "hi-tech-hut"
+    ],
+    [
+      "transworld-depot",
+      "wp_20"
+    ],
+    [
+      "wp_6",
+      "wp_20"
+    ],
+    [
+      "wp_20",
+      "shamrock-club"
+    ],
+    [
+      "starlight-rooms",
+      "wp_21"
+    ],
+    [
+      "lambeth-council-yard",
+      "wp_21"
+    ],
+    [
+      "albert-legion",
+      "wp_22"
+    ],
+    [
+      "wp_22",
+      "wp_15"
+    ],
+    [
+      "wp_22",
+      "sids-cafe"
+    ],
+    [
+      "trigger-flat",
+      "wp_23"
+    ],
+    [
+      "wp_23",
+      "albert-legion"
+    ],
+    [
+      "wp_23",
+      "patels"
+    ],
+    [
+      "sparks-electrical",
+      "wooden-soldier"
+    ],
+    [
+      "wooden-soldier",
+      "wp_13"
+    ],
+    [
+      "wooden-soldier",
+      "lockup"
+    ],
+    [
+      "albert-legion",
+      "ratners-peckham"
+    ],
+    [
+      "ratners-peckham",
+      "wp_18"
+    ],
+    [
+      "ratners-peckham",
+      "sparks-electrical"
+    ],
+    [
+      "betting-shop",
+      "post-office"
     ]
   ],
   "offMap": {

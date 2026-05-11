@@ -81,10 +81,37 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   const rng = createRNG(opts.seed);
 
   // Registries are created up-front so the skin's policies can consult
-  // them for trip overrides at construction time. Delivery > planner >
-  // base schedule, in priority order.
+  // them for trip overrides at construction time. Priority order:
+  // delivery > lunch > planner > base schedule.
   const deliveryRegistry = new DeliveryRegistry();
   const plannerRegistry = new PlannerRegistry();
+  // Lightweight map of (actorId, day, hour) → locId for lunch-slot
+  // randomness. Inline class to avoid a tiny standalone file.
+  const lunchOverrides = new Map<number, Map<number, Map<number, number>>>();
+  const lunchGet = (
+    actorId: number,
+    day: number,
+    hour: number,
+  ): number | null =>
+    lunchOverrides.get(actorId)?.get(day)?.get(hour) ?? null;
+  const lunchSet = (
+    actorId: number,
+    day: number,
+    hour: number,
+    locId: number,
+  ): void => {
+    let perActor = lunchOverrides.get(actorId);
+    if (perActor === undefined) {
+      perActor = new Map();
+      lunchOverrides.set(actorId, perActor);
+    }
+    let perDay = perActor.get(day);
+    if (perDay === undefined) {
+      perDay = new Map();
+      perActor.set(day, perDay);
+    }
+    perDay.set(hour, locId);
+  };
 
   const skin = seedPlaceholderSkin(db, rng, {
     ...(opts.runLengthDays !== undefined
@@ -93,6 +120,8 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     hourOverrideForActor: (actorId) => (clock) => {
       const fromDelivery = deliveryRegistry.getOverride(actorId, clock.hour);
       if (fromDelivery !== null) return fromDelivery;
+      const fromLunch = lunchGet(actorId, clock.day, clock.hour);
+      if (fromLunch !== null) return fromLunch;
       return plannerRegistry.getOverride(actorId, clock.day, clock.hour);
     },
     economics: resolveEconomicsConfig({
@@ -107,6 +136,21 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
       ...(opts.economics ?? {}),
     }),
   });
+
+  // Lunch-slot rolls: one pick per (actor, day) shared across all
+  // the actor's lunch hours that day, so e.g. Alan Parry doesn't
+  // jump between Sid's and the Nag's between 13:00 and 14:00. Done
+  // after the skin returns so we know the run length.
+  for (const [actorId, spec] of skin.lunchSpecsByActorId) {
+    for (let day = 1; day <= skin.runLengthDays; day += 1) {
+      const dow = ((day - 1) % 7) + 1;
+      if (!spec.daysOfWeek.includes(dow)) continue;
+      const locId = rng.pick(spec.candidateLocIds);
+      for (const hour of spec.hours) {
+        lunchSet(actorId, day, hour, locId);
+      }
+    }
+  }
 
   const world = new World({
     db,
