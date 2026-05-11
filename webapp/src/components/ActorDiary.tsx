@@ -140,6 +140,8 @@ function eventInvolvesActor(e: RunEvent, actorId: number): boolean {
     "buyerActorId",
     "sellerActorId",
     "winnerActorId",
+    "holderActorId",
+    "subjectTargetActorId",
   ] as const;
   for (const f of idFields) {
     if ((e as Record<string, unknown>)[f] === actorId) return true;
@@ -276,6 +278,27 @@ function summarizeEvent(
       return <>walked away — {String(e.reason)}</>;
     case "pubdeal.skipped-low-trust":
       return <>wouldn't deal (trust {String(e.trustScore)})</>;
+    case "pubdeal.skipped-rep":
+      return (
+        <>
+          wouldn't deal with {A(e.sellerActorId === actorId ? e.buyerActorId : e.sellerActorId)}{" "}
+          <span className="muted">
+            (rep — hop {String(e.hopCount)}, £{String(e.damageOnLead)})
+          </span>
+        </>
+      );
+    case "rep.spawned":
+      return e.holderActorId === actorId ? (
+        <>
+          got burned by {A(e.subjectTargetActorId)} for £{String(e.damage)}
+        </>
+      ) : e.subjectTargetActorId === actorId ? (
+        <>
+          burned {A(e.holderActorId)} for £{String(e.damage)}
+        </>
+      ) : (
+        <></>
+      );
     case "gossip.exchanged": {
       const others = (e.participantActorIds as readonly number[]).filter(
         (id) => id !== actorId,

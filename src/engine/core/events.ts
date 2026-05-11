@@ -26,9 +26,16 @@ export interface GossipExchange {
   readonly fromActorId: number;
   readonly toActorId: number;
   readonly lead: {
+    /** `commodity` is the legacy meaning (who has/wants stock). `rep`
+     *  is a warning/vouch about a person. Same channel, same machinery,
+     *  different content. */
+    readonly kind: "commodity" | "rep";
     readonly side: "supply" | "demand";
-    readonly subjectItemKindId: number;
+    /** Commodity-only — null on rep leads. */
+    readonly subjectItemKindId: number | null;
     readonly subjectQualityTier: string | null;
+    /** Rep-only — the actor the lead is about. Null on commodity leads. */
+    readonly subjectTargetActorId: number | null;
     readonly counterpartyActorId: number | null;
     readonly estimatedQuantity: number;
     readonly estimatedUnitPrice: number;
@@ -60,6 +67,7 @@ export type WorldEvent =
   | { readonly type: "pubdeal.agreed"; readonly at: Clock; readonly locationId: number; readonly dealId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly unitPrice: number; readonly quantity: number; readonly turns: readonly NegotiationTurnSnapshot[] }
   | { readonly type: "pubdeal.walked"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly reason: string; readonly turns: readonly NegotiationTurnSnapshot[] }
   | { readonly type: "pubdeal.skipped-low-trust"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly trustScore: number }
+  | { readonly type: "pubdeal.skipped-rep"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly repLeadId: number; readonly damageOnLead: number; readonly hopCount: number }
   | {
       readonly type: "gossip.exchanged";
       readonly at: Clock;
@@ -85,6 +93,7 @@ export type WorldEvent =
   | { readonly type: "settlement.lead-claim"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly poolId: number; readonly quantity: number; readonly unitPrice: number; readonly throughLeadId: number }
   | { readonly type: "delivery.fee"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly fee: number }
   | { readonly type: "heat.raised"; readonly at: Clock; readonly actorId: number; readonly delta: number; readonly score: number; readonly reason: string }
+  | { readonly type: "rep.spawned"; readonly at: Clock; readonly leadId: number; readonly holderActorId: number; readonly subjectTargetActorId: number; readonly counterpartyActorId: number; readonly dealId: number; readonly damage: number }
   | { readonly type: "authority.raid"; readonly at: Clock; readonly actorId: number; readonly unitsSeized: number; readonly seizedItemCodes: readonly string[]; readonly fine: number; readonly heatBefore: number }
   | { readonly type: "auction.cleared"; readonly at: Clock; readonly auctionLotId: number; readonly winnerActorId: number; readonly unitPrice: number; readonly totalPrice: number; readonly floorPrice: number; readonly effectiveFloor: number; readonly openingAsk: number; readonly attendees: readonly number[]; readonly bidders: readonly AuctionBidderSnapshot[] }
   | { readonly type: "auction.unsold"; readonly at: Clock; readonly auctionLotId: number; readonly reason: string; readonly floorPrice: number; readonly effectiveFloor: number; readonly openingAsk: number; readonly attendees: readonly number[]; readonly bidders: readonly AuctionBidderSnapshot[] }
@@ -204,6 +213,9 @@ export function consoleHandler(): EventHandler {
       case "pubdeal.skipped-low-trust":
         console.log(`[${stamp}] pubdeal.skipped-low-trust seller=${e.sellerActorId} buyer=${e.buyerActorId} (trust=${e.trustScore})`);
         break;
+      case "pubdeal.skipped-rep":
+        console.log(`[${stamp}] pubdeal.skipped-rep seller=${e.sellerActorId} buyer=${e.buyerActorId} (rep-lead=${e.repLeadId} hop=${e.hopCount} damage=£${e.damageOnLead})`);
+        break;
       case "gossip.exchanged": {
         const summaries = e.exchanges
           .map((x) => {
@@ -223,6 +235,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "heat.raised":
         console.log(`[${stamp}] heat.raised actor=${e.actorId} +${e.delta} → ${e.score} (${e.reason})`);
+        break;
+      case "rep.spawned":
+        console.log(`[${stamp}] rep.spawned holder=${e.holderActorId} target=${e.subjectTargetActorId} damage=£${e.damage} (deal=${e.dealId})`);
         break;
       case "authority.raid":
         console.log(`[${stamp}] 🚨 authority.raid actor=${e.actorId} seized=${e.unitsSeized} units fine=£${e.fine} heat-was=${e.heatBefore}`);

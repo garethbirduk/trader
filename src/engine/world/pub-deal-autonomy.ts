@@ -11,7 +11,7 @@ import { getActorsAtLocation } from "../locations/locations.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { getStockLotsByOwner } from "../stock/lots-repo.js";
 import { getTrust } from "../trust/trust-repo.js";
-import { getSupplyLeadsForItem } from "../leads/leads-repo.js";
+import { getRepLeadAbout, getSupplyLeadsForItem } from "../leads/leads-repo.js";
 import { getPoolById } from "../pools/pools-repo.js";
 import { attemptPubDeal } from "../mechanics/pub-deal/attempt.js";
 import type { AuctionLot } from "../auction/types.js";
@@ -66,6 +66,16 @@ export interface PubDealAutonomyOptions {
    * given M6's -10/default and +2/clean-settle calibration).
    */
   readonly trustGatingThreshold?: number;
+  /**
+   * Rep-based abort. If the buyer holds a warm rep lead about the seller
+   * with damage at or above `repAbortDamageThreshold` and hop count at
+   * or below `repAbortMaxHops`, the attempt is skipped. Hop ceiling
+   * prevents a wildly mutated 6th-hand rumour from gating real trade;
+   * warm-only means the warning has to still feel current. Set
+   * `repAbortDamageThreshold` to `Infinity` to disable.
+   */
+  readonly repAbortDamageThreshold?: number;
+  readonly repAbortMaxHops?: number;
   /**
    * Economic tuning bundle. Tier multipliers, the buyer-ceiling
    * fraction (default 0.5 = aim for 50% of retail value), and the
@@ -128,6 +138,8 @@ export function registerPubDealAutonomy(
   const forwardSellDeadlineRange =
     opts.forwardSellDeadlineRange ?? ([2, 5] as const);
   const trustGatingThreshold = opts.trustGatingThreshold ?? -25;
+  const repAbortDamageThreshold = opts.repAbortDamageThreshold ?? 100;
+  const repAbortMaxHops = opts.repAbortMaxHops ?? 2;
   const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
   const npcSet = new Set(opts.npcActorIds);
 
@@ -154,6 +166,8 @@ export function registerPubDealAutonomy(
           forwardSellQtyRange,
           forwardSellDeadlineRange,
           trustGatingThreshold,
+          repAbortDamageThreshold,
+          repAbortMaxHops,
           economics,
           requireSellerFrom: opts.requireSellerFrom ?? null,
           requireBuyerFrom: opts.requireBuyerFrom ?? null,
@@ -176,6 +190,8 @@ function runOneAttempt(args: {
   forwardSellQtyRange: readonly [number, number];
   forwardSellDeadlineRange: readonly [number, number];
   trustGatingThreshold: number;
+  repAbortDamageThreshold: number;
+  repAbortMaxHops: number;
   economics: EconomicsConfig;
   requireSellerFrom: ReadonlySet<number> | null;
   requireBuyerFrom: ReadonlySet<number> | null;
@@ -195,7 +211,8 @@ function runOneAttempt(args: {
   if (buyerCandidates.length === 0) return;
   const buyerId = world.rng.pick(buyerCandidates);
 
-  // Trust gate — buyer won't even sit down with a chronic defaulter.
+  // Trust gate — buyer won't even sit down with a chronic defaulter
+  // they've been burned by themselves.
   const trust = getTrust(world.db, buyerId, sellerId);
   if (trust.score <= args.trustGatingThreshold) {
     world.events.emit({
@@ -204,6 +221,30 @@ function runOneAttempt(args: {
       sellerActorId: sellerId,
       buyerActorId: buyerId,
       trustScore: trust.score,
+    });
+    return;
+  }
+
+  // Rep gate — even without a first-hand trust dent, a warning passed
+  // through the rumour mill might be enough to walk away. We honour
+  // warm rep leads within a hop ceiling (deep-hops are too mangled to
+  // trust), with damage at or above the configured threshold.
+  const rep = getRepLeadAbout(world.db, buyerId, sellerId);
+  if (
+    rep !== null &&
+    rep.confidence === "warm" &&
+    rep.hopCount <= args.repAbortMaxHops &&
+    rep.estimatedUnitPrice >= args.repAbortDamageThreshold
+  ) {
+    world.events.emit({
+      type: "pubdeal.skipped-rep",
+      at: clock,
+      locationId: locId,
+      sellerActorId: sellerId,
+      buyerActorId: buyerId,
+      repLeadId: rep.id,
+      damageOnLead: rep.estimatedUnitPrice,
+      hopCount: rep.hopCount,
     });
     return;
   }

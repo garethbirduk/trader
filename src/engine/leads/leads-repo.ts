@@ -1,12 +1,18 @@
 import type { DB } from "../core/db.js";
 import { isQualityTier, type QualityTier } from "../stock/types.js";
-import type { Lead, LeadConfidence, LeadSide } from "./types.js";
+import type { Lead, LeadConfidence, LeadKind, LeadSide } from "./types.js";
 
 export interface InsertLeadInput {
   readonly holderActorId: number;
+  /** Discriminator. Defaults to 'commodity' (legacy meaning). */
+  readonly kind?: LeadKind;
   readonly side: LeadSide;
-  readonly subjectItemKindId: number;
+  /** Required for commodity leads. Must be omitted/null on rep leads. */
+  readonly subjectItemKindId?: number | null;
   readonly subjectQualityTier?: QualityTier | null;
+  /** Required for rep leads (the actor the lead is *about*). Must be
+   *  omitted/null on commodity leads. */
+  readonly subjectTargetActorId?: number | null;
   readonly counterpartyActorId?: number | null;
   readonly estimatedQuantity: number;
   readonly estimatedUnitPrice: number;
@@ -21,9 +27,11 @@ export interface InsertLeadInput {
 interface LeadRow {
   id: number;
   holder_actor_id: number;
+  kind: string;
   side: string;
-  subject_item_kind_id: number;
+  subject_item_kind_id: number | null;
   subject_quality_tier: string | null;
+  subject_target_actor_id: number | null;
   counterparty_actor_id: number | null;
   estimated_qty: number;
   estimated_unit_price: number;
@@ -36,6 +44,9 @@ interface LeadRow {
 }
 
 function rowToLead(r: LeadRow): Lead {
+  if (r.kind !== "commodity" && r.kind !== "rep") {
+    throw new Error(`invalid lead kind: ${r.kind}`);
+  }
   if (r.side !== "supply" && r.side !== "demand") {
     throw new Error(`invalid lead side: ${r.side}`);
   }
@@ -48,9 +59,11 @@ function rowToLead(r: LeadRow): Lead {
   return {
     id: r.id,
     holderActorId: r.holder_actor_id,
+    kind: r.kind,
     side: r.side,
     subjectItemKindId: r.subject_item_kind_id,
     subjectQualityTier: r.subject_quality_tier as QualityTier | null,
+    subjectTargetActorId: r.subject_target_actor_id,
     counterpartyActorId: r.counterparty_actor_id,
     estimatedQuantity: r.estimated_qty,
     estimatedUnitPrice: r.estimated_unit_price,
@@ -67,20 +80,27 @@ export function insertLead(db: DB, input: InsertLeadInput): Lead {
   const result = db
     .prepare(
       `INSERT INTO leads
-        (holder_actor_id, side, subject_item_kind_id, subject_quality_tier,
-         counterparty_actor_id, estimated_qty, estimated_unit_price, confidence,
+        (holder_actor_id, kind, side,
+         subject_item_kind_id, subject_quality_tier,
+         subject_target_actor_id, counterparty_actor_id,
+         estimated_qty, estimated_unit_price, confidence,
          source_actor_id, acquired_day, hop_count, derived_from_lead_id,
          subject_pool_id)
        VALUES
-        (@holder, @side, @kind, @tier, @counterparty, @qty, @unit_price,
-         @confidence, @source, @acquired_day, @hop_count, @derived_from,
+        (@holder, @kind, @side,
+         @item_kind, @tier,
+         @target, @counterparty,
+         @qty, @unit_price, @confidence,
+         @source, @acquired_day, @hop_count, @derived_from,
          @pool)`,
     )
     .run({
       holder: input.holderActorId,
+      kind: input.kind ?? "commodity",
       side: input.side,
-      kind: input.subjectItemKindId,
+      item_kind: input.subjectItemKindId ?? null,
       tier: input.subjectQualityTier ?? null,
+      target: input.subjectTargetActorId ?? null,
       counterparty: input.counterpartyActorId ?? null,
       qty: input.estimatedQuantity,
       unit_price: input.estimatedUnitPrice,
@@ -113,7 +133,8 @@ export function getLeadsByHolder(db: DB, holderActorId: number): Lead[] {
 /**
  * Supply leads held by `actor` for a given item kind, ordered by hop_count
  * ascending (closest to source first), then warm-before-cold. Used by the
- * settlement walk to satisfy short obligations.
+ * settlement walk to satisfy short obligations. Only commodity leads — rep
+ * leads share the table but mean something else.
  */
 export function getSupplyLeadsForItem(
   db: DB,
@@ -124,11 +145,49 @@ export function getSupplyLeadsForItem(
     .prepare<LeadRow>(
       `SELECT * FROM leads
        WHERE holder_actor_id = @holder
+         AND kind = 'commodity'
          AND side = 'supply'
          AND subject_item_kind_id = @kind
        ORDER BY hop_count ASC, confidence ASC, id ASC`,
     )
     .all({ holder: holderActorId, kind: itemKindId })
+    .map(rowToLead);
+}
+
+/**
+ * The freshest rep lead `holderActorId` currently holds about
+ * `targetActorId`, or null if they hold none. "Freshest" means lowest
+ * hop count, warm-first within that. The narrative this powers:
+ * "Before I sit down with Boyce, what do I know about him?"
+ */
+export function getRepLeadAbout(
+  db: DB,
+  holderActorId: number,
+  targetActorId: number,
+): Lead | null {
+  const row = db
+    .prepare<LeadRow>(
+      `SELECT * FROM leads
+       WHERE holder_actor_id = @holder
+         AND kind = 'rep'
+         AND subject_target_actor_id = @target
+       ORDER BY hop_count ASC, confidence ASC, id DESC
+       LIMIT 1`,
+    )
+    .get({ holder: holderActorId, target: targetActorId });
+  return row ? rowToLead(row) : null;
+}
+
+/** All rep leads `holderActorId` currently holds, freshest first. */
+export function getRepLeadsBy(db: DB, holderActorId: number): Lead[] {
+  return db
+    .prepare<LeadRow>(
+      `SELECT * FROM leads
+       WHERE holder_actor_id = @holder
+         AND kind = 'rep'
+       ORDER BY hop_count ASC, confidence ASC, id DESC`,
+    )
+    .all({ holder: holderActorId })
     .map(rowToLead);
 }
 
@@ -195,14 +254,20 @@ export function decayLeads(
  */
 export interface ShareLeadMutator {
   (input: {
+    readonly kind: Lead["kind"];
     readonly side: Lead["side"];
     readonly subjectQualityTier: Lead["subjectQualityTier"];
+    readonly subjectTargetActorId: number | null;
+    readonly counterpartyActorId: number | null;
     readonly estimatedQuantity: number;
     readonly estimatedUnitPrice: number;
     readonly subjectPoolId: number | null;
   }): {
+    readonly kind: Lead["kind"];
     readonly side: Lead["side"];
     readonly subjectQualityTier: Lead["subjectQualityTier"];
+    readonly subjectTargetActorId: number | null;
+    readonly counterpartyActorId: number | null;
     readonly estimatedQuantity: number;
     readonly estimatedUnitPrice: number;
     readonly subjectPoolId: number | null;
@@ -242,30 +307,27 @@ export function shareLead(
     if (fromActorId === toActorId) {
       throw new Error(`cannot share a lead with oneself`);
     }
-    const transferred = opts?.mutate
-      ? opts.mutate({
-          side: source.side,
-          subjectQualityTier: source.subjectQualityTier,
-          estimatedQuantity: source.estimatedQuantity,
-          estimatedUnitPrice: source.estimatedUnitPrice,
-          subjectPoolId: source.subjectPoolId,
-        })
-      : {
-          side: source.side,
-          subjectQualityTier: source.subjectQualityTier,
-          estimatedQuantity: source.estimatedQuantity,
-          estimatedUnitPrice: source.estimatedUnitPrice,
-          // Crucially: the pool reference propagates through the gossip
-          // chain. Two retold leads pointing to the same pool reveal
-          // the over-count.
-          subjectPoolId: source.subjectPoolId,
-        };
+    const sourceFields = {
+      kind: source.kind,
+      side: source.side,
+      subjectQualityTier: source.subjectQualityTier,
+      subjectTargetActorId: source.subjectTargetActorId,
+      counterpartyActorId: source.counterpartyActorId,
+      estimatedQuantity: source.estimatedQuantity,
+      estimatedUnitPrice: source.estimatedUnitPrice,
+      // The pool reference propagates by default — two retold leads
+      // pointing at the same pool reveal the over-count.
+      subjectPoolId: source.subjectPoolId,
+    };
+    const transferred = opts?.mutate ? opts.mutate(sourceFields) : sourceFields;
     return insertLead(db, {
       holderActorId: toActorId,
+      kind: transferred.kind,
       side: transferred.side,
       subjectItemKindId: source.subjectItemKindId,
       subjectQualityTier: transferred.subjectQualityTier,
-      counterpartyActorId: source.counterpartyActorId,
+      subjectTargetActorId: transferred.subjectTargetActorId,
+      counterpartyActorId: transferred.counterpartyActorId,
       estimatedQuantity: transferred.estimatedQuantity,
       estimatedUnitPrice: transferred.estimatedUnitPrice,
       // Retold leads are hearsay — always cold from here on.
@@ -321,6 +383,7 @@ export function clarifyLead(
     .prepare<LeadRow>(
       `SELECT * FROM leads
        WHERE holder_actor_id = @holder
+         AND kind = 'commodity'
          AND side = @side
          AND subject_item_kind_id = @kind
          AND ((subject_quality_tier IS NULL AND @tier IS NULL)

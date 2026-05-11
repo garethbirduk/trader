@@ -22,9 +22,11 @@ export function toExchange(
     fromActorId,
     toActorId,
     lead: {
+      kind: lead.kind,
       side: lead.side,
       subjectItemKindId: lead.subjectItemKindId,
       subjectQualityTier: lead.subjectQualityTier,
+      subjectTargetActorId: lead.subjectTargetActorId,
       counterpartyActorId: lead.counterpartyActorId,
       estimatedQuantity: lead.estimatedQuantity,
       estimatedUnitPrice: lead.estimatedUnitPrice,
@@ -49,10 +51,12 @@ export function isLeadKnownTo(
   listenerLeads: readonly Lead[],
 ): boolean {
   for (const l of listenerLeads) {
+    if (l.kind !== speaker.kind) continue;
     if (
       l.side === speaker.side &&
       l.subjectItemKindId === speaker.subjectItemKindId &&
       l.subjectQualityTier === speaker.subjectQualityTier &&
+      l.subjectTargetActorId === speaker.subjectTargetActorId &&
       l.counterpartyActorId === speaker.counterpartyActorId &&
       l.estimatedQuantity === speaker.estimatedQuantity &&
       l.estimatedUnitPrice === speaker.estimatedUnitPrice

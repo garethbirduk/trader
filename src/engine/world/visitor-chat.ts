@@ -228,6 +228,8 @@ function runClarifications(args: {
     const heldLeads = getLeadsByHolder(world.db, askerId);
     const candidate = pickClarificationSubject(heldLeads, world);
     if (candidate === null) continue;
+    // Defensive — pickClarificationSubject only returns commodity leads.
+    if (candidate.subjectItemKindId === null) continue;
     try {
       const received = clarifyLead(
         world.db,
@@ -252,14 +254,17 @@ function runClarifications(args: {
   return out;
 }
 
-/** Warm-first, then most recently acquired. Null if the asker has nothing. */
+/** Warm-first, then most recently acquired. Null if the asker has
+ *  nothing to clarify. Rep leads are excluded — clarification is the
+ *  commodity-side mechanic. */
 function pickClarificationSubject(
   leads: readonly Lead[],
   world: World,
 ): Lead | null {
-  if (leads.length === 0) return null;
-  const warm = leads.filter((l) => l.confidence === "warm");
-  const pool = warm.length > 0 ? warm : leads;
+  const commodity = leads.filter((l) => l.kind === "commodity");
+  if (commodity.length === 0) return null;
+  const warm = commodity.filter((l) => l.confidence === "warm");
+  const pool = warm.length > 0 ? warm : commodity;
   // Lightweight "freshest of the warm bag" — sort by id descending and
   // RNG-pick from the top quarter so behaviour is stochastic without
   // being uniform.

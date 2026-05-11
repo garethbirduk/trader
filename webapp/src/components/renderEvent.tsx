@@ -261,6 +261,21 @@ export function renderEvent(
           {A(e.buyerActorId)} won't deal with {A(e.sellerActorId)} (trust {String(e.trustScore)})
         </>
       );
+    case "pubdeal.skipped-rep":
+      return (
+        <>
+          {A(e.buyerActorId)} clocks {A(e.sellerActorId)} and walks{" "}
+          <span className="muted">
+            (rep — hop {String(e.hopCount)}, £{String(e.damageOnLead)})
+          </span>
+        </>
+      );
+    case "rep.spawned":
+      return (
+        <>
+          {A(e.holderActorId)} learns: {A(e.subjectTargetActorId)} burned them for £{String(e.damage)}
+        </>
+      );
     case "gossip.exchanged": {
       const participants = (e.participantActorIds as readonly number[]) ?? [];
       const a = participants[0];

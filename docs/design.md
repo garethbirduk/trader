@@ -505,14 +505,25 @@ renderEvent) tags it accordingly. Player-driven "ask X about this"
 button on the ledger view is deferred until the player has a real
 interaction surface — the engine support is in place when that lands.
 
-**Stage 5 — reputation leads.**
-Warning leads about people as a sibling lead-kind. Brokers and
-counterparties consult own ledger before vouching / showing up. The
-"Bob walks into the Nag's and leaves" event.
-- Engine: lead-kind extension, broker check, counterparty check, new
-  abort-on-sight event.
-- Viewer: rep leads under the person view; the walk-out as a
-  scene-deck moment.
+**Stage 5 — reputation leads.** ✅ Done.
+Schema migration 019 extends the existing `leads` table with a `kind`
+discriminator (`commodity | rep`) and `subject_target_actor_id` (the
+actor a rep lead is *about*). For rep leads the numeric fields become
+severity (count of recorded offences) and £-damage; tier/item-kind go
+NULL. `Lead` type, `insertLead`, `shareLead`, novelty filter, and the
+mutator all became kind-aware. `mutation.ts` adds a rep-side flavour
+of role reversal — `subjectTargetActorId` ↔ `counterpartyActorId`
+swap, producing the cinematic "Boyce burned Trigger ↔ Trigger burned
+Boyce" mutation downchain. New handler `reputation-reactions.ts`
+spawns a rep lead on every `deal.defaulted`, emitting a companion
+`rep.spawned` event the viewer consumes for first-hand grievances.
+Pub-deal autonomy gained a rep-gate before the trust gate
+(`pubdeal.skipped-rep` event) — warm rep leads within a hop ceiling
+and above a damage threshold cause the would-be buyer to walk away.
+Viewer: new "Reputation" section in `ActorKnows`, diary/render/scene
+labels for the new events. Broker mechanics + the "Bob walks into
+the Nag's" cinematic moment are deferred to Stage 6 (named external
+producers).
 
 **Stage 6 — named external producers and consumers.**
 Trader Bob, Wholesaler Cyril, et al. as virtual actors attached to
@@ -558,15 +569,17 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 5 — reputation leads**. Spec above.
-   Add warning leads about *people* as a sibling lead-kind to the
-   commodity leads — same hop/confidence/decay machinery. Brokers
-   consult own ledger before vouching; counterparties consult theirs
-   before showing up at a venue. The cinematic moment — Bob walks
-   into the Nag's, clocks Del, walks out — is a new abort-on-sight
-   event that surfaces in the scene deck. Schema work: extend the
-   `leads` table (new `kind: "commodity" | "rep"` column, nullable
-   `subject_target_actor_id` for rep leads).
+3. Next engine work is **Stage 6 — named external producers and
+   consumers**. Spec above. Today's synthetic off-map account
+   becomes a roster of named "virtual" actors — Trader Bob (200
+   fair Nikes at £7/u), Wholesaler Cyril (takes Hi-Fi), etc. They
+   don't tick, but they own pools and are referenced by existing
+   leads via `counterpartyActorId`. The broker mechanic gates access
+   — you can transact with Bob through a relationship-holder, take a
+   multi-hour off-map trip, or pay the broker to bring him to the
+   Nag's for a face-to-face. The "Bob walks in, clocks Del, walks
+   back out" abort-on-sight event composes Stage 5's rep gate with
+   Stage 6's materialisation flow.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

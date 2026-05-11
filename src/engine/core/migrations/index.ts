@@ -17,6 +17,7 @@ import { m015LocationType } from "./015-location-type.js";
 import { m016ItemSize } from "./016-item-size.js";
 import { m017ActorLockup } from "./017-actor-lockup.js";
 import { m018AuctionDocket } from "./018-auction-docket.js";
+import { m019RepLeads } from "./019-rep-leads.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -42,4 +43,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m016ItemSize,
   m017ActorLockup,
   m018AuctionDocket,
+  m019RepLeads,
 ];

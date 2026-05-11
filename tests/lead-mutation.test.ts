@@ -34,8 +34,11 @@ describe("information mutation on every gossip hop", () => {
     it("disabled config returns the input verbatim", () => {
       const rng = createRNG("disabled");
       const input = {
+        kind: "commodity" as const,
         side: "supply" as const,
         subjectQualityTier: "good" as const,
+        subjectTargetActorId: null,
+        counterpartyActorId: null,
         estimatedQuantity: 50,
         estimatedUnitPrice: 8,
         subjectPoolId: 42,
@@ -54,8 +57,11 @@ describe("information mutation on every gossip hop", () => {
     it("numeric jitter is bounded and never drops below 1", () => {
       const rng = createRNG("jitter-bounds");
       const input = {
+        kind: "commodity" as const,
         side: "supply" as const,
         subjectQualityTier: null,
+        subjectTargetActorId: null,
+        counterpartyActorId: null,
         estimatedQuantity: 100,
         estimatedUnitPrice: 50,
         subjectPoolId: null,
@@ -79,8 +85,11 @@ describe("information mutation on every gossip hop", () => {
     it("tiny values can't underflow to zero or negative", () => {
       const rng = createRNG("floor");
       const input = {
+        kind: "commodity" as const,
         side: "supply" as const,
         subjectQualityTier: null,
+        subjectTargetActorId: null,
+        counterpartyActorId: null,
         estimatedQuantity: 1,
         estimatedUnitPrice: 1,
         subjectPoolId: null,
@@ -111,8 +120,11 @@ describe("information mutation on every gossip hop", () => {
         for (let i = 0; i < 50; i += 1) {
           const out = mutateLead(
             {
+              kind: "commodity",
               side: "supply",
               subjectQualityTier: tier,
+              subjectTargetActorId: null,
+              counterpartyActorId: null,
               estimatedQuantity: 10,
               estimatedUnitPrice: 5,
               subjectPoolId: 1,
@@ -141,8 +153,11 @@ describe("information mutation on every gossip hop", () => {
       for (let i = 0; i < 20; i += 1) {
         const out = mutateLead(
           {
+            kind: "commodity",
             side: "supply",
             subjectQualityTier: null,
+            subjectTargetActorId: null,
+            counterpartyActorId: null,
             estimatedQuantity: 1,
             estimatedUnitPrice: 1,
             subjectPoolId: null,
@@ -164,8 +179,11 @@ describe("information mutation on every gossip hop", () => {
       };
       const out = mutateLead(
         {
+          kind: "commodity",
           side: "supply",
           subjectQualityTier: "good",
+          subjectTargetActorId: null,
+          counterpartyActorId: null,
           estimatedQuantity: 10,
           estimatedUnitPrice: 5,
           subjectPoolId: 42,
@@ -175,6 +193,35 @@ describe("information mutation on every gossip hop", () => {
       );
       expect(out.side).toBe("demand");
       expect(out.subjectPoolId).toBeNull();
+    });
+
+    it("rep-lead role reversal swaps subject and counterparty", () => {
+      const rng = createRNG("rep-flip");
+      const config = {
+        quantityJitter: 0,
+        priceJitter: 0,
+        tierSlipChance: 0,
+        sideFlipChance: 1.0,
+      };
+      const out = mutateLead(
+        {
+          kind: "rep",
+          side: "supply",
+          subjectQualityTier: null,
+          subjectTargetActorId: 7, // "Boyce"
+          counterpartyActorId: 12, // "Trigger"
+          estimatedQuantity: 1,
+          estimatedUnitPrice: 200,
+          subjectPoolId: null,
+        },
+        rng,
+        config,
+      );
+      // Roles flip; side stays the same; pool grounding untouched (it's null
+      // for rep leads anyway).
+      expect(out.subjectTargetActorId).toBe(12);
+      expect(out.counterpartyActorId).toBe(7);
+      expect(out.side).toBe("supply");
     });
 
     it("no flip preserves the pool grounding", () => {
@@ -187,8 +234,11 @@ describe("information mutation on every gossip hop", () => {
       };
       const out = mutateLead(
         {
+          kind: "commodity",
           side: "supply",
           subjectQualityTier: "good",
+          subjectTargetActorId: null,
+          counterpartyActorId: null,
           estimatedQuantity: 10,
           estimatedUnitPrice: 5,
           subjectPoolId: 42,

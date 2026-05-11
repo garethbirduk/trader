@@ -40,6 +40,7 @@ import {
   type EconomicsConfig,
 } from "./economics/config.js";
 import { registerTrustReactions } from "./world/trust-reactions.js";
+import { registerReputationReactions } from "./world/reputation-reactions.js";
 import { registerPolicyHourTick } from "./world/policy-tick.js";
 import { registerPoolClaimAutonomy } from "./world/pool-claim-autonomy.js";
 import { listLocations } from "./locations/locations.js";
@@ -396,6 +397,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   // Trust/heat reactions are event-driven.
   registerTrustReactions(world);
   registerHeatReactions(world);
+  registerReputationReactions(world);
 
   // Day-scoped bookkeeping.
   registerLeadDecay(world);

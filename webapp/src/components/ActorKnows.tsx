@@ -18,9 +18,13 @@ interface Props {
 }
 
 interface ExchangedLead {
+  readonly kind: "commodity" | "rep";
   readonly side: "supply" | "demand";
-  readonly subjectItemKindId: number;
+  /** Null for rep leads. */
+  readonly subjectItemKindId: number | null;
   readonly subjectQualityTier: string | null;
+  /** Rep-only: the actor the lead is about. */
+  readonly subjectTargetActorId: number | null;
   readonly counterpartyActorId: number | null;
   readonly estimatedQuantity: number;
   readonly estimatedUnitPrice: number;
@@ -196,12 +200,54 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
     return out;
   }, [dump.events, actorId, day, hour]);
 
+  // Commodity-only stream feeds the existing timeline/item/person views.
+  // Rep leads use a separate surface (see `repRows` below).
+  const commodityRows = useMemo<readonly LearnedRow[]>(
+    () => allRows.filter((r) => r.lead.kind !== "rep"),
+    [allRows],
+  );
+
+  // Rep leads — both first-hand (the actor got burned themselves; spawned
+  // via `rep.spawned`) and gossip-received (via `gossip.exchanged`).
+  // Freshest first. Conflicts (two versions of "Boyce burned Trigger" /
+  // "Trigger burned Boyce") appear as two rows because we don't dedup —
+  // exactly what the design wants.
+  const repRows = useMemo<readonly LearnedRow[]>(() => {
+    const fromGossip = allRows.filter((r) => r.lead.kind === "rep");
+    const fromFirstHand: LearnedRow[] = [];
+    for (const e of dump.events) {
+      if (e.type !== "rep.spawned") continue;
+      if ((e.holderActorId as number) !== actorId) continue;
+      if (e.at.day > day || (e.at.day === day && e.at.hour > hour)) continue;
+      fromFirstHand.push({
+        day: e.at.day,
+        hour: e.at.hour,
+        fromActorId: actorId, // first-hand grievance, the holder is the source
+        atLocationId: 0,
+        lead: {
+          kind: "rep",
+          side: "supply",
+          subjectItemKindId: null,
+          subjectQualityTier: null,
+          subjectTargetActorId: e.subjectTargetActorId as number,
+          counterpartyActorId: e.counterpartyActorId as number,
+          estimatedQuantity: 1,
+          estimatedUnitPrice: e.damage as number,
+          confidence: "warm",
+          hopCount: 0,
+          sourceActorId: null,
+        },
+      });
+    }
+    return [...fromGossip, ...fromFirstHand].sort(cmpRows);
+  }, [allRows, dump.events, actorId, day, hour]);
+
   // Timeline: first-time-learned for each distinct subject, newest first.
   // Matches the previous behaviour — useful for "what's new lately?"
   const timelineRows = useMemo<readonly LearnedRow[]>(() => {
     const seen = new Set<string>();
     const out: LearnedRow[] = [];
-    for (const r of allRows) {
+    for (const r of commodityRows) {
       const k = subjectKey(r.lead);
       if (seen.has(k)) continue;
       seen.add(k);
@@ -209,12 +255,13 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
     }
     out.reverse();
     return out;
-  }, [allRows]);
+  }, [commodityRows]);
 
   // By item: group by (item, tier), split into supply vs demand within.
   const itemGroups = useMemo<readonly ItemGroup[]>(() => {
     const byKey = new Map<string, ItemGroup>();
-    for (const r of allRows) {
+    for (const r of commodityRows) {
+      if (r.lead.subjectItemKindId === null) continue;
       const k = `${r.lead.subjectItemKindId}|${r.lead.subjectQualityTier ?? "_"}`;
       let g = byKey.get(k);
       if (g === undefined) {
@@ -244,12 +291,12 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
       return an.localeCompare(bn);
     });
     return groups;
-  }, [allRows, dump.items]);
+  }, [commodityRows, dump.items]);
 
   // By person (subject = the counterparty the leads are *about*).
   const personGroups = useMemo<readonly PersonGroup[]>(() => {
     const byKey = new Map<string, PersonGroup>();
-    for (const r of allRows) {
+    for (const r of commodityRows) {
       const k = r.lead.counterpartyActorId === null
         ? "_null"
         : String(r.lead.counterpartyActorId);
@@ -274,11 +321,11 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
       return an.localeCompare(bn);
     });
     return groups;
-  }, [allRows, dump.actors]);
+  }, [commodityRows, dump.actors]);
 
   const totalDistinctFacts = timelineRows.length;
 
-  if (totalDistinctFacts === 0 && lotRows.length === 0) {
+  if (totalDistinctFacts === 0 && lotRows.length === 0 && repRows.length === 0) {
     return (
       <div className="side-lower-empty muted">
         Nothing yet — nothing new learned by this point.
@@ -320,6 +367,68 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
           </nav>
         ) : null}
       </header>
+
+      {repRows.length > 0 ? (
+        <>
+          <div className="profile-section-label">Reputation</div>
+          <ul>
+            {repRows.map((r, i) => {
+              const targetId = r.lead.subjectTargetActorId;
+              const victimId = r.lead.counterpartyActorId;
+              return (
+                <li key={`rep-${i}`} className="knows-row">
+                  <div className="knows-stamp-line">
+                    <span className="knows-stamp">
+                      D{pad(r.day)} {pad(r.hour)}:00
+                    </span>
+                    <span className="knows-body">
+                      {targetId !== null ? (
+                        <ActorRef
+                          dump={dump}
+                          id={targetId}
+                          onSelect={onSelect}
+                          variant="chip"
+                          size={14}
+                        />
+                      ) : (
+                        <span className="muted">?</span>
+                      )}{" "}
+                      burned{" "}
+                      {victimId !== null ? (
+                        <ActorRef
+                          dump={dump}
+                          id={victimId}
+                          onSelect={onSelect}
+                          variant="chip"
+                          size={14}
+                        />
+                      ) : (
+                        <span className="muted">someone</span>
+                      )}{" "}
+                      <span className="muted">
+                        for £{r.lead.estimatedUnitPrice} · {r.lead.confidence} ·
+                        hop {r.lead.hopCount}
+                      </span>
+                      {r.fromActorId !== actorId ? (
+                        <>
+                          {" "}
+                          <span className="muted">from</span>{" "}
+                          <ActorChip
+                            dump={dump}
+                            actorId={r.fromActorId}
+                            onSelect={onSelect}
+                            size={14}
+                          />
+                        </>
+                      ) : null}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : null}
 
       {lotRows.length > 0 ? (
         <>
@@ -673,7 +782,7 @@ function SubgroupRows({
                   <StockValue divergent={conflict?.qtyVaries}>
                     {r.lead.estimatedQuantity}
                   </StockValue>{" "}
-                  {showItem ? (
+                  {showItem && r.lead.subjectItemKindId !== null ? (
                     <ItemRef
                       dump={dump}
                       id={r.lead.subjectItemKindId}
