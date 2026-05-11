@@ -77,12 +77,22 @@ export type LocationType =
   | "street"
   | "abstract";
 
+export interface RunOpenSession {
+  readonly daysOfWeek: readonly number[];
+  readonly start: number;
+  readonly end: number;
+}
+
 export interface RunLocation {
   readonly id: number;
   readonly code: string;
   readonly displayName: string;
   readonly type?: LocationType;
   readonly openHours?: { start: number; end: number } | null;
+  /** Day-aware schedule. Multiple sessions, each applying to a set of
+   *  weekdays. `end > 24` means the session wraps past midnight. When
+   *  set, this is the canonical schedule for visual open/closed. */
+  readonly openSessions?: readonly RunOpenSession[];
 }
 
 export interface RunTally {

@@ -91,6 +91,11 @@ export interface SkinSeedResult {
   readonly flexibleDailyModeActorIds: readonly number[];
   /** Location code → id map. Skins use codes; engine uses ids. */
   readonly locationByCode: ReadonlyMap<string, number>;
+  /** Location code → normalised opening schedule (one or more
+   *  per-day-group sessions). Only present for locations with explicit
+   *  scheduling data — absent codes fall back to the engine's
+   *  `openHours` plus a type-based weekend heuristic in the viewer. */
+  readonly openSessionsByCode: ReadonlyMap<string, readonly OpenSession[]>;
   /** Hour from which the paper is on the table at Sid's. */
   readonly paperFromHour: number;
   /** Hour from which the listing is on display at Sotheby's. */
@@ -168,35 +173,79 @@ interface LocationSpec {
   readonly code: string;
   readonly displayName: string;
   readonly type: LocationType;
+  /** Engine-facing single-window opening hours. Used by the engine
+   *  planner's candidate filtering (an actor won't be scheduled into
+   *  a closed venue). For locations with day-varying hours this is
+   *  the conservative outer envelope; the per-day truth lives in
+   *  `openSessions`. */
   readonly openHours?: { readonly start: number; readonly end: number };
+  /** Days of the week the location is open at its `openHours`.
+   *  1=Mon..7=Sun. Shortcut for the common case of "same hours every
+   *  open day". When unset, falls back to a type-based heuristic in
+   *  the viewer (auction + business close weekends). */
+  readonly openDaysOfWeek?: readonly number[];
+  /** Multiple per-day-group sessions, for venues with different hours
+   *  on different days (e.g. clubs that open late on Fri/Sat). When
+   *  set, this is the canonical schedule; openHours/openDaysOfWeek
+   *  are ignored for viewer-side open/closed decisions. */
+  readonly openSessions?: readonly OpenSession[];
 }
+
+/** One opening window on a set of weekdays. `end > 24` means the
+ *  session continues past midnight into the next day (e.g. a Friday
+ *  19→02 club night runs as { daysOfWeek: [5], start: 19, end: 26 }
+ *  and the small-hours portion is attributed to Friday's session,
+ *  not Saturday's). */
+export interface OpenSession {
+  readonly daysOfWeek: readonly number[];
+  readonly start: number;
+  readonly end: number;
+}
+
+const DAYS_MON_FRI: readonly number[] = [1, 2, 3, 4, 5];
+const DAYS_MON_SAT: readonly number[] = [1, 2, 3, 4, 5, 6];
+const DAYS_MON_SUN: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
+const DAYS_THU_SUN: readonly number[] = [4, 5, 6, 7];
+const DAYS_SUN_THU: readonly number[] = [7, 1, 2, 3, 4];
+const DAYS_FRI_SAT: readonly number[] = [5, 6];
 
 const LOCATIONS: readonly LocationSpec[] = [
   // Original cast's spaces.
   { code: "peckham-flat", displayName: "Del's Flat", type: "home" },
   { code: "lockup", displayName: "The Lock-up", type: "business", openHours: { start: 8, end: 20 } },
-  { code: "nags", displayName: "The Nag's Head", type: "pub", openHours: { start: 11, end: 23 } },
+  { code: "nags", displayName: "The Nag's Head", type: "pub", openHours: { start: 11, end: 23 }, openDaysOfWeek: DAYS_MON_SUN },
   { code: "auction-house", displayName: "Sotheby's", type: "auction", openHours: { start: 8, end: 17 } },
-  { code: "boyce-auto-sales", displayName: "Boyce Autos", type: "business", openHours: { start: 9, end: 18 } },
+  { code: "boyce-auto-sales", displayName: "Boyce Autos", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_SAT },
   { code: "transworld-depot", displayName: "Transworld Depot", type: "business", openHours: { start: 6, end: 18 } },
   { code: "lambeth-council-yard", displayName: "Council Yard", type: "civic", openHours: { start: 6, end: 17 } },
   // Added from the wider canon.
-  { code: "peckham-market", displayName: "Peckham Market", type: "business", openHours: { start: 8, end: 14 } },
-  { code: "sids-cafe", displayName: "Sid's Café", type: "business", openHours: { start: 6, end: 17 } },
+  { code: "peckham-market", displayName: "Peckham Market", type: "business", openHours: { start: 8, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
+  { code: "sids-cafe", displayName: "Sid's Café", type: "business", openHours: { start: 6, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
   { code: "boycie-house", displayName: "Boycie's", type: "home" },
   { code: "denzil-house", displayName: "Denzil's", type: "home" },
-  { code: "one-eleven-club", displayName: "The 111 Club", type: "pub", openHours: { start: 12, end: 24 } },
+  {
+    code: "one-eleven-club",
+    displayName: "The 111 Club",
+    type: "pub",
+    // Engine envelope: 19→02 covers the late nights; planner sees a
+    // single span. Truth is the openSessions below.
+    openHours: { start: 19, end: 26 },
+    openSessions: [
+      { daysOfWeek: DAYS_SUN_THU, start: 19, end: 23 },
+      { daysOfWeek: DAYS_FRI_SAT, start: 19, end: 26 },
+    ],
+  },
   { code: "starlight-rooms", displayName: "Starlight Rooms", type: "pub", openHours: { start: 20, end: 26 } },
   { code: "police-station", displayName: "The Nick", type: "civic" },
-  { code: "post-office", displayName: "Post Office", type: "civic", openHours: { start: 8, end: 17 } },
-  { code: "betting-shop", displayName: "The Bookies", type: "business", openHours: { start: 9, end: 18 } },
+  { code: "post-office", displayName: "Post Office", type: "civic", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "betting-shop", displayName: "The Bookies", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "shamrock-club", displayName: "Shamrock Club", type: "pub", openHours: { start: 19, end: 26 } },
-  { code: "dirty-barrys", displayName: "Dirty Barry's", type: "business", openHours: { start: 11, end: 20 } },
+  { code: "dirty-barrys", displayName: "Dirty Barry's", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "raquel-flat", displayName: "Raquel's", type: "home" },
-  { code: "cassandra-bank", displayName: "The Bank", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "parry-printers", displayName: "Parry Print", type: "business", openHours: { start: 8, end: 18 } },
+  { code: "cassandra-bank", displayName: "The Bank", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "parry-printers", displayName: "Parry Print", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "trigger-flat", displayName: "Trigger's", type: "home" },
-  { code: "albert-legion", displayName: "The Legion", type: "pub", openHours: { start: 11, end: 23 } },
+  { code: "albert-legion", displayName: "The Legion", type: "pub", openHours: { start: 12, end: 21 }, openDaysOfWeek: DAYS_THU_SUN },
   { code: "mickey-jevon-flat", displayName: "Mickey & Jevon's", type: "home" },
   { code: "cassandra-flat", displayName: "Cassandra's", type: "home" },
   { code: "parry-house", displayName: "Parry's", type: "home" },
@@ -205,16 +254,16 @@ const LOCATIONS: readonly LocationSpec[] = [
   // ─── high-street shops (sell-direct destinations for dealers) ──────
   // Two of each type to foster choice and competition. Each runs 9-17;
   // their shopkeeper lives off-map and is at the shop during these hours.
-  { code: "goldfingers", displayName: "Goldfingers", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "ratners-peckham", displayName: "Ratners of Peckham", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "patels", displayName: "Patel's Newsagent", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "corner-shop", displayName: "The Corner Shop", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "wooden-soldier", displayName: "Wooden Soldier", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "toyland", displayName: "Toyland", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "sparks-electrical", displayName: "Sparks Electrical", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "hi-tech-hut", displayName: "Hi-Tech Hut", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "comfy-corner", displayName: "Comfy Corner", type: "business", openHours: { start: 9, end: 17 } },
-  { code: "throne-co", displayName: "Throne & Co", type: "business", openHours: { start: 9, end: 17 } },
+  { code: "goldfingers", displayName: "Goldfingers", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "ratners-peckham", displayName: "Ratners of Peckham", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "patels", displayName: "Patel's Newsagent", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "corner-shop", displayName: "The Corner Shop", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "wooden-soldier", displayName: "Wooden Soldier", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "toyland", displayName: "Toyland", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "sparks-electrical", displayName: "Sparks Electrical", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "hi-tech-hut", displayName: "Hi-Tech Hut", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "comfy-corner", displayName: "Comfy Corner", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  { code: "throne-co", displayName: "Throne & Co", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
 ];
 
 /**
@@ -1165,6 +1214,7 @@ export function seedPlaceholderSkin(
 
   // Locations.
   const locByCode = new Map<string, number>();
+  const openSessionsByCode = new Map<string, readonly OpenSession[]>();
   for (const spec of LOCATIONS) {
     const loc = insertLocation(db, {
       code: spec.code,
@@ -1173,6 +1223,24 @@ export function seedPlaceholderSkin(
       openHours: spec.openHours ?? null,
     });
     locByCode.set(spec.code, loc.id);
+    // Normalise scheduling info into openSessions: explicit
+    // openSessions wins; otherwise build one from openHours +
+    // openDaysOfWeek if either is present; otherwise leave the map
+    // empty for this code (viewer falls back to the type heuristic).
+    if (spec.openSessions !== undefined) {
+      openSessionsByCode.set(spec.code, spec.openSessions);
+    } else if (
+      spec.openHours !== undefined &&
+      spec.openDaysOfWeek !== undefined
+    ) {
+      openSessionsByCode.set(spec.code, [
+        {
+          daysOfWeek: spec.openDaysOfWeek,
+          start: spec.openHours.start,
+          end: spec.openHours.end,
+        },
+      ]);
+    }
   }
 
   // Items. Track everyday item ids so we can seed starter stock from
@@ -1477,6 +1545,7 @@ export function seedPlaceholderSkin(
     marketSellerActorIds,
     flexibleDailyModeActorIds,
     locationByCode: locByCode,
+    openSessionsByCode,
     runLengthDays,
     tradingActorIds,
     economics,

@@ -179,6 +179,16 @@ export interface RunDump {
     displayName: string;
     type: string;
     openHours: { start: number; end: number } | null;
+    /** Day-aware opening schedule. Set when the skin specifies more
+     *  than just openHours (e.g. Mon-Fri shops, late-night clubs).
+     *  Each session lists the weekdays (1=Mon..7=Sun) it applies to
+     *  and its hour window; `end > 24` means the session continues
+     *  past midnight into the next day. */
+    openSessions?: readonly {
+      daysOfWeek: readonly number[];
+      start: number;
+      end: number;
+    }[];
   }[];
   readonly snapshots: readonly DaySnapshot[];
   readonly playerActorId: number;
@@ -476,13 +486,19 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
       isEasterEgg: it.isEasterEgg,
       flavourText: it.flavourText,
     })),
-    locations: listLocations(db).map((l) => ({
-      id: l.id,
-      code: l.code,
-      displayName: l.displayName,
-      type: l.type,
-      openHours: l.openHours,
-    })),
+    locations: listLocations(db).map((l) => {
+      const sessions = skin.openSessionsByCode.get(l.code);
+      const base = {
+        id: l.id,
+        code: l.code,
+        displayName: l.displayName,
+        type: l.type,
+        openHours: l.openHours,
+      };
+      return sessions !== undefined && sessions.length > 0
+        ? { ...base, openSessions: sessions }
+        : base;
+    }),
     snapshots,
     playerActorId: skin.playerActorId,
     auctionHouseActorId: skin.auctionHouseActorId,
