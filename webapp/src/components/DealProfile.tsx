@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { DaySnapshot, RunDump } from "../types.js";
+import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
 
@@ -26,6 +26,20 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
     }
     return null;
   }, [snapshot, dump.snapshots, dealId]);
+
+  // Where the deal was struck — for pub-deals, this is the pub the
+  // negotiation happened in (also the eventual drop location, by
+  // `attemptPubDeal`'s convention). Pulled from the `pubdeal.agreed`
+  // event since the deal record itself doesn't carry it separately.
+  const struckAtLocationId = useMemo<number | null>(() => {
+    for (const e of dump.events as readonly RunEvent[]) {
+      if (e.type !== "pubdeal.agreed") continue;
+      if ((e.dealId as number) !== dealId) continue;
+      const locId = e.locationId as number | null | undefined;
+      return typeof locId === "number" ? locId : null;
+    }
+    return null;
+  }, [dump.events, dealId]);
 
   if (deal === null) {
     return <div className="empty-state">deal {dealId} not found</div>;
@@ -71,7 +85,35 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
         <dd className={day > deal.deadlineDay && deal.state === "agreed" ? "warn" : ""}>
           D{deal.deadlineDay}
         </dd>
-        {deal.deliveryLocationId !== null ? (
+        {struckAtLocationId !== null ? (
+          <>
+            <dt>Struck at</dt>
+            <dd>
+              <LocationRef
+                dump={dump}
+                id={struckAtLocationId}
+                onSelect={onSelect}
+                variant="chip"
+                size={16}
+              />
+            </dd>
+          </>
+        ) : null}
+        {deal.deliveryLocationId !== null &&
+        deal.deliveryLocationId !== struckAtLocationId ? (
+          <>
+            <dt>Drop</dt>
+            <dd>
+              <LocationRef
+                dump={dump}
+                id={deal.deliveryLocationId}
+                onSelect={onSelect}
+                variant="chip"
+                size={16}
+              />
+            </dd>
+          </>
+        ) : deal.deliveryLocationId !== null && struckAtLocationId === null ? (
           <>
             <dt>Drop</dt>
             <dd>
