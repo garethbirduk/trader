@@ -63,6 +63,49 @@ describe("sql.js DB adapter", () => {
     expect(rows.map((r) => r.v)).toEqual([1]);
   });
 
+  it("nested transactions use SAVEPOINTs (no 'transaction within a transaction' error)", async () => {
+    // Regression: settleDeal wraps in db.transaction() and internally
+    // calls transferStockUnits / claimFromPool / adjustTrust which also
+    // wrap. Before this fix, the sql.js adapter issued raw BEGIN and
+    // SQLite threw "cannot start a transaction within a transaction"
+    // — the error then leaked out as a defaulted deal's reason in
+    // live mode.
+    db = await openSqlJsDB();
+    db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v INTEGER NOT NULL)");
+    db.transaction(() => {
+      db!.prepare("INSERT INTO t (v) VALUES (@v)").run({ v: 1 });
+      db!.transaction(() => {
+        db!.prepare("INSERT INTO t (v) VALUES (@v)").run({ v: 2 });
+      });
+      db!.prepare("INSERT INTO t (v) VALUES (@v)").run({ v: 3 });
+    });
+    const rows = db
+      .prepare<{ v: number }>("SELECT v FROM t ORDER BY v ASC")
+      .all();
+    expect(rows.map((r) => r.v)).toEqual([1, 2, 3]);
+  });
+
+  it("inner transaction rollback doesn't break outer commit", async () => {
+    db = await openSqlJsDB();
+    db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v INTEGER NOT NULL)");
+    db.transaction(() => {
+      db!.prepare("INSERT INTO t (v) VALUES (@v)").run({ v: 1 });
+      try {
+        db!.transaction(() => {
+          db!.prepare("INSERT INTO t (v) VALUES (@v)").run({ v: 99 });
+          throw new Error("nope");
+        });
+      } catch {
+        // swallow — outer transaction continues
+      }
+      db!.prepare("INSERT INTO t (v) VALUES (@v)").run({ v: 2 });
+    });
+    const rows = db
+      .prepare<{ v: number }>("SELECT v FROM t ORDER BY v ASC")
+      .all();
+    expect(rows.map((r) => r.v)).toEqual([1, 2]);
+  });
+
   it("returns lastInsertRowid for inserts", async () => {
     db = await openSqlJsDB();
     db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)");
@@ -87,4 +130,22 @@ describe("sql.js DB adapter", () => {
     world.runToCompletion();
     expect(world.isFinished()).toBe(true);
   }, 30_000);
+
+  it("a full multi-day run produces no transaction-driver errors", async () => {
+    // Settlements call into transferStockUnits / claimFromPool /
+    // trust-reactions which all wrap themselves in db.transaction.
+    // The 2-day smoke isn't long enough to exercise that nesting —
+    // here we run long enough to hit it and assert no deal defaulted
+    // with a driver-internal reason.
+    db = await openSqlJsDB();
+    const { world } = setupWorld(db, { seed: "sqljs-tx", runLengthDays: 7 });
+    const driverErrors: string[] = [];
+    world.events.subscribe((e) => {
+      if (e.type === "deal.defaulted" && /transaction/i.test(e.reason)) {
+        driverErrors.push(e.reason);
+      }
+    });
+    world.runToCompletion();
+    expect(driverErrors).toEqual([]);
+  }, 60_000);
 });

@@ -78,6 +78,14 @@ function makeAdapter(native: SqlJsDatabase): DB {
   // same underlying Statement.
   const prepared = new Map<string, SqlJsStatement>();
 
+  // Nesting depth for `transaction()`. The outermost call uses BEGIN /
+  // COMMIT / ROLLBACK; inner calls use SAVEPOINT / RELEASE / ROLLBACK
+  // TO — same behaviour as better-sqlite3's `.transaction()`. Engine
+  // code routinely nests (e.g. settleDeal opens a transaction and
+  // internally calls transferStockUnits which also opens one) and
+  // relied on this without realising.
+  let txDepth = 0;
+
   function getOrPrepare(sql: string): SqlJsStatement {
     let stmt = prepared.get(sql);
     if (stmt === undefined) {
@@ -139,14 +147,37 @@ function makeAdapter(native: SqlJsDatabase): DB {
     },
 
     transaction<T>(fn: () => T): T {
-      native.run("BEGIN");
+      if (txDepth === 0) {
+        native.run("BEGIN");
+        txDepth = 1;
+        try {
+          const result = fn();
+          native.run("COMMIT");
+          return result;
+        } catch (err) {
+          // Roll back the whole stack — SAVEPOINT-level rollbacks
+          // inside fn would have already unwound by the time we get
+          // here if the inner caller handled them. Anything still
+          // wrapped is now discarded.
+          native.run("ROLLBACK");
+          throw err;
+        } finally {
+          txDepth = 0;
+        }
+      }
+      const sp = `trader_sp_${txDepth}`;
+      native.run(`SAVEPOINT ${sp}`);
+      txDepth += 1;
       try {
         const result = fn();
-        native.run("COMMIT");
+        native.run(`RELEASE ${sp}`);
         return result;
       } catch (err) {
-        native.run("ROLLBACK");
+        native.run(`ROLLBACK TO ${sp}`);
+        native.run(`RELEASE ${sp}`);
         throw err;
+      } finally {
+        txDepth -= 1;
       }
     },
 
