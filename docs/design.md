@@ -8,7 +8,9 @@ player is one actor among many; the world runs whether anyone is
 watching or not.
 
 This document describes what is currently built. The "Planned work"
-section at the end is a placeholder for the milestone plan.
+section at the end is a placeholder for the milestone plan. For the
+player-facing description of how the game *plays*, see
+[game.md](game.md).
 
 ## Repo layout
 
@@ -525,15 +527,30 @@ labels for the new events. Broker mechanics + the "Bob walks into
 the Nag's" cinematic moment are deferred to Stage 6 (named external
 producers).
 
-**Stage 6 — named external producers and consumers.**
-Trader Bob, Wholesaler Cyril, et al. as virtual actors attached to
-pools. Pool `provenance` field for narrative. Broker-or-direct access.
-Producer personalities (small profile, 5–6 axes). Temporary
-materialisation when a face-to-face is brokered.
-- Engine: virtual-actor flag, broker mechanic, optional
-  materialisation, provenance on pools.
-- Viewer: external-actor pages, broker-fee surface, materialisation
-  events.
+**Stage 6 — named external producers and consumers.** ✅ Done (6a).
+Migration 020 adds `actors.is_virtual`, `world_pools.owner_actor_id`
+(FK actors), and `world_pools.provenance` (TEXT). Virtual actors
+don't tick — no routine, no location, no policy — but they own
+pools and are named on every supply lead about their stock.
+Placeholder skin seeds four producers (Trader Bob, Wholesaler Cyril,
+Reggie's Estate, Salvage Sid) covering all 11 categories between
+them; each carries a broker list of local actors and a phrase bank
+for provenance. Pool spawner consults `virtualProducersByCategory`:
+when a category is covered, the new pool is attributed to a chosen
+producer, reachability is the producer's broker list, and a random
+provenance phrase is attached. Broker-gating is enforced naturally
+by the existing `pool_reachability` + `isReachableBy` check in
+`claimFromPool` — non-brokers get `PoolUnreachableError`.
+Supply-lead seeding now sets `counterpartyActorId` to the producer
+when the pool is owned, so gossip about Bob's vacuums names Bob.
+Viewer: virtual-producer profile (owned pools + brokers +
+provenance phrase bank), "Source" + "Provenance" rows on
+PoolProfile, "Brokered by" relabel, "virtual-producer" role tag
+in the sidebar filter.
+Stage 6b (deferred): materialisation — a broker brings their
+producer to the Nag's for an hour for face-to-face access, with
+the Stage 5 rep-gate composing as the "Bob walks in, clocks Del,
+walks out" abort-on-sight moment.
 
 **Stage 7 — boundary unification + auction always-on.**
 Unify the "outside Peckham" ledger node. Regional-clearance lot
@@ -569,17 +586,15 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 6 — named external producers and
-   consumers**. Spec above. Today's synthetic off-map account
-   becomes a roster of named "virtual" actors — Trader Bob (200
-   fair Nikes at £7/u), Wholesaler Cyril (takes Hi-Fi), etc. They
-   don't tick, but they own pools and are referenced by existing
-   leads via `counterpartyActorId`. The broker mechanic gates access
-   — you can transact with Bob through a relationship-holder, take a
-   multi-hour off-map trip, or pay the broker to bring him to the
-   Nag's for a face-to-face. The "Bob walks in, clocks Del, walks
-   back out" abort-on-sight event composes Stage 5's rep gate with
-   Stage 6's materialisation flow.
+3. Next engine work is **Stage 6b — broker materialisation**, or
+   one of the asymmetry-punch-list items (design.md:418–448). The
+   materialisation path turns the broker's relationship into an
+   action: spend the broker fee and an hour at the pub, the virtual
+   producer gets a temporary `current_location_id`, and any actor
+   present can pubdeal with them for that window. Stage 5's rep
+   gate composes naturally — if Bob's rep ledger says Del burned
+   him, Bob walks back out. A new "broker.materialised" event
+   surfaces the cinematic moment in the scene deck.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

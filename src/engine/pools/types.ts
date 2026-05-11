@@ -13,6 +13,14 @@ export interface WorldPool {
   readonly closingUnitPrice: number;
   readonly dumpDestination: DumpDestination;
   readonly flushedDay: number | null;
+  /** Named external producer behind the pool, if any. Null for
+   *  ambient pools (no story, no broker gate beyond the legacy
+   *  reachability set). */
+  readonly ownerActorId: number | null;
+  /** One-line narrative attached to the pool: "estate clearance in
+   *  Bromley", "fell off a lorry on the A2". Surfaced in the
+   *  viewer's pool profile and on supply-lead descriptions. */
+  readonly provenance: string | null;
 }
 
 /**

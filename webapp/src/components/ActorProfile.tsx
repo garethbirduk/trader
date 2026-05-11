@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
+import type { Selection } from "../App.js";
 import { Avatar } from "./Avatar.js";
+import { ActorRef, ItemRef, PoolRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -8,12 +10,35 @@ interface Props {
   readonly hour: number;
   readonly snapshot: DaySnapshot | null;
   readonly actorId: number;
+  readonly onSelect?: ((s: Selection) => void) | undefined;
 }
 
-export function ActorProfile({ dump, day, hour, snapshot, actorId }: Props) {
+export function ActorProfile({
+  dump,
+  day,
+  hour,
+  snapshot,
+  actorId,
+  onSelect,
+}: Props) {
   const actor = dump.actors.find((a) => a.id === actorId);
   if (actor === undefined) return null;
   const isPlayer = actor.id === dump.playerActorId;
+  const isVirtual = actor.isVirtual === true;
+
+  // Stage 6 — virtual external producer. They don't tick, hold no
+  // stock, attend no deals. Render the compact "who-I-am" panel:
+  // owned pools + the brokers who can reach them.
+  if (isVirtual) {
+    return (
+      <VirtualActorProfile
+        dump={dump}
+        snapshot={snapshot}
+        actor={actor}
+        onSelect={onSelect}
+      />
+    );
+  }
 
   const sa = snapshot?.actors.find((a) => a.id === actorId) ?? null;
   const cash = sa?.cash ?? actor.cash;
@@ -153,6 +178,135 @@ export function ActorProfile({ dump, day, hour, snapshot, actorId }: Props) {
         ) : null}
         <dt>Reachable pools</dt>
         <dd>{reachablePools}</dd>
+      </dl>
+    </section>
+  );
+}
+
+function VirtualActorProfile({
+  dump,
+  snapshot,
+  actor,
+  onSelect,
+}: {
+  readonly dump: RunDump;
+  readonly snapshot: DaySnapshot | null;
+  readonly actor: RunDump["actors"][number];
+  readonly onSelect?: ((s: Selection) => void) | undefined;
+}) {
+  const ownedPools = useMemo(() => {
+    if (snapshot === null) return [];
+    return snapshot.pools.filter(
+      (p) => p.ownerActorId === actor.id && p.flushedDay === null,
+    );
+  }, [snapshot, actor.id]);
+
+  // Union of brokers across this producer's currently-live owned pools.
+  // The Stage 6 design treats the broker set as a per-producer property
+  // even though it's stored per-pool, so this groups cleanly.
+  const brokerIds = useMemo(() => {
+    const s = new Set<number>();
+    for (const p of ownedPools) {
+      for (const aid of p.reachableBy) s.add(aid);
+    }
+    return [...s].sort((a, b) => a - b);
+  }, [ownedPools]);
+
+  // Provenance phrases used across this producer's live pools — duplicates
+  // are dropped so the panel reads as a phrase bank, not a duplicate list.
+  const phrases = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of ownedPools) {
+      if (p.provenance) s.add(p.provenance);
+    }
+    return [...s];
+  }, [ownedPools]);
+
+  return (
+    <section className="actor-profile actor-profile-virtual">
+      <header className="profile-head">
+        <Avatar
+          name={actor.displayName}
+          code={actor.code}
+          isPlayer={false}
+          size={42}
+        />
+        <div className="profile-title">
+          <div className="profile-name">{actor.displayName}</div>
+          <div className="profile-code muted">
+            {actor.code} ·{" "}
+            <span className="badge badge-virtual">virtual producer</span>
+          </div>
+        </div>
+      </header>
+      <dl className="profile-stats">
+        <dt>Live pools</dt>
+        <dd>
+          {ownedPools.length === 0 ? (
+            <span className="muted">—</span>
+          ) : (
+            <ul className="profile-inline-list">
+              {ownedPools.map((p) => (
+                <li key={p.id}>
+                  {onSelect !== undefined ? (
+                    <PoolRef
+                      dump={dump}
+                      id={p.id}
+                      onSelect={onSelect}
+                      variant="chip"
+                    />
+                  ) : (
+                    <span>pool {p.id}</span>
+                  )}{" "}
+                  <span className="muted">
+                    {p.quantityRemaining}×{" "}
+                  </span>
+                  <ItemRef
+                    dump={dump}
+                    id={p.itemKindId}
+                    onSelect={onSelect ?? (() => {})}
+                    variant="chip"
+                    qualityTier={p.qualityTier}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </dd>
+        {brokerIds.length > 0 ? (
+          <>
+            <dt>Brokers</dt>
+            <dd>
+              <ul className="profile-inline-list">
+                {brokerIds.map((aid) => (
+                  <li key={aid}>
+                    {onSelect !== undefined ? (
+                      <ActorRef
+                        dump={dump}
+                        id={aid}
+                        onSelect={onSelect}
+                        variant="chip"
+                        size={16}
+                      />
+                    ) : (
+                      <span>actor {aid}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ) : null}
+        {phrases.length > 0 ? (
+          <>
+            <dt>Provenance</dt>
+            <dd className="muted">
+              {phrases.map((s, i) => (
+                <div key={i}>"{s}"</div>
+              ))}
+            </dd>
+          </>
+        ) : null}
       </dl>
     </section>
   );

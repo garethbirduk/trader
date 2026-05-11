@@ -41,6 +41,7 @@ const ROLE_LABEL: Record<string, string> = {
   shopkeeper: "Shopkeepers",
   "off-map-dealer": "Off-map dealers",
   "off-map-market": "Off-map market",
+  "virtual-producer": "Virtual producers",
 };
 
 const LOC_TYPE_LABEL: Record<string, string> = {
@@ -369,6 +370,7 @@ export function Sidebar(props: Props) {
                   hour={hour}
                   snapshot={snapshot}
                   actorId={selection.id}
+                  onSelect={setSelection}
                 />
               )}
               {selection.kind === "actor" && lowerTab === "diary" && (
@@ -551,11 +553,13 @@ function ActorList({
                 ) : null}
               </span>
               <span className="actor-loc">
-                {locName(loc)} · {a.transportCapacity}
+                {a.isVirtual === true
+                  ? <span className="muted">virtual producer</span>
+                  : <>{locName(loc)} · {a.transportCapacity}</>}
               </span>
             </div>
             <span className={`actor-cash ${cash === 0 ? "zero" : ""}`}>
-              £{cash}
+              {a.isVirtual === true ? "—" : `£${cash}`}
             </span>
           </button>
         );

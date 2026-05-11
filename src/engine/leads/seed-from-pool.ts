@@ -10,10 +10,11 @@ import type { Lead } from "./types.js";
  * propagates with them. Two retold leads from different counterparties
  * carrying the same pool id is the over-counted-stock setup.
  *
- * The lead's `counterparty_actor_id` is set to the reachable actor
- * themselves — semantically "I am the one with access." When this lead
- * is gossiped onward, the recipient's lead reads "<actor> has N units"
- * with counterparty = the original reachable actor.
+ * For Stage-6 owned pools, the lead's `counterparty_actor_id` is set
+ * to the pool's owner (the virtual producer — "I'm in touch with
+ * Trader Bob about 200 vacuums"). For ambient pools, the counterparty
+ * is the reachable actor themselves — "I am the one with access" — so
+ * gossiping the lead onward retains the access-holder's identity.
  */
 export function seedSupplyLeadsForPool(
   db: DB,
@@ -36,7 +37,7 @@ export function seedSupplyLeadsForPool(
         side: "supply",
         subjectItemKindId: pool.itemKindId,
         subjectQualityTier: pool.qualityTier,
-        counterpartyActorId: actorId,
+        counterpartyActorId: pool.ownerActorId ?? actorId,
         estimatedQuantity: pool.quantityRemaining,
         estimatedUnitPrice: pool.openingUnitPrice,
         confidence: "warm",

@@ -74,6 +74,11 @@ export interface DaySnapshot {
     dumpDestination: string;
     flushedDay: number | null;
     reachableBy: readonly number[];
+    /** Stage 6: named virtual producer the pool came from. Null for
+     *  ambient pools. */
+    ownerActorId: number | null;
+    /** Stage 6: one-line story attached to the pool. */
+    provenance: string | null;
   }[];
   // floorPrice and clearedPrice are TOTALS (already multiplied by qty)
   // per migration 007.
@@ -147,6 +152,9 @@ export interface RunDump {
     homeLocationId: number | null;
     transportCapacity: string;
     roles: readonly string[];
+    /** Stage 6 — named external producer/consumer. They don't tick,
+     *  don't have a location, don't pubdeal. */
+    isVirtual: boolean;
     bidderProfile?: {
       appraisalAccuracy: Record<string, number>;
       defaultAppraisalAccuracy: number;
@@ -340,7 +348,7 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
     .prepare(
       `SELECT id, item_kind_id, quality_tier, quantity_remaining, created_day,
               expiry_day, opening_unit_price, closing_unit_price,
-              dump_destination, flushed_day
+              dump_destination, flushed_day, owner_actor_id, provenance
        FROM world_pools`,
     )
     .all() as ReadonlyArray<{
@@ -354,6 +362,8 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
       closing_unit_price: number;
       dump_destination: string;
       flushed_day: number | null;
+      owner_actor_id: number | null;
+      provenance: string | null;
     }>;
   const reachRows = db
     .prepare(`SELECT pool_id, actor_id FROM pool_reachability`)
@@ -376,6 +386,8 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
     dumpDestination: p.dump_destination,
     flushedDay: p.flushed_day,
     reachableBy: reachByPool.get(p.id) ?? [],
+    ownerActorId: p.owner_actor_id,
+    provenance: p.provenance,
   }));
 
   const lotAuctionRows = db
@@ -461,6 +473,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
         homeLocationId: a.homeLocationId,
         transportCapacity: a.transportCapacity,
         roles: skin.rolesByActorId.get(a.id) ?? [],
+        isVirtual: a.isVirtual,
         ...(profile !== undefined
           ? {
               bidderProfile: {

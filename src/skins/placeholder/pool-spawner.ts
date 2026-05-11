@@ -7,12 +7,15 @@ import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
 } from "../../engine/economics/config.js";
+import type { VirtualProducerInfo } from "./index.js";
 
 export interface PoolSpawnerOptions {
   /**
    * Map of item category → actor ids who can source pools of that
    * category. Skin-specific (e.g. Denzil reaches electrical pools).
    * Items in categories not in the map use `defaultReachableActorIds`.
+   * Used as the ambient fallback when no virtual producer covers a
+   * category (or when a roll lands on the ambient branch).
    */
   readonly reachableByCategory: ReadonlyMap<string, readonly number[]>;
   readonly defaultReachableActorIds: readonly number[];
@@ -21,6 +24,26 @@ export interface PoolSpawnerOptions {
   /** Economic tuning bundle. Tier multipliers + opening/closing fractions
    *  + jitter come from here. */
   readonly economics?: EconomicsConfig;
+  /**
+   * Stage 6 — virtual external producers grouped by category. When a
+   * category has one or more producers, the spawner picks one at random
+   * for the new pool: the pool's `owner_actor_id` is set to the
+   * producer, reachability is the producer's broker list, and
+   * `provenance` is drawn from the producer's phrase bank. Categories
+   * with no producer (or producers with empty broker lists) fall back
+   * to the ambient flow.
+   */
+  readonly virtualProducersByCategory?: ReadonlyMap<
+    string,
+    readonly VirtualProducerInfo[]
+  >;
+  /**
+   * Probability that a pool in a category with a virtual producer is
+   * attributed to that producer (vs. spawning as ambient). Lets the
+   * skin keep a fraction of pools producer-less for narrative variety.
+   * Default 1.0 — every coverable pool gets a producer.
+   */
+  readonly virtualProducerChance?: number;
 }
 
 const DEFAULT_SPAWNS_PER_DAY = [
@@ -60,6 +83,10 @@ export function registerPoolSpawner(
     const itemWeights = spawnable.map((it) => ({ value: it, weight: it.spawnWeight }));
     const numToSpawn = world.rng.weighted(spawnsPerDayDist);
 
+    const virtualByCategory: ReadonlyMap<string, readonly VirtualProducerInfo[]> =
+      opts.virtualProducersByCategory ?? new Map<string, readonly VirtualProducerInfo[]>();
+    const virtualProducerChance = opts.virtualProducerChance ?? 1.0;
+
     for (let i = 0; i < numToSpawn; i += 1) {
       const item = world.rng.weighted(itemWeights);
       const tier = world.rng.weighted(TIER_DISTRIBUTION);
@@ -67,7 +94,32 @@ export function registerPoolSpawner(
       const windowDays = world.rng.int(2, 7);
       const opening = priceFor(item, tier, world.rng, economics);
       const closing = Math.max(1, Math.round(opening * economics.poolClosingFraction));
-      const reachable = pickReachableActors(item, opts);
+
+      // Stage 6: prefer a named virtual producer when one covers this
+      // category. The producer's broker list becomes the reachability
+      // set and the pool gets a provenance phrase. Otherwise fall back
+      // to the ambient flow.
+      let reachable: readonly number[];
+      let ownerActorId: number | null = null;
+      let provenance: string | null = null;
+      const producers = virtualByCategory.get(item.category) ?? [];
+      const usableProducers = producers.filter(
+        (p) => p.brokerActorIds.length > 0,
+      );
+      if (
+        usableProducers.length > 0 &&
+        world.rng.chance(virtualProducerChance)
+      ) {
+        const producer = world.rng.pick(usableProducers);
+        reachable = producer.brokerActorIds;
+        ownerActorId = producer.actorId;
+        provenance =
+          producer.provenancePhrases.length > 0
+            ? world.rng.pick(producer.provenancePhrases)
+            : null;
+      } else {
+        reachable = pickReachableActors(item, opts);
+      }
 
       if (reachable.length === 0) continue;
 
@@ -80,6 +132,8 @@ export function registerPoolSpawner(
         openingUnitPrice: opening,
         closingUnitPrice: closing,
         reachableBy: reachable,
+        ownerActorId,
+        provenance,
       });
 
       // Seed first-hand supply leads so reachable actors *know* about

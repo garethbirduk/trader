@@ -26,6 +26,10 @@ export interface RunActor {
   /** Descriptive tags ("dealer", "civilian", "police", …). Optional
    *  so dumps generated before this field still load. */
   readonly roles?: readonly string[];
+  /** Stage 6 — named external producer/consumer. They don't have a
+   *  routine, location, or any in-world position. Optional for
+   *  back-compat with older dumps. */
+  readonly isVirtual?: boolean;
   /** Bidder profile snapshot — used to compute retail estimates. */
   readonly bidderProfile?: BidderProfileDump;
 }
@@ -165,6 +169,11 @@ export interface SnapshotPool {
   readonly dumpDestination: string;
   readonly flushedDay: number | null;
   readonly reachableBy: readonly number[];
+  /** Stage 6 — named virtual producer behind the pool. Null on ambient
+   *  pools. Optional for back-compat with older dumps. */
+  readonly ownerActorId?: number | null;
+  /** Stage 6 — narrative one-liner ("estate clearance in Bromley"). */
+  readonly provenance?: string | null;
 }
 
 // Note: floorPrice / clearedPrice are TOTALS (price × qty), per

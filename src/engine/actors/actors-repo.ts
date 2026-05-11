@@ -9,6 +9,10 @@ export interface InsertActorInput {
   readonly transportCapacity?: TransportCapacity;
   readonly homeLocationId?: number | null;
   readonly lockupLocationId?: number | null;
+  /** Mark this actor as a virtual external producer/consumer. They
+   *  don't tick, don't pubdeal, don't have a routine — they exist
+   *  as records so they can own pools and be named by gossip. */
+  readonly isVirtual?: boolean;
 }
 
 interface ActorRow {
@@ -20,6 +24,7 @@ interface ActorRow {
   home_location_id: number | null;
   lockup_location_id: number | null;
   transport_capacity: string;
+  is_virtual: number;
 }
 
 function rowToActor(r: ActorRow): Actor {
@@ -35,6 +40,7 @@ function rowToActor(r: ActorRow): Actor {
     homeLocationId: r.home_location_id,
     lockupLocationId: r.lockup_location_id,
     transportCapacity: r.transport_capacity,
+    isVirtual: r.is_virtual === 1,
   };
 }
 
@@ -43,10 +49,13 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
   const transportCapacity = input.transportCapacity ?? "pocket";
   const homeLocationId = input.homeLocationId ?? null;
   const lockupLocationId = input.lockupLocationId ?? null;
+  const isVirtual = input.isVirtual === true;
   const result = db
     .prepare(
-      `INSERT INTO actors (code, display_name, cash, transport_capacity, home_location_id, lockup_location_id)
-       VALUES (@code, @display_name, @cash, @transport_capacity, @home_location_id, @lockup_location_id)`,
+      `INSERT INTO actors (code, display_name, cash, transport_capacity,
+                           home_location_id, lockup_location_id, is_virtual)
+       VALUES (@code, @display_name, @cash, @transport_capacity,
+               @home_location_id, @lockup_location_id, @is_virtual)`,
     )
     .run({
       code: input.code,
@@ -55,6 +64,7 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
       transport_capacity: transportCapacity,
       home_location_id: homeLocationId,
       lockup_location_id: lockupLocationId,
+      is_virtual: isVirtual ? 1 : 0,
     });
   return {
     id: result.lastInsertRowid,
@@ -65,7 +75,30 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
     homeLocationId,
     lockupLocationId,
     transportCapacity,
+    isVirtual,
   };
+}
+
+/** All non-virtual actors — the "live" cast that ticks. Virtual
+ *  producers/consumers are excluded. */
+export function listLiveActors(db: DB): Actor[] {
+  return db
+    .prepare<ActorRow>(
+      `SELECT * FROM actors WHERE is_virtual = 0 ORDER BY id ASC`,
+    )
+    .all()
+    .map(rowToActor);
+}
+
+/** All virtual actors only. Used by the viewer to surface the
+ *  external-producer cast separately. */
+export function listVirtualActors(db: DB): Actor[] {
+  return db
+    .prepare<ActorRow>(
+      `SELECT * FROM actors WHERE is_virtual = 1 ORDER BY id ASC`,
+    )
+    .all()
+    .map(rowToActor);
 }
 
 export function setActorHome(

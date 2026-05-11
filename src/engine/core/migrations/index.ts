@@ -18,6 +18,7 @@ import { m016ItemSize } from "./016-item-size.js";
 import { m017ActorLockup } from "./017-actor-lockup.js";
 import { m018AuctionDocket } from "./018-auction-docket.js";
 import { m019RepLeads } from "./019-rep-leads.js";
+import { m020VirtualActors } from "./020-virtual-actors.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -44,4 +45,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m017ActorLockup,
   m018AuctionDocket,
   m019RepLeads,
+  m020VirtualActors,
 ];

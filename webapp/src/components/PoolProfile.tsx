@@ -76,10 +76,34 @@ export function PoolProfile({ dump, day, snapshot, poolId, onSelect }: Props) {
             <dd>≈ £{currentUnitPrice}/u</dd>
           </>
         ) : null}
+        {pool.ownerActorId !== null && pool.ownerActorId !== undefined ? (
+          <>
+            <dt>Source</dt>
+            <dd>
+              <ActorRef
+                dump={dump}
+                id={pool.ownerActorId}
+                onSelect={onSelect}
+                variant="chip"
+                size={16}
+              />
+            </dd>
+          </>
+        ) : null}
+        {pool.provenance ? (
+          <>
+            <dt>Provenance</dt>
+            <dd className="muted">"{pool.provenance}"</dd>
+          </>
+        ) : null}
       </dl>
       {pool.reachableBy.length > 0 ? (
         <div className="loc-people">
-          <div className="profile-section-label">Reachable by</div>
+          <div className="profile-section-label">
+            {pool.ownerActorId !== null && pool.ownerActorId !== undefined
+              ? "Brokered by"
+              : "Reachable by"}
+          </div>
           {pool.reachableBy.map((aid) => (
             <div key={aid} className="loc-person-row">
               <ActorRef

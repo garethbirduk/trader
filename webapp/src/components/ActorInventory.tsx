@@ -2,6 +2,12 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotDeal, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
+import { ItemRef, LocationRef } from "./Refs.js";
+import { StockLine, StockValue } from "./StockLine.js";
+import {
+  estimateUnitRetail,
+  formatRetailEstimate,
+} from "../lib/retail-estimate.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -12,6 +18,9 @@ interface Props {
 }
 
 export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props) {
+  const actor = dump.actors.find((a) => a.id === actorId);
+  const profile = actor?.bidderProfile;
+
   const lots = useMemo<readonly SnapshotStockLot[]>(() => {
     if (snapshot === null) return [];
     return snapshot.stockLots.filter((l) => l.ownerActorId === actorId);
@@ -56,25 +65,68 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
       {lots.length === 0 ? (
         <div className="muted">No stock.</div>
       ) : (
-        <ul className="actor-inv-lots">
+        <ul className="inv-lots">
           {lots
             .slice()
             .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
-            .map((l) => (
-              <li key={l.id} className="actor-inv-row">
-                <span className="actor-inv-qty">{l.quantity}</span>
-                <span className="actor-inv-name">
-                  {itemName(l.itemKindId)}
-                  <span className="muted"> ({l.qualityTier})</span>
-                </span>
-                <span className="muted">@ £{l.acquiredUnitPrice}</span>
-                {l.locationId !== null ? (
-                  <span className="muted">
-                    · <LocationLink dump={dump} locationId={l.locationId} onSelect={onSelect} />
-                  </span>
-                ) : null}
-              </li>
-            ))}
+            .map((lot) => {
+              const item = dump.items.find((i) => i.id === lot.itemKindId);
+              const retail =
+                profile !== undefined && item !== undefined
+                  ? estimateUnitRetail(
+                      profile,
+                      item,
+                      lot.qualityTier,
+                      dump.economics,
+                    )
+                  : null;
+              return (
+                <StockLine
+                  key={lot.id}
+                  fact={
+                    <>
+                      <span className="muted">has</span>{" "}
+                      <StockValue>{lot.quantity}</StockValue>{" "}
+                      <ItemRef
+                        dump={dump}
+                        id={lot.itemKindId}
+                        onSelect={onSelect}
+                        variant="chip"
+                        qualityTier={lot.qualityTier}
+                      />{" "}
+                      <span className="muted">@</span>{" "}
+                      <StockValue>£{lot.acquiredUnitPrice}</StockValue>
+                      <span className="muted">/u</span>
+                    </>
+                  }
+                  meta={
+                    <>
+                      {retail !== null ? (
+                        <span
+                          title={`${actor?.displayName ?? "owner"}'s retail estimate based on category accuracy`}
+                        >
+                          ~£{formatRetailEstimate(retail)} retail
+                        </span>
+                      ) : null}
+                      {retail !== null ? <span>·</span> : null}
+                      <span>acquired D{lot.acquiredDay}</span>
+                      {lot.locationId !== null ? (
+                        <>
+                          <span>·</span>
+                          <LocationRef
+                            dump={dump}
+                            id={lot.locationId}
+                            onSelect={onSelect}
+                            variant="chip"
+                            size={12}
+                          />
+                        </>
+                      ) : null}
+                    </>
+                  }
+                />
+              );
+            })}
         </ul>
       )}
 

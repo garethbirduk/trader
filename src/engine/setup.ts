@@ -409,6 +409,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     reachableByCategory: skin.reachableByCategory,
     defaultReachableActorIds: skin.defaultReachableActorIds,
     economics: skin.economics,
+    virtualProducersByCategory: skin.virtualProducersByCategory,
   });
 
   return { world, skin };

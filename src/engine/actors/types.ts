@@ -70,4 +70,14 @@ export interface Actor {
    */
   readonly lockupLocationId: number | null;
   readonly transportCapacity: TransportCapacity;
+  /**
+   * Named external producer / consumer — Trader Bob, Wholesaler
+   * Cyril. Virtual actors don't tick: no routine, no policy, no
+   * location, no pubdeal autonomy. They exist as records so the
+   * gossip layer can name them (`counterpartyActorId` on leads) and
+   * they can own pools (`world_pools.owner_actor_id`). Access to a
+   * virtual actor is mediated through brokers — see
+   * `pool_reachability` and the placeholder skin's producer profiles.
+   */
+  readonly isVirtual: boolean;
 }

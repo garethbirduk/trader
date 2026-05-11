@@ -1261,6 +1261,35 @@ button.actor-row.actor-row-selected {
 .profile-stats dd { margin: 0; text-align: right; }
 .profile-stats .warn { color: var(--warn); }
 
+/* Inline list inside a <dd> — used for virtual-producer profile to
+ * stack pool / broker chips without bullets. Aligns to the right edge
+ * of the stats grid, same as ordinary <dd> content. */
+.profile-inline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.profile-inline-list > li { display: inline-flex; align-items: center; gap: 3px; }
+
+/* Stage 6 — small badge next to a virtual producer's code line. */
+.badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+.badge-virtual {
+  background: rgba(120, 80, 200, 0.15);
+  color: #b48cff;
+  border: 1px solid rgba(120, 80, 200, 0.4);
+}
+
 .summary {
   display: grid;
   grid-template-columns: 1fr auto;

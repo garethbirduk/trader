@@ -14,6 +14,8 @@ export interface InsertPoolInput {
   readonly closingUnitPrice: number;
   readonly dumpDestination?: DumpDestination;
   readonly reachableBy?: readonly number[];
+  readonly ownerActorId?: number | null;
+  readonly provenance?: string | null;
 }
 
 interface PoolRow {
@@ -27,6 +29,8 @@ interface PoolRow {
   closing_unit_price: number;
   dump_destination: string;
   flushed_day: number | null;
+  owner_actor_id: number | null;
+  provenance: string | null;
 }
 
 function rowToPool(r: PoolRow): WorldPool {
@@ -51,6 +55,8 @@ function rowToPool(r: PoolRow): WorldPool {
     closingUnitPrice: r.closing_unit_price,
     dumpDestination: r.dump_destination,
     flushedDay: r.flushed_day,
+    ownerActorId: r.owner_actor_id,
+    provenance: r.provenance,
   };
 }
 
@@ -60,9 +66,11 @@ export function insertPool(db: DB, input: InsertPoolInput): WorldPool {
       .prepare(
         `INSERT INTO world_pools
           (item_kind_id, quality_tier, quantity_remaining, created_day,
-           expiry_day, opening_unit_price, closing_unit_price, dump_destination)
+           expiry_day, opening_unit_price, closing_unit_price, dump_destination,
+           owner_actor_id, provenance)
          VALUES
-          (@kind, @tier, @qty, @created, @expiry, @open, @close, @dest)`,
+          (@kind, @tier, @qty, @created, @expiry, @open, @close, @dest,
+           @owner, @provenance)`,
       )
       .run({
         kind: input.itemKindId,
@@ -73,6 +81,8 @@ export function insertPool(db: DB, input: InsertPoolInput): WorldPool {
         open: input.openingUnitPrice,
         close: input.closingUnitPrice,
         dest: input.dumpDestination ?? "auction",
+        owner: input.ownerActorId ?? null,
+        provenance: input.provenance ?? null,
       });
     const poolId = result.lastInsertRowid;
     if (input.reachableBy) {

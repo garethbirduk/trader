@@ -128,6 +128,19 @@ export interface SkinSeedResult {
    */
   readonly infoTraderActorIds: readonly number[];
   /**
+   * Stage 6 — virtual external producers (Trader Bob, Wholesaler
+   * Cyril, Reggie's Estate, Salvage Sid). Each maps a stock category
+   * to the producer who supplies it, plus the broker actor ids who
+   * can claim from that producer's pools, plus a phrase bank for
+   * provenance. The pool spawner consults this to attribute new
+   * pools to a named producer and wire their broker list as
+   * reachability. Producers with no category coverage fall back to
+   * ambient (legacy `reachableByCategory`) behaviour.
+   */
+  readonly virtualProducers: readonly VirtualProducerInfo[];
+  /** Category → list of producers (in order of preference). */
+  readonly virtualProducersByCategory: ReadonlyMap<string, readonly VirtualProducerInfo[]>;
+  /**
    * Resolved economics config, exposed back to the caller so the
    * world-setup wiring (pool spawner, pub-deal autonomy, bidders) can
    * read the same bundle. Defaults applied where the skin caller
@@ -146,6 +159,21 @@ export interface SkinSeedResult {
    * webapp's filter rail to slice the cast. Keyed by actor id.
    */
   readonly rolesByActorId: ReadonlyMap<number, readonly string[]>;
+}
+
+/**
+ * Resolved metadata about a seeded virtual producer. The pool spawner
+ * picks a producer per category (using these `categories`), attributes
+ * the pool's owner_actor_id to `actorId`, sets reachability to
+ * `brokerActorIds`, and pulls a random phrase from `provenancePhrases`.
+ */
+export interface VirtualProducerInfo {
+  readonly actorId: number;
+  readonly code: string;
+  readonly displayName: string;
+  readonly categories: readonly string[];
+  readonly brokerActorIds: readonly number[];
+  readonly provenancePhrases: readonly string[];
 }
 
 export interface ActorRoutineInfo {
@@ -1167,6 +1195,78 @@ const INFO_TRADER_CODES: readonly string[] = [
   "albert",
 ];
 
+/**
+ * Stage 6 — named external producers. Each has a category roster (the
+ * kinds of stock they supply), a broker list (the local actors who
+ * hold the relationship and can therefore claim from a pool the
+ * producer owns), and a bank of provenance phrases attached to each
+ * spawned pool for narrative flavour.
+ *
+ * Pools spawned for a category covered here become "owned" pools —
+ * `world_pools.owner_actor_id` is set, reachability is the producer's
+ * broker list, and the pool carries a provenance string. Pools for
+ * categories not covered fall back to the legacy ambient flow
+ * (`REACHABLE_BY_CATEGORY`).
+ */
+interface VirtualProducerSpec {
+  readonly code: string;
+  readonly displayName: string;
+  readonly categories: readonly string[];
+  readonly brokerCodes: readonly string[];
+  readonly provenancePhrases: readonly string[];
+}
+
+const VIRTUAL_PRODUCERS: readonly VirtualProducerSpec[] = [
+  {
+    code: "trader-bob",
+    displayName: "Trader Bob",
+    categories: ["electrical", "novelty", "tools"],
+    brokerCodes: ["denzil", "monkey-harris"],
+    provenancePhrases: [
+      "off a lorry on the A2",
+      "direct from a depot in Croydon",
+      "warehouse closure in Sidcup",
+      "no questions asked, mate",
+    ],
+  },
+  {
+    code: "wholesaler-cyril",
+    displayName: "Wholesaler Cyril",
+    categories: ["clothing", "luggage"],
+    brokerCodes: ["boyce", "mustapha"],
+    provenancePhrases: [
+      "bankrupt warehouse sale",
+      "catalogue returns",
+      "end-of-line stock from a chain shop",
+      "container straight off the Port of Tilbury",
+    ],
+  },
+  {
+    code: "reggies-estate",
+    displayName: "Reggie's Estate",
+    categories: ["furniture", "decor", "toys"],
+    brokerCodes: ["boyce", "monkey-harris"],
+    provenancePhrases: [
+      "estate clearance in Bromley",
+      "probate sale, deceased gentleman",
+      "house contents from a divorce in Eltham",
+      "garage clearout — owner emigrating",
+    ],
+  },
+  {
+    code: "salvage-sid",
+    displayName: "Salvage Sid",
+    categories: ["vehicles", "safety", "food"],
+    brokerCodes: ["denzil", "trigger"],
+    provenancePhrases: [
+      "site clearance in New Cross",
+      "bailiff's auction overflow",
+      "excess stock from a contract job",
+      "damaged but functional, guv",
+    ],
+  },
+];
+
 const REACHABLE_BY_CATEGORY: Readonly<Record<string, readonly string[]>> = {
   electrical: ["denzil", "monkey-harris", "ronnie-nelson"],
   furniture: ["boyce", "monkey-harris"],
@@ -1610,6 +1710,45 @@ export function seedPlaceholderSkin(
     });
   }
 
+  // Stage 6 — seed the named virtual producers. They don't tick, don't
+  // pubdeal, don't have a routine; they're records whose ids appear on
+  // owned-pool `owner_actor_id` and (eventually) on rep/commodity leads
+  // as `counterparty_actor_id`. Broker codes are resolved against the
+  // already-seeded local cast; producers with no resolvable brokers are
+  // skipped (defensive — shouldn't fire for the shipping cast).
+  const virtualProducers: VirtualProducerInfo[] = [];
+  for (const spec of VIRTUAL_PRODUCERS) {
+    const brokerActorIds = spec.brokerCodes
+      .map((c) => actorByCode.get(c))
+      .filter((id): id is number => id !== undefined);
+    if (brokerActorIds.length === 0) continue;
+    const a = insertActor(db, {
+      code: spec.code,
+      displayName: spec.displayName,
+      cash: 0,
+      transportCapacity: "none",
+      isVirtual: true,
+    });
+    actorByCode.set(spec.code, a.id);
+    rolesByActorId.set(a.id, ["virtual-producer"]);
+    virtualProducers.push({
+      actorId: a.id,
+      code: spec.code,
+      displayName: spec.displayName,
+      categories: spec.categories,
+      brokerActorIds,
+      provenancePhrases: spec.provenancePhrases,
+    });
+  }
+  const virtualProducersByCategory = new Map<string, VirtualProducerInfo[]>();
+  for (const p of virtualProducers) {
+    for (const cat of p.categories) {
+      const list = virtualProducersByCategory.get(cat) ?? [];
+      list.push(p);
+      virtualProducersByCategory.set(cat, list);
+    }
+  }
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -1640,6 +1779,8 @@ export function seedPlaceholderSkin(
     runLengthDays,
     tradingActorIds,
     infoTraderActorIds,
+    virtualProducers,
+    virtualProducersByCategory,
     economics,
     actorRoutines,
     rolesByActorId,
