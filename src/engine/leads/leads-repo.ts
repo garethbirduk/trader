@@ -278,3 +278,65 @@ export function shareLead(
     });
   });
 }
+
+/**
+ * Tuple uniquely identifying a "subject" — the conjunction of fields the
+ * gossip-novelty filter compares on, minus the numeric values that drift
+ * per hop. Used by `clarifyLead` to find the target's matching lead on
+ * a subject the asker is curious about.
+ */
+export interface LeadSubjectKey {
+  readonly side: Lead["side"];
+  readonly subjectItemKindId: number;
+  readonly subjectQualityTier: Lead["subjectQualityTier"];
+  readonly counterpartyActorId: number | null;
+}
+
+/**
+ * Targeted information request — the cousin of `shareLead`. Where
+ * `shareLead` says "tell them something they don't know," `clarifyLead`
+ * says "tell them what *you* know about this specific subject."
+ *
+ * The asker brings a subject (their version of a lead); the target
+ * looks up their own lead matching that subject and shares the freshest
+ * one (lowest hop, warm-first). Mutation applies as usual. The asker's
+ * existing lead on the subject is *not* removed — both versions persist
+ * so divergent numbers / tiers / sides are visible side-by-side in the
+ * asker's ledger.
+ *
+ * Returns the newly inserted lead in the asker's bag, or `null` if the
+ * target had nothing on the subject. No event is emitted at this layer
+ * — the calling handler decides whether to fire a `gossip.exchanged`.
+ */
+export function clarifyLead(
+  db: DB,
+  askerActorId: number,
+  targetActorId: number,
+  subject: LeadSubjectKey,
+  onDay: number,
+  opts?: ShareLeadOptions,
+): Lead | null {
+  if (askerActorId === targetActorId) return null;
+  const rows = db
+    .prepare<LeadRow>(
+      `SELECT * FROM leads
+       WHERE holder_actor_id = @holder
+         AND side = @side
+         AND subject_item_kind_id = @kind
+         AND ((subject_quality_tier IS NULL AND @tier IS NULL)
+              OR subject_quality_tier = @tier)
+         AND ((counterparty_actor_id IS NULL AND @counterparty IS NULL)
+              OR counterparty_actor_id = @counterparty)
+       ORDER BY hop_count ASC, confidence ASC, id DESC`,
+    )
+    .all({
+      holder: targetActorId,
+      side: subject.side,
+      kind: subject.subjectItemKindId,
+      tier: subject.subjectQualityTier ?? null,
+      counterparty: subject.counterpartyActorId ?? null,
+    });
+  if (rows.length === 0) return null;
+  const best = rowToLead(rows[0]!);
+  return shareLead(db, targetActorId, askerActorId, best.id, onDay, opts);
+}

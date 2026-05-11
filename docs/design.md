@@ -490,12 +490,20 @@ was actually said. Conflicts now visibly emerge in the existing
 `ActorKnows` ledger view (Stage 1 already wired the divergent-value
 highlight).
 
-**Stage 4 — clarification action.**
-"Ask X about lead L" reads X's matching lead and surfaces metadata.
-Both versions persist in the asker's table. The chain becomes
-walkable.
-- Engine: new action verb, lookup against target's table.
-- Viewer: clarification UI, chain visualisation.
+**Stage 4 — clarification action.** ✅ Done.
+Shipped engine-side as `clarifyLead(db, askerId, targetId, subject,
+day, opts?)` in `leads-repo.ts`: looks up the target's lead matching
+the asker's subject (side + item + tier + counterparty), copies the
+freshest match into the asker's bag with mutation applied and
+`sourceActorId` = target (so chain-walking is "go back one speaker
+at a time"). NPC-side autonomy folded into `visitor-chat.ts` — each
+chat pair rolls `clarificationChance` per side and asks the partner
+about one of their warmest held subjects. A new `gossip.exchanged`
+kind `"clarification"` distinguishes the deliberate cross-check from
+the casual novel-swap; the viewer (Diary / Scene / EventList /
+renderEvent) tags it accordingly. Player-driven "ask X about this"
+button on the ledger view is deferred until the player has a real
+interaction surface — the engine support is in place when that lands.
 
 **Stage 5 — reputation leads.**
 Warning leads about people as a sibling lead-kind. Brokers and
@@ -550,15 +558,15 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 4 — clarification action**. Spec
-   above. The player (and policy-driven NPCs) ask a target X about
-   a held lead L; X surfaces their matching lead on the same
-   subject. Both versions persist in the asker's table —
-   `sourceActorId` already means "immediate prior speaker," so
-   chain-walking falls out of the existing schema. New verb +
-   handler against the target's lead table; new viewer surface
-   on `ActorKnows` to launch a clarification and visualise the
-   resulting chain. No schema changes expected.
+3. Next engine work is **Stage 5 — reputation leads**. Spec above.
+   Add warning leads about *people* as a sibling lead-kind to the
+   commodity leads — same hop/confidence/decay machinery. Brokers
+   consult own ledger before vouching; counterparties consult theirs
+   before showing up at a venue. The cinematic moment — Bob walks
+   into the Nag's, clocks Del, walks out — is a new abort-on-sight
+   event that surfaces in the scene deck. Schema work: extend the
+   `leads` table (new `kind: "commodity" | "rep"` column, nullable
+   `subject_target_actor_id` for rep leads).
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

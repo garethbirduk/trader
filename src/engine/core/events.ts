@@ -65,13 +65,17 @@ export type WorldEvent =
       readonly at: Clock;
       readonly atLocationId: number;
       /**
-       * `proprietor` — the existing drive-by exchange between a visitor
+       * `proprietor`    — the existing drive-by exchange between a visitor
        *   and the location's proprietor on arrival (passive, no hour cost).
-       * `chat`       — a visitor↔visitor conversation at a social venue.
-       * `deal`       — gossip that fires alongside a pub-deal attempt
+       * `chat`          — a visitor↔visitor conversation at a social venue.
+       * `deal`          — gossip that fires alongside a pub-deal attempt
        *   (agreed or walked) between the two would-be counterparties.
+       * `clarification` — a targeted "what do *you* know about X?" lookup
+       *   inside a conversation. The asker brings a subject; the target
+       *   surfaces their matching lead. Distinguishes "stuff came up" from
+       *   "I asked specifically."
        */
-      readonly kind: "proprietor" | "chat" | "deal";
+      readonly kind: "proprietor" | "chat" | "deal" | "clarification";
       /** The two actors involved. For proprietor exchanges, index 0 is
        *  the visitor and index 1 is the proprietor (legacy ordering).
        *  For chat/deal exchanges the order is not meaningful. */

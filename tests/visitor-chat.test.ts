@@ -252,6 +252,9 @@ describe("visitor↔visitor chat", () => {
       chatLocationIds: [nags.id],
       attemptsPerHour: 5,
       pairChance: 1.0,
+      // Isolate the novel-swap silence; clarifications would still
+      // pull A's identical lead back across as a deliberate ask.
+      clarificationChance: 0,
     });
     world.runToCompletion();
 

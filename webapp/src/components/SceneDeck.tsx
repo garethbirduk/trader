@@ -1324,9 +1324,15 @@ function GossipScene({
           const participants = (e.participantActorIds as readonly number[] | undefined) ?? [];
           const a = participants[0];
           const b = participants[1];
-          const kind = (e.kind as "proprietor" | "chat" | "deal" | undefined) ?? "proprietor";
+          const kind = (e.kind as "proprietor" | "chat" | "deal" | "clarification" | undefined) ?? "proprietor";
           const tag =
-            kind === "chat" ? "chat" : kind === "deal" ? "deal-side" : "proprietor";
+            kind === "chat"
+              ? "chat"
+              : kind === "deal"
+                ? "deal-side"
+                : kind === "clarification"
+                  ? "clarification"
+                  : "proprietor";
           const loc = e.atLocationId as number;
           const exchanges = (e.exchanges as readonly any[] | undefined) ?? [];
           return (

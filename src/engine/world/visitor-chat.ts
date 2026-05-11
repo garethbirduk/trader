@@ -1,13 +1,19 @@
 import type { World, Unsubscribe } from "../core/world.js";
 import type { GossipExchange } from "../core/events.js";
 import { getActorsAtLocation, getLocationProprietor } from "../locations/locations.js";
-import { getLeadsByHolder, shareLead, type ShareLeadMutator } from "../leads/leads-repo.js";
+import {
+  clarifyLead,
+  getLeadsByHolder,
+  shareLead,
+  type ShareLeadMutator,
+} from "../leads/leads-repo.js";
 import { selectNovelLeads, toExchange } from "../leads/gossip-utils.js";
 import { mutateLead } from "../leads/mutation.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
 } from "../economics/config.js";
+import type { Lead } from "../leads/types.js";
 
 export interface VisitorChatOptions {
   /** Venues where chat fires — typically pubs and other "lingering" spaces.
@@ -36,6 +42,13 @@ export interface VisitorChatOptions {
   readonly chatLeadsPerExchange?: number;
   /** Novel leads each direction when at least one party is an info-trader. */
   readonly infoTraderChatYield?: number;
+  /** Probability per chat that each side rolls a clarification — picks
+   *  one of their warmest held leads and asks the other party what
+   *  *they* know about that exact subject. Independent of the novel-lead
+   *  swap; produces a separate `kind: "clarification"` event when fruit
+   *  comes back. Default 0.4 — clarifications are common but not every
+   *  exchange. */
+  readonly clarificationChance?: number;
   /** Economic config — supplies `gossipMutation` knobs to the per-hop
    *  mutator. Defaults to the engine defaults when unset. */
   readonly economics?: EconomicsConfig;
@@ -78,6 +91,7 @@ export function registerVisitorChat(
   const infoYield = opts.infoTraderChatYield ?? 4;
   const eligible = opts.eligibleActorIds ?? null;
   const infoTraders = opts.infoTraderActorIds ?? new Set<number>();
+  const clarificationChance = opts.clarificationChance ?? 0.4;
   const mutationConfig = (opts.economics ?? DEFAULT_ECONOMICS_CONFIG).gossipMutation;
   const mutate: ShareLeadMutator = (input) =>
     mutateLead(input, world.rng, mutationConfig);
@@ -116,15 +130,40 @@ export function registerVisitorChat(
           mutate,
         });
 
-        if (exchanges.length === 0) continue;
-        world.events.emit({
-          type: "gossip.exchanged",
-          at: clock,
-          atLocationId: locId,
-          kind: "chat",
-          participantActorIds: [a, b],
-          exchanges,
+        if (exchanges.length > 0) {
+          world.events.emit({
+            type: "gossip.exchanged",
+            at: clock,
+            atLocationId: locId,
+            kind: "chat",
+            participantActorIds: [a, b],
+            exchanges,
+          });
+        }
+
+        // After the casual exchange, each side may turn the conversation
+        // to a *specific* subject they hold — "what's your version of
+        // this Casios story?" Clarifications produce a separate event so
+        // the diary can show the difference between drifted chatter and
+        // a deliberate cross-check.
+        const clarifications = runClarifications({
+          world,
+          a,
+          b,
+          clarificationChance,
+          onDay: clock.day,
+          mutate,
         });
+        if (clarifications.length > 0) {
+          world.events.emit({
+            type: "gossip.exchanged",
+            at: clock,
+            atLocationId: locId,
+            kind: "clarification",
+            participantActorIds: [a, b],
+            exchanges: clarifications,
+          });
+        }
       }
     }
   });
@@ -155,6 +194,78 @@ function swapNovelLeads(args: {
   pourLeads(world, a, b, aLeads, bLeads, maxPerSide, dayHour.day, mutate, exchanges);
   pourLeads(world, b, a, bLeads, aLeads, maxPerSide, dayHour.day, mutate, exchanges);
   return exchanges;
+}
+
+/**
+ * Roll clarifications each direction between `a` and `b`. The asker
+ * picks one of their own currently-held leads — preferring warm ones
+ * and breaking ties by recency (highest id) — and asks the partner
+ * what *they* know about the same subject. If the partner has a
+ * matching lead, it's pulled (with mutation) into the asker's bag.
+ *
+ * Pure side-effect aside from DB writes; returns the GossipExchange
+ * list for the event payload. The asker's existing lead on the
+ * subject persists, so divergent versions sit side-by-side and the
+ * ledger view can highlight the conflict.
+ */
+function runClarifications(args: {
+  world: World;
+  a: number;
+  b: number;
+  clarificationChance: number;
+  onDay: number;
+  mutate: ShareLeadMutator;
+}): GossipExchange[] {
+  const { world, a, b, clarificationChance, onDay, mutate } = args;
+  const out: GossipExchange[] = [];
+  if (clarificationChance <= 0) return out;
+
+  for (const [askerId, targetId] of [
+    [a, b],
+    [b, a],
+  ] as const) {
+    if (!world.rng.chance(clarificationChance)) continue;
+    const heldLeads = getLeadsByHolder(world.db, askerId);
+    const candidate = pickClarificationSubject(heldLeads, world);
+    if (candidate === null) continue;
+    try {
+      const received = clarifyLead(
+        world.db,
+        askerId,
+        targetId,
+        {
+          side: candidate.side,
+          subjectItemKindId: candidate.subjectItemKindId,
+          subjectQualityTier: candidate.subjectQualityTier,
+          counterpartyActorId: candidate.counterpartyActorId,
+        },
+        onDay,
+        { mutate },
+      );
+      if (received !== null) {
+        out.push(toExchange(received, targetId, askerId));
+      }
+    } catch {
+      // Self-share or constraint failure — skip silently.
+    }
+  }
+  return out;
+}
+
+/** Warm-first, then most recently acquired. Null if the asker has nothing. */
+function pickClarificationSubject(
+  leads: readonly Lead[],
+  world: World,
+): Lead | null {
+  if (leads.length === 0) return null;
+  const warm = leads.filter((l) => l.confidence === "warm");
+  const pool = warm.length > 0 ? warm : leads;
+  // Lightweight "freshest of the warm bag" — sort by id descending and
+  // RNG-pick from the top quarter so behaviour is stochastic without
+  // being uniform.
+  const sorted = [...pool].sort((x, y) => y.id - x.id);
+  const topN = Math.max(1, Math.ceil(sorted.length / 4));
+  return world.rng.pick(sorted.slice(0, topN));
 }
 
 function pourLeads(

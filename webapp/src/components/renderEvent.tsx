@@ -265,9 +265,15 @@ export function renderEvent(
       const participants = (e.participantActorIds as readonly number[]) ?? [];
       const a = participants[0];
       const b = participants[1];
-      const kind = e.kind as "proprietor" | "chat" | "deal";
+      const kind = e.kind as "proprietor" | "chat" | "deal" | "clarification";
       const tag =
-        kind === "chat" ? "chat" : kind === "deal" ? "deal-side" : "proprietor";
+        kind === "chat"
+          ? "chat"
+          : kind === "deal"
+            ? "deal-side"
+            : kind === "clarification"
+              ? "clarification"
+              : "proprietor";
       return (
         <>
           {a !== undefined ? A(a) : <span className="muted">?</span>} ↔{" "}

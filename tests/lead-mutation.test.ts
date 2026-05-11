@@ -345,6 +345,7 @@ describe("information mutation on every gossip hop", () => {
         attemptsPerHour: 1,
         pairChance: 1.0,
         chatLeadsPerExchange: 1,
+        clarificationChance: 0, // isolate the novel-swap path
         economics,
       });
       world.runToCompletion();
@@ -424,6 +425,7 @@ describe("information mutation on every gossip hop", () => {
         attemptsPerHour: 1,
         pairChance: 1.0,
         chatLeadsPerExchange: 1,
+        clarificationChance: 0,
         economics,
       });
       world.runToCompletion();

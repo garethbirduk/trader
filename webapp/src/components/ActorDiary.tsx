@@ -281,9 +281,15 @@ function summarizeEvent(
         (id) => id !== actorId,
       );
       const otherId = others[0];
-      const kind = e.kind as "proprietor" | "chat" | "deal";
+      const kind = e.kind as "proprietor" | "chat" | "deal" | "clarification";
       const verb =
-        kind === "chat" ? "chatted" : kind === "deal" ? "haggle gossip" : "gossip";
+        kind === "chat"
+          ? "chatted"
+          : kind === "deal"
+            ? "haggle gossip"
+            : kind === "clarification"
+              ? "asked about"
+              : "gossip";
       return (
         <>
           {verb} with {otherId !== undefined ? A(otherId) : <span className="muted">?</span>} at {L(e.atLocationId)}
