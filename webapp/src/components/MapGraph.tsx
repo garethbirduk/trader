@@ -378,16 +378,14 @@ export function MapGraph(props: Props) {
       }
       const list = stackedAt.get(p.locationCode) ?? [];
       const idx = list.indexOf(a.id);
-      const total = list.length;
-      if (total <= 1) {
-        // Single actor: sit centred on the node. The previous
-        // hint-offset (26 px below) caused the avatar to drift below
-        // the road during the 320 ms inner-CSS transition back to 0
-        // when the next hour kicked off transit, making routes appear
-        // to miss the avatar.
-        map.set(a.id, { x: 0, y: 0 });
-        continue;
-      }
+      const total = Math.max(1, list.length);
+      // Orbit every at-location actor, including a solo one — the
+      // location's own square avatar sits at the node centre, so
+      // overlaying actors there would obscure the place itself.
+      // First actor sits at the top (-π/2); additional actors fan
+      // out clockwise. The brief 320 ms CSS-transition slide from
+      // this orbit point to (0,0) at the start of a transit is
+      // accepted as visual cost.
       const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
       const r = NODE_R + AVATAR_R + 6;
       map.set(a.id, {
