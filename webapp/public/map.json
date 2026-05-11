@@ -42,7 +42,7 @@
     },
     "sids-cafe": {
       "x": 470,
-      "y": 600
+      "y": 510
     },
     "peckham-flat": {
       "x": 430,
@@ -221,6 +221,10 @@
     "wp_1": {
       "x": 310,
       "y": 500
+    },
+    "wp_3": {
+      "x": 460,
+      "y": 600
     }
   },
   "edges": [
@@ -247,14 +251,6 @@
     [
       "trigger-flat",
       "mickey-jevon-flat"
-    ],
-    [
-      "nags",
-      "sids-cafe"
-    ],
-    [
-      "sids-cafe",
-      "betting-shop"
     ],
     [
       "peckham-market",
@@ -351,10 +347,6 @@
     [
       "wp_8",
       "wp_7"
-    ],
-    [
-      "wp_7",
-      "sids-cafe"
     ],
     [
       "wp_14",
@@ -498,6 +490,22 @@
     ],
     [
       "corner-shop",
+      "wp_7"
+    ],
+    [
+      "sids-cafe",
+      "wp_3"
+    ],
+    [
+      "wp_3",
+      "nags"
+    ],
+    [
+      "wp_3",
+      "betting-shop"
+    ],
+    [
+      "wp_3",
       "wp_7"
     ]
   ],

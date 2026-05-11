@@ -579,7 +579,7 @@ const ACTORS: readonly ActorSpec[] = [
   // ─── core trader cast ────────────────────────────────────────────────
   {
     code: "player",
-    displayName: "The Trader",
+    displayName: "Del Boy",
     cash: 2000,
     ...makeRoutineFromSpans("peckham-flat", [
       { from: 6, to: 8, location: "peckham-flat" },

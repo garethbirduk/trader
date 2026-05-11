@@ -41,7 +41,11 @@ export default defineConfig({
   base: process.env.BASE_URL ?? "/",
   plugins: [react(), mapWritePlugin()],
   server: {
-    port: 5173,
+    // Out of the common dev-server range (3000 / 4200 / 5173 / 8080) so
+    // trader doesn't fight other local projects for default ports.
+    // strictPort means we fail rather than silently roll over.
+    port: 6173,
+    strictPort: true,
     open: false,
   },
 });
