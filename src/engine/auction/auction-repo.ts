@@ -10,6 +10,9 @@ export interface InsertAuctionLotInput {
   /** Reserve price for the whole lot. */
   readonly floorPrice: number;
   readonly listedDay: number;
+  /** Optional narrative tag — used for Stage 7 regional-clearance
+   *  lots ("Bexleyheath estate clearance"). */
+  readonly provenance?: string | null;
 }
 
 interface AuctionLotRow {
@@ -24,6 +27,7 @@ interface AuctionLotRow {
   cleared_day: number | null;
   cleared_price: number | null;
   cleared_to_actor_id: number | null;
+  provenance: string | null;
 }
 
 function rowToLot(r: AuctionLotRow): AuctionLot {
@@ -42,6 +46,7 @@ function rowToLot(r: AuctionLotRow): AuctionLot {
     clearedDay: r.cleared_day,
     clearedPrice: r.cleared_price,
     clearedToActorId: r.cleared_to_actor_id,
+    provenance: r.provenance,
   };
 }
 
@@ -80,9 +85,9 @@ export function insertAuctionLot(
     .prepare(
       `INSERT INTO auction_lots
         (source_pool_id, item_kind_id, quality_tier, quantity,
-         floor_price, listed_day)
+         floor_price, listed_day, provenance)
        VALUES
-        (@source, @kind, @tier, @qty, @floor, @listed)`,
+        (@source, @kind, @tier, @qty, @floor, @listed, @provenance)`,
     )
     .run({
       source: input.sourcePoolId ?? null,
@@ -91,6 +96,7 @@ export function insertAuctionLot(
       qty: input.quantity,
       floor: input.floorPrice,
       listed: input.listedDay,
+      provenance: input.provenance ?? null,
     });
   const lot = getAuctionLotById(db, result.lastInsertRowid);
   if (!lot) throw new Error("failed to fetch newly inserted auction lot");

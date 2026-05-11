@@ -2,6 +2,7 @@ import type { World, Unsubscribe } from "../core/world.js";
 import { getStockLotsByOwner, deleteStockLot } from "../stock/lots-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { adjustActorCash } from "../actors/actors-repo.js";
+import { insertPendingPayout } from "../payouts/pending-payouts-repo.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -41,6 +42,7 @@ export function registerOffMapResale(
   const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
   const tierMult = economics.tierMultipliers;
   const resellMargin = economics.offMapAuction.resellMargin;
+  const payoutLagDays = Math.max(0, economics.offMapAuction.payoutLagDays);
 
   return world.onDayEnd((day) => {
     for (const dealerId of opts.offMapDealerActorIds) {
@@ -63,8 +65,23 @@ export function registerOffMapResale(
         deleteStockLot(world.db, lot.id);
       }
       if (totalValue === 0) continue;
-      adjustActorCash(world.db, dealerId, totalValue);
+      // Cash leaves the off-map market account immediately (the buyer
+      // pays for goods at the moment of resale), but the dealer's
+      // proceeds arrive with `payoutLagDays` lag — modelling cheques
+      // clearing, wire transfers, etc. Conservation is preserved
+      // because the pending_payouts row holds the cash in transit.
       adjustActorCash(world.db, opts.offMapMarketActorId, -totalValue);
+      if (payoutLagDays === 0) {
+        adjustActorCash(world.db, dealerId, totalValue);
+      } else {
+        insertPendingPayout(world.db, {
+          actorId: dealerId,
+          amount: totalValue,
+          availableDay: day + payoutLagDays,
+          source: "off-map-resale",
+          createdDay: day,
+        });
+      }
       world.events.emit({
         type: "off-map.resold",
         at: { day, hour: 23 },

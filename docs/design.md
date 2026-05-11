@@ -563,14 +563,28 @@ producer's location at the start of the next hour; a per-tick
 guard stops the producer from immediately re-materialising in the
 same hour. Viewer surfaces in diary / renderEvent / Summary.
 
-**Stage 7 — boundary unification + auction always-on.**
-Unify the "outside Peckham" ledger node. Regional-clearance lot
-schedule flowing into the auction independent of local pool flushes.
-Whales with finite budgets.
-- Engine: budget on whale actors, regional-clearance scheduler,
-  ledger unification.
-- Viewer: budget display on whale pages, distinct lot provenance in
-  docket.
+**Stage 7 — boundary unification + auction always-on.** ✅ Done.
+Two new schemas — migration 021 adds a general-purpose
+`pending_payouts` table for deferred cash flows; migration 022 adds
+`auction_lots.provenance` for narrative tags. The off-map resale
+handler now lags its proceeds: stock liquidates at end-of-day D,
+but the whale's cash arrives on day D + `payoutLagDays` (default 2)
+via a row in `pending_payouts` that the new `pending-payouts.ts`
+handler drains each morning. Whales who spent up have to sit out
+until their cheques clear. The new `regional-clearance.ts` handler
+inserts `lotsPerDay` extra auction lots each Mon–Fri morning,
+priced at a `floorFractionOfRetail` of true retail with a phrase
+from `EconomicsConfig.regionalClearance.provenancePhrases` —
+Sotheby's is busy every weekday now, even when local pools don't
+flush. Cash conservation holds: the off-map market account is
+debited at resale and the pending payout row holds the cash in
+transit. Viewer: pending-payout total surfaces on actor profile
+as "In transit £X"; LotProfile renders the new "regional clearance"
+tag and provenance line.
+Ledger unification (merging `auctionHouseActorId` and
+`offMapMarketActorId` into one conceptual entity) deferred — the
+two accounts are tractable separately and the cash-conservation
+test relies on the off-map exemption.
 
 **Stage 8 — shop turnover, write-off, routine travel cost.**
 Close the remaining asymmetries. Shop customer histogram. "Skip it"
@@ -597,14 +611,13 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 7 — boundary unification +
-   auction always-on**, or one of the asymmetry-punch-list items
-   (design.md:418–448). Stage 7 unifies the "outside Peckham"
-   ledger node, adds regional-clearance lots flowing into Sotheby's
-   independent of local pool flushes (so the auction is busy every
-   day), and gives whales finite daily budgets that replenish from
-   yesterday's resale revenue with a lag — finite appetite, real
-   outbidding consequences.
+3. Next engine work is **Stage 8 — shop turnover, write-off,
+   routine travel cost** (the remaining asymmetries from
+   design.md:418–448): verify shops actually move bought stock
+   back out (or fix them so they do); add a "skip it" sink for
+   stock too broken even for auction (small fee, stock leaves the
+   world); decide on routine travel petrol/fare. Each item is
+   surgical against the existing schema and subsystems.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

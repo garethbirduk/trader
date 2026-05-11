@@ -24,4 +24,7 @@ export interface AuctionLot {
   /** Final hammer price for the whole lot, when cleared. */
   readonly clearedPrice: number | null;
   readonly clearedToActorId: number | null;
+  /** Narrative tag, used by regional-clearance lots ("Bexleyheath
+   *  estate clearance"). Null for legacy pool-sourced lots. */
+  readonly provenance: string | null;
 }

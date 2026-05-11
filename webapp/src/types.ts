@@ -193,6 +193,17 @@ export interface SnapshotAuctionLot {
   readonly clearedDay: number | null;
   readonly clearedPrice: number | null;
   readonly clearedToActorId: number | null;
+  /** Stage 7 — narrative tag for regional-clearance lots. */
+  readonly provenance?: string | null;
+}
+
+export interface SnapshotPendingPayout {
+  readonly id: number;
+  readonly actorId: number;
+  readonly amount: number;
+  readonly availableDay: number;
+  readonly source: string;
+  readonly createdDay: number;
 }
 
 export interface DaySnapshot {
@@ -202,6 +213,8 @@ export interface DaySnapshot {
   readonly deals: readonly SnapshotDeal[];
   readonly pools: readonly SnapshotPool[];
   readonly auctionLots: readonly SnapshotAuctionLot[];
+  /** Stage 7 — cash-in-transit (lagged off-map resale payouts). */
+  readonly pendingPayouts?: readonly SnapshotPendingPayout[];
 }
 
 export interface RunDump {

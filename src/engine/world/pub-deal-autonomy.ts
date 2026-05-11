@@ -351,6 +351,7 @@ function runOneAttempt(args: {
     floorPrice: 0,
     listedDay: clock.day,
     scheduledHour: null,
+    provenance: null,
     clearedDay: null,
     clearedPrice: null,
     clearedToActorId: null,

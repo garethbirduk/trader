@@ -39,6 +39,8 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "gossip.exchanged", label: "Gossip exchanges", types: ["gossip.exchanged"] },
   { key: "actor.planned", label: "Planner picks", types: ["actor.planned"] },
   { key: "off-map.resold", label: "Off-map resales", types: ["off-map.resold"] },
+  { key: "payout.released", label: "Payouts released", types: ["payout.released"] },
+  { key: "regional-clearance.listed", label: "Regional lots listed", types: ["regional-clearance.listed"] },
   { key: "heat.raised", label: "Heat raises", types: ["heat.raised"] },
   { key: "authority.raid", label: "🚨 Raids", types: ["authority.raid"], warn: true },
 ];

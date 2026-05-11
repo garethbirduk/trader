@@ -92,6 +92,19 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
               />
             </dd>
           </>
+        ) : (lot.provenance ?? null) !== null ? (
+          <>
+            <dt>Source</dt>
+            <dd>
+              <span className="badge badge-virtual">regional clearance</span>
+            </dd>
+          </>
+        ) : null}
+        {lot.provenance ? (
+          <>
+            <dt>Provenance</dt>
+            <dd className="muted">"{lot.provenance}"</dd>
+          </>
         ) : null}
         {cleared && lot.clearedPrice !== null ? (
           <>

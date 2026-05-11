@@ -94,6 +94,20 @@ export interface DaySnapshot {
     clearedDay: number | null;
     clearedPrice: number | null;
     clearedToActorId: number | null;
+    /** Stage 7 — narrative tag, set on regional-clearance lots. */
+    provenance: string | null;
+  }[];
+  /**
+   * Stage 7 — pending cash payouts (off-map resale revenue arriving
+   * later). Useful for the viewer's "cash in transit" surface.
+   */
+  readonly pendingPayouts: readonly {
+    id: number;
+    actorId: number;
+    amount: number;
+    availableDay: number;
+    source: string;
+    createdDay: number;
   }[];
 }
 
@@ -394,7 +408,7 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
     .prepare(
       `SELECT id, source_pool_id, item_kind_id, quality_tier, quantity,
               floor_price, listed_day, scheduled_hour, cleared_day,
-              cleared_price, cleared_to_actor_id
+              cleared_price, cleared_to_actor_id, provenance
        FROM auction_lots`,
     )
     .all() as ReadonlyArray<{
@@ -409,6 +423,7 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
       cleared_day: number | null;
       cleared_price: number | null;
       cleared_to_actor_id: number | null;
+      provenance: string | null;
     }>;
   const auctionLots = lotAuctionRows.map((r) => ({
     id: r.id,
@@ -422,9 +437,32 @@ export function captureSnapshot(db: DB, day: number): DaySnapshot {
     clearedDay: r.cleared_day,
     clearedPrice: r.cleared_price,
     clearedToActorId: r.cleared_to_actor_id,
+    provenance: r.provenance,
   }));
 
-  return { day, actors, stockLots, deals, pools, auctionLots };
+  const pendingPayoutRows = db
+    .prepare(
+      `SELECT id, actor_id, amount, available_day, source, created_day
+       FROM pending_payouts ORDER BY available_day ASC`,
+    )
+    .all() as ReadonlyArray<{
+      id: number;
+      actor_id: number;
+      amount: number;
+      available_day: number;
+      source: string;
+      created_day: number;
+    }>;
+  const pendingPayouts = pendingPayoutRows.map((r) => ({
+    id: r.id,
+    actorId: r.actor_id,
+    amount: r.amount,
+    availableDay: r.available_day,
+    source: r.source,
+    createdDay: r.created_day,
+  }));
+
+  return { day, actors, stockLots, deals, pools, auctionLots, pendingPayouts };
 }
 
 export interface BuildRunDumpInput {

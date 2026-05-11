@@ -19,6 +19,8 @@ import { m017ActorLockup } from "./017-actor-lockup.js";
 import { m018AuctionDocket } from "./018-auction-docket.js";
 import { m019RepLeads } from "./019-rep-leads.js";
 import { m020VirtualActors } from "./020-virtual-actors.js";
+import { m021PendingPayouts } from "./021-pending-payouts.js";
+import { m022AuctionLotProvenance } from "./022-auction-lot-provenance.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -46,4 +48,6 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m018AuctionDocket,
   m019RepLeads,
   m020VirtualActors,
+  m021PendingPayouts,
+  m022AuctionLotProvenance,
 ];

@@ -333,6 +333,15 @@ function summarizeEvent(
       ) : (
         <></>
       );
+    case "payout.released":
+      return (
+        <>
+          received £{String(e.amount)}{" "}
+          <span className="muted">
+            ({String(e.source)} from D{String(e.originatedDay)})
+          </span>
+        </>
+      );
     case "gossip.exchanged": {
       const others = (e.participantActorIds as readonly number[]).filter(
         (id) => id !== actorId,

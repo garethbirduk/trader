@@ -29,6 +29,8 @@ import { registerAuctionListingKnowledge } from "./world/auction-listing-knowled
 import { registerAuctionInspection } from "./world/auction-inspection.js";
 import { registerOffMapResale } from "./world/off-map-resale.js";
 import { registerLeadDecay } from "./world/lead-decay.js";
+import { registerPendingPayouts } from "./world/pending-payouts.js";
+import { registerRegionalClearance } from "./world/regional-clearance.js";
 import { registerMarketSale } from "./world/market-sale.js";
 import {
   PlannerRegistry,
@@ -420,7 +422,12 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   registerHeatReactions(world);
   registerReputationReactions(world);
 
-  // Day-scoped bookkeeping.
+  // Day-scoped bookkeeping. Pending-payouts drains first so any cash
+  // arriving today is in actors' hands before they decide where to
+  // be (planner) or what to bid (auction). Regional-clearance lists
+  // its lots before the daily auction picks the docket.
+  registerPendingPayouts(world);
+  registerRegionalClearance(world, { economics: skin.economics });
   registerLeadDecay(world);
   registerHeatDecay(world);
   registerAuthoritySweep(world, {

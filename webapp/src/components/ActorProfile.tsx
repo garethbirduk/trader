@@ -111,6 +111,15 @@ export function ActorProfile({
     ).length;
   }, [snapshot, day, actorId]);
 
+  // Stage 7 — cash-in-transit (off-map resale revenue arriving with a
+  // lag). Only shown when non-zero; mostly relevant to whales.
+  const pendingPayoutTotal = useMemo(() => {
+    if (snapshot === null) return 0;
+    return (snapshot.pendingPayouts ?? [])
+      .filter((p) => p.actorId === actorId)
+      .reduce((sum, p) => sum + p.amount, 0);
+  }, [snapshot, actorId]);
+
   return (
     <section className="actor-profile">
       <header className="profile-head">
@@ -178,6 +187,12 @@ export function ActorProfile({
         ) : null}
         <dt>Reachable pools</dt>
         <dd>{reachablePools}</dd>
+        {pendingPayoutTotal > 0 ? (
+          <>
+            <dt>In transit</dt>
+            <dd className="muted">£{pendingPayoutTotal}</dd>
+          </>
+        ) : null}
       </dl>
     </section>
   );

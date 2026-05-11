@@ -289,6 +289,25 @@ export function renderEvent(
           {A(e.producerActorId)} clocks {A(e.blockerActorId)} at {L(e.locationId)} and walks
         </>
       );
+    case "payout.released":
+      return (
+        <>
+          {A(e.actorId)} receives £{String(e.amount)}{" "}
+          <span className="muted">
+            ({String(e.source)} from D{String(e.originatedDay)})
+          </span>
+        </>
+      );
+    case "regional-clearance.listed":
+      return (
+        <>
+          New lot: {I(e.itemKindId)} ×{String(e.quantity)} ({String(e.qualityTier)}){" "}
+          floor £{String(e.floorPrice)}
+          {e.provenance !== null && e.provenance !== undefined ? (
+            <> <span className="muted">— {String(e.provenance)}</span></>
+          ) : null}
+        </>
+      );
     case "gossip.exchanged": {
       const participants = (e.participantActorIds as readonly number[]) ?? [];
       const a = participants[0];

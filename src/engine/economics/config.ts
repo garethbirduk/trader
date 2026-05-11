@@ -135,6 +135,29 @@ export interface EconomicsConfig {
    * mutation entirely (faithful retelling, useful for tests).
    */
   readonly gossipMutation: GossipMutationConfig;
+
+  /**
+   * Stage 7 — regional clearance lots flowing into the auction
+   * independent of local pool flushes. Keeps Sotheby's busy every
+   * auction day: locals engage on the affordable lots, whales clear
+   * the rest. Disable by setting `lotsPerDay` to 0.
+   */
+  readonly regionalClearance: RegionalClearanceConfig;
+}
+
+export interface RegionalClearanceConfig {
+  /** How many regional-clearance lots to spawn each morning. Default
+   *  3 — enough that even a quiet local-pool day has a docket. */
+  readonly lotsPerDay: number;
+  /** Floor price as a fraction of the lot's true tier-adjusted retail
+   *  value. Higher = more restrictive; only whales can engage.
+   *  Default 0.55 — most locals stretch to mid-range lots; whales
+   *  scoop the top end. */
+  readonly floorFractionOfRetail: number;
+  /** Symmetric ±jitter on the floor price. Default 0.15. */
+  readonly floorJitter: number;
+  /** Bank of provenance phrases attached to the spawned lots. */
+  readonly provenancePhrases: readonly string[];
 }
 
 export interface GossipMutationConfig {
@@ -167,6 +190,14 @@ export interface OffMapAuctionConfig {
    *  small "transaction cost" so successful trades net positive but
    *  overbids still hurt. Default 0.95. */
   readonly resellMargin: number;
+  /**
+   * Days between off-map resale and the cash arriving back to the
+   * dealer. Stage 7's finiteness lever: a whale that spent all their
+   * cash bidding can't bid again for `payoutLagDays` after the
+   * resale. Set to 0 for immediate payout (the pre-Stage-7 behaviour).
+   * Default 2 — long enough that a single big spend forces a sit-out.
+   */
+  readonly payoutLagDays: number;
 }
 
 export type PlannerCandidateKind =
@@ -409,6 +440,7 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
   offMapAuction: {
     maxBiddersPerLot: 3,
     resellMargin: 0.95,
+    payoutLagDays: 2,
   },
   // Gentle defaults — every hop drifts the numbers ~10–15%, tiers slip
   // once in twenty retellings, side flips one in fifty. Combined over
@@ -421,6 +453,19 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     priceJitter: 0.1,
     tierSlipChance: 0.05,
     sideFlipChance: 0.02,
+  },
+  regionalClearance: {
+    lotsPerDay: 3,
+    floorFractionOfRetail: 0.55,
+    floorJitter: 0.15,
+    provenancePhrases: [
+      "Bexleyheath estate clearance",
+      "Sevenoaks auction overflow",
+      "Bromley bankruptcy stock",
+      "Croydon warehouse closure",
+      "Maidstone probate sale",
+      "Sidcup garage clearout",
+    ],
   },
 };
 
@@ -476,6 +521,10 @@ export function resolveEconomicsConfig(
     gossipMutation: {
       ...DEFAULT_ECONOMICS_CONFIG.gossipMutation,
       ...(partial.gossipMutation ?? {}),
+    },
+    regionalClearance: {
+      ...DEFAULT_ECONOMICS_CONFIG.regionalClearance,
+      ...(partial.regionalClearance ?? {}),
     },
   };
 }
