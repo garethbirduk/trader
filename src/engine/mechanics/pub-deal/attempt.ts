@@ -110,6 +110,7 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
     args.events.emit({
       type: "pubdeal.walked",
       at: args.clock,
+      locationId: args.locationId,
       sellerActorId: args.seller.actorId,
       buyerActorId: args.buyer.actorId,
       reason: negotiation.reason,
@@ -140,6 +141,7 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
   args.events.emit({
     type: "pubdeal.agreed",
     at: args.clock,
+    locationId: args.locationId,
     dealId: deal.id,
     sellerActorId: args.seller.actorId,
     buyerActorId: args.buyer.actorId,

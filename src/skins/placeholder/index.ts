@@ -120,6 +120,14 @@ export interface SkinSeedResult {
    */
   readonly tradingActorIds: readonly number[];
   /**
+   * Actor ids flagged as information-traders. In chat-side gossip
+   * (`registerVisitorChat`) any pair containing one of these yields
+   * the boosted per-encounter lead count rather than the baseline.
+   * The cast is the skin's choice — for placeholder/OFAH it's
+   * Denzil, Mike, Sid, Uncle Albert.
+   */
+  readonly infoTraderActorIds: readonly number[];
+  /**
    * Resolved economics config, exposed back to the caller so the
    * world-setup wiring (pool spawner, pub-deal autonomy, bidders) can
    * read the same bundle. Defaults applied where the skin caller
@@ -1142,6 +1150,23 @@ const TRADING_CODES: readonly string[] = [
   "trigger",
 ];
 
+/**
+ * Information-trader actors. They aren't necessarily traders of stock —
+ * Mike runs a pub, Sid a caff, Albert nurses pints at the Legion —
+ * their value to the player is the relationship and the rumour
+ * pipeline that comes with it. In chat-side gossip the per-encounter
+ * lead yield jumps when either party is one of these. Per
+ * design.md → Stage 2: "Denzil (mobile), Mike (Nag's), Sid (café),
+ * Albert (Legion) — outsized lead capacity per encounter and a
+ * location-flavoured gossip slant."
+ */
+const INFO_TRADER_CODES: readonly string[] = [
+  "denzil",
+  "mike",
+  "sid",
+  "albert",
+];
+
 const REACHABLE_BY_CATEGORY: Readonly<Record<string, readonly string[]>> = {
   electrical: ["denzil", "monkey-harris", "ronnie-nelson"],
   furniture: ["boyce", "monkey-harris"],
@@ -1509,6 +1534,9 @@ export function seedPlaceholderSkin(
   const tradingActorIds = TRADING_CODES.map((c) => actorByCode.get(c)).filter(
     (id): id is number => id !== undefined,
   );
+  const infoTraderActorIds = INFO_TRADER_CODES.map((c) => actorByCode.get(c)).filter(
+    (id): id is number => id !== undefined,
+  );
 
   // Starter stock — every dealer/fence opens day 1 with 2-3 lots from
   // the everyday catalogue. Each lot also seeds a first-hand "I have
@@ -1611,6 +1639,7 @@ export function seedPlaceholderSkin(
     lunchSpecsByActorId,
     runLengthDays,
     tradingActorIds,
+    infoTraderActorIds,
     economics,
     actorRoutines,
     rolesByActorId,

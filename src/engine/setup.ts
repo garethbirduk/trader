@@ -47,6 +47,8 @@ import { makeDefaultBidders } from "./auction/default-bidders.js";
 import { registerPoolSpawner } from "../skins/placeholder/pool-spawner.js";
 import { registerPubDealAutonomy } from "./world/pub-deal-autonomy.js";
 import { registerLocationGossip } from "./world/location-gossip.js";
+import { registerVisitorChat } from "./world/visitor-chat.js";
+import { registerPubDealGossip } from "./world/pub-deal-gossip.js";
 import { registerHeatReactions } from "./world/heat-reactions.js";
 import { registerHeatDecay } from "./world/heat-decay.js";
 import { registerAuthoritySweep } from "./world/authority-sweep.js";
@@ -204,6 +206,25 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
 
   // 3 — interactions, all observe post-arrival positions.
   registerLocationGossip(world);
+
+  // Visitor↔visitor chat at social venues. Pubs are the cinematic core
+  // (an evening at the Nag's), but the high-street caff (Sid's) and
+  // the market hall also linger long enough for real conversation, so
+  // those venues participate too. The auction gallery is excluded —
+  // people stop there for the listing, not to talk.
+  const chatLocationIds: number[] = [
+    ...skin.allPubLocationIds,
+    skin.marketLocationId,
+    ...skin.newspaperLocationIds, // Sid's + high-street newsagents.
+  ];
+  registerVisitorChat(world, {
+    chatLocationIds,
+    infoTraderActorIds: new Set(skin.infoTraderActorIds),
+  });
+
+  // Deal-adjacent gossip. Every pubdeal — agreed or walked — leaks a
+  // piece of news between the two would-be counterparties.
+  registerPubDealGossip(world);
   registerAuctionListingKnowledge(world, {
     newspaperLocationIds: skin.newspaperLocationIds,
     paperFromHour: skin.paperFromHour,

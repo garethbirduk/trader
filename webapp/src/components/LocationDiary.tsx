@@ -485,12 +485,21 @@ function summarizeLocEvent(
   switch (e.type) {
     case "actor.travelled":
       return <>{A(e.actorId)} arrived</>;
-    case "gossip.exchanged":
+    case "gossip.exchanged": {
+      const participants = (e.participantActorIds as readonly number[]) ?? [];
+      const a = participants[0];
+      const b = participants[1];
+      const kind = e.kind as "proprietor" | "chat" | "deal";
+      const tag =
+        kind === "chat" ? "chat" : kind === "deal" ? "deal-side" : "proprietor";
       return (
         <>
-          {A(e.visitorActorId)} ↔ {A(e.proprietorActorId)}
+          {a !== undefined ? A(a) : <span className="muted">?</span>} ↔{" "}
+          {b !== undefined ? A(b) : <span className="muted">?</span>}{" "}
+          <span className="muted">({tag})</span>
         </>
       );
+    }
     case "pubdeal.attempted":
       return (
         <>

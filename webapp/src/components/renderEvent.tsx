@@ -261,12 +261,21 @@ export function renderEvent(
           {A(e.buyerActorId)} won't deal with {A(e.sellerActorId)} (trust {String(e.trustScore)})
         </>
       );
-    case "gossip.exchanged":
+    case "gossip.exchanged": {
+      const participants = (e.participantActorIds as readonly number[]) ?? [];
+      const a = participants[0];
+      const b = participants[1];
+      const kind = e.kind as "proprietor" | "chat" | "deal";
+      const tag =
+        kind === "chat" ? "chat" : kind === "deal" ? "deal-side" : "proprietor";
       return (
         <>
-          {A(e.visitorActorId)} ↔ {A(e.proprietorActorId)} at {L(e.atLocationId)}
+          {a !== undefined ? A(a) : <span className="muted">?</span>} ↔{" "}
+          {b !== undefined ? A(b) : <span className="muted">?</span>} at {L(e.atLocationId)}{" "}
+          <span className="muted">({tag})</span>
         </>
       );
+    }
     case "actor.travelled":
       return (
         <>

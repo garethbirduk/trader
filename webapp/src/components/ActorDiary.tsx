@@ -140,12 +140,15 @@ function eventInvolvesActor(e: RunEvent, actorId: number): boolean {
     "buyerActorId",
     "sellerActorId",
     "winnerActorId",
-    "visitorActorId",
-    "proprietorActorId",
   ] as const;
   for (const f of idFields) {
     if ((e as Record<string, unknown>)[f] === actorId) return true;
   }
+  // gossip.exchanged carries its participants as an array. A gossip
+  // event involves the focal actor if their id is listed.
+  const participants = (e as { participantActorIds?: readonly number[] })
+    .participantActorIds;
+  if (participants !== undefined && participants.includes(actorId)) return true;
   return false;
 }
 
@@ -273,12 +276,20 @@ function summarizeEvent(
       return <>walked away — {String(e.reason)}</>;
     case "pubdeal.skipped-low-trust":
       return <>wouldn't deal (trust {String(e.trustScore)})</>;
-    case "gossip.exchanged":
+    case "gossip.exchanged": {
+      const others = (e.participantActorIds as readonly number[]).filter(
+        (id) => id !== actorId,
+      );
+      const otherId = others[0];
+      const kind = e.kind as "proprietor" | "chat" | "deal";
+      const verb =
+        kind === "chat" ? "chatted" : kind === "deal" ? "haggle gossip" : "gossip";
       return (
         <>
-          gossip with {A(e.proprietorActorId === actorId ? e.visitorActorId : e.proprietorActorId)} at {L(e.atLocationId)}
+          {verb} with {otherId !== undefined ? A(otherId) : <span className="muted">?</span>} at {L(e.atLocationId)}
         </>
       );
+    }
     case "heat.raised":
       return (
         <>

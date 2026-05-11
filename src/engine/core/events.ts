@@ -57,10 +57,27 @@ export type WorldEvent =
   | { readonly type: "policy.errored"; readonly at: Clock; readonly actorId: number; readonly policyId: string; readonly reason: string }
   | { readonly type: "pool.flushed"; readonly at: Clock; readonly poolId: number; readonly quantity: number; readonly destination: "auction" | "market" | "write_off"; readonly auctionLotId: number | null }
   | { readonly type: "pubdeal.attempted"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly itemKindId: number; readonly qualityTier: string; readonly quantity: number }
-  | { readonly type: "pubdeal.agreed"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly unitPrice: number; readonly quantity: number; readonly turns: readonly NegotiationTurnSnapshot[] }
-  | { readonly type: "pubdeal.walked"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly reason: string; readonly turns: readonly NegotiationTurnSnapshot[] }
+  | { readonly type: "pubdeal.agreed"; readonly at: Clock; readonly locationId: number; readonly dealId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly unitPrice: number; readonly quantity: number; readonly turns: readonly NegotiationTurnSnapshot[] }
+  | { readonly type: "pubdeal.walked"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly reason: string; readonly turns: readonly NegotiationTurnSnapshot[] }
   | { readonly type: "pubdeal.skipped-low-trust"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly trustScore: number }
-  | { readonly type: "gossip.exchanged"; readonly at: Clock; readonly atLocationId: number; readonly visitorActorId: number; readonly proprietorActorId: number; readonly exchanges: readonly GossipExchange[] }
+  | {
+      readonly type: "gossip.exchanged";
+      readonly at: Clock;
+      readonly atLocationId: number;
+      /**
+       * `proprietor` — the existing drive-by exchange between a visitor
+       *   and the location's proprietor on arrival (passive, no hour cost).
+       * `chat`       — a visitor↔visitor conversation at a social venue.
+       * `deal`       — gossip that fires alongside a pub-deal attempt
+       *   (agreed or walked) between the two would-be counterparties.
+       */
+      readonly kind: "proprietor" | "chat" | "deal";
+      /** The two actors involved. For proprietor exchanges, index 0 is
+       *  the visitor and index 1 is the proprietor (legacy ordering).
+       *  For chat/deal exchanges the order is not meaningful. */
+      readonly participantActorIds: readonly number[];
+      readonly exchanges: readonly GossipExchange[];
+    }
   | { readonly type: "settlement.lead-claim"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly poolId: number; readonly quantity: number; readonly unitPrice: number; readonly throughLeadId: number }
   | { readonly type: "delivery.fee"; readonly at: Clock; readonly dealId: number; readonly sellerActorId: number; readonly fee: number }
   | { readonly type: "heat.raised"; readonly at: Clock; readonly actorId: number; readonly delta: number; readonly score: number; readonly reason: string }
@@ -191,7 +208,7 @@ export function consoleHandler(): EventHandler {
             return `${x.fromActorId}→${x.toActorId} [${l.side} kind=${l.subjectItemKindId}/${tier} qty=${l.estimatedQuantity}@£${l.estimatedUnitPrice} ${l.confidence} hop=${l.hopCount}]`;
           })
           .join(" ");
-        console.log(`[${stamp}] gossip.exchanged loc=${e.atLocationId} ${summaries}`);
+        console.log(`[${stamp}] gossip.exchanged (${e.kind}) loc=${e.atLocationId} ${summaries}`);
         break;
       }
       case "settlement.lead-claim":

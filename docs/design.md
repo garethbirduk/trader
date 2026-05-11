@@ -459,14 +459,19 @@ alongside (`location-gossip.ts` novelty filter). See the "Already
 in place" list above for the broader UI work that landed in the
 same window.
 
-**Stage 2 — visitor-to-visitor interaction.**
-Add a `chat` hour-activity (vs the existing `deal` and implicit
-`idle`). Visitor ↔ visitor exchange handler at the interact step.
-Lead selection prefers novel / refresh over redundant. Deal-side
-gossip fires on both `pubdeal.agreed` and `pubdeal.walked`.
-Information-trader chat-yield multiplier.
-- Engine: new action verb, new handler, piggyback on pubdeal.
-- Viewer: surface the new activity in the diary + scene deck.
+**Stage 2 — visitor-to-visitor interaction.** ✅ Done.
+Shipped as `src/engine/world/visitor-chat.ts` (visitor↔visitor pair
+trials at pubs / market / Sid's / newsagents) and
+`src/engine/world/pub-deal-gossip.ts` (deal-adjacent gossip on both
+`pubdeal.agreed` and `pubdeal.walked`). The `gossip.exchanged` event
+gained a `kind` discriminator (`proprietor | chat | deal`) and now
+carries `participantActorIds` rather than the legacy
+visitor/proprietor pair. Diary, scene deck, and event list label
+each gossip event with its kind. Info-trader actors
+(Denzil/Mike/Sid/Albert) are flagged in the placeholder skin and
+get the boosted per-encounter lead yield through
+`infoTraderChatYield`. Shared novelty/freshness filter lives in
+`src/engine/leads/gossip-utils.ts` (warm-first selection).
 
 **Stage 3 — information mutation.**
 Pure function `mutate(lead, rng, config)` applied on every hop.
@@ -535,12 +540,15 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 2 — visitor↔visitor chat**. Spec
-   above. Key files when you start: `src/engine/world/location-
-   gossip.ts` (the existing visitor↔proprietor handler — the
-   visitor↔visitor flow is the same shape one step over), and
-   `webapp/src/components/ActorDiary.tsx` (where the new
-   chat-activity needs to surface).
+3. Next engine work is **Stage 3 — information mutation**. Spec
+   above. Apply a `mutate(lead, rng, config)` function inside
+   `src/engine/leads/leads-repo.ts::shareLead` (the single call site
+   for every gossip handler) so numeric jitter, occasional
+   categorical slip, and rare role reversal happen on every hop.
+   All probabilities live in `EconomicsConfig`. Conflicts will then
+   visibly emerge in the existing gossip ledger view
+   (`ActorKnows`) — the divergent-value highlighting from Stage 1 is
+   already in place to render them.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police

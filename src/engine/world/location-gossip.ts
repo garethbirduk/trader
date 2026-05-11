@@ -1,51 +1,8 @@
 import type { World, Unsubscribe } from "../core/world.js";
 import type { GossipExchange } from "../core/events.js";
-import type { Lead } from "../leads/types.js";
 import { getLocationProprietor } from "../locations/locations.js";
 import { getLeadsByHolder, shareLead } from "../leads/leads-repo.js";
-
-function toExchange(lead: Lead, fromActorId: number, toActorId: number): GossipExchange {
-  return {
-    fromActorId,
-    toActorId,
-    lead: {
-      side: lead.side,
-      subjectItemKindId: lead.subjectItemKindId,
-      subjectQualityTier: lead.subjectQualityTier,
-      counterpartyActorId: lead.counterpartyActorId,
-      estimatedQuantity: lead.estimatedQuantity,
-      estimatedUnitPrice: lead.estimatedUnitPrice,
-      confidence: lead.confidence,
-      hopCount: lead.hopCount,
-      sourceActorId: lead.sourceActorId,
-    },
-  };
-}
-
-/**
- * True if `listener` already holds a lead identical to `speaker` on every
- * value-bearing field (subject + qty + price). Different values count as
- * a *refinement* — a £7 correction to a previously-known £8 fact is news
- * and should still be transmitted, surfacing as a conflict in the
- * receiver's bag. Confidence/hopCount/source aren't compared because the
- * same fact retold always cools to cold with a higher hop, but that's
- * not a change in the underlying claim.
- */
-function isLeadKnownTo(speaker: Lead, listenerLeads: readonly Lead[]): boolean {
-  for (const l of listenerLeads) {
-    if (
-      l.side === speaker.side &&
-      l.subjectItemKindId === speaker.subjectItemKindId &&
-      l.subjectQualityTier === speaker.subjectQualityTier &&
-      l.counterpartyActorId === speaker.counterpartyActorId &&
-      l.estimatedQuantity === speaker.estimatedQuantity &&
-      l.estimatedUnitPrice === speaker.estimatedUnitPrice
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
+import { selectNovelLeads, toExchange } from "../leads/gossip-utils.js";
 
 /**
  * Listens for `actor.travelled` events. Whenever an actor arrives at a
@@ -85,9 +42,7 @@ export function registerLocationGossip(world: World): Unsubscribe {
 
     // Visitor → proprietor: only share something the proprietor doesn't
     // already hold verbatim.
-    const novelToProprietor = visitorLeads.filter(
-      (l) => !isLeadKnownTo(l, proprietorLeads),
-    );
+    const novelToProprietor = selectNovelLeads(visitorLeads, proprietorLeads);
     if (novelToProprietor.length > 0) {
       const lead = world.rng.pick(novelToProprietor);
       try {
@@ -99,9 +54,7 @@ export function registerLocationGossip(world: World): Unsubscribe {
     }
 
     // Proprietor → visitor — same novelty filter in reverse.
-    const novelToVisitor = proprietorLeads.filter(
-      (l) => !isLeadKnownTo(l, visitorLeads),
-    );
+    const novelToVisitor = selectNovelLeads(proprietorLeads, visitorLeads);
     if (novelToVisitor.length > 0) {
       const lead = world.rng.pick(novelToVisitor);
       try {
@@ -117,8 +70,8 @@ export function registerLocationGossip(world: World): Unsubscribe {
         type: "gossip.exchanged",
         at: e.at,
         atLocationId: e.toLocationId,
-        visitorActorId: e.actorId,
-        proprietorActorId: proprietorId,
+        kind: "proprietor",
+        participantActorIds: [e.actorId, proprietorId],
         exchanges,
       });
     }

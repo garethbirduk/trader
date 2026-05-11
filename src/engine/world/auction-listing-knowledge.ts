@@ -98,14 +98,17 @@ export function registerAuctionListingKnowledge(
     }
   });
 
-  // Gossip propagation: when a gossip exchange fires, the visitor and
-  // proprietor each share one auction-lot id the other doesn't yet know.
+  // Gossip propagation: when a gossip exchange fires, each pair of
+  // participants shares one auction-lot id the other doesn't yet know.
   // We piggyback on the existing gossip event rather than adding a new
-  // hook — keeps the social fabric in one place.
+  // hook — keeps the social fabric in one place. Works for proprietor
+  // drive-bys, visitor↔visitor chats, and deal-adjacent gossip alike.
   const unsubGossip = world.events.subscribe((e) => {
     if (e.type !== "gossip.exchanged") return;
-    propagateLotKnowledge(world, e.visitorActorId, e.proprietorActorId, e.at);
-    propagateLotKnowledge(world, e.proprietorActorId, e.visitorActorId, e.at);
+    const [a, b] = e.participantActorIds;
+    if (a === undefined || b === undefined) return;
+    propagateLotKnowledge(world, a, b, e.at);
+    propagateLotKnowledge(world, b, a, e.at);
   });
 
   return () => {

@@ -1321,18 +1321,31 @@ function GossipScene({
       </header>
       <ul className="scene-gossip-list">
         {events.map((e, i) => {
-          const v = e.visitorActorId as number;
-          const p = e.proprietorActorId as number;
+          const participants = (e.participantActorIds as readonly number[] | undefined) ?? [];
+          const a = participants[0];
+          const b = participants[1];
+          const kind = (e.kind as "proprietor" | "chat" | "deal" | undefined) ?? "proprietor";
+          const tag =
+            kind === "chat" ? "chat" : kind === "deal" ? "deal-side" : "proprietor";
           const loc = e.atLocationId as number;
           const exchanges = (e.exchanges as readonly any[] | undefined) ?? [];
           return (
             <li key={i} className="scene-gossip-row">
               <div className="scene-parties">
-                <ActorChip dump={dump} actorId={v} onSelect={onSelect} size={16} />
+                {a !== undefined ? (
+                  <ActorChip dump={dump} actorId={a} onSelect={onSelect} size={16} />
+                ) : (
+                  <span className="muted">?</span>
+                )}
                 <span>↔</span>
-                <ActorChip dump={dump} actorId={p} onSelect={onSelect} size={16} />
+                {b !== undefined ? (
+                  <ActorChip dump={dump} actorId={b} onSelect={onSelect} size={16} />
+                ) : (
+                  <span className="muted">?</span>
+                )}
                 <span className="muted">at</span>
                 <LocationLink dump={dump} locationId={loc} onSelect={onSelect} />
+                <span className="muted">· {tag}</span>
               </div>
               {exchanges.length > 0 ? (
                 <ul className="scene-lines">
