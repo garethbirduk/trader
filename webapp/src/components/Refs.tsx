@@ -127,13 +127,13 @@ export function LocationRef({
   variant = "inline",
   size = 18,
 }: LocationRefProps) {
-  const { hour } = useCurrentTime();
+  const { day, hour } = useCurrentTime();
   const loc = dump.locations.find((l) => l.id === id);
   if (loc === undefined) {
     return <span className="ref-missing muted">loc {id}</span>;
   }
   if (variant === "chip") {
-    const isOpen = isLocationOpenAt(loc.openHours, hour);
+    const isOpen = isLocationOpenAt(loc, day, hour);
     return (
       <RefButton
         kind="location"

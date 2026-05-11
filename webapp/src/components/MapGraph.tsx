@@ -697,7 +697,7 @@ export function MapGraph(props: Props) {
               (loc as { type?: string }).type === "auction";
             const isStar = isAuction && isHourInAuctionWindow(dump, hour);
             const t = (loc as { type?: string }).type ?? "business";
-            const isOpen = isLocationOpenAt(loc.openHours, hour);
+            const isOpen = isLocationOpenAt(loc, day, hour);
             const fill = getLocationColor({ code: loc.code, type: t });
             const stroke = isSel || isStar ? HEX_PLAYER : "rgba(0,0,0,0.4)";
             const strokeWidth = isSel || isStar ? 2.5 : 1;
@@ -846,7 +846,7 @@ export function MapGraph(props: Props) {
                 code={loc.code}
                 type={(loc as { type?: string }).type}
                 size={14}
-                isOpen={isLocationOpenAt(loc.openHours, hour)}
+                isOpen={isLocationOpenAt(loc, day, hour)}
               />
               <span className="offmap-label">
                 {SHORT_LABELS[loc.code] ?? loc.displayName}

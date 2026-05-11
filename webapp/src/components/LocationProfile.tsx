@@ -18,7 +18,7 @@ export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: P
   const { hour } = useCurrentTime();
   const loc = dump.locations.find((l) => l.id === locationId);
   if (loc === undefined) return null;
-  const isOpen = isLocationOpenAt(loc.openHours, hour);
+  const isOpen = isLocationOpenAt(loc, day, hour);
 
   const hereIds = useMemo<readonly number[]>(() => {
     if (snapshot === null) return [];
