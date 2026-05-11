@@ -1,12 +1,20 @@
 import type { World, Unsubscribe } from "../core/world.js";
 import type { GossipExchange } from "../core/events.js";
-import { getLeadsByHolder, shareLead } from "../leads/leads-repo.js";
+import { getLeadsByHolder, shareLead, type ShareLeadMutator } from "../leads/leads-repo.js";
 import { selectNovelLeads, toExchange } from "../leads/gossip-utils.js";
+import { mutateLead } from "../leads/mutation.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 export interface PubDealGossipOptions {
   /** Leads exchanged each direction per agreed/walked pub-deal. Default 1
    *  — one rumour per round of negotiation, regardless of outcome. */
   readonly leadsPerSide?: number;
+  /** Economic config — supplies `gossipMutation` knobs to the per-hop
+   *  mutator. Defaults to the engine defaults when unset. */
+  readonly economics?: EconomicsConfig;
 }
 
 /**
@@ -27,6 +35,9 @@ export function registerPubDealGossip(
   opts: PubDealGossipOptions = {},
 ): Unsubscribe {
   const leadsPerSide = opts.leadsPerSide ?? 1;
+  const mutationConfig = (opts.economics ?? DEFAULT_ECONOMICS_CONFIG).gossipMutation;
+  const mutate: ShareLeadMutator = (input) =>
+    mutateLead(input, world.rng, mutationConfig);
 
   return world.events.subscribe((e) => {
     if (e.type !== "pubdeal.agreed" && e.type !== "pubdeal.walked") return;
@@ -39,8 +50,8 @@ export function registerPubDealGossip(
     const buyerLeads = getLeadsByHolder(world.db, buyer);
 
     const exchanges: GossipExchange[] = [];
-    pour(world, seller, buyer, sellerLeads, buyerLeads, leadsPerSide, e.at.day, exchanges);
-    pour(world, buyer, seller, buyerLeads, sellerLeads, leadsPerSide, e.at.day, exchanges);
+    pour(world, seller, buyer, sellerLeads, buyerLeads, leadsPerSide, e.at.day, mutate, exchanges);
+    pour(world, buyer, seller, buyerLeads, sellerLeads, leadsPerSide, e.at.day, mutate, exchanges);
 
     if (exchanges.length === 0) return;
     world.events.emit({
@@ -62,6 +73,7 @@ function pour(
   toLeadsSnapshot: readonly import("../leads/types.js").Lead[],
   cap: number,
   onDay: number,
+  mutate: ShareLeadMutator,
   out: GossipExchange[],
 ): void {
   if (cap <= 0) return;
@@ -76,8 +88,11 @@ function pour(
     pool.splice(idx, 1);
     drawn += 1;
     try {
-      shareLead(world.db, fromActorId, toActorId, lead.id, onDay);
-      out.push(toExchange(lead, fromActorId, toActorId));
+      const received = shareLead(
+        world.db, fromActorId, toActorId, lead.id, onDay,
+        { mutate },
+      );
+      out.push(toExchange(received, fromActorId, toActorId));
     } catch {
       // Holder mismatch or self-share — skip silently.
     }

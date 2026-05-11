@@ -205,7 +205,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   });
 
   // 3 — interactions, all observe post-arrival positions.
-  registerLocationGossip(world);
+  registerLocationGossip(world, { economics: skin.economics });
 
   // Visitor↔visitor chat at social venues. Pubs are the cinematic core
   // (an evening at the Nag's), but the high-street caff (Sid's) and
@@ -220,11 +220,12 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   registerVisitorChat(world, {
     chatLocationIds,
     infoTraderActorIds: new Set(skin.infoTraderActorIds),
+    economics: skin.economics,
   });
 
   // Deal-adjacent gossip. Every pubdeal — agreed or walked — leaks a
   // piece of news between the two would-be counterparties.
-  registerPubDealGossip(world);
+  registerPubDealGossip(world, { economics: skin.economics });
   registerAuctionListingKnowledge(world, {
     newspaperLocationIds: skin.newspaperLocationIds,
     paperFromHour: skin.paperFromHour,

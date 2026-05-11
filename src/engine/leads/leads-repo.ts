@@ -187,9 +187,43 @@ export function decayLeads(
 }
 
 /**
+ * Per-hop transform applied to the value-bearing fields of a lead as
+ * it's retold. Returning the input unchanged is a faithful retelling;
+ * the engine's gossip handlers wire in `mutateLead` to introduce drift.
+ * Tests that don't care about mutation can leave this unset for an
+ * exact-copy share.
+ */
+export interface ShareLeadMutator {
+  (input: {
+    readonly side: Lead["side"];
+    readonly subjectQualityTier: Lead["subjectQualityTier"];
+    readonly estimatedQuantity: number;
+    readonly estimatedUnitPrice: number;
+    readonly subjectPoolId: number | null;
+  }): {
+    readonly side: Lead["side"];
+    readonly subjectQualityTier: Lead["subjectQualityTier"];
+    readonly estimatedQuantity: number;
+    readonly estimatedUnitPrice: number;
+    readonly subjectPoolId: number | null;
+  };
+}
+
+export interface ShareLeadOptions {
+  /** Optional per-hop mutator. When omitted, the lead is copied
+   *  verbatim into the receiver's bag (modulo hop+1 / cold). */
+  readonly mutate?: ShareLeadMutator;
+}
+
+/**
  * Pass a lead from one actor to another — produces a new lead in the
  * recipient's bag with hop_count incremented and confidence stepped down
  * (warm leads become cold once retold). The original is left intact.
+ *
+ * If `opts.mutate` is supplied, the value-bearing fields (side, tier,
+ * qty, price, pool grounding) run through the mutator before insert.
+ * That's how information drift, tier slip, and role reversal happen —
+ * one call site, one function, every gossip path covered.
  */
 export function shareLead(
   db: DB,
@@ -197,6 +231,7 @@ export function shareLead(
   toActorId: number,
   leadId: number,
   onDay: number,
+  opts?: ShareLeadOptions,
 ): Lead {
   return db.transaction((): Lead => {
     const source = getLeadById(db, leadId);
@@ -207,23 +242,39 @@ export function shareLead(
     if (fromActorId === toActorId) {
       throw new Error(`cannot share a lead with oneself`);
     }
+    const transferred = opts?.mutate
+      ? opts.mutate({
+          side: source.side,
+          subjectQualityTier: source.subjectQualityTier,
+          estimatedQuantity: source.estimatedQuantity,
+          estimatedUnitPrice: source.estimatedUnitPrice,
+          subjectPoolId: source.subjectPoolId,
+        })
+      : {
+          side: source.side,
+          subjectQualityTier: source.subjectQualityTier,
+          estimatedQuantity: source.estimatedQuantity,
+          estimatedUnitPrice: source.estimatedUnitPrice,
+          // Crucially: the pool reference propagates through the gossip
+          // chain. Two retold leads pointing to the same pool reveal
+          // the over-count.
+          subjectPoolId: source.subjectPoolId,
+        };
     return insertLead(db, {
       holderActorId: toActorId,
-      side: source.side,
+      side: transferred.side,
       subjectItemKindId: source.subjectItemKindId,
-      subjectQualityTier: source.subjectQualityTier,
+      subjectQualityTier: transferred.subjectQualityTier,
       counterpartyActorId: source.counterpartyActorId,
-      estimatedQuantity: source.estimatedQuantity,
-      estimatedUnitPrice: source.estimatedUnitPrice,
+      estimatedQuantity: transferred.estimatedQuantity,
+      estimatedUnitPrice: transferred.estimatedUnitPrice,
       // Retold leads are hearsay — always cold from here on.
       confidence: "cold",
       sourceActorId: fromActorId,
       acquiredDay: onDay,
       hopCount: source.hopCount + 1,
       derivedFromLeadId: source.id,
-      // Crucially: the pool reference propagates through the gossip chain.
-      // Two retold leads pointing to the same pool reveal the over-count.
-      subjectPoolId: source.subjectPoolId,
+      subjectPoolId: transferred.subjectPoolId,
     });
   });
 }

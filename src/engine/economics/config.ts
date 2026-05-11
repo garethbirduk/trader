@@ -126,6 +126,34 @@ export interface EconomicsConfig {
    * account at the configured `resellMargin`.
    */
   readonly offMapAuction: OffMapAuctionConfig;
+
+  /**
+   * Per-hop mutation applied when one actor passes a lead to another.
+   * Numeric drift is the texture; tier slip and side flip are the
+   * cinematic bugs — "Boyce burned Trigger" becomes "Trigger burned
+   * Boyce" two hops down the line. Set every chance to 0 to disable
+   * mutation entirely (faithful retelling, useful for tests).
+   */
+  readonly gossipMutation: GossipMutationConfig;
+}
+
+export interface GossipMutationConfig {
+  /** Symmetric multiplicative jitter applied to `estimatedQuantity` on
+   *  every hop. 0.15 = result drawn uniformly in [85%, 115%] of the
+   *  source value, then rounded to an integer >= 1. Always applied. */
+  readonly quantityJitter: number;
+  /** Symmetric multiplicative jitter on `estimatedUnitPrice`. */
+  readonly priceJitter: number;
+  /** Per-hop probability that `subjectQualityTier` slips by one step
+   *  in the QUALITY_TIERS ordering (good → fair or good → mint).
+   *  Bounded at the ends — a slip on `mint` can only go down to
+   *  `good`. Leads with a null tier are never slipped. */
+  readonly tierSlipChance: number;
+  /** Per-hop probability that the lead's `side` flips from supply to
+   *  demand or vice versa. The flipped lead also has its
+   *  `subjectPoolId` cleared — a fact that's been semantically
+   *  inverted is no longer grounded in the original supply pool. */
+  readonly sideFlipChance: number;
 }
 
 export interface OffMapAuctionConfig {
@@ -382,6 +410,18 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     maxBiddersPerLot: 3,
     resellMargin: 0.95,
   },
+  // Gentle defaults — every hop drifts the numbers ~10–15%, tiers slip
+  // once in twenty retellings, side flips one in fifty. Combined over
+  // a 4-hop chain that's roughly: numbers always wrong-but-close, ~20%
+  // chance of tier confusion, ~8% chance of a flipped role. Calibrated
+  // to make conflicts visibly emerge in the gossip ledger without
+  // making every lead noise.
+  gossipMutation: {
+    quantityJitter: 0.15,
+    priceJitter: 0.1,
+    tierSlipChance: 0.05,
+    sideFlipChance: 0.02,
+  },
 };
 
 /**
@@ -432,6 +472,10 @@ export function resolveEconomicsConfig(
     offMapAuction: {
       ...DEFAULT_ECONOMICS_CONFIG.offMapAuction,
       ...(partial.offMapAuction ?? {}),
+    },
+    gossipMutation: {
+      ...DEFAULT_ECONOMICS_CONFIG.gossipMutation,
+      ...(partial.gossipMutation ?? {}),
     },
   };
 }

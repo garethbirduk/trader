@@ -3,6 +3,15 @@ import type { GossipExchange } from "../core/events.js";
 import { getLocationProprietor } from "../locations/locations.js";
 import { getLeadsByHolder, shareLead } from "../leads/leads-repo.js";
 import { selectNovelLeads, toExchange } from "../leads/gossip-utils.js";
+import { mutateLead } from "../leads/mutation.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
+
+export interface LocationGossipOptions {
+  readonly economics?: EconomicsConfig;
+}
 
 /**
  * Listens for `actor.travelled` events. Whenever an actor arrives at a
@@ -28,7 +37,14 @@ import { selectNovelLeads, toExchange } from "../leads/gossip-utils.js";
  * unknowingly all be repeating the same upstream pool — and once any of
  * them tries to forward-sell on the aggregate, the cascade fires.
  */
-export function registerLocationGossip(world: World): Unsubscribe {
+export function registerLocationGossip(
+  world: World,
+  opts: LocationGossipOptions = {},
+): Unsubscribe {
+  const mutationConfig = (opts.economics ?? DEFAULT_ECONOMICS_CONFIG).gossipMutation;
+  const mutate = (input: Parameters<typeof mutateLead>[0]) =>
+    mutateLead(input, world.rng, mutationConfig);
+
   return world.events.subscribe((e) => {
     if (e.type !== "actor.travelled") return;
     const proprietorId = getLocationProprietor(world.db, e.toLocationId);
@@ -46,8 +62,11 @@ export function registerLocationGossip(world: World): Unsubscribe {
     if (novelToProprietor.length > 0) {
       const lead = world.rng.pick(novelToProprietor);
       try {
-        shareLead(world.db, e.actorId, proprietorId, lead.id, e.at.day);
-        exchanges.push(toExchange(lead, e.actorId, proprietorId));
+        const received = shareLead(
+          world.db, e.actorId, proprietorId, lead.id, e.at.day,
+          { mutate },
+        );
+        exchanges.push(toExchange(received, e.actorId, proprietorId));
       } catch {
         // Self-share or holder mismatch — skip silently.
       }
@@ -58,8 +77,11 @@ export function registerLocationGossip(world: World): Unsubscribe {
     if (novelToVisitor.length > 0) {
       const lead = world.rng.pick(novelToVisitor);
       try {
-        shareLead(world.db, proprietorId, e.actorId, lead.id, e.at.day);
-        exchanges.push(toExchange(lead, proprietorId, e.actorId));
+        const received = shareLead(
+          world.db, proprietorId, e.actorId, lead.id, e.at.day,
+          { mutate },
+        );
+        exchanges.push(toExchange(received, proprietorId, e.actorId));
       } catch {
         // Skip silently.
       }

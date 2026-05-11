@@ -1,8 +1,13 @@
 import type { World, Unsubscribe } from "../core/world.js";
 import type { GossipExchange } from "../core/events.js";
 import { getActorsAtLocation, getLocationProprietor } from "../locations/locations.js";
-import { getLeadsByHolder, shareLead } from "../leads/leads-repo.js";
+import { getLeadsByHolder, shareLead, type ShareLeadMutator } from "../leads/leads-repo.js";
 import { selectNovelLeads, toExchange } from "../leads/gossip-utils.js";
+import { mutateLead } from "../leads/mutation.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 export interface VisitorChatOptions {
   /** Venues where chat fires — typically pubs and other "lingering" spaces.
@@ -31,6 +36,9 @@ export interface VisitorChatOptions {
   readonly chatLeadsPerExchange?: number;
   /** Novel leads each direction when at least one party is an info-trader. */
   readonly infoTraderChatYield?: number;
+  /** Economic config — supplies `gossipMutation` knobs to the per-hop
+   *  mutator. Defaults to the engine defaults when unset. */
+  readonly economics?: EconomicsConfig;
 }
 
 /**
@@ -70,6 +78,9 @@ export function registerVisitorChat(
   const infoYield = opts.infoTraderChatYield ?? 4;
   const eligible = opts.eligibleActorIds ?? null;
   const infoTraders = opts.infoTraderActorIds ?? new Set<number>();
+  const mutationConfig = (opts.economics ?? DEFAULT_ECONOMICS_CONFIG).gossipMutation;
+  const mutate: ShareLeadMutator = (input) =>
+    mutateLead(input, world.rng, mutationConfig);
 
   return world.onHour((clock) => {
     if (clock.hour < startHour || clock.hour > endHour) return;
@@ -102,6 +113,7 @@ export function registerVisitorChat(
           a,
           b,
           maxPerSide: yieldPerSide,
+          mutate,
         });
 
         if (exchanges.length === 0) continue;
@@ -132,15 +144,16 @@ function swapNovelLeads(args: {
   a: number;
   b: number;
   maxPerSide: number;
+  mutate: ShareLeadMutator;
 }): GossipExchange[] {
-  const { world, dayHour, a, b, maxPerSide } = args;
+  const { world, dayHour, a, b, maxPerSide, mutate } = args;
 
   const aLeads = getLeadsByHolder(world.db, a);
   const bLeads = getLeadsByHolder(world.db, b);
 
   const exchanges: GossipExchange[] = [];
-  pourLeads(world, a, b, aLeads, bLeads, maxPerSide, dayHour.day, exchanges);
-  pourLeads(world, b, a, bLeads, aLeads, maxPerSide, dayHour.day, exchanges);
+  pourLeads(world, a, b, aLeads, bLeads, maxPerSide, dayHour.day, mutate, exchanges);
+  pourLeads(world, b, a, bLeads, aLeads, maxPerSide, dayHour.day, mutate, exchanges);
   return exchanges;
 }
 
@@ -152,6 +165,7 @@ function pourLeads(
   toLeadsSnapshot: readonly import("../leads/types.js").Lead[],
   cap: number,
   onDay: number,
+  mutate: ShareLeadMutator,
   out: GossipExchange[],
 ): void {
   if (cap <= 0) return;
@@ -169,8 +183,11 @@ function pourLeads(
     pool.splice(idx, 1);
     drawn += 1;
     try {
-      shareLead(world.db, fromActorId, toActorId, lead.id, onDay);
-      out.push(toExchange(lead, fromActorId, toActorId));
+      const received = shareLead(
+        world.db, fromActorId, toActorId, lead.id, onDay,
+        { mutate },
+      );
+      out.push(toExchange(received, fromActorId, toActorId));
     } catch {
       // Holder mismatch (lead already moved) or self-share — skip silently.
     }

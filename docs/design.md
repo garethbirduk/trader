@@ -473,12 +473,22 @@ get the boosted per-encounter lead yield through
 `infoTraderChatYield`. Shared novelty/freshness filter lives in
 `src/engine/leads/gossip-utils.ts` (warm-first selection).
 
-**Stage 3 — information mutation.**
-Pure function `mutate(lead, rng, config)` applied on every hop.
-Numeric jitter always; categorical slip rare; role reversal rarer
-still. All probabilities in `EconomicsConfig`.
-- Engine: one function, one call site.
-- Viewer: conflicts now visibly emerge in the gossip ledger.
+**Stage 3 — information mutation.** ✅ Done.
+Shipped as `src/engine/leads/mutation.ts` — one pure function,
+called from `shareLead` via an optional mutator hook. Numeric
+jitter on `estimatedQuantity` and `estimatedUnitPrice` is always
+applied; tier slip (±1 step in `QUALITY_TIERS`) fires per
+`tierSlipChance`; side flip (supply↔demand) per `sideFlipChance`
+and also drops `subjectPoolId` so a category-confused lead can no
+longer over-count the original pool. All four knobs live in
+`EconomicsConfig.gossipMutation`. The three gossip handlers
+(location-gossip, visitor-chat, pub-deal-gossip) build the mutator
+once at registration and pass it on every `shareLead` call;
+embedded `GossipExchange` entries now carry the post-mutation
+values so the event stream and the receiver's bag agree on what
+was actually said. Conflicts now visibly emerge in the existing
+`ActorKnows` ledger view (Stage 1 already wired the divergent-value
+highlight).
 
 **Stage 4 — clarification action.**
 "Ask X about lead L" reads X's matching lead and surfaces metadata.
@@ -540,15 +550,15 @@ earlier work.
    is the load-bearing one for "what exists right now."
 2. Working tree is clean and pushed; current `main` is what's
    running locally and on Pages.
-3. Next engine work is **Stage 3 — information mutation**. Spec
-   above. Apply a `mutate(lead, rng, config)` function inside
-   `src/engine/leads/leads-repo.ts::shareLead` (the single call site
-   for every gossip handler) so numeric jitter, occasional
-   categorical slip, and rare role reversal happen on every hop.
-   All probabilities live in `EconomicsConfig`. Conflicts will then
-   visibly emerge in the existing gossip ledger view
-   (`ActorKnows`) — the divergent-value highlighting from Stage 1 is
-   already in place to render them.
+3. Next engine work is **Stage 4 — clarification action**. Spec
+   above. The player (and policy-driven NPCs) ask a target X about
+   a held lead L; X surfaces their matching lead on the same
+   subject. Both versions persist in the asker's table —
+   `sourceActorId` already means "immediate prior speaker," so
+   chain-walking falls out of the existing schema. New verb +
+   handler against the target's lead table; new viewer surface
+   on `ActorKnows` to launch a clarification and visualise the
+   resulting chain. No schema changes expected.
 4. Smaller follow-ups parked outside the stages:
    - Opening hours for Sotheby's (explicit Mon-Fri), Transworld
      depot, council yard, Starlight Rooms, Shamrock Club, Police
