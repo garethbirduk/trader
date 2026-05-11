@@ -291,13 +291,25 @@ export function MapGraph(props: Props) {
   }, [dump, day, hour, adj, codeById]);
 
   // Stack actors at the same location so multiple-here don't overlap.
+  // Includes transit actors whose destination is this location — by the
+  // end of an arrival hour they're conceptually at the destination, so
+  // they should get an orbit slot rather than render on top of the
+  // location's own avatar.
   const stackedAt = useMemo(() => {
     const m = new Map<string, number[]>();
     for (const [aid, p] of placement) {
-      if (p.kind !== "at") continue;
-      const list = m.get(p.locationCode) ?? [];
+      let code: string | null = null;
+      if (p.kind === "at") {
+        code = p.locationCode;
+      } else {
+        const nodes = p.pathInfo.nodes;
+        const last = nodes[nodes.length - 1];
+        if (last !== undefined) code = last;
+      }
+      if (code === null) continue;
+      const list = m.get(code) ?? [];
       list.push(aid);
-      m.set(p.locationCode, list);
+      m.set(code, list);
     }
     return m;
   }, [placement]);
@@ -361,9 +373,12 @@ export function MapGraph(props: Props) {
   }, [dump.actors, placement]);
 
   // Stack-jitter render offsets: applied on top of the on-road anim
-  // position via a CSS-transitioned inner <g>. (0,0) while in transit
-  // so the avatar sits exactly on the polyline; only fans out when
-  // they've arrived and are idle.
+  // position via a CSS-transitioned inner <g>. Transit avatars get the
+  // same orbital offset as their at-location peers so that at the
+  // moment of arrival (end-of-hour static state) they sit on the orbit
+  // ring rather than on top of the destination's avatar. The aesthetic
+  // cost is that during transit animation playback the avatar walks
+  // parallel to the polyline rather than exactly on it.
   const renderOffsets = useMemo(() => {
     const map = new Map<number, { x: number; y: number }>();
     for (const a of dump.actors) {
@@ -372,11 +387,15 @@ export function MapGraph(props: Props) {
         map.set(a.id, { x: 0, y: 0 });
         continue;
       }
-      if (p.kind === "transit") {
+      const code =
+        p.kind === "at"
+          ? p.locationCode
+          : (p.pathInfo.nodes[p.pathInfo.nodes.length - 1] ?? null);
+      if (code === null) {
         map.set(a.id, { x: 0, y: 0 });
         continue;
       }
-      const list = stackedAt.get(p.locationCode) ?? [];
+      const list = stackedAt.get(code) ?? [];
       const idx = list.indexOf(a.id);
       const total = Math.max(1, list.length);
       // Orbit every at-location actor, including a solo one — the
