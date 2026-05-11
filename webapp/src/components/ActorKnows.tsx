@@ -2,7 +2,12 @@ import { useMemo, useState } from "react";
 import type { RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
-import { ActorRef, LotRef } from "./Refs.js";
+import { ActorRef, ItemRef, LotRef } from "./Refs.js";
+import { StockLine, StockValue } from "./StockLine.js";
+import {
+  estimateUnitRetail,
+  formatRetailEstimate,
+} from "../lib/retail-estimate.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -367,12 +372,18 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
             <TimelineView rows={timelineRows} dump={dump} onSelect={onSelect} />
           ) : null}
           {view === "item" ? (
-            <ByItemView groups={itemGroups} dump={dump} onSelect={onSelect} />
+            <ByItemView
+              groups={itemGroups}
+              dump={dump}
+              actorId={actorId}
+              onSelect={onSelect}
+            />
           ) : null}
           {view === "person" ? (
             <ByPersonView
               groups={personGroups}
               dump={dump}
+              actorId={actorId}
               onSelect={onSelect}
             />
           ) : null}
@@ -425,10 +436,12 @@ function TimelineView({
 function ByItemView({
   groups,
   dump,
+  actorId,
   onSelect,
 }: {
   readonly groups: readonly ItemGroup[];
   readonly dump: RunDump;
+  readonly actorId: number;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
@@ -465,6 +478,7 @@ function ByItemView({
                 showItem={false}
                 showCounterparty={true}
                 dump={dump}
+                receiverActorId={actorId}
                 onSelect={onSelect}
               />
             ) : null}
@@ -475,6 +489,7 @@ function ByItemView({
                 showItem={false}
                 showCounterparty={true}
                 dump={dump}
+                receiverActorId={actorId}
                 onSelect={onSelect}
               />
             ) : null}
@@ -488,10 +503,12 @@ function ByItemView({
 function ByPersonView({
   groups,
   dump,
+  actorId,
   onSelect,
 }: {
   readonly groups: readonly PersonGroup[];
   readonly dump: RunDump;
+  readonly actorId: number;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
@@ -526,6 +543,7 @@ function ByPersonView({
                 showItem={true}
                 showCounterparty={false}
                 dump={dump}
+                receiverActorId={actorId}
                 onSelect={onSelect}
               />
             ) : null}
@@ -536,6 +554,7 @@ function ByPersonView({
                 showItem={true}
                 showCounterparty={false}
                 dump={dump}
+                receiverActorId={actorId}
                 onSelect={onSelect}
               />
             ) : null}
@@ -552,6 +571,7 @@ function SubgroupRows({
   showItem,
   showCounterparty,
   dump,
+  receiverActorId,
   onSelect,
 }: {
   readonly label: string;
@@ -559,8 +579,16 @@ function SubgroupRows({
   readonly showItem: boolean;
   readonly showCounterparty: boolean;
   readonly dump: RunDump;
+  /** The actor whose knowledge this is — drives the retail-estimate
+   *  calculation (the receiver's own guess at value, given the
+   *  claimed tier from the gossip; their estimate is no better than
+   *  their bidder profile says, and uninspected hearsay carries its
+   *  speaker's possibly-wrong tier verbatim). */
+  readonly receiverActorId: number;
   readonly onSelect: (s: Selection) => void;
 }) {
+  const receiver = dump.actors.find((a) => a.id === receiverActorId);
+  const receiverProfile = receiver?.bidderProfile;
   // Detect conflict by subject: rows about the same subject with
   // diverging qty or price are in disagreement. In By-Item view all
   // rows share item+tier, so subject equivalence is by counterparty.
@@ -602,80 +630,94 @@ function SubgroupRows({
         {rows.map((r, i) => {
           const k = subjectKey(r.lead);
           const conflict = conflictMap.get(k);
+          // Retail estimate from the receiver's perspective — same
+          // shape as inventory's retail column. The claimed tier
+          // drives it: until the receiver inspects (auction-lot
+          // mechanic only, not modelled here), they trust the
+          // speaker's tier verbatim. Civilians with no bidder
+          // profile get no estimate.
           const item = dump.items.find(
             (it) => it.id === r.lead.subjectItemKindId,
           );
-          const itemName = item?.displayName ?? `kind ${r.lead.subjectItemKindId}`;
+          const retailEstimate =
+            receiverProfile !== undefined && item !== undefined
+              ? estimateUnitRetail(
+                  receiverProfile,
+                  item,
+                  r.lead.subjectQualityTier ?? "fair",
+                  dump.economics,
+                )
+              : null;
           return (
-            <li key={i} className="knows-grouped-row">
-              <div className="knows-grouped-fact">
-                {showItem ? (
-                  <>
-                    <button
-                      type="button"
-                      className="ref ref-inline ref-item"
-                      onClick={() =>
-                        onSelect({ kind: "item", id: r.lead.subjectItemKindId })
-                      }
-                    >
-                      {itemName}
-                    </button>
-                    {r.lead.subjectQualityTier !== null ? (
-                      <span
-                        className={`tier tier-${r.lead.subjectQualityTier}`}
-                      >
-                        {r.lead.subjectQualityTier}
-                      </span>
-                    ) : null}{" "}
-                  </>
-                ) : null}
-                {showCounterparty ? (
-                  r.lead.counterpartyActorId !== null ? (
-                    <>
-                      <ActorChip
-                        dump={dump}
-                        actorId={r.lead.counterpartyActorId}
-                        onSelect={onSelect}
-                        size={12}
-                      />{" "}
-                    </>
+            <StockLine
+              key={i}
+              fact={
+                <>
+                  {showCounterparty ? (
+                    r.lead.counterpartyActorId !== null ? (
+                      <>
+                        <ActorChip
+                          dump={dump}
+                          actorId={r.lead.counterpartyActorId}
+                          onSelect={onSelect}
+                          size={12}
+                        />{" "}
+                        <span className="muted">has</span>{" "}
+                      </>
+                    ) : (
+                      <span className="muted">someone has</span>
+                    )
                   ) : (
-                    <span className="muted">someone </span>
-                  )
-                ) : null}
-                <span
-                  className={
-                    conflict?.qtyVaries
-                      ? "knows-value knows-value-divergent"
-                      : "knows-value"
-                  }
-                >
-                  {r.lead.estimatedQuantity}
-                </span>
-                <span className="muted"> @ </span>
-                <span
-                  className={
-                    conflict?.priceVaries
-                      ? "knows-value knows-value-divergent"
-                      : "knows-value"
-                  }
-                >
-                  £{r.lead.estimatedUnitPrice}
-                </span>
-              </div>
-              <div className="knows-source-line muted">
-                from{" "}
-                <ActorChip
-                  dump={dump}
-                  actorId={r.fromActorId}
-                  onSelect={onSelect}
-                  size={12}
-                />{" "}
-                · {r.lead.confidence}
-                {r.lead.hopCount > 0 ? ` · hop ${r.lead.hopCount}` : ""} · D
-                {pad(r.day)} {pad(r.hour)}:00
-              </div>
-            </li>
+                    <span className="muted">has</span>
+                  )}{" "}
+                  <StockValue divergent={conflict?.qtyVaries}>
+                    {r.lead.estimatedQuantity}
+                  </StockValue>{" "}
+                  {showItem ? (
+                    <ItemRef
+                      dump={dump}
+                      id={r.lead.subjectItemKindId}
+                      onSelect={onSelect}
+                      variant="chip"
+                      qualityTier={r.lead.subjectQualityTier ?? undefined}
+                    />
+                  ) : r.lead.subjectQualityTier !== null ? (
+                    <span className={`tier tier-${r.lead.subjectQualityTier}`}>
+                      {r.lead.subjectQualityTier}
+                    </span>
+                  ) : null}{" "}
+                  <span className="muted">@</span>{" "}
+                  <StockValue divergent={conflict?.priceVaries}>
+                    £{r.lead.estimatedUnitPrice}
+                  </StockValue>
+                  <span className="muted">/u</span>
+                </>
+              }
+              meta={
+                <>
+                  {retailEstimate !== null ? (
+                    <>
+                      <span
+                        title={`Your retail estimate at the claimed tier (${r.lead.subjectQualityTier ?? "fair"}), based on your category accuracy. Inspect the lot to tighten the range.`}
+                      >
+                        ~£{formatRetailEstimate(retailEstimate)} retail
+                      </span>
+                      <span>·</span>
+                    </>
+                  ) : null}
+                  from{" "}
+                  <ActorChip
+                    dump={dump}
+                    actorId={r.fromActorId}
+                    onSelect={onSelect}
+                    size={12}
+                  />{" "}
+                  · {r.lead.confidence}
+                  {r.lead.hopCount > 0 ? ` · hop ${r.lead.hopCount}` : ""} · D
+                  {pad(r.day)} {pad(r.hour)}:00
+                </>
+              }
+            />
           );
         })}
       </ul>

@@ -429,19 +429,26 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   flex-direction: column;
   gap: 2px;
 }
-.knows-grouped-row {
+.knows-conflict-badge { color: #ffb84d; }
+
+/* Shared two-line "verb + qty + item(tier) + price · meta" row used by
+ * the gossip ledger, inventory, deal lines, and any other view that
+ * makes a stock proposition. Content varies per context but the
+ * visual mould is identical — so a gossip-vs-reality divergence reads
+ * as the same kind of claim. See <StockLine />. */
+.stock-line {
   padding: 3px 0;
   font-size: 12px;
   border-bottom: 1px dotted var(--border);
 }
-.knows-grouped-row:last-child { border-bottom: none; }
-.knows-grouped-fact {
+.stock-line:last-child { border-bottom: none; }
+.stock-line-fact {
   display: flex;
   gap: 4px;
   align-items: center;
   flex-wrap: wrap;
 }
-.knows-source-line {
+.stock-line-meta {
   display: flex;
   gap: 4px;
   align-items: center;
@@ -449,14 +456,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   font-size: 10px;
   margin-top: 1px;
 }
-.knows-value { font-variant-numeric: tabular-nums; }
-.knows-value-divergent {
+.stock-value { font-variant-numeric: tabular-nums; }
+.stock-value-divergent {
   color: #ffb84d;
   background: rgba(255, 184, 77, 0.08);
   padding: 0 3px;
   border-radius: 2px;
 }
-.knows-conflict-badge { color: #ffb84d; }
 
 /* "Inventory" tab — actor's stock and open delivery promises. */
 .actor-inv { display: flex; flex-direction: column; gap: 6px; }
@@ -1436,21 +1442,24 @@ button.actor-row.actor-row-selected {
   color: var(--accent);
 }
 .muted { color: var(--muted); }
-.inv-table, .deal-lines {
+/* Inventory lot rows reuse the gossip-grouped-row look (see
+ * .knows-grouped-row / .knows-grouped-fact / .knows-source-line)
+ * so a stock lot reads the same as a gossip lead: "has 22 Sofas
+ * (fair) @ £58/u". */
+.inv-lots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.deal-lines {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
 }
-.inv-table th {
-  text-align: left;
-  padding: 4px 8px;
-  color: var(--muted);
-  font-weight: normal;
-  font-size: 11px;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-}
-.inv-table td, .deal-lines td {
+.deal-lines td {
   padding: 3px 8px;
   border-bottom: 1px dotted var(--border);
 }

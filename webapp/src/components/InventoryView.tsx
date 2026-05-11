@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
+import { StockLine, StockValue } from "./StockLine.js";
 import { estimateUnitRetail, formatRetailEstimate } from "../lib/retail-estimate.js";
 
 interface Props {
@@ -57,6 +58,11 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
         );
         const owner = dump.actors.find((a) => a.id === ownerId);
         const profile = owner?.bidderProfile;
+        const sortedLots = lots
+          .slice()
+          .sort((a, b) =>
+            itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)),
+          );
         return (
           <section key={ownerId} className="inventory-actor">
             <header className="inventory-actor-header">
@@ -71,70 +77,66 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                 {totalUnits} units · cost £{totalCost}
               </span>
             </header>
-            <table className="inv-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Tier</th>
-                  <th>Qty</th>
-                  <th>£/u cost</th>
-                  <th>£/u retail</th>
-                  <th>Acquired</th>
-                  <th>Location</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lots
-                  .slice()
-                  .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
-                  .map((lot) => {
-                    const item = dump.items.find((i) => i.id === lot.itemKindId);
-                    const retail =
-                      profile !== undefined && item !== undefined
-                        ? estimateUnitRetail(profile, item, lot.qualityTier, dump.economics)
-                        : null;
-                    return (
-                      <tr key={lot.id}>
-                        <td>
-                          <ItemRef
-                            dump={dump}
-                            id={lot.itemKindId}
-                            onSelect={onSelect}
-                            variant="chip"
-                          />
-                        </td>
-                        <td className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</td>
-                        <td className="num">{lot.quantity}</td>
-                        <td className="num">£{lot.acquiredUnitPrice}</td>
-                        <td
-                          className="num muted"
-                          title={
-                            retail !== null
-                              ? `${owner?.displayName ?? "owner"}'s estimate based on category accuracy`
-                              : "no bidder profile for owner"
-                          }
-                        >
-                          {retail !== null ? formatRetailEstimate(retail) : "—"}
-                        </td>
-                        <td className="num muted">D{lot.acquiredDay}</td>
-                        <td className="muted">
-                          {lot.locationId === null ? (
-                            "— (no location)"
-                          ) : (
+            <ul className="inv-lots">
+              {sortedLots.map((lot) => {
+                const item = dump.items.find((i) => i.id === lot.itemKindId);
+                const retail =
+                  profile !== undefined && item !== undefined
+                    ? estimateUnitRetail(
+                        profile,
+                        item,
+                        lot.qualityTier,
+                        dump.economics,
+                      )
+                    : null;
+                return (
+                  <StockLine
+                    key={lot.id}
+                    fact={
+                      <>
+                        <span className="muted">has</span>{" "}
+                        <StockValue>{lot.quantity}</StockValue>{" "}
+                        <ItemRef
+                          dump={dump}
+                          id={lot.itemKindId}
+                          onSelect={onSelect}
+                          variant="chip"
+                          qualityTier={lot.qualityTier}
+                        />{" "}
+                        <span className="muted">@</span>{" "}
+                        <StockValue>£{lot.acquiredUnitPrice}</StockValue>
+                        <span className="muted">/u</span>
+                      </>
+                    }
+                    meta={
+                      <>
+                        {retail !== null ? (
+                          <span
+                            title={`${owner?.displayName ?? "owner"}'s retail estimate based on category accuracy`}
+                          >
+                            ~£{formatRetailEstimate(retail)} retail
+                          </span>
+                        ) : null}
+                        {retail !== null ? <span>·</span> : null}
+                        <span>acquired D{lot.acquiredDay}</span>
+                        {lot.locationId !== null ? (
+                          <>
+                            <span>·</span>
                             <LocationRef
                               dump={dump}
                               id={lot.locationId}
                               onSelect={onSelect}
                               variant="chip"
-                              size={14}
+                              size={12}
                             />
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+                          </>
+                        ) : null}
+                      </>
+                    }
+                  />
+                );
+              })}
+            </ul>
           </section>
         );
       })}
