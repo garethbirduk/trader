@@ -40,8 +40,10 @@ interface LocationLinkProps {
 }
 
 /**
- * Legacy alias for `<LocationRef variant="inline">`. Kept so existing
+ * Legacy alias for `<LocationRef variant="chip">`. Kept so existing
  * call sites keep working while the codebase migrates to <LocationRef>.
+ * Now renders as a chip (square avatar + name) — matches the standard
+ * for entity references across the app.
  */
 export function LocationLink({ dump, locationId, onSelect }: LocationLinkProps) {
   return (
@@ -49,7 +51,8 @@ export function LocationLink({ dump, locationId, onSelect }: LocationLinkProps) 
       dump={dump}
       id={locationId}
       onSelect={onSelect}
-      variant="inline"
+      variant="chip"
+      size={14}
     />
   );
 }

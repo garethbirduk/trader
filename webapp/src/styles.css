@@ -341,10 +341,36 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .knows-list { display: flex; flex-direction: column; gap: 0; }
 .knows-list ul { list-style: none; margin: 0; padding: 0; }
 .knows-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 11px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 6px;
+}
+.knows-views {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+}
+.knows-view-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.knows-view-btn:hover { color: var(--text); background: var(--panel-2); }
+.knows-view-btn.active {
+  background: var(--panel-2);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .knows-row {
   padding: 6px 0;
@@ -369,6 +395,68 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   align-items: center;
   flex-wrap: wrap;
 }
+
+/* Grouped views — by item / by person. */
+.knows-groups { display: flex; flex-direction: column; gap: 8px; }
+.knows-group {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: var(--panel-2);
+}
+.knows-group-header {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+  border-bottom: 1px dotted var(--border);
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.knows-group-title { font-weight: 600; }
+.knows-group-count { font-size: 10px; margin-left: auto; }
+.knows-subgroup-label {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+.knows-subgroup-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.knows-grouped-row {
+  padding: 3px 0;
+  font-size: 12px;
+  border-bottom: 1px dotted var(--border);
+}
+.knows-grouped-row:last-child { border-bottom: none; }
+.knows-grouped-fact {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.knows-source-line {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 10px;
+  margin-top: 1px;
+}
+.knows-value { font-variant-numeric: tabular-nums; }
+.knows-value-divergent {
+  color: #ffb84d;
+  background: rgba(255, 184, 77, 0.08);
+  padding: 0 3px;
+  border-radius: 2px;
+}
+.knows-conflict-badge { color: #ffb84d; }
 
 /* "Inventory" tab — actor's stock and open delivery promises. */
 .actor-inv { display: flex; flex-direction: column; gap: 6px; }
@@ -967,6 +1055,10 @@ button.ref-chip {
   align-items: center;
   gap: 4px;
   border-radius: 999px;
+  /* Align the chip's vertical middle with surrounding text's middle so
+   * "{chip} arrived" / "{chip} → {chip}" don't sit at jarring heights.
+   * Default baseline alignment puts the chip too low. */
+  vertical-align: middle;
 }
 button.ref-chip:hover { color: var(--accent); }
 button.ref-chip.ref-avatar-only { gap: 0; }
@@ -995,6 +1087,19 @@ button.ref-chip:hover .ref-icon {
   display: inline-flex;
   align-items: baseline;
   gap: 4px;
+}
+
+/* Connector between two clickable refs (e.g. seller → buyer). Slightly
+ * larger and bolder than the surrounding text so it doesn't get lost
+ * between two chips. */
+.ref-arrow {
+  display: inline-block;
+  margin: 0 4px;
+  color: var(--muted);
+  font-size: 1.2em;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: -1px;
 }
 
 /* legacy aliases — preserved so existing call sites keep working */
@@ -1095,8 +1200,10 @@ button.actor-row.actor-row-selected {
 /* avatar */
 .avatar { display: inline-flex; flex-shrink: 0; }
 .avatar-clickable { cursor: pointer; }
-.avatar-clickable:hover svg circle { stroke: #fff; }
-.avatar-selected svg circle { stroke: #fff; stroke-width: 2.5 !important; }
+.avatar-clickable:hover svg circle,
+.avatar-clickable:hover svg rect { stroke: #fff; }
+.avatar-selected svg circle,
+.avatar-selected svg rect { stroke: #fff; stroke-width: 2.5 !important; }
 .map-avatar { cursor: pointer; }
 .map-avatar:hover circle { stroke: #fff; }
 
@@ -1740,14 +1847,14 @@ svg.graph-map:active { cursor: grabbing; }
 .editor-bg-toggle input { cursor: pointer; }
 
 .editor-svg .editor-loc {
-  fill: #1c2030;
+  /* fill comes from inline style (location type colour). Class only
+   * supplies the editor's stroke indicators. */
   stroke: #6dd3a4;
   stroke-width: 1.6;
 }
 .editor-svg .editor-loc.editor-loc-offmap {
   stroke: #ffb84d;
   stroke-dasharray: 3 2;
-  fill: #2a221a;
 }
 .editor-svg .editor-waypoint {
   fill: #2a3140;

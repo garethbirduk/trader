@@ -374,7 +374,8 @@ function AuctionLotRow({
             dump={dump}
             id={lot.clearedToActorId}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
+            size={14}
           />{" "}
           for £{lot.clearedPrice}
         </span>
@@ -446,7 +447,13 @@ function summarizeLocEvent(
 ): JSX.Element {
   const A = (id: unknown) =>
     typeof id === "number" ? (
-      <ActorRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <ActorRef
+        dump={dump}
+        id={id}
+        onSelect={onSelect}
+        variant="chip"
+        size={14}
+      />
     ) : (
       <span className="muted">?</span>
     );

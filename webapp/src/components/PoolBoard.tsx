@@ -138,12 +138,13 @@ function PoolCard({
         ) : (
           pool.reachableBy.map((aid, i) => (
             <span key={aid}>
-              {i > 0 ? ", " : ""}
+              {i > 0 ? " " : ""}
               <ActorRef
                 dump={dump}
                 id={aid}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
+                size={14}
               />
             </span>
           ))

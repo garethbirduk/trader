@@ -176,7 +176,8 @@ function RetailEstimateTable({
                   dump={dump}
                   id={a.id}
                   onSelect={onSelect}
-                  variant="inline"
+                  variant="chip"
+                  size={14}
                 />
               </td>
               {TIERS_FOR_TABLE.map((t) => {

@@ -769,7 +769,8 @@ function describeLogEntry(
               dump={dump}
               id={winnerId}
               onSelect={onSelect}
-              variant="inline"
+              variant="chip"
+              size={14}
             />{" "}
             wins
           </span>
@@ -791,7 +792,8 @@ function describeLogEntry(
             dump={dump}
             id={frame.bidder}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
+            size={14}
           />{" "}
           bids
         </span>

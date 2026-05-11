@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RunDump } from "../types.js";
+import { getInitials, getLocationColor } from "../avatar.js";
 import {
   DEFAULT_LAYOUT,
   combinedPositions,
@@ -17,6 +18,10 @@ import {
   WAYPOINT_R,
   clientToWorld,
 } from "./map-shared.js";
+
+/** Side length of the editor's location node (square). Must match
+ *  LOC_NODE_SIZE in MapGraph so the two views look identical. */
+const EDITOR_LOC_NODE_SIZE = 22;
 
 interface Props {
   readonly dump: RunDump;
@@ -44,6 +49,11 @@ export function MapEditor({ dump }: Props) {
   const labelByCode = useMemo(() => {
     const m = new Map<string, string>();
     for (const l of dump.locations) m.set(l.code, l.displayName);
+    return m;
+  }, [dump.locations]);
+  const typeByCode = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    for (const l of dump.locations) m.set(l.code, l.type);
     return m;
   }, [dump.locations]);
   const [tool, setTool] = useState<Tool>("move");
@@ -370,6 +380,9 @@ export function MapEditor({ dump }: Props) {
           {Object.entries(draft.locations).map(([code, pos]) => {
             const isEdgeFirst = code === edgeFirst;
             const isOff = draft.offMap[code] === true;
+            const sq = EDITOR_LOC_NODE_SIZE;
+            const fill = getLocationColor({ code, type: typeByCode.get(code) });
+            const displayName = labelByCode.get(code) ?? code;
             return (
               <g
                 key={code}
@@ -384,16 +397,37 @@ export function MapEditor({ dump }: Props) {
                       : "default",
                 }}
               >
-                <circle
-                  r={NODE_R + 5}
+                <rect
+                  x={-sq / 2 - 4}
+                  y={-sq / 2 - 4}
+                  width={sq + 8}
+                  height={sq + 8}
                   fill="transparent"
                 />
-                <circle
-                  r={NODE_R}
+                <rect
+                  x={-sq / 2}
+                  y={-sq / 2}
+                  width={sq}
+                  height={sq}
+                  rx={5}
+                  style={{ fill }}
                   className={`editor-loc ${isEdgeFirst ? "editor-edge-first" : ""} ${isOff ? "editor-loc-offmap" : ""}`}
                 />
+                <text
+                  className="loc-node-initials"
+                  textAnchor="middle"
+                  dy="0.35em"
+                  fontSize={Math.round(sq * 0.42)}
+                  fontWeight={600}
+                  fill="#0d0d12"
+                  fontFamily="ui-monospace, Consolas, monospace"
+                  style={{ pointerEvents: "none" }}
+                >
+                  {getInitials(displayName)}
+                </text>
                 <NodeLabel
-                  text={(isOff ? "⌧ " : "") + (labelByCode.get(code) ?? code)}
+                  text={(isOff ? "⌧ " : "") + displayName}
+                  yOffset={-sq / 2 - 14}
                 />
                 {isOff ? <title>off-map (perimeter cluster)</title> : null}
               </g>

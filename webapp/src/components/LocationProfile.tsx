@@ -1,32 +1,26 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
-import { Avatar } from "./Avatar.js";
+import type { Selection } from "../App.js";
+import { ActorRef } from "./Refs.js";
 
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
   readonly snapshot: DaySnapshot | null;
   readonly locationId: number;
+  readonly onSelect: (s: Selection) => void;
 }
 
-export function LocationProfile({ dump, day, snapshot, locationId }: Props) {
+export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: Props) {
   const loc = dump.locations.find((l) => l.id === locationId);
   if (loc === undefined) return null;
 
-  const here = useMemo(() => {
+  const hereIds = useMemo<readonly number[]>(() => {
     if (snapshot === null) return [];
     return snapshot.actors
       .filter((a) => a.currentLocationId === locationId)
-      .map((sa) => {
-        const dumpActor = dump.actors.find((a) => a.id === sa.id);
-        return {
-          id: sa.id,
-          name: dumpActor?.displayName ?? `actor ${sa.id}`,
-          code: dumpActor?.code ?? `actor-${sa.id}`,
-          isPlayer: sa.id === dump.playerActorId,
-        };
-      });
-  }, [snapshot, locationId, dump]);
+      .map((sa) => sa.id);
+  }, [snapshot, locationId]);
 
   // Residents = actors whose home is this location.
   const residents = useMemo(
@@ -58,7 +52,7 @@ export function LocationProfile({ dump, day, snapshot, locationId }: Props) {
       </header>
       <dl className="profile-stats">
         <dt>Now (D{day})</dt>
-        <dd>{here.length === 0 ? <span className="muted">empty</span> : `${here.length} here`}</dd>
+        <dd>{hereIds.length === 0 ? <span className="muted">empty</span> : `${hereIds.length} here`}</dd>
         {stockSummary !== null ? (
           <>
             <dt>Stock</dt>
@@ -82,24 +76,29 @@ export function LocationProfile({ dump, day, snapshot, locationId }: Props) {
           <div className="profile-section-label">Lives here</div>
           {residents.map((r) => (
             <div key={r.id} className="loc-person-row">
-              <Avatar
-                name={r.displayName}
-                code={r.code}
-                isPlayer={r.id === dump.playerActorId}
+              <ActorRef
+                dump={dump}
+                id={r.id}
+                onSelect={onSelect}
+                variant="chip"
                 size={20}
               />
-              <span>{r.displayName}</span>
             </div>
           ))}
         </div>
       ) : null}
-      {here.length > 0 ? (
+      {hereIds.length > 0 ? (
         <div className="loc-people">
           <div className="profile-section-label">Here right now</div>
-          {here.map((r) => (
-            <div key={r.id} className="loc-person-row">
-              <Avatar name={r.name} code={r.code} isPlayer={r.isPlayer} size={20} />
-              <span>{r.name}</span>
+          {hereIds.map((id) => (
+            <div key={id} className="loc-person-row">
+              <ActorRef
+                dump={dump}
+                id={id}
+                onSelect={onSelect}
+                variant="chip"
+                size={20}
+              />
             </div>
           ))}
         </div>

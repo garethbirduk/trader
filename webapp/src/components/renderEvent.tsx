@@ -14,13 +14,25 @@ export function renderEvent(
 ) {
   const A = (id: unknown) =>
     typeof id === "number" ? (
-      <ActorRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <ActorRef
+        dump={dump}
+        id={id}
+        onSelect={onSelect}
+        variant="chip"
+        size={14}
+      />
     ) : (
       <span className="muted">{String(id)}</span>
     );
   const L = (id: unknown) =>
     typeof id === "number" ? (
-      <LocationRef dump={dump} id={id} onSelect={onSelect} variant="inline" />
+      <LocationRef
+        dump={dump}
+        id={id}
+        onSelect={onSelect}
+        variant="chip"
+        size={14}
+      />
     ) : (
       <span className="muted">{String(id)}</span>
     );
@@ -95,7 +107,7 @@ export function renderEvent(
     case "auction.cleared":
       return (
         <>
-          {Lot(e.auctionLotId)} → {A(e.winnerActorId)}: total £{String(e.totalPrice)} (≈ £{String(e.unitPrice)}/unit)
+          {Lot(e.auctionLotId)}<span className="ref-arrow">→</span>{A(e.winnerActorId)}: total £{String(e.totalPrice)} (≈ £{String(e.unitPrice)}/unit)
         </>
       );
     case "auction.unsold":
@@ -194,15 +206,18 @@ export function renderEvent(
     case "deal.settled":
       return (
         <>
-          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} for £{String(e.totalPrice)}
+          {Deal(e.dealId)}: {A(e.sellerActorId)}
+          <span className="ref-arrow">→</span>
+          {A(e.buyerActorId)} for £{String(e.totalPrice)}
         </>
       );
     case "deal.defaulted":
       return (
         <>
           <span className="tag-warn">⚠</span>
-          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} —{" "}
-          <em>{String(e.reason)}</em>
+          {Deal(e.dealId)}: {A(e.sellerActorId)}
+          <span className="ref-arrow">→</span>
+          {A(e.buyerActorId)} — <em>{String(e.reason)}</em>
         </>
       );
     case "delivery.fee":
@@ -220,13 +235,17 @@ export function renderEvent(
     case "pubdeal.attempted":
       return (
         <>
-          {A(e.sellerActorId)} → {A(e.buyerActorId)}: {I(e.itemKindId, String(e.qualityTier))} ×{String(e.quantity)}
+          {A(e.sellerActorId)}
+          <span className="ref-arrow">→</span>
+          {A(e.buyerActorId)}: {I(e.itemKindId, String(e.qualityTier))} ×{String(e.quantity)}
         </>
       );
     case "pubdeal.agreed":
       return (
         <>
-          {Deal(e.dealId)}: {A(e.sellerActorId)} → {A(e.buyerActorId)} — {String(e.quantity)} @ £{String(e.unitPrice)}/unit
+          {Deal(e.dealId)}: {A(e.sellerActorId)}
+          <span className="ref-arrow">→</span>
+          {A(e.buyerActorId)} — {String(e.quantity)} @ £{String(e.unitPrice)}/unit
         </>
       );
     case "pubdeal.walked":

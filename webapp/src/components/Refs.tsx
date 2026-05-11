@@ -1,6 +1,7 @@
 import type { RunDump } from "../types.js";
 import type { Selection, SelectionKind } from "../App.js";
 import { Avatar } from "./Avatar.js";
+import { LocationAvatar } from "./LocationAvatar.js";
 
 export type RefVariant = "chip" | "inline";
 
@@ -113,12 +114,17 @@ export function ActorRef({
   );
 }
 
+export interface LocationRefProps extends CommonRefProps {
+  readonly size?: number;
+}
+
 export function LocationRef({
   dump,
   id,
   onSelect,
   variant = "inline",
-}: CommonRefProps) {
+  size = 18,
+}: LocationRefProps) {
   const loc = dump.locations.find((l) => l.id === id);
   if (loc === undefined) {
     return <span className="ref-missing muted">loc {id}</span>;
@@ -132,7 +138,12 @@ export function LocationRef({
         variant="chip"
         title={loc.displayName}
       >
-        <span className="ref-icon" aria-hidden="true">📍</span>
+        <LocationAvatar
+          displayName={loc.displayName}
+          code={loc.code}
+          type={loc.type}
+          size={size}
+        />
         <span>{loc.displayName}</span>
       </RefButton>
     );

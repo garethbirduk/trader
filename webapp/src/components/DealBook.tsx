@@ -75,14 +75,16 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                     dump={dump}
                     id={d.sellerActorId}
                     onSelect={onSelect}
-                    variant="inline"
+                    variant="chip"
+                    size={14}
                   />
-                  {" → "}
+                  <span className="ref-arrow">→</span>
                   <ActorRef
                     dump={dump}
                     id={d.buyerActorId}
                     onSelect={onSelect}
-                    variant="inline"
+                    variant="chip"
+                    size={14}
                   />
                 </span>
                 <span className="muted">
@@ -94,7 +96,8 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                         dump={dump}
                         id={d.deliveryLocationId}
                         onSelect={onSelect}
-                        variant="inline"
+                        variant="chip"
+                        size={14}
                       />
                     </>
                   ) : null}

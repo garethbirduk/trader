@@ -49,7 +49,8 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
             dump={dump}
             id={deal.sellerActorId}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
+            size={16}
           />
         </dd>
         <dt>Buyer</dt>
@@ -58,7 +59,8 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
             dump={dump}
             id={deal.buyerActorId}
             onSelect={onSelect}
-            variant="inline"
+            variant="chip"
+            size={16}
           />
         </dd>
         <dt>Total</dt>
@@ -77,7 +79,8 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                 dump={dump}
                 id={deal.deliveryLocationId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
+                size={16}
               />
             </dd>
           </>

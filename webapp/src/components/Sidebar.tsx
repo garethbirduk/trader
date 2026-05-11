@@ -405,6 +405,7 @@ export function Sidebar(props: Props) {
                   day={day}
                   snapshot={snapshot}
                   locationId={selection.id}
+                  onSelect={setSelection}
                 />
               )}
               {selection.kind === "location" && lowerTab === "diary" && (

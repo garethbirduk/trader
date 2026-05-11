@@ -32,3 +32,24 @@ export function getActorColor(opts: { code: string; isPlayer: boolean }): string
   }
   return PALETTE[hash % PALETTE.length]!;
 }
+
+/** Per-location-type fill colour for the square location avatar. Each
+ *  family is chosen to sit visually next to actor colours without
+ *  clashing. Unknown types fall back to the business hue. */
+const LOC_PALETTE: Record<string, string> = {
+  home: "#8fc28a",      // muted green
+  pub: "#e89a64",       // warm amber
+  business: "#7fb0d8",  // cool blue
+  civic: "#a3a8ba",     // grey-blue
+  auction: "#c79aff",   // purple
+  street: "#888888",    // dim
+  abstract: "#666666",
+};
+
+export function getLocationColor(opts: {
+  code: string;
+  type?: string | undefined;
+}): string {
+  void opts.code; // reserved for future per-location tinting within a type family
+  return LOC_PALETTE[opts.type ?? "business"] ?? LOC_PALETTE.business!;
+}

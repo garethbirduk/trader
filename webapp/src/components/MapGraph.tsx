@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { getActorColor, getInitials } from "../avatar.js";
+import { getActorColor, getInitials, getLocationColor } from "../avatar.js";
+import { LocationAvatar } from "./LocationAvatar.js";
 import { combinedPositions, useLayout, type MapLayout } from "../map-layout.js";
 import { getPlaybackSpeed, setMapBusy } from "../anim-state.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
@@ -69,27 +70,15 @@ const SHORT_LABELS: Record<string, string> = {
 };
 
 // Edges live in map-layout.ts (defaults + saved overrides).
-const TYPE_FILL: Record<string, string> = {
-  home: "#1a201a",
-  pub: "#2a1a1a",
-  business: "#1a1f2a",
-  civic: "#1a1a2a",
-  auction: "#2a2510",
-  street: "#1a1a1a",
-  abstract: "#0d0d12",
-};
-const TYPE_STROKE: Record<string, string> = {
-  home: "#3a553a",
-  pub: "#6b3a3a",
-  business: "#3a4a6a",
-  civic: "#3a466b",
-  auction: "#7a6420",
-  street: "#555",
-  abstract: "#666",
-};
-
+// Location node fill colours are now derived from `getLocationColor()`
+// in ../avatar.ts so the on-map node and the chip-style LocationRef
+// stay in sync.
 const HEX_PLAYER = "#ffb84d";
 const AVATAR_R = 13;
+/** Side length (px in SVG world units) of a location's square node
+ *  avatar. Roughly matches the diameter of an actor's circle so the two
+ *  read as equal-weight first-class entities on the map. */
+const LOC_NODE_SIZE = 22;
 
 interface Adjacency {
   readonly graph: Map<string, ReadonlyArray<{ to: string; cost: number }>>;
@@ -690,11 +679,12 @@ export function MapGraph(props: Props) {
               (loc as { type?: string }).type === "auction";
             const isStar = isAuction && isHourInAuctionWindow(dump, hour);
             const t = (loc as { type?: string }).type ?? "business";
-            const fill = TYPE_FILL[t] ?? "#15161c";
-            const stroke = isSel || isStar ? HEX_PLAYER : (TYPE_STROKE[t] ?? "#2a2b35");
-            const strokeWidth = isSel || isStar ? 2.5 : 1.5;
+            const fill = getLocationColor({ code: loc.code, type: t });
+            const stroke = isSel || isStar ? HEX_PLAYER : "rgba(0,0,0,0.4)";
+            const strokeWidth = isSel || isStar ? 2.5 : 1;
             const label = (isStar ? "★ " : "") +
               (SHORT_LABELS[loc.code] ?? loc.displayName);
+            const sq = LOC_NODE_SIZE;
             return (
               <g
                 key={loc.id}
@@ -707,13 +697,29 @@ export function MapGraph(props: Props) {
                   onSelect(isSel ? null : { kind: "location", id: loc.id });
                 }}
               >
-                <circle
-                  r={NODE_R}
+                <rect
+                  x={-sq / 2}
+                  y={-sq / 2}
+                  width={sq}
+                  height={sq}
+                  rx={5}
                   fill={fill}
                   stroke={stroke}
                   strokeWidth={strokeWidth}
                 />
-                <NodeLabel text={label} />
+                <text
+                  className="loc-node-initials"
+                  textAnchor="middle"
+                  dy="0.35em"
+                  fontSize={Math.round(sq * 0.42)}
+                  fontWeight={600}
+                  fill="#0d0d12"
+                  fontFamily="ui-monospace, Consolas, monospace"
+                  style={{ pointerEvents: "none" }}
+                >
+                  {getInitials(loc.displayName)}
+                </text>
+                <NodeLabel text={label} yOffset={-sq / 2 - 14} />
               </g>
             );
           })}
@@ -814,6 +820,12 @@ export function MapGraph(props: Props) {
                 onSelect(isSel ? null : { kind: "location", id: loc.id });
               }}
             >
+              <LocationAvatar
+                displayName={loc.displayName}
+                code={loc.code}
+                type={(loc as { type?: string }).type}
+                size={14}
+              />
               <span className="offmap-label">
                 {SHORT_LABELS[loc.code] ?? loc.displayName}
               </span>

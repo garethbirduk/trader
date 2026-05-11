@@ -74,7 +74,8 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
                 dump={dump}
                 id={auctionLocId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
+                size={16}
               />
             </dd>
           </>

@@ -64,7 +64,8 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                 dump={dump}
                 id={ownerId}
                 onSelect={onSelect}
-                variant="inline"
+                variant="chip"
+                size={18}
               />
               <span className="muted">
                 {totalUnits} units · cost £{totalCost}
@@ -124,7 +125,8 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                               dump={dump}
                               id={lot.locationId}
                               onSelect={onSelect}
-                              variant="inline"
+                              variant="chip"
+                              size={14}
                             />
                           )}
                         </td>

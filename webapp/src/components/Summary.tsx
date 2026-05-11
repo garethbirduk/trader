@@ -77,7 +77,8 @@ function renderDealEnrichment(
               dump={dump}
               id={deal.deliveryLocationId}
               onSelect={onSelect}
-              variant="inline"
+              variant="chip"
+              size={14}
             />
           </>
         ) : null}
