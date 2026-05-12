@@ -21,6 +21,7 @@ import { m019RepLeads } from "./019-rep-leads.js";
 import { m020VirtualActors } from "./020-virtual-actors.js";
 import { m021PendingPayouts } from "./021-pending-payouts.js";
 import { m022AuctionLotProvenance } from "./022-auction-lot-provenance.js";
+import { m023KnowledgeAxes } from "./023-knowledge-axes.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -50,4 +51,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m020VirtualActors,
   m021PendingPayouts,
   m022AuctionLotProvenance,
+  m023KnowledgeAxes,
 ];

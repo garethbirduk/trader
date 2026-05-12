@@ -13,6 +13,7 @@ import type { LocationType } from "../../engine/locations/locations.js";
 import { RuleBasedAIPolicy } from "../../engine/policy/rule-based.js";
 import type { ActorPolicy } from "../../engine/policy/types.js";
 import type { BidderProfile } from "../../engine/auction/bidder-profile.js";
+import { seedKnowledgeProfiles } from "../../engine/knowledge/skin-seed.js";
 import type { FlawType, QualityTier } from "../../engine/stock/types.js";
 import type { TransportCapacity } from "../../engine/actors/types.js";
 import { EVERYDAY_ITEMS } from "./catalogue-everyday.js";
@@ -1550,6 +1551,13 @@ export function seedPlaceholderSkin(
         };
     bidderProfiles.set(id, profileEntry);
   }
+
+  // Persist a five-axis KnowledgeProfile for every actor (todolist:57).
+  // The legacy bidderProfiles map is kept in memory for the existing
+  // auction / pub-deal / market pipelines; the new schema-backed
+  // skill grid is what consultations, the belief aggregator, and the
+  // belief-anchored haggle read from.
+  seedKnowledgeProfiles(db, bidderProfiles);
 
   // Reachability map — resolve actor codes to ids.
   const reachableByCategory = new Map<string, readonly number[]>();
