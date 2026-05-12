@@ -489,11 +489,18 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     feeProceedsActorId: skin.auctionHouseActorId,
   });
   registerRegionalClearance(world, { economics: skin.economics });
-  // House clearances (todolist #9) — newspaper drops 1 listing per
-  // day Mon-Sat, lots-per-listing random in 3-7, fee £500. Listings
-  // resolve when their earliest booking's scheduled hour arrives;
-  // unbooked listings sit open until end of day and quietly expire.
-  registerClearanceAutonomy(world, {});
+  // House clearances (todolist #9). Full lifecycle:
+  //   • morning spawn (default 1 listing per Mon-Sat day)
+  //   • newspaper knowledge propagation at Sid's / newsagents
+  //   • NPC booking autonomy at pubs (where the phone is)
+  //   • hourly resolver delivers hauls to winning bookers
+  //   • end-of-day expiry for unbooked listings
+  registerClearanceAutonomy(world, {
+    newspaperLocationIds: skin.newspaperLocationIds,
+    paperFromHour: skin.paperFromHour,
+    phoneCapableLocationIds: skin.allPubLocationIds,
+    bookerActorIds: new Set(skin.tradingActorIds),
+  });
   registerLeadDecay(world);
   registerHeatDecay(world);
   registerAuthoritySweep(world, {

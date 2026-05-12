@@ -283,6 +283,21 @@ export type WorldEvent =
         readonly itemKindId: number;
         readonly quantity: number;
       }[];
+    }
+  | {
+      readonly type: "clearance.expired";
+      readonly at: Clock;
+      readonly listingId: number;
+      readonly flavour: string | null;
+    }
+  | {
+      readonly type: "clearance.booked";
+      readonly at: Clock;
+      readonly listingId: number;
+      readonly bookingId: number;
+      readonly bookerActorId: number;
+      readonly scheduledHour: number;
+      readonly atLocationId: number | null;
     };
 
 export type EventHandler = (event: WorldEvent) => void;

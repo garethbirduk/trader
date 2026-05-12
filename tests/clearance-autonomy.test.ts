@@ -135,6 +135,139 @@ describe("clearance autonomy", () => {
     expect(events.filter((e) => e.type === "clearance.resolved").length).toBe(0);
   });
 
+  it("newspaper knowledge: actors at the newspaper venue learn about today's listings", async () => {
+    const localDb = openBetterSqlite3DB({ filename: ":memory:" });
+    applyMigrations(localDb, ALL_MIGRATIONS);
+    db = localDb;
+    insertItemKind(localDb, {
+      code: "tables", displayName: "Tables", category: "furniture",
+      baseValue: 40, spawnWeight: 10,
+    });
+    const sids = insertLocation(localDb, { code: "sids", displayName: "Sid's" });
+    const reader = insertActor(localDb, {
+      code: "reader", displayName: "Reader", cash: 0,
+    });
+    const { setActorLocation } = await import("../src/engine/locations/locations.js");
+    setActorLocation(localDb, reader.id, sids.id);
+
+    const world = new World({
+      db: localDb,
+      rng: createRNG("paper"),
+      seed: "paper",
+      maxDays: 1,
+      startDay: 1,
+      startHour: 6,
+    });
+    registerClearanceAutonomy(world, {
+      listingsPerDay: 1,
+      newspaperLocationIds: [sids.id],
+      paperFromHour: 7,
+    });
+    world.start();
+    world.tickOnce(); // hour 6 fires, advances to 7
+    world.tickOnce(); // hour 7 fires (paper visible, Reader at Sid's)
+    world.tickOnce(); // advance past so handler has run
+
+    const { getKnownClearanceIdsForActor } = await import(
+      "../src/engine/clearance/knowledge-repo.js"
+    );
+    const known = getKnownClearanceIdsForActor(localDb, reader.id);
+    expect(known).toHaveLength(1);
+  });
+
+  it("NPC booking autonomy: dealer at the pub books a listing they know about, plants witness leads", async () => {
+    const localDb = openBetterSqlite3DB({ filename: ":memory:" });
+    applyMigrations(localDb, ALL_MIGRATIONS);
+    db = localDb;
+    insertItemKind(localDb, {
+      code: "tables", displayName: "Tables", category: "furniture",
+      baseValue: 40, spawnWeight: 10,
+    });
+    const sids = insertLocation(localDb, { code: "sids", displayName: "Sid's" });
+    const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
+    const lockup = insertLocation(localDb, { code: "lockup", displayName: "Lockup" });
+    const del = insertActor(localDb, {
+      code: "del", displayName: "Del", cash: 2000, lockupLocationId: lockup.id,
+    });
+    const trigger = insertActor(localDb, {
+      code: "trigger", displayName: "Trigger", cash: 0,
+    });
+    const { setActorLocation } = await import("../src/engine/locations/locations.js");
+    // Del at Sid's during paper hour. Trigger at Nag's the whole time.
+    setActorLocation(localDb, del.id, sids.id);
+    setActorLocation(localDb, trigger.id, nags.id);
+
+    const world = new World({
+      db: localDb,
+      rng: createRNG("book-via-pub"),
+      seed: "book-via-pub",
+      maxDays: 1, startDay: 1, startHour: 6,
+    });
+    const events: WorldEvent[] = [];
+    world.events.subscribe((e) => events.push(e));
+    registerClearanceAutonomy(world, {
+      listingsPerDay: 1,
+      newspaperLocationIds: [sids.id],
+      paperFromHour: 7,
+      phoneCapableLocationIds: [nags.id],
+      bookerActorIds: new Set([del.id]),
+      bookChancePerHour: 1.0,
+      bookStartHour: 8,
+      bookEndHour: 17,
+    });
+    world.start();
+    world.tickOnce(); // hour 6 fires, → 7
+    world.tickOnce(); // hour 7 fires: Del at Sid's, paper visible, learns. → 8
+    // Now move Del to the Nag's for the booking handler.
+    setActorLocation(localDb, del.id, nags.id);
+    world.tickOnce(); // hour 8 fires: Del at Nag's, eligible, books. → 9
+    // Drive through the rest of the day so resolution / events finalise.
+    world.runToCompletion();
+
+    const booked = events.filter((e) => e.type === "clearance.booked");
+    expect(booked.length).toBeGreaterThan(0);
+    // Trigger overheard the call → has an overheard knowledge row.
+    const { getKnownClearancesForActor } = await import(
+      "../src/engine/clearance/knowledge-repo.js"
+    );
+    const triggerKnown = getKnownClearancesForActor(localDb, trigger.id);
+    expect(triggerKnown.length).toBeGreaterThan(0);
+    expect(triggerKnown[0]!.learnedVia).toBe("overheard");
+    // And Trigger has a witness lead.
+    const { getLeadsByHolder } = await import(
+      "../src/engine/leads/leads-repo.js"
+    );
+    const triggerLeads = getLeadsByHolder(localDb, trigger.id);
+    const witnessLead = triggerLeads.find(
+      (l) => l.subjectEventType === "clearance-booking",
+    );
+    expect(witnessLead).toBeDefined();
+  });
+
+  it("end-of-day: unbooked listings expire", () => {
+    const localDb = openBetterSqlite3DB({ filename: ":memory:" });
+    applyMigrations(localDb, ALL_MIGRATIONS);
+    db = localDb;
+    insertItemKind(localDb, {
+      code: "tables", displayName: "Tables", category: "furniture",
+      baseValue: 40, spawnWeight: 10,
+    });
+    const world = new World({
+      db: localDb,
+      rng: createRNG("expire"),
+      seed: "expire",
+      maxDays: 1, startDay: 1, startHour: 6,
+    });
+    const events: WorldEvent[] = [];
+    world.events.subscribe((e) => events.push(e));
+    registerClearanceAutonomy(world, { listingsPerDay: 1 });
+    world.runToCompletion();
+    const expired = events.filter((e) => e.type === "clearance.expired");
+    expect(expired.length).toBe(1);
+    // No clearance.resolved fired.
+    expect(events.filter((e) => e.type === "clearance.resolved").length).toBe(0);
+  });
+
   it("doesn't spawn on Sundays by default", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);

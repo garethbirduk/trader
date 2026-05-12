@@ -192,6 +192,20 @@ export function getListingsScheduledFor(
     .map(rowToListing);
 }
 
+/** Mark a listing expired (no booker, day is over). */
+export function expireListing(
+  db: DB,
+  listingId: number,
+  day: number,
+  hour: number,
+): void {
+  db.prepare(
+    `UPDATE clearance_listings
+       SET resolved_day = @day, resolved_hour = @hour, winning_booking_id = NULL
+       WHERE id = @id AND resolved_day IS NULL`,
+  ).run({ day, hour, id: listingId });
+}
+
 /* ── Bookings ───────────────────────────────────────────────────── */
 
 export interface BookClearanceArgs {

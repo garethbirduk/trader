@@ -164,6 +164,25 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
         });
       });
 
+    // Clearance lifecycle — one tab per hour covering every listed /
+    // booked / resolved / expired event.
+    const clearance = eventsThisHour.filter(
+      (e) =>
+        e.type === "clearance.listed" ||
+        e.type === "clearance.booked" ||
+        e.type === "clearance.resolved" ||
+        e.type === "clearance.expired",
+    );
+    if (clearance.length > 0) {
+      list.push({
+        key: "clearance",
+        label: `Clearance (${clearance.length})`,
+        render: () => (
+          <ClearanceScene events={clearance} dump={dump} onSelect={onSelect} />
+        ),
+      });
+    }
+
     return list;
   }, [eventsThisHour, snapshot, dump, day, onSelect]);
 
@@ -1462,6 +1481,128 @@ function RaidScene({
       {codes.length > 0 ? (
         <div className="scene-row muted">{codes.join(", ")}</div>
       ) : null}
+    </section>
+  );
+}
+
+function ClearanceScene({
+  events,
+  dump,
+  onSelect,
+}: {
+  readonly events: readonly RunEvent[];
+  readonly dump: RunDump;
+  readonly onSelect: (s: Selection) => void;
+}) {
+  const itemName = (id: number) =>
+    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
+  return (
+    <section className="scene scene-clearance">
+      <header className="scene-header">
+        <span className="scene-tag scene-tag-clearance">House clearance</span>
+        <span className="muted">· {events.length} event{events.length === 1 ? "" : "s"}</span>
+      </header>
+      <ul className="clearance-events">
+        {events.map((e, i) => {
+          if (e.type === "clearance.listed") {
+            const lots = (e.lots as readonly {
+              itemKindId: number;
+              qualityTier: string;
+              quantity: number;
+            }[]) ?? [];
+            const totalUnits = lots.reduce((s, l) => s + l.quantity, 0);
+            return (
+              <li key={i} className="clearance-row clearance-listed">
+                <span className="muted">📰</span>
+                <strong>Listed</strong>{" "}
+                <span>{(e.flavour as string | null) ?? "Clearance"}</span>
+                <span className="muted">
+                  · fee £{Number(e.fee)} · {lots.length} lot
+                  {lots.length === 1 ? "" : "s"} ({totalUnits} units)
+                </span>
+              </li>
+            );
+          }
+          if (e.type === "clearance.booked") {
+            const bookerId = e.bookerActorId as number;
+            const locId = e.atLocationId as number | null;
+            return (
+              <li key={i} className="clearance-row clearance-booked">
+                <span className="muted">☎</span>
+                <ActorChip
+                  dump={dump}
+                  actorId={bookerId}
+                  onSelect={onSelect}
+                  size={14}
+                />
+                <strong>booked</strong>{" "}
+                <span className="muted">
+                  listing #{Number(e.listingId)} for {Number(e.scheduledHour)}:00
+                </span>
+                {locId !== null ? (
+                  <>
+                    <span className="muted">· from </span>
+                    <LocationLink dump={dump} locationId={locId} onSelect={onSelect} />
+                  </>
+                ) : null}
+              </li>
+            );
+          }
+          if (e.type === "clearance.resolved") {
+            const winnerId = e.winnerActorId as number | null;
+            const delivered = (e.lotsDelivered as readonly {
+              itemKindId: number;
+              quantity: number;
+            }[]) ?? [];
+            const losers = (e.loserActorIds as readonly number[]) ?? [];
+            return (
+              <li key={i} className="clearance-row clearance-resolved">
+                <span>★</span>
+                {winnerId !== null ? (
+                  <>
+                    <ActorChip
+                      dump={dump}
+                      actorId={winnerId}
+                      onSelect={onSelect}
+                      size={14}
+                    />
+                    <strong>cleared</strong>{" "}
+                    <span className="muted">
+                      listing #{Number(e.listingId)} · paid £{Number(e.feeCharged)}
+                      {" · "}
+                      took {delivered.reduce((s, l) => s + l.quantity, 0)} units
+                      {delivered.length > 0
+                        ? ` (${delivered.map((l) => itemName(l.itemKindId)).join(", ")})`
+                        : ""}
+                    </span>
+                    {losers.length > 0 ? (
+                      <span className="warn">
+                        · {losers.length} loser{losers.length === 1 ? "" : "s"} walked
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  <span className="warn">
+                    listing #{Number(e.listingId)} resolved with no winner
+                  </span>
+                )}
+              </li>
+            );
+          }
+          if (e.type === "clearance.expired") {
+            return (
+              <li key={i} className="clearance-row clearance-expired">
+                <span className="muted">∅</span>
+                <strong>Expired</strong>{" "}
+                <span className="muted">
+                  {(e.flavour as string | null) ?? "Clearance"} — no booker, no take
+                </span>
+              </li>
+            );
+          }
+          return null;
+        })}
+      </ul>
     </section>
   );
 }

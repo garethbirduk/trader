@@ -700,6 +700,33 @@ button.cat-child-row:hover { background: var(--panel-2); }
 .scene-tag-gossip { background: var(--easter, #b18ad9); color: #0d0d12; }
 .scene-tag-raid { background: var(--warn); color: #fff; }
 .scene-tag-market { background: var(--accent); color: #0d0d12; }
+.scene-tag-clearance {
+  background: rgba(212, 175, 55, 0.85);
+  color: #0d0d12;
+}
+.scene-clearance .clearance-events {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.clearance-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-size: 12px;
+}
+.clearance-listed { border-color: rgba(212, 175, 55, 0.5); }
+.clearance-booked { border-color: rgba(80, 160, 220, 0.5); }
+.clearance-resolved { border-color: var(--accent-2); }
+.clearance-expired { opacity: 0.6; }
 .market-histogram {
   display: flex;
   width: 100%;
