@@ -291,6 +291,14 @@ function summarizeEvent(
           </span>
         </>
       );
+    case "pubdeal.skipped-too-small":
+      return (
+        <>
+          didn't bother haggling with{" "}
+          {A(e.sellerActorId === actorId ? e.buyerActorId : e.sellerActorId)}{" "}
+          <span className="muted">— too small (floor £{String(e.floor)})</span>
+        </>
+      );
     case "rep.spawned":
       return e.holderActorId === actorId ? (
         <>

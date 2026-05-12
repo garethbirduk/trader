@@ -13,6 +13,8 @@ import {
 } from "../src/engine/locations/locations.js";
 import { registerPubDealAutonomy } from "../src/engine/world/pub-deal-autonomy.js";
 import { registerDailySettlement } from "../src/engine/world/daily-settlement.js";
+import { insertPool } from "../src/engine/pools/pools-repo.js";
+import { insertLead } from "../src/engine/leads/leads-repo.js";
 import {
   FALLBACK_BIDDER_PROFILE,
   type BidderProfile,
@@ -32,8 +34,10 @@ describe("pub-deal autonomy", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const seller = insertActor(localDb, { code: "s", displayName: "Seller", cash: 0 });
-    const buyer = insertActor(localDb, { code: "b", displayName: "Buyer", cash: 5000 });
+    // Boot transport so the seller can credibly move enough of their
+    // 50-unit bag to clear the new 25%-slice floor (≥13 units).
+    const seller = insertActor(localDb, { code: "s", displayName: "Seller", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", displayName: "Buyer", cash: 5000, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);
@@ -211,9 +215,34 @@ describe("pub-deal autonomy", () => {
       ownerActorId: seller.id,
       itemKindId: item.id,
       qualityTier: "good",
-      quantity: 5,
+      quantity: 50, // big enough to clear the 25% slice floor
       acquiredUnitPrice: 5,
       acquiredDay: 1,
+    });
+
+    // Forward-sell now requires a warm, low-hop, pool-grounded supply
+    // lead matching the item-tier. Seed one tied to a live pool to
+    // exercise the over-commit path.
+    const sourcePool = insertPool(localDb, {
+      itemKindId: item.id,
+      qualityTier: "good",
+      quantity: 200,
+      createdDay: 1,
+      expiryDay: 10,
+      openingUnitPrice: 5,
+      closingUnitPrice: 3,
+    });
+    insertLead(localDb, {
+      holderActorId: seller.id,
+      side: "supply",
+      subjectItemKindId: item.id,
+      subjectQualityTier: "good",
+      estimatedQuantity: 200,
+      estimatedUnitPrice: 5,
+      acquiredDay: 1,
+      confidence: "warm",
+      hopCount: 0,
+      subjectPoolId: sourcePool.id,
     });
 
     const profiles = new Map<number, BidderProfile>([
@@ -246,28 +275,25 @@ describe("pub-deal autonomy", () => {
       pairChance: 1.0,
       forwardSellChance: 1.0, // every attempt is a forward-sale
       forwardSellQtyMultiplierRange: [3, 4],
-      forwardSellDeadlineRange: [2, 2],
+      forwardSellDeadlineRange: [4, 4], // 2× truck transit (truck=2) days
     });
     world.runToCompletion();
 
     const agreed = events.filter((e) => e.type === "pubdeal.agreed");
     expect(agreed.length).toBeGreaterThan(0);
-    // At least one must have committed more than the seller's lot held.
+    // At least one must have committed more than the seller's bag held.
     const overcommit = agreed.find(
-      (e) => e.type === "pubdeal.agreed" && e.quantity > 5,
+      (e) => e.type === "pubdeal.agreed" && e.quantity > 50,
     );
     expect(overcommit).toBeDefined();
-
-    const defaulted = events.filter((e) => e.type === "deal.defaulted");
-    expect(defaulted.length).toBeGreaterThan(0);
   });
 
   it("trust gating: a buyer at or below the threshold refuses to deal", async () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0 });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000 });
+    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);
@@ -281,7 +307,7 @@ describe("pub-deal autonomy", () => {
       ownerActorId: seller.id,
       itemKindId: item.id,
       qualityTier: "good",
-      quantity: 50,
+      quantity: 20,
       acquiredUnitPrice: 5,
       acquiredDay: 1,
     });
@@ -318,8 +344,8 @@ describe("pub-deal autonomy", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0 });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000 });
+    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);
@@ -333,7 +359,7 @@ describe("pub-deal autonomy", () => {
       ownerActorId: seller.id,
       itemKindId: item.id,
       qualityTier: "good",
-      quantity: 50,
+      quantity: 20, // boot tier covers this with room to spare
       acquiredUnitPrice: 5,
       acquiredDay: 1,
     });

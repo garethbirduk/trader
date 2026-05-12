@@ -32,6 +32,7 @@ const CATEGORIES: readonly CategorySpec[] = [
   { key: "pubdeal.walked", label: "· walked", types: ["pubdeal.walked"] },
   { key: "pubdeal.trust-blocked", label: "· trust-blocked", types: ["pubdeal.skipped-low-trust"] },
   { key: "pubdeal.rep-blocked", label: "· rep-blocked", types: ["pubdeal.skipped-rep"] },
+  { key: "pubdeal.too-small-blocked", label: "· too-small", types: ["pubdeal.skipped-too-small"] },
   { key: "rep.spawned", label: "Rep warnings spawned", types: ["rep.spawned"] },
   { key: "broker.materialised", label: "Broker face-to-faces", types: ["broker.materialised"] },
   { key: "broker.materialisation-aborted", label: "· walked-out", types: ["broker.materialisation-aborted"], warn: true },

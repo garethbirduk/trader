@@ -270,6 +270,15 @@ export function renderEvent(
           </span>
         </>
       );
+    case "pubdeal.skipped-too-small":
+      return (
+        <>
+          {A(e.sellerActorId)} ↔ {A(e.buyerActorId)} too small to bother{" "}
+          <span className="muted">
+            (seller £{String(e.sellerRrp)}, buyer £{String(e.buyerRrp)}, floor £{String(e.floor)})
+          </span>
+        </>
+      );
     case "rep.spawned":
       return (
         <>

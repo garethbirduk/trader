@@ -249,73 +249,76 @@ function runOneAttempt(args: {
     return;
   }
 
-  const lots = getStockLotsByOwner(world.db, sellerId);
-  if (lots.length === 0) return;
-  const lot = world.rng.pick(lots);
+  const allLots = getStockLotsByOwner(world.db, sellerId);
+  if (allLots.length === 0) return;
+  // Pick a kind+tier the seller wants to push, then aggregate their
+  // whole bag of that kind+tier — sellers offer all (or most) of what
+  // they have, not a random slice of one stock_lot row.
+  const seedLot = world.rng.pick(allLots);
+  const sameTierLots = allLots.filter(
+    (l) =>
+      l.itemKindId === seedLot.itemKindId &&
+      l.qualityTier === seedLot.qualityTier,
+  );
+  const onHand = sameTierLots.reduce((sum, l) => sum + l.quantity, 0);
 
-  // Roll for forward-sale: commit to MORE than the lot currently holds,
-  // with a longer deadline. This is what makes the cascade comedy bite —
-  // the seller takes on a delivery promise hoping to source more before
-  // the deadline.
-  const isForwardSale = world.rng.chance(args.forwardSellChance);
-  let proposalQty: number;
-  let deadlineDay: number;
-  if (isForwardSale) {
-    // Lead-driven sizing: the seller's confidence comes from the supply
-    // leads they hold. If their notebook lists 200 units across two
-    // contacts, they happily commit close to that. Two sellers whose
-    // leads both reference the same pool will *both* forward-sell the
-    // full quantity — and one of them eats the cascade when settlement
-    // drains the shared pool first.
-    const supplyLeads = getSupplyLeadsForItem(world.db, sellerId, lot.itemKindId)
-      .filter((l) => l.subjectPoolId !== null);
-    let leadAvailableQty = 0;
-    for (const l of supplyLeads) {
-      // Trust the lead's *current* understanding of pool availability if
-      // we can read the pool; otherwise fall back to the lead's recorded
-      // quantity.
-      if (l.subjectPoolId === null) continue;
-      const pool = getPoolById(world.db, l.subjectPoolId);
-      if (pool && pool.flushedDay === null) {
-        leadAvailableQty += pool.quantityRemaining;
-      } else {
-        leadAvailableQty += l.estimatedQuantity;
-      }
-    }
-    if (leadAvailableQty > 0) {
-      // Optimistic: commit own stock + 70% of perceived lead supply.
-      proposalQty = Math.max(2, lot.quantity + Math.floor(leadAvailableQty * 0.7));
+  // Transport constraints up front.
+  const sellerActor = getActorById(world.db, sellerId);
+  if (!sellerActor) return;
+  const transit = TRANSIT_DAYS_BY_TIER[sellerActor.transportCapacity];
+  const transportLimit = TRANSPORT_LIMITS[sellerActor.transportCapacity];
+  if (transportLimit <= 0) return;
+
+  // Forward-sell evaluation — only on warm, low-hop, pool-grounded supply
+  // leads that match the kind (and tier if specified). A thin cold rumour
+  // isn't justification for committing stock you don't have.
+  const supplyLeads = getSupplyLeadsForItem(world.db, sellerId, seedLot.itemKindId)
+    .filter(
+      (l) =>
+        l.subjectPoolId !== null &&
+        l.confidence === "warm" &&
+        l.hopCount <= economics.forwardSellMaxHopCount &&
+        (l.subjectQualityTier === null ||
+          l.subjectQualityTier === seedLot.qualityTier),
+    );
+  let sourceable = 0;
+  for (const l of supplyLeads) {
+    if (l.subjectPoolId === null) continue;
+    const pool = getPoolById(world.db, l.subjectPoolId);
+    if (pool && pool.flushedDay === null) {
+      sourceable += pool.quantityRemaining;
     } else {
-      // Pure speculation: random over-commitment.
-      const [lo, hi] = args.forwardSellQtyRange;
-      const mult = lo + world.rng.next() * (hi - lo);
-      proposalQty = Math.max(2, Math.round(lot.quantity * mult));
+      sourceable += l.estimatedQuantity;
     }
+  }
+  // 70% confidence haircut — the seller's optimism is real but not blind.
+  sourceable = Math.floor(sourceable * 0.7);
+
+  // Decide whether to engage the forward-sale path. Requires both:
+  // gossip backing (sourceable > 0) AND the coin-flip. Deadline must
+  // allow at least 2× transit (one source trip + one delivery trip);
+  // if the rolled deadline is too short we bump it up so the commitment
+  // is physically achievable.
+  const wantsForward = sourceable > 0 && world.rng.chance(args.forwardSellChance);
+  let deadlineDay = args.normalDeadlineDay;
+  if (wantsForward) {
     const [dlo, dhi] = args.forwardSellDeadlineRange;
     deadlineDay = clock.day + world.rng.int(dlo, dhi + 1);
-  } else {
-    proposalQty = Math.max(1, Math.min(lot.quantity, world.rng.int(1, 11)));
-    deadlineDay = args.normalDeadlineDay;
+    const minForwardDeadline = clock.day + 2 * transit;
+    if (deadlineDay < minForwardDeadline) deadlineDay = minForwardDeadline;
   }
+  // Normal-path deadline also respects single-trip transit.
+  const minNormalDeadline = clock.day + transit;
+  if (deadlineDay < minNormalDeadline) deadlineDay = minNormalDeadline;
 
-  // Cap proposal by what the seller can physically transport. A small-
-  // tier seller would never agree to deliver hundreds of units via a
-  // coat pocket — so the autonomy doesn't propose it either. Also
-  // bump the deadline to give the seller's transport tier enough time
-  // to physically make the trip — committing a lorry-load for delivery
-  // tomorrow is a guaranteed default.
-  const sellerActor = getActorById(world.db, sellerId);
-  if (sellerActor) {
-    const limit = TRANSPORT_LIMITS[sellerActor.transportCapacity];
-    if (limit <= 0) return; // can't move anything; abandon attempt
-    proposalQty = Math.max(1, Math.min(proposalQty, limit));
+  // Seller's ideal commit = whole bag (+ forward-sourceable), capped
+  // by what they can carry. This is the size proposal headed into the
+  // haggle; buyer affordability scales it down below.
+  let sellerIdealQty = wantsForward ? onHand + sourceable : onHand;
+  sellerIdealQty = Math.min(sellerIdealQty, transportLimit);
+  if (sellerIdealQty < 1) return;
 
-    const transit = TRANSIT_DAYS_BY_TIER[sellerActor.transportCapacity];
-    const minDeadline = clock.day + transit;
-    if (deadlineDay < minDeadline) deadlineDay = minDeadline;
-  }
-
-  const item = getItemKindById(world.db, lot.itemKindId);
+  const item = getItemKindById(world.db, seedLot.itemKindId);
   if (!item) return;
 
   // Buyer's perceived tier — either the lot's actual tier (full info)
@@ -325,9 +328,8 @@ function runOneAttempt(args: {
   const perceivedTier: QualityTier =
     economics.pubBuyerTierMode === "assumed"
       ? economics.pubAssumedTier
-      : lot.qualityTier;
+      : seedLot.qualityTier;
   const tierMult = economics.tierMultipliers[perceivedTier];
-  const trueLotValue = Math.max(1, Math.round(item.baseValue * tierMult * proposalQty));
 
   // Build the buyer's profile, forcing flaw detection if they already know
   // about this item kind's flaw.
@@ -338,16 +340,19 @@ function runOneAttempt(args: {
       ? withForcedFlawDetection(baseProfile, item.flawType)
       : baseProfile;
 
-  // Synthetic AuctionLot for appraisal — the only field anyone reads is
-  // `inspectionAdjustment(lot)` and v1 profiles don't set that callback,
-  // so the synthetic shape is harmless. The appraised tier matches the
-  // buyer's perceived tier so flaw/customer-fit math stays consistent.
+  // Synthetic AuctionLot for appraisal at the seller's ideal qty — we
+  // need the buyer's RRP estimate at full proposed size for the £100
+  // gate.
+  const trueLotValueAtIdeal = Math.max(
+    1,
+    Math.round(item.baseValue * tierMult * sellerIdealQty),
+  );
   const fakeLot: AuctionLot = {
     id: -1,
     sourcePoolId: null,
     itemKindId: item.id,
     qualityTier: perceivedTier,
-    quantity: proposalQty,
+    quantity: sellerIdealQty,
     floorPrice: 0,
     listedDay: clock.day,
     scheduledHour: null,
@@ -356,35 +361,93 @@ function runOneAttempt(args: {
     clearedPrice: null,
     clearedToActorId: null,
   };
-
   const appraisal = appraiseLot({
     profile: buyerProfile,
     lot: fakeLot,
     category: item.category,
     flawType: item.flawType,
     itemTargetCustomers: item.targetCustomers,
-    trueLotValue,
+    trueLotValue: trueLotValueAtIdeal,
     rng: world.rng,
     economics,
   });
 
+  // Seller's own retail estimate — deterministic tier-anchored mid over
+  // the bag they actually hold (excludes forward-sourceable; you don't
+  // value rumour stock as if you've already got it).
+  const sellerRrp = Math.round(
+    item.baseValue *
+      economics.tierMultipliers[seedLot.qualityTier] *
+      onHand,
+  );
+
+  // Rule 7 — symmetric £100 RRP floor. Either side's number below the
+  // threshold and neither bothers haggling. Buyer's number is the noisy
+  // appraisal at the full proposed bag; seller's is their deterministic
+  // mid over their actual on-hand stock.
+  if (
+    appraisal.valuation < economics.pubDealRrpFloor ||
+    sellerRrp < economics.pubDealRrpFloor
+  ) {
+    world.events.emit({
+      type: "pubdeal.skipped-too-small",
+      at: clock,
+      locationId: locId,
+      sellerActorId: sellerId,
+      buyerActorId: buyerId,
+      itemKindId: item.id,
+      qualityTier: seedLot.qualityTier,
+      sellerRrp,
+      buyerRrp: appraisal.valuation,
+      floor: economics.pubDealRrpFloor,
+    });
+    return;
+  }
+
   const buyer = getActorById(world.db, buyerId);
   if (!buyer) return;
 
-  // The appraisal is the buyer's noisy estimate of *retail* value (what
-  // they think they can resell the lot for). At the pub the buyer is
-  // sourcing for onward sale, so they aim to pay only a fraction of
-  // that — leaving margin for transport, risk, and profit. The fraction
-  // is configurable via economics.pubBuyerCeilingFraction (default 0.5).
-  // Cash still caps it.
+  // Buyer's total ceiling = appraised retail × fraction, capped by cash.
   const buyerTotalCeiling = Math.min(
     Math.round(appraisal.valuation * economics.pubBuyerCeilingFraction),
     buyer.cash,
   );
-  if (buyerTotalCeiling < proposalQty) return; // can't even bid £1/unit
+  if (buyerTotalCeiling < 1) return;
 
-  const buyerCeilingPerUnit = Math.floor(buyerTotalCeiling / proposalQty);
-  const sellerFloorPerUnit = Math.max(1, lot.acquiredUnitPrice);
+  // Resize qty to what the buyer can actually afford. We use a rough
+  // mid price between the seller's floor and the buyer's would-be
+  // ceiling at sellerIdealQty as a planning estimate — the haggle will
+  // tighten this up later. The resulting `proposalQty` is what we lock
+  // in; the converged unit price comes from the haggle.
+  const sellerFloorPerUnit = Math.max(1, seedLot.acquiredUnitPrice);
+  const ceilingAtIdeal = Math.max(
+    1,
+    Math.floor(buyerTotalCeiling / sellerIdealQty),
+  );
+  const roughMidPrice = Math.max(
+    sellerFloorPerUnit,
+    Math.round((sellerFloorPerUnit + ceilingAtIdeal) / 2),
+  );
+  const buyerAffordableQty = Math.max(
+    1,
+    Math.floor(buyer.cash / roughMidPrice),
+  );
+  const proposalQty = Math.min(sellerIdealQty, buyerAffordableQty);
+
+  // Rule 3 — 25% slice floor. If the converged qty would break the
+  // seller's bag into a slice smaller than `pubDealMinSlicePct` of
+  // what they were willing to push, neither side bothers. The "bag"
+  // here is the seller's on-hand stock; forward-sourceable counts
+  // for what they could promise but not for what counts as the bag
+  // being broken up.
+  const sliceFloor = Math.ceil(onHand * economics.pubDealMinSlicePct);
+  if (proposalQty < Math.max(1, sliceFloor)) return;
+
+  // Final per-unit ceiling at the (potentially scaled-down) proposalQty.
+  const buyerCeilingPerUnit = Math.max(
+    1,
+    Math.floor(buyerTotalCeiling / proposalQty),
+  );
   if (sellerFloorPerUnit > buyerCeilingPerUnit) return; // no overlap
 
   // Seller opens high, buyer opens low — wide opening anchors create
@@ -392,7 +455,7 @@ function runOneAttempt(args: {
   // already-reasonable opener.
   const sellerTargetPerUnit = Math.max(
     sellerFloorPerUnit,
-    Math.round(lot.acquiredUnitPrice * args.sellerTargetMarkup),
+    Math.round(seedLot.acquiredUnitPrice * args.sellerTargetMarkup),
   );
   // Buyer opens at a small fraction of their ceiling — deliberately
   // *not* clamped up to the seller's floor, so the buyer can anchor
@@ -432,7 +495,7 @@ function runOneAttempt(args: {
       concedeRate: buyerConcedeRate,
     },
     itemKindId: item.id,
-    qualityTier: lot.qualityTier,
+    qualityTier: seedLot.qualityTier,
     quantity: proposalQty,
     initiator,
     deadlineDay,

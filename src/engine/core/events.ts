@@ -69,6 +69,20 @@ export type WorldEvent =
   | { readonly type: "pubdeal.skipped-low-trust"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly trustScore: number }
   | { readonly type: "pubdeal.skipped-rep"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly repLeadId: number; readonly damageOnLead: number; readonly hopCount: number }
   | {
+      readonly type: "pubdeal.skipped-too-small";
+      readonly at: Clock;
+      readonly locationId: number;
+      readonly sellerActorId: number;
+      readonly buyerActorId: number;
+      readonly itemKindId: number;
+      readonly qualityTier: string;
+      /** Seller's RRP estimate over their on-hand bag. */
+      readonly sellerRrp: number;
+      /** Buyer's appraised RRP of the seller's max-committable bag. */
+      readonly buyerRrp: number;
+      readonly floor: number;
+    }
+  | {
       readonly type: "gossip.exchanged";
       readonly at: Clock;
       readonly atLocationId: number;
@@ -281,6 +295,9 @@ export function consoleHandler(): EventHandler {
         break;
       case "pubdeal.skipped-rep":
         console.log(`[${stamp}] pubdeal.skipped-rep seller=${e.sellerActorId} buyer=${e.buyerActorId} (rep-lead=${e.repLeadId} hop=${e.hopCount} damage=£${e.damageOnLead})`);
+        break;
+      case "pubdeal.skipped-too-small":
+        console.log(`[${stamp}] pubdeal.skipped-too-small seller=${e.sellerActorId} buyer=${e.buyerActorId} kind=${e.itemKindId}/${e.qualityTier} sellerRrp=£${e.sellerRrp} buyerRrp=£${e.buyerRrp} floor=£${e.floor}`);
         break;
       case "gossip.exchanged": {
         const summaries = e.exchanges

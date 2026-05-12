@@ -59,6 +59,29 @@ export interface EconomicsConfig {
    */
   readonly pubBuyerCeilingFraction: number;
   /**
+   * RRP-value floor below which neither side bothers to haggle —
+   * applied symmetrically. The buyer estimates max-available × their
+   * appraised unit retail; the seller estimates their own bag × the
+   * deterministic tier-anchored retail mid. If either side's number
+   * is below this, walk with `pubdeal.skipped-too-small`. Default
+   * £100 — small enough that ordinary trade still happens, large
+   * enough that "two screwdriver sets for a quid" no-ops out.
+   */
+  readonly pubDealRrpFloor: number;
+  /**
+   * Minimum fraction of seller's available bag a deal must clear to
+   * be worth breaking up the lot for. If both sides converge at a qty
+   * below this fraction of what the seller has on hand, walk —
+   * neither party wants to split a small slice. Default 0.25 (25%).
+   */
+  readonly pubDealMinSlicePct: number;
+  /**
+   * Forward-sell only engages on warm, pool-grounded supply leads
+   * with hopCount at or below this. Beyond this, the rumour's too
+   * mangled to commit on. Default 2 — first-hand or one-hop only.
+   */
+  readonly forwardSellMaxHopCount: number;
+  /**
    * What tier does the pub buyer assume the lot is, when valuing it?
    * 'real' uses the lot's actual qualityTier (full-information world);
    * 'assumed' uses `pubAssumedTier` regardless of reality (tier-blind
@@ -468,6 +491,9 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
   // negotiations actually get a back-and-forth instead of insta-walking
   // when seller floor sits just above buyer ceiling.
   pubBuyerCeilingFraction: 0.6,
+  pubDealRrpFloor: 100,
+  pubDealMinSlicePct: 0.25,
+  forwardSellMaxHopCount: 2,
   // Default keeps current behaviour (tests rely on this).
   pubBuyerTierMode: "real",
   pubAssumedTier: "fair",
