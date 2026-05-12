@@ -36,6 +36,14 @@ export interface PubDealAttemptArgs {
 
   /** Delivery deadline for the resulting deal, if agreement is reached. */
   readonly deadlineDay: number;
+
+  /** Optional belief snapshots, surfaced on the pubdeal.agreed event
+   *  so the UI can render "what each side thought a unit was worth"
+   *  alongside the agreed unit price. Computed by the caller (which
+   *  already has both parties' bidder profiles). */
+  readonly sellerBelief?: { readonly low: number; readonly high: number };
+  readonly buyerBelief?: { readonly low: number; readonly high: number };
+  readonly truePricePerUnit?: number;
 }
 
 export type PubDealResult =
@@ -152,6 +160,11 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
     unitPrice: negotiation.unitPrice,
     quantity: args.quantity,
     turns: negotiation.turns,
+    ...(args.sellerBelief !== undefined ? { sellerBelief: args.sellerBelief } : {}),
+    ...(args.buyerBelief !== undefined ? { buyerBelief: args.buyerBelief } : {}),
+    ...(args.truePricePerUnit !== undefined
+      ? { truePricePerUnit: args.truePricePerUnit }
+      : {}),
   });
 
   // Hand-off in the room — when the seller owns enough of the agreed

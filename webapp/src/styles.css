@@ -1337,6 +1337,26 @@ button.actor-row.actor-row-selected {
   gap: 4px;
 }
 
+/* Deal-profile belief bands — surfaces what each side thought a unit
+ * was worth at agreement time. The chip styling matches the existing
+ * muted/accent-quiet palette so it reads as supporting context
+ * beneath the agreed price, not as another stat. */
+.deal-beliefs {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.belief-band {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: rgba(140, 140, 140, 0.1);
+  color: var(--text);
+  border: 1px solid rgba(140, 140, 140, 0.3);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Relations tab — per-counterparty trust + change history. */
 .relations-list {
   display: flex;

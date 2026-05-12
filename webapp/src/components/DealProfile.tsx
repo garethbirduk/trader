@@ -31,15 +31,37 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
   // negotiation happened in (also the eventual drop location, by
   // `attemptPubDeal`'s convention). Pulled from the `pubdeal.agreed`
   // event since the deal record itself doesn't carry it separately.
-  const struckAtLocationId = useMemo<number | null>(() => {
-    for (const e of dump.events as readonly RunEvent[]) {
-      if (e.type !== "pubdeal.agreed") continue;
-      if ((e.dealId as number) !== dealId) continue;
-      const locId = e.locationId as number | null | undefined;
-      return typeof locId === "number" ? locId : null;
-    }
-    return null;
-  }, [dump.events, dealId]);
+  // Also pull the belief snapshots while we're walking the event list,
+  // so we can render "what each side thought a unit was worth" beside
+  // the agreed unit price.
+  const { struckAtLocationId, sellerBelief, buyerBelief, truePricePerUnit } =
+    useMemo<{
+      struckAtLocationId: number | null;
+      sellerBelief: { low: number; high: number } | null;
+      buyerBelief: { low: number; high: number } | null;
+      truePricePerUnit: number | null;
+    }>(() => {
+      for (const e of dump.events as readonly RunEvent[]) {
+        if (e.type !== "pubdeal.agreed") continue;
+        if ((e.dealId as number) !== dealId) continue;
+        const locId = e.locationId as number | null | undefined;
+        const sb = e.sellerBelief as { low: number; high: number } | undefined;
+        const bb = e.buyerBelief as { low: number; high: number } | undefined;
+        const tp = e.truePricePerUnit as number | undefined;
+        return {
+          struckAtLocationId: typeof locId === "number" ? locId : null,
+          sellerBelief: sb ?? null,
+          buyerBelief: bb ?? null,
+          truePricePerUnit: typeof tp === "number" ? tp : null,
+        };
+      }
+      return {
+        struckAtLocationId: null,
+        sellerBelief: null,
+        buyerBelief: null,
+        truePricePerUnit: null,
+      };
+    }, [dump.events, dealId]);
 
   if (deal === null) {
     return <div className="empty-state">deal {dealId} not found</div>;
@@ -166,6 +188,86 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
           ))}
         </div>
       ) : null}
+      {sellerBelief !== null || buyerBelief !== null || truePricePerUnit !== null ? (
+        <BeliefBands
+          sellerBelief={sellerBelief}
+          buyerBelief={buyerBelief}
+          truePricePerUnit={truePricePerUnit}
+          agreedUnitPrice={deal.lines[0]?.unitPrice ?? null}
+        />
+      ) : null}
     </section>
   );
+}
+
+/**
+ * Side-by-side per-unit belief ranges captured at agreement time.
+ * Shows "what each side thought a unit was worth" — the asymmetric-
+ * knowledge surface area. The agreed unit price sits between (or
+ * inside one of) the two bands; the engine's true RRP renders as a
+ * reference line.
+ */
+function BeliefBands({
+  sellerBelief,
+  buyerBelief,
+  truePricePerUnit,
+  agreedUnitPrice,
+}: {
+  readonly sellerBelief: { low: number; high: number } | null;
+  readonly buyerBelief: { low: number; high: number } | null;
+  readonly truePricePerUnit: number | null;
+  readonly agreedUnitPrice: number | null;
+}) {
+  return (
+    <div className="loc-people deal-beliefs">
+      <div className="profile-section-label">Per-unit beliefs</div>
+      <dl className="profile-stats">
+        {sellerBelief !== null ? (
+          <>
+            <dt>Seller thought</dt>
+            <dd>
+              <span className="belief-band">
+                £{sellerBelief.low}–£{sellerBelief.high}
+              </span>
+            </dd>
+          </>
+        ) : null}
+        {buyerBelief !== null ? (
+          <>
+            <dt>Buyer thought</dt>
+            <dd>
+              <span className="belief-band">
+                £{buyerBelief.low}–£{buyerBelief.high}
+              </span>
+            </dd>
+          </>
+        ) : null}
+        {agreedUnitPrice !== null ? (
+          <>
+            <dt>Agreed</dt>
+            <dd>£{agreedUnitPrice}</dd>
+          </>
+        ) : null}
+        {truePricePerUnit !== null ? (
+          <>
+            <dt>True RRP</dt>
+            <dd className="muted">
+              £{truePricePerUnit}
+              {agreedUnitPrice !== null ? (
+                <span className="muted">
+                  {" "}
+                  ({fmtDelta(agreedUnitPrice - truePricePerUnit)} on agreed)
+                </span>
+              ) : null}
+            </dd>
+          </>
+        ) : null}
+      </dl>
+    </div>
+  );
+}
+
+function fmtDelta(n: number): string {
+  if (n === 0) return "±0";
+  return n > 0 ? `+£${n}` : `−£${Math.abs(n)}`;
 }

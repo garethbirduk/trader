@@ -19,6 +19,12 @@ export interface CustomerHistogram {
 
 const FOOTFALL_JITTER = 0.25;
 
+/** Default clamp range for the realised customer willingness as a
+ *  fraction of the lot's true per-unit RRP. The customer-drives-price
+ *  model lands every sale in this window. */
+export const DEFAULT_WILLINGNESS_LOW = 0.9;
+export const DEFAULT_WILLINGNESS_HIGH = 1.1;
+
 /**
  * Roll the histogram for a given market-hour. Footfall comes from the
  * config's `hourlyFootfall` map, jittered ±25% per draw. Composition is
@@ -59,27 +65,38 @@ export function rollCustomerHistogram(
 
 /**
  * Walk a single customer's interaction with the displayed lot. Returns
- * the unit price the customer agreed to pay, or null if they walked.
+ * the unit price the customer is prepared to pay (which IS the
+ * realised sale price), or null if they walked.
  *
  * Decision pipeline:
  *   1. Interest in the item's category (per-persona weight, with a
  *      default fallback). Below 1 reduces engagement probability.
- *   2. Willingness-to-pay = trueRetailMidPerUnit × (mid ± jitter).
- *      Each customer rolls their own willingness in that band.
- *   3. Savviness gate: at low savviness the customer pays whatever the
- *      seller asks; at high savviness they walk if price > willingness.
- *      Continuous: the probability they'll pay an over-price falls
- *      linearly from 1 at savviness=0 to 0 at savviness=1.
+ *   2. Willingness-to-pay = `truePricePerUnit × factor`, where `factor`
+ *      lands in `[minFraction, maxFraction]` (default `[0.9, 1.1]`) —
+ *      biased by the persona's `willingnessToPayMid`. A "bargain
+ *      hunter" persona (mid ≤ 0.5) sits at the bottom of the window;
+ *      a "generous" persona (mid ≥ 1.0) sits at the top.
+ *   3. The customer pays their willingness directly. Sellers don't
+ *      negotiate at this scale — the price is taken or the customer
+ *      walks (and the only walk vector now is the interest check).
+ *
+ * This is the **customer-drives-price** model: stocks sell at varying
+ * prices depending on who walks in. Persona mix produces the
+ * cinematic shape — a fancy-stall day sees realised prices skew high
+ * (more dads / yuppies); a bargain-bin day skews low (more old-dears).
  */
 export function resolveOneSale(args: {
   readonly persona: MarketCustomerType;
   readonly itemCategory: string;
-  /** True retail mid per unit — what the item is genuinely worth at
-   *  retail given its real tier. */
-  readonly trueRetailMidPerUnit: number;
-  /** Seller's asking price per unit. */
-  readonly sellerPricePerUnit: number;
+  /** True retail per-unit price — `item.baseValue × tierMult[qualityTier]`.
+   *  This is engine truth, unknown to the seller. */
+  readonly truePricePerUnit: number;
   readonly rng: SeededRNG;
+  /** Lower clamp on the realised willingness, as a fraction of
+   *  truePricePerUnit. Defaults to 0.9. */
+  readonly minFraction?: number;
+  /** Upper clamp on the realised willingness. Defaults to 1.1. */
+  readonly maxFraction?: number;
 }): { readonly soldAt: number } | null {
   const interest =
     args.persona.categoryInterest[args.itemCategory] ??
@@ -89,21 +106,52 @@ export function resolveOneSale(args: {
   const engageP = Math.min(1, Math.max(0, interest));
   if (!args.rng.chance(engageP)) return null;
 
-  const j = args.persona.willingnessToPayJitter;
-  const willingnessFactor =
-    args.persona.willingnessToPayMid + (args.rng.next() * 2 * j - j);
-  const willingnessPerUnit = Math.max(0, args.trueRetailMidPerUnit * willingnessFactor);
+  const lo = args.minFraction ?? DEFAULT_WILLINGNESS_LOW;
+  const hi = args.maxFraction ?? DEFAULT_WILLINGNESS_HIGH;
+  const factor = personaWillingnessFactor({
+    persona: args.persona,
+    rng: args.rng,
+    lo,
+    hi,
+  });
+  const soldAt = Math.max(1, Math.round(args.truePricePerUnit * factor));
+  return { soldAt };
+}
 
-  if (args.sellerPricePerUnit <= willingnessPerUnit) {
-    // Within budget — straight buy.
-    return { soldAt: args.sellerPricePerUnit };
-  }
+/**
+ * Map a persona's `willingnessToPayMid` (historically 0.5..1.0) into
+ * a fraction inside [lo, hi]. Bargain hunters (mid 0.5) anchor at lo;
+ * generous personas (mid 1.0) anchor at hi. Jitter is applied around
+ * the anchor and the result clamped back to [lo, hi].
+ *
+ * The mapping is intentionally linear and simple — it preserves the
+ * relative ordering of personas in the existing skin without forcing
+ * skin authors to re-tune mid/jitter for the narrower window.
+ */
+function personaWillingnessFactor(args: {
+  persona: MarketCustomerType;
+  rng: SeededRNG;
+  lo: number;
+  hi: number;
+}): number {
+  const { persona, rng, lo, hi } = args;
+  // Normalise the persona's mid (historically in roughly [0.5, 1.0])
+  // to [0, 1]. Personas outside that range get clamped — extreme
+  // values still anchor cleanly at the edges of the window.
+  const norm = clamp01((persona.willingnessToPayMid - 0.5) / 0.5);
+  const anchor = lo + (hi - lo) * norm;
+  // Persona jitter shrinks into the narrower window. Half of the
+  // historical jitter sets a believable spread within [lo, hi]
+  // without immediately punching through the clamps.
+  const halfWidth = persona.willingnessToPayJitter * 0.5 * (hi - lo);
+  const raw = anchor + (rng.next() * 2 * halfWidth - halfWidth);
+  if (raw < lo) return lo;
+  if (raw > hi) return hi;
+  return raw;
+}
 
-  // Above budget. Savvy customers walk; unsavvy ones might still pay.
-  // The probability of buying anyway falls linearly with savviness.
-  const overpayP = Math.max(0, 1 - args.persona.savviness);
-  if (args.rng.chance(overpayP)) {
-    return { soldAt: args.sellerPricePerUnit };
-  }
-  return null;
+function clamp01(x: number): number {
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
 }

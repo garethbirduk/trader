@@ -64,7 +64,28 @@ export type WorldEvent =
   | { readonly type: "policy.errored"; readonly at: Clock; readonly actorId: number; readonly policyId: string; readonly reason: string }
   | { readonly type: "pool.flushed"; readonly at: Clock; readonly poolId: number; readonly quantity: number; readonly destination: "auction" | "market" | "write_off"; readonly auctionLotId: number | null }
   | { readonly type: "pubdeal.attempted"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly itemKindId: number; readonly qualityTier: string; readonly quantity: number }
-  | { readonly type: "pubdeal.agreed"; readonly at: Clock; readonly locationId: number; readonly dealId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly unitPrice: number; readonly quantity: number; readonly turns: readonly NegotiationTurnSnapshot[] }
+  | {
+      readonly type: "pubdeal.agreed";
+      readonly at: Clock;
+      readonly locationId: number;
+      readonly dealId: number;
+      readonly sellerActorId: number;
+      readonly buyerActorId: number;
+      readonly unitPrice: number;
+      readonly quantity: number;
+      readonly turns: readonly NegotiationTurnSnapshot[];
+      /** Seller's per-unit belief band at the moment of agreement —
+       *  what they thought a unit was worth as they shook hands.
+       *  Snapshot of `estimateUnitRetail` against the seller's
+       *  bidder profile. Optional for back-compat with older dumps. */
+      readonly sellerBelief?: { readonly low: number; readonly high: number };
+      /** Buyer's per-unit belief band at the moment of agreement.
+       *  The two-band diff is the asymmetric-knowledge surface area. */
+      readonly buyerBelief?: { readonly low: number; readonly high: number };
+      /** Engine truth: the lot's per-unit RRP at the agreed tier.
+       *  Surfaced for the UI's "what they thought vs the truth" diff. */
+      readonly truePricePerUnit?: number;
+    }
   | { readonly type: "pubdeal.walked"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly reason: string; readonly turns: readonly NegotiationTurnSnapshot[] }
   | { readonly type: "pubdeal.skipped-low-trust"; readonly at: Clock; readonly sellerActorId: number; readonly buyerActorId: number; readonly trustScore: number }
   | { readonly type: "pubdeal.skipped-rep"; readonly at: Clock; readonly locationId: number; readonly sellerActorId: number; readonly buyerActorId: number; readonly repLeadId: number; readonly damageOnLead: number; readonly hopCount: number }
@@ -162,7 +183,21 @@ export type WorldEvent =
       readonly stockLotId: number;
       readonly itemKindId: number;
       readonly qualityTier: string;
+      /** Average realised price per unit (revenue / unitsSold). */
       readonly pricePerUnit: number;
+      /** Per-unit price range across the hour. With the customer-
+       *  drives-price model, individual customers pay different
+       *  prices in [0.9, 1.1] × RRP; this surfaces the spread. */
+      readonly priceRange?: { readonly low: number; readonly high: number };
+      /** What the seller thought a unit was worth — their own
+       *  belief band before any customers walked in. The UI can
+       *  contrast this with the realised range to show "the seller
+       *  thought X; they actually got Y." */
+      readonly sellerBelief?: { readonly low: number; readonly high: number };
+      /** Engine truth: the lot's per-unit RRP (item baseValue ×
+       *  tier multiplier). Unknown to the seller; surfaced in the
+       *  event for retrospective analysis / UI display. */
+      readonly truePricePerUnit?: number;
       readonly unitsOffered: number;
       readonly unitsSold: number;
       readonly revenue: number;

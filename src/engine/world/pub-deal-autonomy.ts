@@ -4,6 +4,7 @@ import {
   FALLBACK_BIDDER_PROFILE,
   appraiseLot,
 } from "../auction/bidder-profile.js";
+import { estimateUnitRetail } from "../auction/estimate.js";
 import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
 import { getActorById } from "../actors/actors-repo.js";
 import { TRANSIT_DAYS_BY_TIER, TRANSPORT_LIMITS } from "../actors/types.js";
@@ -476,6 +477,28 @@ function runOneAttempt(args: {
   const sellerConcedeRate = 0.08 + world.rng.next() * 0.14;
   const buyerConcedeRate = 0.08 + world.rng.next() * 0.14;
 
+  // Belief snapshots — what each side thinks a unit is worth right
+  // now, surfaced into the pubdeal.agreed event so the UI can show
+  // the two bands side-by-side. The seller's belief uses the lot's
+  // actual tier (they know what they're holding); the buyer's belief
+  // uses the perceived tier (they only see what the seller's chosen
+  // to display).
+  const sellerProfile = profiles.get(sellerId) ?? FALLBACK_BIDDER_PROFILE;
+  const sellerBeliefEstimate = estimateUnitRetail(
+    sellerProfile,
+    item,
+    seedLot.qualityTier,
+    economics,
+  );
+  const buyerBeliefEstimate = estimateUnitRetail(
+    buyerProfile,
+    item,
+    perceivedTier,
+    economics,
+  );
+  const trueRrpPerUnit =
+    item.baseValue * economics.tierMultipliers[seedLot.qualityTier];
+
   attemptPubDeal({
     db: world.db,
     events: world.events,
@@ -499,6 +522,15 @@ function runOneAttempt(args: {
     quantity: proposalQty,
     initiator,
     deadlineDay,
+    sellerBelief: {
+      low: sellerBeliefEstimate.low,
+      high: sellerBeliefEstimate.high,
+    },
+    buyerBelief: {
+      low: buyerBeliefEstimate.low,
+      high: buyerBeliefEstimate.high,
+    },
+    truePricePerUnit: Math.round(trueRrpPerUnit),
   });
   // The forward-sale fact isn't carried into the deal record (deals are
   // promises regardless), but the trace can be reconstructed from

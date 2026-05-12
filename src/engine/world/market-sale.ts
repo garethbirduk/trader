@@ -75,25 +75,25 @@ export function registerMarketSale(
       // passable generalists with default category accuracy.
       const profile = opts.bidderProfiles.get(seller.id) ?? FALLBACK_BIDDER_PROFILE;
 
-      const estimate = estimateUnitRetail(
+      // Seller's belief band — what the seller thinks the lot is worth.
+      // Kept on the event for the deal/profile UI to render the
+      // "what the seller thought" range; not used to gate the sale.
+      const sellerEstimate = estimateUnitRetail(
         profile,
         item,
         displayed.qualityTier as QualityTier,
         economics,
       );
-      const sellerPricePerUnit = Math.max(
-        1,
-        Math.round(estimate.mid * cfg.pricePerUnitFraction),
-      );
 
-      // True retail mid (using the actual tier and engine tier mults)
-      // is what customers value the lot at. Sellers can over-price
-      // beyond this; savviness decides whether customers fall for it.
-      const trueMidPerUnit =
+      // True retail per unit — what the engine knows the lot is worth.
+      // Unknown to the seller. Drives the customer's willingness window.
+      const truePricePerUnit =
         item.baseValue * economics.tierMultipliers[displayed.qualityTier as QualityTier];
 
       let unitsSold = 0;
       let revenue = 0;
+      let priceLow = Number.POSITIVE_INFINITY;
+      let priceHigh = 0;
       const soldByPersona: Record<string, number> = {};
       const remainingByPersona: Record<string, number> = { ...histogram.counts };
       let stockLeft = displayed.quantity;
@@ -112,14 +112,15 @@ export function registerMarketSale(
           const sale = resolveOneSale({
             persona,
             itemCategory: item.category,
-            trueRetailMidPerUnit: trueMidPerUnit,
-            sellerPricePerUnit,
+            truePricePerUnit,
             rng: world.rng,
           });
           n -= 1;
           if (sale !== null) {
             unitsSold += 1;
             revenue += sale.soldAt;
+            if (sale.soldAt < priceLow) priceLow = sale.soldAt;
+            if (sale.soldAt > priceHigh) priceHigh = sale.soldAt;
             stockLeft -= 1;
             soldByPersona[personaId] = (soldByPersona[personaId] ?? 0) + 1;
           }
@@ -130,6 +131,11 @@ export function registerMarketSale(
       if (unitsSold === 0) continue;
       decrementLotQuantity(world.db, displayed.id, unitsSold);
       adjustActorCash(world.db, seller.id, revenue);
+
+      // `pricePerUnit` becomes the AVERAGE realised price — varying
+      // per customer in the [0.9, 1.1] × RRP window. `priceRange`
+      // exposes the actual low/high realised across the hour.
+      const averagePricePerUnit = Math.round(revenue / unitsSold);
 
       // Only emit when something actually sold. Zero-sale hours would
       // be no-ops — they'd clutter diaries and the event list with
@@ -143,7 +149,10 @@ export function registerMarketSale(
         stockLotId: displayed.id,
         itemKindId: item.id,
         qualityTier: displayed.qualityTier,
-        pricePerUnit: sellerPricePerUnit,
+        pricePerUnit: averagePricePerUnit,
+        priceRange: { low: priceLow, high: priceHigh },
+        sellerBelief: { low: sellerEstimate.low, high: sellerEstimate.high },
+        truePricePerUnit,
         unitsOffered: displayed.quantity,
         unitsSold,
         revenue,

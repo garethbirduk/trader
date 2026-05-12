@@ -113,26 +113,26 @@ export function registerShopSale(
 
       const profile =
         opts.bidderProfiles.get(shop.keeperActorId) ?? FALLBACK_BIDDER_PROFILE;
-      const estimate = estimateUnitRetail(
+      // Keeper's belief band — surfaced on the event for the UI, not
+      // used to gate sales (customer drives the realised price).
+      const sellerEstimate = estimateUnitRetail(
         profile,
         item,
         displayed.qualityTier as QualityTier,
         economics,
       );
-      const sellerPricePerUnit = Math.max(
-        1,
-        Math.round(estimate.mid * shopCfg.pricePerUnitFraction),
-      );
 
       const histogram = rollCustomerHistogram(clock.hour, shopFlowConfig, world.rng);
       if (histogram.totalCount === 0) continue;
 
-      const trueMidPerUnit =
+      const truePricePerUnit =
         item.baseValue *
         economics.tierMultipliers[displayed.qualityTier as QualityTier];
 
       let unitsSold = 0;
       let revenue = 0;
+      let priceLow = Number.POSITIVE_INFINITY;
+      let priceHigh = 0;
       const soldByPersona: Record<string, number> = {};
       const remainingByPersona: Record<string, number> = { ...histogram.counts };
       let stockLeft = displayed.quantity;
@@ -146,14 +146,15 @@ export function registerShopSale(
           const sale = resolveOneSale({
             persona,
             itemCategory: item.category,
-            trueRetailMidPerUnit: trueMidPerUnit,
-            sellerPricePerUnit,
+            truePricePerUnit,
             rng: world.rng,
           });
           n -= 1;
           if (sale !== null) {
             unitsSold += 1;
             revenue += sale.soldAt;
+            if (sale.soldAt < priceLow) priceLow = sale.soldAt;
+            if (sale.soldAt > priceHigh) priceHigh = sale.soldAt;
             stockLeft -= 1;
             soldByPersona[personaId] = (soldByPersona[personaId] ?? 0) + 1;
           }
@@ -165,6 +166,8 @@ export function registerShopSale(
       decrementLotQuantity(world.db, displayed.id, unitsSold);
       adjustActorCash(world.db, shop.keeperActorId, revenue);
 
+      const averagePricePerUnit = Math.round(revenue / unitsSold);
+
       world.events.emit({
         type: "market.hour-summary",
         at: clock,
@@ -173,7 +176,10 @@ export function registerShopSale(
         stockLotId: displayed.id,
         itemKindId: item.id,
         qualityTier: displayed.qualityTier,
-        pricePerUnit: sellerPricePerUnit,
+        pricePerUnit: averagePricePerUnit,
+        priceRange: { low: priceLow, high: priceHigh },
+        sellerBelief: { low: sellerEstimate.low, high: sellerEstimate.high },
+        truePricePerUnit,
         unitsOffered: displayed.quantity,
         unitsSold,
         revenue,

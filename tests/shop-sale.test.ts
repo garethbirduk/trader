@@ -114,9 +114,12 @@ describe("shop turnover (Stage 8)", () => {
       expect(summary.revenue).toBeGreaterThan(0);
     }
 
-    // Keeper's stock fell, cash rose.
+    // Keeper's stock fell, cash rose. The lot may be fully cleared
+    // (row deleted) when footfall exceeds units on display — assert
+    // on the *delta* rather than the surviving row.
     const remaining = getStockLotsByOwner(localDb, keeper.id);
-    expect(remaining[0]!.quantity).toBeLessThan(lot.quantity);
+    const remainingQty = remaining[0]?.quantity ?? 0;
+    expect(remainingQty).toBeLessThan(lot.quantity);
     expect(getActorById(localDb, keeper.id)!.cash).toBeGreaterThan(0);
   });
 
