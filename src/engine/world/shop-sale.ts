@@ -26,6 +26,26 @@ export interface ShopSpec {
   /** Item categories this shop trades in. Used as a soft filter on
    *  the displayed lot — keepers prefer matching stock. */
   readonly specialties: readonly string[];
+  /**
+   * Per-shop hourly footfall override (todolist #2). When set,
+   * replaces the global `shopSale.hourlyFootfall` for this shop —
+   * lets a newsagent peak at the school-run hour while a jeweller
+   * peaks at lunchtime. Hours not listed default to 0 (shop quiet).
+   */
+  readonly hourlyFootfall?: Readonly<Record<number, number>>;
+  /**
+   * Per-shop persona mix override (todolist #1). Multiplies the
+   * shared customerTypes' `populationWeight` per persona, so the
+   * jeweller pulls a different crowd than the electrical shop
+   * without re-declaring the persona bank.
+   *
+   *   { yuppies: 3, "old-dears": 0.2 }  ← jeweller-ish bias
+   *   { mums: 2, "old-dears": 1.5, students: 0.3 }  ← newsagent
+   *
+   * Personas not listed take multiplier 1 (no bias). Negative or zero
+   * values effectively remove the persona from this shop's mix.
+   */
+  readonly personaWeightMultipliers?: Readonly<Record<string, number>>;
 }
 
 export interface ShopSaleOptions {
@@ -67,21 +87,48 @@ export function registerShopSale(
   const marketCfg = economics.marketSale;
   const shopCfg = economics.shopSale;
 
-  // Hijack the market customer-types and customer-flow logic but with
+  // Hijack the market customer-types + customer-flow logic but with
   // the shop's own footfall curve. The underlying customer-flow API
-  // expects a MarketSaleConfig-shaped object, so we synthesise one.
-  const shopFlowConfig = {
-    ...marketCfg,
-    hourlyFootfall: shopCfg.hourlyFootfall,
-    pricePerUnitFraction: shopCfg.pricePerUnitFraction,
+  // expects a MarketSaleConfig-shaped object, so we synthesise one
+  // per shop — the synthesised config layers any per-shop overrides
+  // on top of the engine defaults.
+  const buildShopFlowConfig = (shop: ShopSpec) => {
+    // Footfall: per-shop override wins; else fall back to global.
+    const hourlyFootfall = shop.hourlyFootfall ?? shopCfg.hourlyFootfall;
+    // Persona mix: copy each global persona, scaling its
+    // populationWeight by the per-shop multiplier (default 1).
+    const mults = shop.personaWeightMultipliers ?? {};
+    const customerTypes: Record<string, typeof marketCfg.customerTypes[string]> = {};
+    for (const [personaId, persona] of Object.entries(marketCfg.customerTypes)) {
+      const mult = mults[personaId] ?? 1;
+      // Skip personas whose multiplier zeroes them — saves cycles in
+      // the histogram roller and matches the cinematic shape (no
+      // students at the jeweller's, full stop).
+      if (mult <= 0) continue;
+      customerTypes[personaId] = {
+        ...persona,
+        populationWeight: Math.max(0, persona.populationWeight * mult),
+      };
+    }
+    return {
+      ...marketCfg,
+      hourlyFootfall,
+      pricePerUnitFraction: shopCfg.pricePerUnitFraction,
+      customerTypes,
+    };
   };
 
   return world.onHour((clock) => {
     if (!shopCfg.enabled) return;
-    const footfall = shopCfg.hourlyFootfall[clock.hour];
-    if (footfall === undefined || footfall <= 0) return;
 
     for (const shop of opts.shops) {
+      // Per-shop footfall lookup. A shop with its own curve uses that;
+      // otherwise the global default applies. Zero footfall this hour
+      // → skip this shop, but other shops may still trade.
+      const effectiveFootfall = shop.hourlyFootfall ?? shopCfg.hourlyFootfall;
+      const footfall = effectiveFootfall[clock.hour];
+      if (footfall === undefined || footfall <= 0) continue;
+
       const keeper = getActorById(world.db, shop.keeperActorId);
       if (!keeper) continue;
       if (keeper.currentLocationId !== shop.locationId) continue;
@@ -122,6 +169,11 @@ export function registerShopSale(
         economics,
       );
 
+      // Build a per-shop flow config. The persona mix's
+      // populationWeight is biased by spec.personaWeightMultipliers,
+      // and the hourly footfall comes from the per-shop override
+      // (which we already validated has a positive value this hour).
+      const shopFlowConfig = buildShopFlowConfig(shop);
       const histogram = rollCustomerHistogram(clock.hour, shopFlowConfig, world.rng);
       if (histogram.totalCount === 0) continue;
 

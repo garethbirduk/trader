@@ -185,4 +185,154 @@ describe("shop turnover (Stage 8)", () => {
 
     expect(events.filter((e) => e.type === "market.hour-summary")).toHaveLength(0);
   });
+
+  it("per-shop hourlyFootfall override drives footfall at this shop only", () => {
+    const localDb = openBetterSqlite3DB({ filename: ":memory:" });
+    applyMigrations(localDb, ALL_MIGRATIONS);
+    db = localDb;
+    const shop = insertLocation(localDb, { code: "jewel", displayName: "Jewel" });
+    const keeper = insertActor(localDb, {
+      code: "cyril", displayName: "Cyril", cash: 0,
+    });
+    setActorLocation(localDb, keeper.id, shop.id);
+    const item = insertItemKind(localDb, {
+      code: "ornaments", displayName: "Ornaments", category: "decor", baseValue: 30,
+    });
+    insertStockLot(localDb, {
+      ownerActorId: keeper.id, itemKindId: item.id,
+      qualityTier: "good", quantity: 50, acquiredUnitPrice: 10,
+      acquiredDay: 1,
+    });
+    // Global shopSale footfall is 0 at hour 12; per-shop override
+    // makes this shop busy. (Engine should ignore the global.)
+    const economics = resolveEconomicsConfig({
+      shopSale: {
+        enabled: true,
+        hourlyFootfall: { 12: 0 }, // global silent
+        pricePerUnitFraction: 1.0,
+      },
+      marketSale: {
+        pricePerUnitFraction: 1.0,
+        customerTypes: {
+          all: {
+            categoryInterest: { decor: 1.5 },
+            defaultCategoryInterest: 1.0,
+            willingnessToPayMid: 1.0,
+            willingnessToPayJitter: 0,
+            savviness: 0,
+            populationWeight: 1.0,
+          },
+        },
+        hourlyFootfall: { 12: 0 },
+      },
+    });
+    const world = new World({
+      db: localDb,
+      rng: createRNG("perfootfall"),
+      seed: "perfootfall",
+      maxDays: 1, startDay: 1, startHour: 12,
+    });
+    const events: WorldEvent[] = [];
+    world.events.subscribe((e) => events.push(e));
+    registerShopSale(world, {
+      shops: [
+        {
+          locationId: shop.id,
+          keeperActorId: keeper.id,
+          specialties: ["decor"],
+          hourlyFootfall: { 12: 20 }, // per-shop override
+        },
+      ],
+      bidderProfiles: new Map(),
+      economics,
+    });
+    world.start();
+    world.tickOnce();
+    // The per-shop override should override the global zero footfall.
+    const summary = events.find((e) => e.type === "market.hour-summary");
+    expect(summary).toBeDefined();
+    if (summary?.type === "market.hour-summary") {
+      expect(summary.unitsSold).toBeGreaterThan(0);
+      expect(summary.footfall).toBeGreaterThan(0);
+    }
+  });
+
+  it("per-shop personaWeightMultipliers bias the customer mix", () => {
+    const localDb = openBetterSqlite3DB({ filename: ":memory:" });
+    applyMigrations(localDb, ALL_MIGRATIONS);
+    db = localDb;
+    const shop = insertLocation(localDb, { code: "jewel", displayName: "Jewel" });
+    const keeper = insertActor(localDb, {
+      code: "cyril", displayName: "Cyril", cash: 0,
+    });
+    setActorLocation(localDb, keeper.id, shop.id);
+    const item = insertItemKind(localDb, {
+      code: "ornaments", displayName: "Ornaments", category: "decor", baseValue: 30,
+    });
+    insertStockLot(localDb, {
+      ownerActorId: keeper.id, itemKindId: item.id,
+      qualityTier: "good", quantity: 100, acquiredUnitPrice: 10,
+      acquiredDay: 1,
+    });
+    const economics = resolveEconomicsConfig({
+      shopSale: {
+        enabled: true,
+        hourlyFootfall: { 12: 200 },
+        pricePerUnitFraction: 1.0,
+      },
+      marketSale: {
+        pricePerUnitFraction: 1.0,
+        customerTypes: {
+          "old-dears": {
+            categoryInterest: { decor: 1.5 },
+            defaultCategoryInterest: 0.5,
+            willingnessToPayMid: 1.0,
+            willingnessToPayJitter: 0,
+            savviness: 0,
+            populationWeight: 1.0,
+          },
+          students: {
+            categoryInterest: { decor: 0.3 },
+            defaultCategoryInterest: 0.5,
+            willingnessToPayMid: 1.0,
+            willingnessToPayJitter: 0,
+            savviness: 0,
+            populationWeight: 1.0,
+          },
+        },
+        hourlyFootfall: { 12: 200 },
+      },
+    });
+    const world = new World({
+      db: localDb,
+      rng: createRNG("personabias"),
+      seed: "personabias",
+      maxDays: 1, startDay: 1, startHour: 12,
+    });
+    const events: WorldEvent[] = [];
+    world.events.subscribe((e) => events.push(e));
+    registerShopSale(world, {
+      shops: [
+        {
+          locationId: shop.id,
+          keeperActorId: keeper.id,
+          specialties: ["decor"],
+          // Jeweller: old-dears heavily favoured, students excluded.
+          personaWeightMultipliers: { "old-dears": 5, students: 0 },
+        },
+      ],
+      bidderProfiles: new Map(),
+      economics,
+    });
+    world.start();
+    world.tickOnce();
+    const summary = events.find((e) => e.type === "market.hour-summary");
+    expect(summary).toBeDefined();
+    if (summary?.type === "market.hour-summary") {
+      const mix = summary.customerMix as Record<string, number>;
+      // Students were zero'd; old-dears should dominate.
+      expect(mix.students ?? 0).toBe(0);
+      expect(mix["old-dears"] ?? 0).toBeGreaterThan(0);
+    }
+  });
 });

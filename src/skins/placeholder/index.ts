@@ -59,6 +59,15 @@ export interface SkinSeedResult {
    *  planner can score "matched stock" bonuses for steering dealers
    *  to the right shop. */
   readonly shopSpecialtiesByLocation: ReadonlyMap<number, ReadonlyArray<string>>;
+  /** Per-shop hourly footfall override (todolist #2). Shops not in
+   *  this map fall back to the global `shopSale.hourlyFootfall`. */
+  readonly shopFootfallByLocation: ReadonlyMap<number, Readonly<Record<number, number>>>;
+  /** Per-shop persona-weight multipliers (todolist #1). Shops not in
+   *  this map use the global persona bank unmodified. */
+  readonly shopPersonaMultipliersByLocation: ReadonlyMap<
+    number,
+    Readonly<Record<string, number>>
+  >;
   /** Actor ids of shopkeepers that own the high-street shops. The
    *  shop-deal autonomy uses this set to force the buyer side. */
   readonly shopkeeperActorIds: readonly number[];
@@ -384,6 +393,67 @@ const SHOP_SPECIALTIES_BY_CODE: Readonly<Record<string, readonly string[]>> = {
   "hi-tech-hut": ["electrical", "tools"],
   "comfy-corner": ["furniture", "decor"],
   "throne-co": ["furniture", "decor"],
+};
+
+/**
+ * Per-shop hourly footfall curves (todolist #2). Replaces the
+ * default `shopSale.hourlyFootfall` for each shop so the day reads
+ * cinematically — newsagents at school-run o'clock, jewellers
+ * around lunchtime, furniture stores all afternoon.
+ *
+ * Hours not listed default to 0 (shop quiet that hour). All shops
+ * close before 18:00.
+ */
+const SHOP_FOOTFALL_BY_CODE: Readonly<Record<string, Readonly<Record<number, number>>>> = {
+  // Jewellers — lunchtime crowd, light browsing, gift hunters.
+  goldfingers: { 11: 1, 12: 3, 13: 4, 14: 3, 15: 2, 16: 2, 17: 1 },
+  "ratners-peckham": { 11: 1, 12: 3, 13: 4, 14: 3, 15: 2, 16: 2, 17: 1 },
+  // Corner shops — school run + lunch + after-work errands.
+  patels: { 7: 3, 8: 5, 9: 3, 12: 3, 13: 3, 15: 2, 16: 4, 17: 3 },
+  "corner-shop": { 7: 3, 8: 5, 9: 3, 12: 3, 13: 3, 15: 2, 16: 4, 17: 3 },
+  // Toy shops — after-school surge, mid-morning trickle.
+  "wooden-soldier": { 9: 1, 10: 2, 11: 2, 12: 2, 13: 2, 15: 4, 16: 5, 17: 3 },
+  toyland: { 9: 1, 10: 2, 11: 2, 12: 2, 13: 2, 15: 4, 16: 5, 17: 3 },
+  // Electrical / tools — tradesmen morning runs + after-work DIY.
+  "sparks-electrical": { 9: 3, 10: 3, 11: 2, 12: 2, 13: 2, 14: 2, 16: 3, 17: 4 },
+  "hi-tech-hut": { 9: 3, 10: 3, 11: 2, 12: 2, 13: 2, 14: 2, 16: 3, 17: 4 },
+  // Furniture — a long flat afternoon, couples browsing.
+  "comfy-corner": { 10: 1, 11: 2, 12: 3, 13: 3, 14: 3, 15: 3, 16: 2, 17: 2 },
+  "throne-co": { 10: 1, 11: 2, 12: 3, 13: 3, 14: 3, 15: 3, 16: 2, 17: 2 },
+};
+
+/**
+ * Per-shop persona-weight multipliers (todolist #1). Biases the
+ * shared persona bank for each shop so a jeweller pulls a different
+ * crowd than the electrical place. Personas not listed take 1.0;
+ * 0 effectively excludes them.
+ *
+ * Personas in the default bank: old-dears, students, mums, dads.
+ */
+const SHOP_PERSONA_MULTIPLIERS_BY_CODE: Readonly<
+  Record<string, Readonly<Record<string, number>>>
+> = {
+  // Jewellers — old-dears (gift shoppers, aspirational) and mums
+  // dominate; students rarely buy jewellery; dads window-shop only.
+  goldfingers: { "old-dears": 1.8, mums: 1.3, students: 0.1, dads: 0.4 },
+  "ratners-peckham": { "old-dears": 1.8, mums: 1.3, students: 0.1, dads: 0.4 },
+  // Corner shops — mums and old-dears do the daily household runs;
+  // dads and students chip in but at a lower rate.
+  patels: { mums: 1.6, "old-dears": 1.4, students: 0.8, dads: 0.7 },
+  "corner-shop": { mums: 1.6, "old-dears": 1.4, students: 0.8, dads: 0.7 },
+  // Toy shops — mums and dads buying for kids, old-dears for
+  // grandkids, students barely register.
+  "wooden-soldier": { mums: 2.0, dads: 1.4, "old-dears": 0.9, students: 0.2 },
+  toyland: { mums: 2.0, dads: 1.4, "old-dears": 0.9, students: 0.2 },
+  // Electrical / tools — dads and tradesmen lean. Mums shop here
+  // for kettles and irons; old-dears rarely; students for fans and
+  // alarm clocks.
+  "sparks-electrical": { dads: 2.2, mums: 0.9, students: 1.1, "old-dears": 0.3 },
+  "hi-tech-hut": { dads: 2.2, mums: 0.9, students: 1.1, "old-dears": 0.3 },
+  // Furniture — mums and dads decide together; old-dears refresh
+  // a chair occasionally; students don't.
+  "comfy-corner": { mums: 1.4, dads: 1.3, "old-dears": 0.8, students: 0.2 },
+  "throne-co": { mums: 1.4, dads: 1.3, "old-dears": 0.8, students: 0.2 },
 };
 
 /**
@@ -1600,6 +1670,14 @@ export function seedPlaceholderSkin(
   const shopLocationIds: number[] = [];
   const shopkeeperActorIds: number[] = [];
   const shopSpecialtiesByLocation = new Map<number, ReadonlyArray<string>>();
+  const shopFootfallByLocation = new Map<
+    number,
+    Readonly<Record<number, number>>
+  >();
+  const shopPersonaMultipliersByLocation = new Map<
+    number,
+    Readonly<Record<string, number>>
+  >();
   for (const { shopCode, keeperCode } of HIGH_STREET_SHOPS) {
     const shopId = locByCode.get(shopCode);
     const keeperId = actorByCode.get(keeperCode);
@@ -1610,6 +1688,14 @@ export function seedPlaceholderSkin(
       const specialties = SHOP_SPECIALTIES_BY_CODE[shopCode];
       if (specialties !== undefined) {
         shopSpecialtiesByLocation.set(shopId, specialties);
+      }
+      const footfall = SHOP_FOOTFALL_BY_CODE[shopCode];
+      if (footfall !== undefined) {
+        shopFootfallByLocation.set(shopId, footfall);
+      }
+      const personaMults = SHOP_PERSONA_MULTIPLIERS_BY_CODE[shopCode];
+      if (personaMults !== undefined) {
+        shopPersonaMultipliersByLocation.set(shopId, personaMults);
       }
     }
   }
@@ -1780,6 +1866,8 @@ export function seedPlaceholderSkin(
     allPubLocationIds,
     shopLocationIds,
     shopSpecialtiesByLocation,
+    shopFootfallByLocation,
+    shopPersonaMultipliersByLocation,
     shopkeeperActorIds,
     newspaperLocationIds,
     offMapDealerActorIds,

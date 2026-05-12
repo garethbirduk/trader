@@ -449,10 +449,16 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
       const keeperId = codeToKeeperId.get(`shop-${shopId}`);
       if (keeperId === undefined) continue;
       const specialties = skin.shopSpecialtiesByLocation.get(shopId) ?? [];
+      const footfall = skin.shopFootfallByLocation.get(shopId);
+      const personaMults = skin.shopPersonaMultipliersByLocation.get(shopId);
       shops.push({
         locationId: shopId,
         keeperActorId: keeperId,
         specialties: [...specialties],
+        ...(footfall !== undefined ? { hourlyFootfall: footfall } : {}),
+        ...(personaMults !== undefined
+          ? { personaWeightMultipliers: personaMults }
+          : {}),
       });
     }
     if (shops.length > 0) {
