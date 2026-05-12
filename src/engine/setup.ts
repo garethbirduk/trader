@@ -31,6 +31,7 @@ import { registerOffMapResale } from "./world/off-map-resale.js";
 import { registerLeadDecay } from "./world/lead-decay.js";
 import { registerPendingPayouts } from "./world/pending-payouts.js";
 import { registerRegionalClearance } from "./world/regional-clearance.js";
+import { registerClearanceAutonomy } from "./world/clearance-autonomy.js";
 import { registerWriteOffRubbish } from "./world/write-off-rubbish.js";
 import { registerMarketSale } from "./world/market-sale.js";
 import { registerShopSale, type ShopSpec } from "./world/shop-sale.js";
@@ -488,6 +489,11 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     feeProceedsActorId: skin.auctionHouseActorId,
   });
   registerRegionalClearance(world, { economics: skin.economics });
+  // House clearances (todolist #9) — newspaper drops 1 listing per
+  // day Mon-Sat, lots-per-listing random in 3-7, fee £500. Listings
+  // resolve when their earliest booking's scheduled hour arrives;
+  // unbooked listings sit open until end of day and quietly expire.
+  registerClearanceAutonomy(world, {});
   registerLeadDecay(world);
   registerHeatDecay(world);
   registerAuthoritySweep(world, {

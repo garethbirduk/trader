@@ -1,4 +1,6 @@
 import type { DB } from "../core/db.js";
+import type { Clock } from "../core/clock.js";
+import type { EventLog } from "../core/events.js";
 import { adjustActorCash, getActorById } from "../actors/actors-repo.js";
 import { insertStockLot } from "../stock/lots-repo.js";
 import {
@@ -23,6 +25,9 @@ import {
 export interface RunClearanceArgs {
   readonly day: number;
   readonly hour: number;
+  /** Optional event log. When supplied, a clearance.resolved event
+   *  fires for every listing that resolved this call. */
+  readonly events?: EventLog;
 }
 
 export interface ClearanceRunResult {
@@ -129,7 +134,8 @@ export function runDueClearances(
           quantity: lot.quantity,
         });
       }
-      const loserIds = bookings.filter((b) => b.id !== earliest.id).map((b) => b.id);
+      const loserBookings = bookings.filter((b) => b.id !== earliest.id);
+      const loserIds = loserBookings.map((b) => b.id);
       recordResolution(db, {
         listingId: listing.id,
         resolvedDay: args.day,
@@ -143,6 +149,19 @@ export function runDueClearances(
         lotsDelivered: delivered,
         feeCharged: listing.fee,
       });
+      if (args.events !== undefined) {
+        const clock: Clock = { day: args.day, hour: args.hour };
+        args.events.emit({
+          type: "clearance.resolved",
+          at: clock,
+          listingId: listing.id,
+          winnerActorId: winnerActor.id,
+          winningBookingId: earliest.id,
+          feeCharged: listing.fee,
+          loserActorIds: loserBookings.map((b) => b.bookerActorId),
+          lotsDelivered: delivered,
+        });
+      }
     }
     return results;
   });

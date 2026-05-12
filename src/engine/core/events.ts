@@ -256,6 +256,33 @@ export type WorldEvent =
        *  'defaulted' = the wronged buyer side. */
       readonly reason: "settled" | "defaulted";
       readonly dealId: number;
+    }
+  | {
+      readonly type: "clearance.listed";
+      readonly at: Clock;
+      readonly listingId: number;
+      readonly scheduledDay: number;
+      readonly fee: number;
+      readonly flavour: string | null;
+      readonly lots: readonly {
+        readonly itemKindId: number;
+        readonly qualityTier: string;
+        readonly quantity: number;
+      }[];
+    }
+  | {
+      readonly type: "clearance.resolved";
+      readonly at: Clock;
+      readonly listingId: number;
+      readonly winnerActorId: number | null;
+      readonly winningBookingId: number | null;
+      readonly feeCharged: number;
+      readonly loserActorIds: readonly number[];
+      readonly lotsDelivered: readonly {
+        readonly stockLotId: number;
+        readonly itemKindId: number;
+        readonly quantity: number;
+      }[];
     };
 
 export type EventHandler = (event: WorldEvent) => void;
