@@ -13,6 +13,8 @@ export interface InsertActorInput {
    *  don't tick, don't pubdeal, don't have a routine — they exist
    *  as records so they can own pools and be named by gossip. */
   readonly isVirtual?: boolean;
+  /** Whether this actor takes bribes. Default false. */
+  readonly bribable?: boolean;
 }
 
 interface ActorRow {
@@ -25,6 +27,7 @@ interface ActorRow {
   lockup_location_id: number | null;
   transport_capacity: string;
   is_virtual: number;
+  bribable: number;
 }
 
 function rowToActor(r: ActorRow): Actor {
@@ -41,6 +44,7 @@ function rowToActor(r: ActorRow): Actor {
     lockupLocationId: r.lockup_location_id,
     transportCapacity: r.transport_capacity,
     isVirtual: r.is_virtual === 1,
+    bribable: (r.bribable ?? 0) === 1,
   };
 }
 
@@ -50,12 +54,15 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
   const homeLocationId = input.homeLocationId ?? null;
   const lockupLocationId = input.lockupLocationId ?? null;
   const isVirtual = input.isVirtual === true;
+  const bribable = input.bribable === true;
   const result = db
     .prepare(
       `INSERT INTO actors (code, display_name, cash, transport_capacity,
-                           home_location_id, lockup_location_id, is_virtual)
+                           home_location_id, lockup_location_id, is_virtual,
+                           bribable)
        VALUES (@code, @display_name, @cash, @transport_capacity,
-               @home_location_id, @lockup_location_id, @is_virtual)`,
+               @home_location_id, @lockup_location_id, @is_virtual,
+               @bribable)`,
     )
     .run({
       code: input.code,
@@ -65,6 +72,7 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
       home_location_id: homeLocationId,
       lockup_location_id: lockupLocationId,
       is_virtual: isVirtual ? 1 : 0,
+      bribable: bribable ? 1 : 0,
     });
   return {
     id: result.lastInsertRowid,
@@ -76,6 +84,7 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
     lockupLocationId,
     transportCapacity,
     isVirtual,
+    bribable,
   };
 }
 

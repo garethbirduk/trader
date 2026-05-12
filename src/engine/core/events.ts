@@ -298,6 +298,75 @@ export type WorldEvent =
       readonly bookerActorId: number;
       readonly scheduledHour: number;
       readonly atLocationId: number | null;
+    }
+  | {
+      readonly type: "market.stall-rented";
+      readonly at: Clock;
+      readonly stallId: number;
+      readonly sellerActorId: number;
+      readonly locationId: number;
+      readonly mode: "legit" | "adhoc";
+      readonly feePaid: number;
+    }
+  | {
+      readonly type: "market.patrol-arrived";
+      readonly at: Clock;
+      readonly locationId: number;
+      readonly officerActorId: number;
+      readonly stallIds: readonly number[];
+    }
+  | {
+      readonly type: "market.stall-busted";
+      readonly at: Clock;
+      readonly stallId: number;
+      readonly sellerActorId: number;
+      readonly locationId: number;
+      readonly officerActorId: number;
+      readonly finePaid: number;
+      readonly unitsLost: number;
+    }
+  | {
+      readonly type: "market.stall-cleared";
+      readonly at: Clock;
+      readonly stallId: number;
+      readonly sellerActorId: number;
+      readonly locationId: number;
+    }
+  | {
+      readonly type: "market.stall-bribed";
+      readonly at: Clock;
+      readonly stallId: number;
+      readonly sellerActorId: number;
+      readonly locationId: number;
+      readonly officerActorId: number;
+      readonly bribeAmount: number;
+    }
+  | {
+      readonly type: "bribe.offered";
+      readonly at: Clock;
+      readonly offererActorId: number;
+      readonly officerActorId: number;
+      readonly amount: number;
+      readonly thresholdAtTime: number;
+      readonly locationId: number;
+    }
+  | {
+      readonly type: "bribe.accepted";
+      readonly at: Clock;
+      readonly offererActorId: number;
+      readonly officerActorId: number;
+      readonly amount: number;
+      readonly thresholdAtTime: number;
+      readonly locationId: number;
+    }
+  | {
+      readonly type: "bribe.refused";
+      readonly at: Clock;
+      readonly offererActorId: number;
+      readonly officerActorId: number;
+      readonly amount: number;
+      readonly reason: "not-bribable" | "below-threshold";
+      readonly locationId: number;
     };
 
 export type EventHandler = (event: WorldEvent) => void;

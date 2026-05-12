@@ -25,6 +25,7 @@ import { m023KnowledgeAxes } from "./023-knowledge-axes.js";
 import { m024KnowledgeAxesV2 } from "./024-knowledge-axes-v2.js";
 import { m025WitnessDisclosureClearance } from "./025-witness-disclosure-clearance.js";
 import { m026ClearanceKnowledge } from "./026-clearance-knowledge.js";
+import { m027StallsBribery } from "./027-stalls-bribery.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -58,4 +59,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m024KnowledgeAxesV2,
   m025WitnessDisclosureClearance,
   m026ClearanceKnowledge,
+  m027StallsBribery,
 ];

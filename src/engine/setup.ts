@@ -32,6 +32,7 @@ import { registerLeadDecay } from "./world/lead-decay.js";
 import { registerPendingPayouts } from "./world/pending-payouts.js";
 import { registerRegionalClearance } from "./world/regional-clearance.js";
 import { registerClearanceAutonomy } from "./world/clearance-autonomy.js";
+import { registerMarketStallAutonomy } from "./world/market-stall-autonomy.js";
 import { registerWriteOffRubbish } from "./world/write-off-rubbish.js";
 import { registerMarketSale } from "./world/market-sale.js";
 import { registerShopSale, type ShopSpec } from "./world/shop-sale.js";
@@ -501,6 +502,25 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     phoneCapableLocationIds: skin.allPubLocationIds,
     bookerActorIds: new Set(skin.tradingActorIds),
   });
+  // Market stall mode + Slater patrol (todolist #3 + #4). Sellers
+  // register their stall each day (legit £20 fee or free-but-risky
+  // adhoc); during open hours Slater may turn up and bust adhoc
+  // stalls. Bribery primitive composes with witness leads — every
+  // bribe at the market is seen by present bystanders.
+  if (skin.patrolOfficerActorId !== undefined) {
+    const marketOpenHours = Object.keys(
+      skin.economics.marketSale.hourlyFootfall,
+    )
+      .map((h) => Number(h))
+      .filter((h) => Number.isFinite(h));
+    registerMarketStallAutonomy(world, {
+      marketLocationId: skin.marketLocationId,
+      marketOpenHours,
+      sellerActorIds: new Set(skin.marketSellerActorIds),
+      patrolOfficerActorId: skin.patrolOfficerActorId,
+      fineProceedsActorId: skin.auctionHouseActorId,
+    });
+  }
   registerLeadDecay(world);
   registerHeatDecay(world);
   registerAuthoritySweep(world, {

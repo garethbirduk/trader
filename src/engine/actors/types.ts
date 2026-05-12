@@ -80,4 +80,10 @@ export interface Actor {
    * `pool_reachability` and the placeholder skin's producer profiles.
    */
   readonly isVirtual: boolean;
+  /**
+   * Whether this actor accepts bribes. The wider plod (default false)
+   * plays it straight. Slater specifically (true) waives a bust when
+   * the bribe clears his threshold. See `world/bribe.ts`.
+   */
+  readonly bribable: boolean;
 }

@@ -87,6 +87,9 @@ export interface SkinSeedResult {
   /** Actor ids eligible to run a market stall (dealer / fence /
    *  player). Civilians passing through aren't sellers. */
   readonly marketSellerActorIds: readonly number[];
+  /** The patrolling officer who busts adhoc stalls. Optional —
+   *  skins without a police character omit it. */
+  readonly patrolOfficerActorId?: number;
   /** Actor ids whose flex hours are filled in by the per-hour planner
    *  (auction / market / each shop / each pub / newspaper / home). */
   readonly flexibleDailyModeActorIds: readonly number[];
@@ -216,6 +219,8 @@ interface ActorSpec {
    *  (Mike, Sid, Slater, shopkeepers, …) leave this unset and their
    *  routine runs as written. */
   readonly flexibleDailyMode?: boolean;
+  /** Whether this actor accepts bribes. Defaults to false. */
+  readonly bribable?: boolean;
   /** Per-day random lunch destination for employed civilians whose
    *  schedule is otherwise fixed. On each day in `daysOfWeek` the
    *  seed rolls one pick from `candidateCodes` and applies it to
@@ -1076,8 +1081,12 @@ const ACTORS: readonly ActorSpec[] = [
     code: "slater",
     displayName: "DCI Roy Slater",
     cash: 300,
+    // Slater pops down to the market at lunchtime to "keep an eye on
+    // things" — that's when the patrol autonomy can fire.
     ...makeRoutineFromSpans("slater-flat", [
-      { from: 8, to: 18, location: "police-station" },
+      { from: 8, to: 12, location: "police-station" },
+      { from: 12, to: 14, location: "peckham-market" },
+      { from: 14, to: 18, location: "police-station" },
       { from: 18, to: 22, location: "FLEXIBLE" },
       { from: 22, to: 8, location: "slater-flat" },
     ]),
@@ -1085,6 +1094,8 @@ const ACTORS: readonly ActorSpec[] = [
     homeLocation: "slater-flat",
     transportCapacity: "boot",
     awakeHours: { start: 7, end: 22 },
+    // Slater is bent. The wider plod isn't.
+    bribable: true,
   },
   {
     code: "dirty-barry",
@@ -1435,6 +1446,7 @@ export function seedPlaceholderSkin(
       transportCapacity: spec.transportCapacity,
       homeLocationId: homeId,
       lockupLocationId: lockupId,
+      ...(spec.bribable === true ? { bribable: true } : {}),
     });
     actorByCode.set(spec.code, a.id);
     actorLockupLocByCode.set(spec.code, lockupId);
@@ -1780,6 +1792,9 @@ export function seedPlaceholderSkin(
     galleryFromHour: GALLERY_FROM_HOUR,
     marketLocationId,
     marketSellerActorIds,
+    ...(actorByCode.get("slater") !== undefined
+      ? { patrolOfficerActorId: actorByCode.get("slater")! }
+      : {}),
     flexibleDailyModeActorIds,
     locationByCode: locByCode,
     openSessionsByCode,
