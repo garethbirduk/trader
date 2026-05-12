@@ -99,6 +99,13 @@ export interface SkinSeedResult {
   /** The patrolling officer who busts adhoc stalls. Optional —
    *  skins without a police character omit it. */
   readonly patrolOfficerActorId?: number;
+  /** Weighted patrol beat for the officer. Each hour during the
+   *  active window the picker draws from this list. Police station
+   *  is the heavy weight; the rest are "wandering" venues. */
+  readonly patrolCandidates?: readonly { readonly locationId: number; readonly weight: number }[];
+  /** Hours during which patrol-pick fires (overriding the schedule).
+   *  Outside this window the schedule applies (overnight at home). */
+  readonly patrolActiveHours?: ReadonlySet<number>;
   /** Actor ids whose flex hours are filled in by the per-hour planner
    *  (auction / market / each shop / each pub / newspaper / home). */
   readonly flexibleDailyModeActorIds: readonly number[];
@@ -1151,12 +1158,12 @@ const ACTORS: readonly ActorSpec[] = [
     code: "slater",
     displayName: "DCI Roy Slater",
     cash: 300,
-    // Slater pops down to the market at lunchtime to "keep an eye on
-    // things" — that's when the patrol autonomy can fire.
+    // Slater patrols — his routine reads as "station" but the
+    // patrol-picker overrides each hour, weighted random across his
+    // beat (station, market, Nag's, Sid's). Event-driven alerts
+    // (e.g. a tip-off about stolen goods) supersede the patrol pick.
     ...makeRoutineFromSpans("slater-flat", [
-      { from: 8, to: 12, location: "police-station" },
-      { from: 12, to: 14, location: "peckham-market" },
-      { from: 14, to: 18, location: "police-station" },
+      { from: 8, to: 18, location: "police-station" },
       { from: 18, to: 22, location: "FLEXIBLE" },
       { from: 22, to: 8, location: "slater-flat" },
     ]),
@@ -1164,7 +1171,6 @@ const ACTORS: readonly ActorSpec[] = [
     homeLocation: "slater-flat",
     transportCapacity: "boot",
     awakeHours: { start: 7, end: 22 },
-    // Slater is bent. The wider plod isn't.
     bribable: true,
   },
   {
@@ -1883,6 +1889,27 @@ export function seedPlaceholderSkin(
     ...(actorByCode.get("slater") !== undefined
       ? { patrolOfficerActorId: actorByCode.get("slater")! }
       : {}),
+    // Slater's patrol beat. Station-heavy by design; the venues
+    // where dealing happens (Nag's, Peckham Market, Sid's caff)
+    // get smaller weights so he turns up there occasionally.
+    ...(() => {
+      const candidates: { locationId: number; weight: number }[] = [];
+      const addCandidate = (code: string, weight: number) => {
+        const id = locByCode.get(code);
+        if (id !== undefined) candidates.push({ locationId: id, weight });
+      };
+      addCandidate("police-station", 40);
+      addCandidate("peckham-market", 25);
+      addCandidate("nags", 15);
+      addCandidate("sids-cafe", 10);
+      addCandidate("hard-knock-cafe", 10);
+      return candidates.length > 0
+        ? {
+            patrolCandidates: candidates,
+            patrolActiveHours: new Set([8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
+          }
+        : {};
+    })(),
     flexibleDailyModeActorIds,
     locationByCode: locByCode,
     openSessionsByCode,

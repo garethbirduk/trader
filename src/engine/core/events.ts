@@ -367,6 +367,20 @@ export type WorldEvent =
       readonly amount: number;
       readonly reason: "not-bribable" | "below-threshold";
       readonly locationId: number;
+    }
+  | {
+      readonly type: "slater.alert";
+      readonly at: Clock;
+      readonly slaterActorId: number;
+      readonly destinationLocationId: number;
+      readonly fromDay: number;
+      readonly fromHour: number;
+      readonly toDay: number;
+      readonly toHour: number;
+      readonly reason: string;
+      /** Optional — the deal id that triggered the alert (when the
+       *  trigger was a pubdeal of stolen goods). */
+      readonly sourceDealId?: number;
     };
 
 export type EventHandler = (event: WorldEvent) => void;

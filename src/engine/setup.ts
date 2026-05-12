@@ -33,6 +33,9 @@ import { registerPendingPayouts } from "./world/pending-payouts.js";
 import { registerRegionalClearance } from "./world/regional-clearance.js";
 import { registerClearanceAutonomy } from "./world/clearance-autonomy.js";
 import { registerMarketStallAutonomy } from "./world/market-stall-autonomy.js";
+import { DiaryAlertRegistry } from "./world/diary-alerts.js";
+import { PatrolPicker } from "./world/patrol-picker.js";
+import { registerSlaterAlerts } from "./world/slater-alerts.js";
 import { registerWriteOffRubbish } from "./world/write-off-rubbish.js";
 import { registerMarketSale } from "./world/market-sale.js";
 import { registerShopSale, type ShopSpec } from "./world/shop-sale.js";
@@ -123,6 +126,9 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     perDay.set(hour, locId);
   };
 
+  const diaryAlerts = new DiaryAlertRegistry();
+  const patrolPicker = new PatrolPicker();
+
   const skin = seedPlaceholderSkin(db, rng, {
     ...(opts.runLengthDays !== undefined
       ? { runLengthDays: opts.runLengthDays }
@@ -130,6 +136,13 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     hourOverrideForActor: (actorId) => (clock) => {
       const fromDelivery = deliveryRegistry.getOverride(actorId, clock.hour);
       if (fromDelivery !== null) return fromDelivery;
+      // Event-driven alerts beat schedule + patrol — a tip-off
+      // about stolen goods pulls Slater off his beat.
+      const fromAlert = diaryAlerts.getAlertAt(actorId, clock);
+      if (fromAlert !== null) return fromAlert.destinationLocationId;
+      // Patrol picker (Slater only — others return null).
+      const fromPatrol = patrolPicker.pickFor(actorId, clock, rng);
+      if (fromPatrol !== null) return fromPatrol;
       const fromLunch = lunchGet(actorId, clock.day, clock.hour);
       if (fromLunch !== null) return fromLunch;
       return plannerRegistry.getOverride(actorId, clock.day, clock.hour);
@@ -525,6 +538,24 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
       sellerActorIds: new Set(skin.marketSellerActorIds),
       patrolOfficerActorId: skin.patrolOfficerActorId,
       fineProceedsActorId: skin.auctionHouseActorId,
+    });
+    // Configure the patrol picker now that we know the officer id
+    // and the candidate beat. The hourOverrideForActor callback
+    // already wired into the skin reads from this picker each tick.
+    if (
+      skin.patrolCandidates !== undefined &&
+      skin.patrolCandidates.length > 0
+    ) {
+      patrolPicker.configure({
+        actorId: skin.patrolOfficerActorId,
+        candidates: skin.patrolCandidates,
+        activeHours: skin.patrolActiveHours ?? new Set<number>(),
+      });
+    }
+    // Event-driven alerts that override the patrol pick.
+    registerSlaterAlerts(world, {
+      slaterActorId: skin.patrolOfficerActorId,
+      registry: diaryAlerts,
     });
   }
   registerLeadDecay(world);
