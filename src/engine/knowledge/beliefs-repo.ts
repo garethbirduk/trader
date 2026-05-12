@@ -107,6 +107,12 @@ function decodeValue(axis: KnowledgeAxis, json: string): BeliefValue {
       }
       return { axis: "customer_fit", types: types as string[] };
     }
+    default:
+      // v2 axes (band_placement, band_tightness, condition_detection)
+      // are skill-table-backed, not belief-table-backed. Reaching this
+      // branch means someone tried to write a v2 axis into the belief
+      // log — a bug at the call site.
+      throw new Error(`belief decode: axis '${axis}' has no payload shape`);
   }
 }
 

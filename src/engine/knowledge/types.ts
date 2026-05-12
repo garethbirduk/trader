@@ -23,11 +23,27 @@ import type { FlawType, QualityTier } from "../stock/types.js";
  * which is how Del's price-oracle visit to Mickey works (todolist:73).
  */
 export const KNOWLEDGE_AXES = [
+  // v1 axes — id/condition/flaw/price/customer_fit. The flat scalars
+  // for each (per category or per flaw type) drove the v1 mixture
+  // aggregator. Kept callable but superseded by v2 for new content.
   "id",
   "condition",
   "flaw",
   "price",
   "customer_fit",
+  // v2 axes — the four-skill price-axis decomposition plus condition
+  // sub-skills. See todolist:67-78.
+  //   band_placement     — given my mental partition for this category,
+  //                        accuracy of placing the lot in the right band.
+  //   band_tightness     — within the placed band, how tightly I quote.
+  //   condition_detection — reading the tier off the lot in front of me.
+  //                        Transferable: cross-category default + overrides.
+  // condition_impact lives outside the skills table — the actor's
+  // belief about each tier's multiplier per category is stored
+  // directly in actor_tier_beliefs.
+  "band_placement",
+  "band_tightness",
+  "condition_detection",
 ] as const;
 
 export type KnowledgeAxis = (typeof KNOWLEDGE_AXES)[number];

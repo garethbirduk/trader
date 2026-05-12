@@ -163,6 +163,12 @@ function sampleAxis(args: SampleAxisArgs): AxisSample {
       return samplePrice(args);
     case "customer_fit":
       return sampleCustomerFit(args);
+    default:
+      // v2 axes (band_placement, band_tightness, condition_detection)
+      // aren't consulted via this primitive — they're skill scalars
+      // resolved by the v2 extraction-band path. Reaching here means
+      // a v1 call site asked about a v2 axis.
+      throw new Error(`consult: axis '${args.axis}' has no v1 sampler`);
   }
 }
 
