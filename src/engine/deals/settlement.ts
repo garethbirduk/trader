@@ -116,6 +116,14 @@ export interface SettleOptions {
    * to false to preserve old behaviour for legacy callers.
    */
   readonly sellerSelfDelivers?: boolean;
+  /**
+   * When true, skip the per-tier transit-day gate on remote stock.
+   * Used by `attemptPubDeal` for in-the-room handoffs: both parties
+   * are at the deal venue right now, the seller is carrying what
+   * they brought, so the "a lorry can't drive in by tomorrow"
+   * physical-time argument doesn't apply. Defaults false.
+   */
+  readonly skipTransitGate?: boolean;
 }
 
 /**
@@ -277,9 +285,12 @@ function consumeStockForLine(
 
   let feeCharged = false;
   // Compute the lead-time gate up front. Seller might already be
-  // resolved at this point but re-fetch defensively.
+  // resolved at this point but re-fetch defensively. The pubdeal
+  // in-the-room handoff path skips this entirely — both parties
+  // are at the venue now, so the physical-transit argument doesn't
+  // apply.
   let timeGatePassed = true;
-  if (deliveryLocationId !== null) {
+  if (deliveryLocationId !== null && !opts.skipTransitGate) {
     const sellerForGate = getActorById(db, sellerId);
     if (sellerForGate) {
       const transit = TRANSIT_DAYS_BY_TIER[sellerForGate.transportCapacity];

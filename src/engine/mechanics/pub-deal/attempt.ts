@@ -11,6 +11,10 @@ import type {
   SellerParty,
 } from "../../negotiation/types.js";
 import { createAgreedDeal } from "../../deals/deals-repo.js";
+import { settleDeal } from "../../deals/settlement.js";
+import { totalQuantityForOwnerKindAndTier } from "../../stock/lots-repo.js";
+import { getActorById } from "../../actors/actors-repo.js";
+import { TRANSPORT_LIMITS } from "../../actors/types.js";
 import type { QualityTier } from "../../stock/types.js";
 
 export interface PubDealAttemptArgs {
@@ -150,5 +154,55 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
     turns: negotiation.turns,
   });
 
+  // Hand-off in the room — when the seller owns enough of the agreed
+  // item-tier (at any of their locations) and their transport tier
+  // can carry the lot, settle on the spot. Both parties are co-located
+  // by construction; the seller brought what they brought. The pre-fix
+  // behaviour deferred everything to the next-day delivery scheduler,
+  // which let the seller's stock drain into a parallel deal between
+  // agreement and settlement and produced spurious defaults. Forward-
+  // sale cases (where the seller's commitment exceeds their on-hand
+  // stock) still fall through to the deadline path.
+  if (canHandOffNow(args)) {
+    try {
+      settleDeal(args.db, deal.id, args.clock.day, {
+        events: args.events,
+        atClock: args.clock,
+        sellerSelfDelivers: true,
+        skipTransitGate: true,
+      });
+    } catch {
+      // Settlement raced or otherwise failed — leave the deal in
+      // 'agreed' state and let the daily scheduler retry tomorrow.
+    }
+  }
+
   return { type: "agreed", dealId: deal.id, unitPrice: negotiation.unitPrice, negotiation };
+}
+
+/**
+ * Can this deal settle right now, in the room, without scheduling a
+ * separate delivery trip? Two conditions:
+ *
+ *   1. The seller owns at least the agreed quantity of the item-tier
+ *      across all their locations. Settlement will draw from local
+ *      lots first (Phase 1a) then from remote lots (Phase 1b) at no
+ *      delivery fee, since the seller is self-delivering and the
+ *      transit-time gate is bypassed for the in-the-room case.
+ *   2. The seller's transport tier could physically carry the lot.
+ *      A van's worth of fridges still needs a van even when the
+ *      buyer is standing next to it.
+ */
+function canHandOffNow(args: PubDealAttemptArgs): boolean {
+  const onHand = totalQuantityForOwnerKindAndTier(
+    args.db,
+    args.seller.actorId,
+    args.itemKindId,
+    args.qualityTier,
+  );
+  if (onHand < args.quantity) return false;
+  const seller = getActorById(args.db, args.seller.actorId);
+  if (!seller) return false;
+  const limit = TRANSPORT_LIMITS[seller.transportCapacity];
+  return limit >= args.quantity;
 }
