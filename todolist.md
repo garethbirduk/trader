@@ -1,7 +1,5 @@
 # Todo List
 
-- ~~We need UI support to show where/how trust was lost. We get the summary in the upper side of the top right, but something has to be visible in the profile. E.g. a new tab "Relations" with the personal rating of individuals, plus the collapsable breakdown of how it has changed over the game.~~ Done — new **Relations** lower tab on actor profile shows per-counterparty outgoing/incoming trust scores plus a collapsible timeline of every adjustment, driven by the new `trust.adjusted` event stream.
-
 - **Per-shop persona mixes.** Today both market stalls and high-street shops share one `marketSale.customerTypes` persona bank (old-dears / students / mums / dads). A jewellery shop should pull a different crowd than an electrical shop. Add per-shop overrides in `EconomicsConfig.shopSale` (or per-specialty) so the persona weighting reflects the shop's character.
 
 - **Per-shop hourly footfall curves.** Today all shops share `shopSale.hourlyFootfall`. Suburban newsagents peak at school-run hours; high-end shops have a lunchtime peak; etc. Allow per-shop overrides.
