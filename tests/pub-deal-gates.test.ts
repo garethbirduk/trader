@@ -126,8 +126,21 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
     });
     world.runToCompletion();
 
-    expect(events.filter((e) => e.type === "pubdeal.skipped-too-small")).toHaveLength(0);
-    expect(events.filter((e) => e.type === "pubdeal.attempted").length).toBeGreaterThan(0);
+    // The chunky bag passes the floor on its first attempts. Once
+    // deals start clearing stock, a later attempt at a small
+    // surviving slice may legitimately skip-too-small — that's a
+    // correct outcome of the gate, not a bug. Assert on the
+    // sequence: at least one attempt fires before any skip.
+    const firstAttempt = events.findIndex(
+      (e) => e.type === "pubdeal.attempted",
+    );
+    const firstSkip = events.findIndex(
+      (e) => e.type === "pubdeal.skipped-too-small",
+    );
+    expect(firstAttempt).toBeGreaterThanOrEqual(0);
+    if (firstSkip !== -1) {
+      expect(firstSkip).toBeGreaterThan(firstAttempt);
+    }
   });
 
   it("25% slice: buyer can only afford a tiny slice → no attempt", () => {

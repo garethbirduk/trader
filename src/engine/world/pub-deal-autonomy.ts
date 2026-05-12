@@ -38,8 +38,37 @@ export interface PubDealAutonomyOptions {
   readonly pairChance?: number;
   /** Days from today until the deal's delivery deadline (normal sales). */
   readonly deadlineDaysOut?: number;
-  /** Seller's mark-up over their acquisition cost as their opening ask. */
+  /**
+   * @deprecated Cost-anchored markup is gone. The seller's target is
+   * now derived from their belief band via `sellerAnchorAggression`.
+   * Kept on the type for back-compat; ignored at runtime.
+   */
   readonly sellerTargetMarkup?: number;
+  /**
+   * Multiplier on the seller's per-unit belief HIGH to set their
+   * opening target. 1.0 = anchor at honest top-of-belief; 1.5 = hedge
+   * high; 0.8 = aim for a quick sale below honest top. Replaces the
+   * cost-anchored model so a lucky-buy seller doesn't leave belief
+   * surplus on the table and a bad-buy seller can actually clear
+   * stock below cost. Default 1.0.
+   */
+  readonly sellerAnchorAggression?: number;
+  /**
+   * Multiplier on the seller's per-unit belief LOW to set their
+   * walk-away floor. 1.0 = won't go below honest low; 0.5 = willing
+   * to halve the bottom of their belief for a real offer; 0.0 =
+   * pure price-taker. Default 0.5 — captures the typical pubdeal
+   * dynamic where a trader actively looking to clear stock will
+   * concede well below their honest low. Premium-stall sellers
+   * (Boyce-types) might use 0.85 or higher.
+   *
+   * **Cost basis is no longer the floor.** A seller who paid £200
+   * for stock they now believe is worth £30 will clear at ~£15 and
+   * eat the loss — that's the price of a bad buy. The "below cost"
+   * fact surfaces on the deal record (acquired_unit_price vs
+   * agreed unit_price), not in the negotiation logic.
+   */
+  readonly sellerFloorMultiplier?: number;
   /**
    * Buyer's opening offer as a fraction of their per-unit ceiling.
    * Lower = bigger anchoring move = more counter-offer rounds before
@@ -131,7 +160,11 @@ export function registerPubDealAutonomy(
   const attemptsPerHour = opts.attemptsPerHour ?? 3;
   const pairChance = opts.pairChance ?? 0.5;
   const deadlineDaysOut = opts.deadlineDaysOut ?? 1;
-  const sellerTargetMarkup = opts.sellerTargetMarkup ?? 2.5;
+  // sellerTargetMarkup is deprecated and ignored; the seller now
+  // anchors on their belief band rather than their cost basis.
+  void opts.sellerTargetMarkup;
+  const sellerAnchorAggression = opts.sellerAnchorAggression ?? 1.0;
+  const sellerFloorMultiplier = opts.sellerFloorMultiplier ?? 0.5;
   const buyerTargetFraction = opts.buyerTargetFraction ?? 0.2;
   const forwardSellChance = opts.forwardSellChance ?? 0.25;
   const forwardSellQtyRange =
@@ -161,7 +194,8 @@ export function registerPubDealAutonomy(
           present,
           profiles: opts.bidderProfiles,
           normalDeadlineDay: clock.day + deadlineDaysOut,
-          sellerTargetMarkup,
+          sellerAnchorAggression,
+          sellerFloorMultiplier,
           buyerTargetFraction,
           forwardSellChance,
           forwardSellQtyRange,
@@ -185,7 +219,8 @@ function runOneAttempt(args: {
   present: readonly number[];
   profiles: ReadonlyMap<number, BidderProfile>;
   normalDeadlineDay: number;
-  sellerTargetMarkup: number;
+  sellerAnchorAggression: number;
+  sellerFloorMultiplier: number;
   buyerTargetFraction: number;
   forwardSellChance: number;
   forwardSellQtyRange: readonly [number, number];
@@ -341,6 +376,29 @@ function runOneAttempt(args: {
       ? withForcedFlawDetection(baseProfile, item.flawType)
       : baseProfile;
 
+  // Seller's profile + per-unit belief band. The belief drives the
+  // haggle floor and target — cost basis is sunk and no longer
+  // anchors the negotiation (todolist:104-107).
+  const sellerProfile = profiles.get(sellerId) ?? FALLBACK_BIDDER_PROFILE;
+  const sellerBeliefEstimate = estimateUnitRetail(
+    sellerProfile,
+    item,
+    seedLot.qualityTier,
+    economics,
+  );
+  // Buyer's per-unit belief band, used for the event snapshot and
+  // (potentially) for the ceiling. The existing ceiling logic still
+  // routes through `appraiseLot` below; keeping that path intact so
+  // this change touches the seller side only.
+  const buyerBeliefEstimate = estimateUnitRetail(
+    buyerProfile,
+    item,
+    perceivedTier,
+    economics,
+  );
+  const trueRrpPerUnit =
+    item.baseValue * economics.tierMultipliers[seedLot.qualityTier];
+
   // Synthetic AuctionLot for appraisal at the seller's ideal qty — we
   // need the buyer's RRP estimate at full proposed size for the £100
   // gate.
@@ -415,12 +473,20 @@ function runOneAttempt(args: {
   );
   if (buyerTotalCeiling < 1) return;
 
-  // Resize qty to what the buyer can actually afford. We use a rough
-  // mid price between the seller's floor and the buyer's would-be
-  // ceiling at sellerIdealQty as a planning estimate — the haggle will
-  // tighten this up later. The resulting `proposalQty` is what we lock
-  // in; the converged unit price comes from the haggle.
-  const sellerFloorPerUnit = Math.max(1, seedLot.acquiredUnitPrice);
+  // Seller's belief-anchored floor & target. Floor sits below honest
+  // belief.low by `sellerFloorMultiplier` (default 0.9 — willing to
+  // concede a little). Target sits at belief.high × aggression
+  // (default 1.0 — anchor at honest top). Cost basis is *not* in this
+  // calculation; a bad-buy seller can clear stock below cost, and a
+  // lucky-buy seller doesn't leave belief surplus on the table.
+  const sellerFloorPerUnit = Math.max(
+    1,
+    Math.round(sellerBeliefEstimate.low * args.sellerFloorMultiplier),
+  );
+
+  // Resize qty to what the buyer can actually afford. Rough mid price
+  // for the planning estimate uses the seller's floor and the buyer's
+  // ceiling at the unproposed qty — the haggle tightens this up later.
   const ceilingAtIdeal = Math.max(
     1,
     Math.floor(buyerTotalCeiling / sellerIdealQty),
@@ -453,10 +519,10 @@ function runOneAttempt(args: {
 
   // Seller opens high, buyer opens low — wide opening anchors create
   // room for visible back-and-forth instead of insta-accepting an
-  // already-reasonable opener.
+  // already-reasonable opener. Seller target anchors on belief.high.
   const sellerTargetPerUnit = Math.max(
     sellerFloorPerUnit,
-    Math.round(seedLot.acquiredUnitPrice * args.sellerTargetMarkup),
+    Math.round(sellerBeliefEstimate.high * args.sellerAnchorAggression),
   );
   // Buyer opens at a small fraction of their ceiling — deliberately
   // *not* clamped up to the seller's floor, so the buyer can anchor
@@ -477,34 +543,18 @@ function runOneAttempt(args: {
   const sellerConcedeRate = 0.08 + world.rng.next() * 0.14;
   const buyerConcedeRate = 0.08 + world.rng.next() * 0.14;
 
-  // Belief snapshots — what each side thinks a unit is worth right
-  // now, surfaced into the pubdeal.agreed event so the UI can show
-  // the two bands side-by-side. The seller's belief uses the lot's
-  // actual tier (they know what they're holding); the buyer's belief
-  // uses the perceived tier (they only see what the seller's chosen
-  // to display).
-  const sellerProfile = profiles.get(sellerId) ?? FALLBACK_BIDDER_PROFILE;
-  const sellerBeliefEstimate = estimateUnitRetail(
-    sellerProfile,
-    item,
-    seedLot.qualityTier,
-    economics,
-  );
-  const buyerBeliefEstimate = estimateUnitRetail(
-    buyerProfile,
-    item,
-    perceivedTier,
-    economics,
-  );
-  const trueRrpPerUnit =
-    item.baseValue * economics.tierMultipliers[seedLot.qualityTier];
-
   attemptPubDeal({
     db: world.db,
     events: world.events,
     rng: world.rng,
     clock,
     locationId: locId,
+    // Belief-anchored openers create wider initial gaps than the old
+    // cost-anchored model (seller opens at belief.high, often well
+    // above the buyer's resell-margin ceiling). Bump maxRounds so
+    // the haggle has time to converge — 30 turns lets a 0.1
+    // concession rate close a 30× gap before timing out.
+    maxRounds: 30,
     seller: {
       actorId: sellerId,
       floor: sellerFloorPerUnit,
