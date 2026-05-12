@@ -1290,6 +1290,53 @@ button.actor-row.actor-row-selected {
   border: 1px solid rgba(120, 80, 200, 0.4);
 }
 
+/* Expertise tier chips on the actor profile. Shows at a glance who's
+ * a specialist (gold) vs a generalist (neutral) vs a punter
+ * (warn-tinted). Tier thresholds in ActorProfile.tsx:tierForAccuracy. */
+.badge-expert {
+  background: rgba(212, 175, 55, 0.18);
+  color: #e0c060;
+  border: 1px solid rgba(212, 175, 55, 0.55);
+}
+.badge-skilled {
+  background: rgba(80, 160, 220, 0.16);
+  color: #7fb8e0;
+  border: 1px solid rgba(80, 160, 220, 0.45);
+}
+.badge-competent {
+  background: rgba(140, 140, 140, 0.12);
+  color: var(--text);
+  border: 1px solid rgba(140, 140, 140, 0.35);
+}
+.badge-novice {
+  background: rgba(140, 140, 140, 0.08);
+  color: var(--muted);
+  border: 1px solid rgba(140, 140, 140, 0.25);
+}
+.badge-clueless {
+  background: rgba(200, 100, 80, 0.12);
+  color: #d68a78;
+  border: 1px solid rgba(200, 100, 80, 0.4);
+}
+/* Customer-market chips — slightly different palette so the
+ * specialist axis and the market axis are visually distinct. */
+.badge-market {
+  background: rgba(100, 180, 140, 0.12);
+  color: #88c4a4;
+  border: 1px solid rgba(100, 180, 140, 0.4);
+}
+
+/* Expertise section under the main stats dl. Uses the same grid as
+ * profile-stats; the inline-list of chips wraps neatly to the right. */
+.profile-expertise {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.expertise-list {
+  gap: 4px;
+}
+
 /* Relations tab — per-counterparty trust + change history. */
 .relations-list {
   display: flex;

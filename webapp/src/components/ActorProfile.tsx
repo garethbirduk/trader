@@ -194,7 +194,153 @@ export function ActorProfile({
           </>
         ) : null}
       </dl>
+      {actor.bidderProfile !== undefined ? (
+        <ExpertiseSection profile={actor.bidderProfile} />
+      ) : null}
     </section>
+  );
+}
+
+/**
+ * Per-category expertise indicator surfaced from the actor's
+ * bidderProfile. Shows what categories they're sharp on (their
+ * specialties), their general competence floor, the flaw types they
+ * notice, and the customer market they serve.
+ *
+ * Tier-label thresholds match the cinematic feel: an "Expert" reliably
+ * pegs the value (~85%+); a "Clueless" punter is paying the wrong
+ * price for the wrong thing. The defaults track the placeholder
+ * cast — Boyce reads as a furniture/luggage specialist, Trigger
+ * reads as Clueless everywhere, Mike reads as a food generalist.
+ */
+function ExpertiseSection({
+  profile,
+}: {
+  readonly profile: NonNullable<RunDump["actors"][number]["bidderProfile"]>;
+}) {
+  const categories = useMemo(() => {
+    const entries = Object.entries(profile.appraisalAccuracy ?? {});
+    // Surface every named category, ranked by accuracy desc. The
+    // viewer can read the gap between named-category accuracy and
+    // the actor's `defaultAppraisalAccuracy` to see who's a
+    // specialist vs a generalist.
+    return entries
+      .map(([cat, acc]) => ({ category: cat, accuracy: acc }))
+      .sort((a, b) => b.accuracy - a.accuracy);
+  }, [profile]);
+
+  const flaws = useMemo(() => {
+    const entries = Object.entries(profile.flawTypeDetection ?? {});
+    const def = profile.defaultFlawTypeDetection ?? 0;
+    // Only list flaws where the actor is *better than their own
+    // default* — the design hook is "what flaws do they have an
+    // eye for?", not "what's their flat detection score."
+    return entries
+      .filter(([, det]) => det > def + 0.05)
+      .map(([flaw, det]) => ({ flaw, detection: det }))
+      .sort((a, b) => b.detection - a.detection);
+  }, [profile]);
+
+  const defaultTier = tierForAccuracy(profile.defaultAppraisalAccuracy ?? 0.5);
+
+  // Don't render the section if the actor is a featureless generalist
+  // with no specialties and no flaw eye — there's nothing to surface.
+  if (
+    categories.length === 0 &&
+    flaws.length === 0 &&
+    (profile.customerTypes?.length ?? 0) === 0
+  ) {
+    return null;
+  }
+
+  return (
+    <section className="profile-expertise">
+      <div className="profile-section-label">Expertise</div>
+      <dl className="profile-stats">
+        {categories.length > 0 ? (
+          <>
+            <dt>Sharp on</dt>
+            <dd>
+              <ul className="profile-inline-list expertise-list">
+                {categories.map((c) => (
+                  <li key={c.category}>
+                    <ExpertiseChip
+                      label={c.category}
+                      accuracy={c.accuracy}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ) : null}
+        <dt>General eye</dt>
+        <dd>
+          <span className={`badge badge-${defaultTier.cls}`}>
+            {defaultTier.label}
+          </span>{" "}
+          <span className="muted">
+            ({(profile.defaultAppraisalAccuracy ?? 0).toFixed(2)})
+          </span>
+        </dd>
+        {flaws.length > 0 ? (
+          <>
+            <dt>Eye for flaws</dt>
+            <dd>
+              <ul className="profile-inline-list expertise-list">
+                {flaws.map((f) => (
+                  <li key={f.flaw}>
+                    <ExpertiseChip label={f.flaw} accuracy={f.detection} />
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ) : null}
+        {profile.customerTypes !== undefined && profile.customerTypes.length > 0 ? (
+          <>
+            <dt>Sells to</dt>
+            <dd>
+              <ul className="profile-inline-list expertise-list">
+                {profile.customerTypes.map((t) => (
+                  <li key={t}>
+                    <span className="badge badge-market">{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ) : null}
+      </dl>
+    </section>
+  );
+}
+
+interface AccuracyTier {
+  readonly label: string;
+  readonly cls: "expert" | "skilled" | "competent" | "novice" | "clueless";
+}
+
+function tierForAccuracy(accuracy: number): AccuracyTier {
+  if (accuracy >= 0.85) return { label: "Expert", cls: "expert" };
+  if (accuracy >= 0.65) return { label: "Skilled", cls: "skilled" };
+  if (accuracy >= 0.45) return { label: "Competent", cls: "competent" };
+  if (accuracy >= 0.25) return { label: "Some clue", cls: "novice" };
+  return { label: "Clueless", cls: "clueless" };
+}
+
+function ExpertiseChip({
+  label,
+  accuracy,
+}: {
+  readonly label: string;
+  readonly accuracy: number;
+}) {
+  const tier = tierForAccuracy(accuracy);
+  return (
+    <span className={`badge badge-${tier.cls}`} title={`${tier.label} (${accuracy.toFixed(2)})`}>
+      {label}
+    </span>
   );
 }
 
