@@ -1821,7 +1821,7 @@ function seedStarterStock(
     if (ownerId === undefined) continue;
     const locId = actorLockupLocByCode.get(code) ?? null;
 
-    const lotCount = rng.int(2, 4); // 2 or 3 lots
+    const lotCount = rng.int(4, 7); // 4–6 lots
     const usedItemIds = new Set<number>();
     for (let i = 0; i < lotCount; i += 1) {
       // Pick a distinct item per actor — multiple lots of the same item
@@ -1840,7 +1840,15 @@ function seedStarterStock(
       if (item === undefined) continue;
 
       const tier = rng.pick(STARTER_TIERS);
-      const quantity = rng.int(10, 41); // 10..40
+      // Target each starter lot at £80–£400 RRP so it clears the
+      // pub-deal £100 floor immediately and gives the dealer something
+      // worth actually haggling about. Quantity is derived from the
+      // item's tier-anchored retail mid; small high-value items end
+      // up as tiny lots, cheap commodity items as big ones.
+      const tierMult = economics.tierMultipliers[tier];
+      const retailPerUnit = Math.max(1, item.baseValue * tierMult);
+      const targetRrp = 80 + rng.next() * 320; // [£80, £400]
+      const quantity = Math.max(1, Math.round(targetRrp / retailPerUnit));
       const priceFactor = fmin + rng.next() * fspan;
       const acquiredUnitPrice = Math.max(
         1,
