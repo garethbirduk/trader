@@ -23,6 +23,7 @@ import { m021PendingPayouts } from "./021-pending-payouts.js";
 import { m022AuctionLotProvenance } from "./022-auction-lot-provenance.js";
 import { m023KnowledgeAxes } from "./023-knowledge-axes.js";
 import { m024KnowledgeAxesV2 } from "./024-knowledge-axes-v2.js";
+import { m025WitnessDisclosureClearance } from "./025-witness-disclosure-clearance.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -54,4 +55,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m022AuctionLotProvenance,
   m023KnowledgeAxes,
   m024KnowledgeAxesV2,
+  m025WitnessDisclosureClearance,
 ];

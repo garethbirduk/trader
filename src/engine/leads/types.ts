@@ -52,4 +52,17 @@ export interface Lead {
    * is mathematically inevitable. Rep leads never set this.
    */
   readonly subjectPoolId: number | null;
+  /**
+   * Rep/witness leads — what kind of event was witnessed.
+   * "bribe", "phone-call", "raid", etc. NULL for ordinary commodity
+   * leads and for rep leads that don't pertain to a specific event.
+   */
+  readonly subjectEventType: string | null;
+  /**
+   * Free-form JSON payload describing the witnessed event — bribe
+   * amount, phone-call clearance id + scheduled hour, raid item kind,
+   * etc. Parsed by consumers that know what shape to expect for the
+   * given `subjectEventType`.
+   */
+  readonly subjectContextJson: string | null;
 }

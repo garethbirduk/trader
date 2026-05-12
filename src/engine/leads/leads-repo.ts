@@ -41,6 +41,8 @@ interface LeadRow {
   hop_count: number;
   derived_from_lead_id: number | null;
   subject_pool_id: number | null;
+  subject_event_type: string | null;
+  subject_context_json: string | null;
 }
 
 function rowToLead(r: LeadRow): Lead {
@@ -73,6 +75,8 @@ function rowToLead(r: LeadRow): Lead {
     hopCount: r.hop_count,
     derivedFromLeadId: r.derived_from_lead_id,
     subjectPoolId: r.subject_pool_id,
+    subjectEventType: r.subject_event_type ?? null,
+    subjectContextJson: r.subject_context_json ?? null,
   };
 }
 
