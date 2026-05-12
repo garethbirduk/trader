@@ -846,6 +846,16 @@ function PubdealHagglePlayer({
   const sellerId = event.sellerActorId as number;
   const buyerId = event.buyerActorId as number;
   const turns = (event.turns as readonly NegotiationTurn[] | undefined) ?? [];
+  // Belief snapshots attached to the agreement event — per-unit
+  // ranges representing what each side thought the item was worth
+  // when they sat down. Optional (older dumps don't carry them).
+  const sellerBelief = event.sellerBelief as
+    | { low: number; high: number }
+    | undefined;
+  const buyerBelief = event.buyerBelief as
+    | { low: number; high: number }
+    | undefined;
+  const truePricePerUnit = event.truePricePerUnit as number | undefined;
 
   const attempted = hourEvents.find(
     (e) =>
@@ -1052,6 +1062,14 @@ function PubdealHagglePlayer({
                 onSelect={onSelect}
                 size={14}
               />
+              {sellerBelief !== undefined ? (
+                <span
+                  className="belief-band"
+                  title="what the seller thought a unit was worth"
+                >
+                  £{sellerBelief.low}–£{sellerBelief.high}
+                </span>
+              ) : null}
               <span className="muted">
                 {lastOffers.seller !== null
                   ? `last £${lastOffers.seller}`
@@ -1076,6 +1094,14 @@ function PubdealHagglePlayer({
                 onSelect={onSelect}
                 size={14}
               />
+              {buyerBelief !== undefined ? (
+                <span
+                  className="belief-band"
+                  title="what the buyer thought a unit was worth"
+                >
+                  £{buyerBelief.low}–£{buyerBelief.high}
+                </span>
+              ) : null}
               <span className="muted">
                 {lastOffers.buyer !== null
                   ? `last £${lastOffers.buyer}`
@@ -1083,6 +1109,19 @@ function PubdealHagglePlayer({
               </span>
             </li>
           </ul>
+          {truePricePerUnit !== undefined && isFinal ? (
+            <div className="lot-room-truth muted">
+              True RRP £{truePricePerUnit}/unit
+              {unitPrice !== null ? (
+                <>
+                  {" · agreed "}
+                  <span className={truePricePerUnit > unitPrice ? "warn" : ""}>
+                    {fmtDelta(unitPrice - truePricePerUnit)}
+                  </span>
+                </>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {/* Controls */}
@@ -1576,4 +1615,12 @@ function MarketScene({
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n);
+}
+
+/** Format a signed pound delta as "+£X" / "−£X" / "±0". Used on the
+ *  pubdeal closing frame to show how the agreed price compares to
+ *  the engine's true RRP. */
+function fmtDelta(n: number): string {
+  if (n === 0) return "±0";
+  return n > 0 ? `+£${n}` : `−£${Math.abs(n)}`;
 }

@@ -1357,6 +1357,16 @@ button.actor-row.actor-row-selected {
   font-variant-numeric: tabular-nums;
 }
 
+/* True-RRP line at the foot of the pub-deal scene's room panel.
+ * Shows up only on the closing frame; spans the row so it doesn't
+ * crowd the seller / buyer chips above. */
+.lot-room-truth {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  padding-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Relations tab — per-counterparty trust + change history. */
 .relations-list {
   display: flex;
