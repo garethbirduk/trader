@@ -539,23 +539,21 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
       patrolOfficerActorId: skin.patrolOfficerActorId,
       fineProceedsActorId: skin.auctionHouseActorId,
     });
-    // Configure the patrol picker now that we know the officer id
-    // and the candidate beat. The hourOverrideForActor callback
-    // already wired into the skin reads from this picker each tick.
-    if (
-      skin.patrolCandidates !== undefined &&
-      skin.patrolCandidates.length > 0
-    ) {
-      patrolPicker.configure({
-        actorId: skin.patrolOfficerActorId,
-        candidates: skin.patrolCandidates,
-        activeHours: skin.patrolActiveHours ?? new Set<number>(),
-      });
-    }
     // Event-driven alerts that override the patrol pick.
     registerSlaterAlerts(world, {
       slaterActorId: skin.patrolOfficerActorId,
       registry: diaryAlerts,
+    });
+  }
+  // Register each officer's patrol beat. The hourOverrideForActor
+  // callback already wired into the skin consults this picker each
+  // tick. Officers' beats may overlap. Independent of bust-officer
+  // wiring above — presence and bust mechanics are separate.
+  for (const officer of skin.patrolOfficers) {
+    patrolPicker.register({
+      actorId: officer.officerActorId,
+      candidates: officer.candidates,
+      activeHours: officer.activeHours,
     });
   }
   registerLeadDecay(world);

@@ -151,14 +151,14 @@ describe("Slater alerts", () => {
 });
 
 describe("PatrolPicker", () => {
-  it("returns null until configured", () => {
+  it("returns null until any officer is registered", () => {
     const p = new PatrolPicker();
     expect(p.pickFor(1, { day: 1, hour: 10 }, createRNG("a"))).toBeNull();
   });
 
-  it("returns null for actors other than the configured one", () => {
+  it("returns null for actors that haven't been registered", () => {
     const p = new PatrolPicker();
-    p.configure({
+    p.register({
       actorId: 1,
       candidates: [{ locationId: 100, weight: 1 }],
       activeHours: new Set([10]),
@@ -169,7 +169,7 @@ describe("PatrolPicker", () => {
 
   it("returns null outside the active-hours window", () => {
     const p = new PatrolPicker();
-    p.configure({
+    p.register({
       actorId: 1,
       candidates: [{ locationId: 100, weight: 1 }],
       activeHours: new Set([10, 11, 12]),
@@ -181,7 +181,7 @@ describe("PatrolPicker", () => {
 
   it("weighted pick honours the relative weights across many rolls", () => {
     const p = new PatrolPicker();
-    p.configure({
+    p.register({
       actorId: 1,
       candidates: [
         { locationId: 100, weight: 9 },
@@ -198,5 +198,42 @@ describe("PatrolPicker", () => {
     // Should be around 900; allow generous margin.
     expect(count100).toBeGreaterThan(800);
     expect(count100).toBeLessThan(950);
+  });
+
+  it("routes multiple registered officers to their own beats and windows", () => {
+    const p = new PatrolPicker();
+    p.register({
+      actorId: 1,
+      candidates: [{ locationId: 100, weight: 1 }],
+      activeHours: new Set([8, 9, 10]),
+    });
+    p.register({
+      actorId: 2,
+      candidates: [{ locationId: 200, weight: 1 }],
+      activeHours: new Set([12, 13, 14]),
+    });
+    const rng = createRNG("multi");
+    // Officer 1 active 8-10, silent 12-14; officer 2 the opposite.
+    expect(p.pickFor(1, { day: 1, hour: 9 }, rng)).toBe(100);
+    expect(p.pickFor(1, { day: 1, hour: 13 }, rng)).toBeNull();
+    expect(p.pickFor(2, { day: 1, hour: 9 }, rng)).toBeNull();
+    expect(p.pickFor(2, { day: 1, hour: 13 }, rng)).toBe(200);
+    // Unregistered actor still returns null.
+    expect(p.pickFor(3, { day: 1, hour: 9 }, rng)).toBeNull();
+  });
+
+  it("re-registering the same actor replaces the previous config", () => {
+    const p = new PatrolPicker();
+    p.register({
+      actorId: 1,
+      candidates: [{ locationId: 100, weight: 1 }],
+      activeHours: new Set([10]),
+    });
+    p.register({
+      actorId: 1,
+      candidates: [{ locationId: 999, weight: 1 }],
+      activeHours: new Set([10]),
+    });
+    expect(p.pickFor(1, { day: 1, hour: 10 }, createRNG("r"))).toBe(999);
   });
 });

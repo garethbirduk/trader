@@ -97,15 +97,15 @@ export interface SkinSeedResult {
    *  player). Civilians passing through aren't sellers. */
   readonly marketSellerActorIds: readonly number[];
   /** The patrolling officer who busts adhoc stalls. Optional —
-   *  skins without a police character omit it. */
+   *  skins without a police character omit it. This is the *bust*
+   *  officer specifically (today: Slater); the wider patrol roster
+   *  is `patrolOfficers` below. */
   readonly patrolOfficerActorId?: number;
-  /** Weighted patrol beat for the officer. Each hour during the
-   *  active window the picker draws from this list. Police station
-   *  is the heavy weight; the rest are "wandering" venues. */
-  readonly patrolCandidates?: readonly { readonly locationId: number; readonly weight: number }[];
-  /** Hours during which patrol-pick fires (overriding the schedule).
-   *  Outside this window the schedule applies (overnight at home). */
-  readonly patrolActiveHours?: ReadonlySet<number>;
+  /** Patrol roster — every officer who walks a weighted beat during
+   *  their active-hours window. Beats may overlap. Skins without
+   *  police pass an empty array. Each entry feeds one
+   *  `PatrolPicker.register` call. */
+  readonly patrolOfficers: readonly PatrolOfficerSpec[];
   /** Actor ids whose flex hours are filled in by the per-hour planner
    *  (auction / market / each shop / each pub / newspaper / home). */
   readonly flexibleDailyModeActorIds: readonly number[];
@@ -194,6 +194,18 @@ export interface VirtualProducerInfo {
   readonly categories: readonly string[];
   readonly brokerActorIds: readonly number[];
   readonly provenancePhrases: readonly string[];
+}
+
+/**
+ * One officer's patrol beat. Each entry feeds a single
+ * `PatrolPicker.register` call: the picker runs a weighted-random
+ * hour-by-hour pick within `activeHours`, drawing from
+ * `candidates`. Beats may overlap between officers.
+ */
+export interface PatrolOfficerSpec {
+  readonly officerActorId: number;
+  readonly candidates: readonly { readonly locationId: number; readonly weight: number }[];
+  readonly activeHours: ReadonlySet<number>;
 }
 
 export interface ActorRoutineInfo {
@@ -303,7 +315,7 @@ const LOCATIONS: readonly LocationSpec[] = [
   // Added from the wider canon.
   { code: "peckham-market", displayName: "Peckham Market", type: "business", openHours: { start: 8, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
   { code: "sids-cafe", displayName: "Sid's Café", type: "business", openHours: { start: 6, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "boycie-house", displayName: "Boycie's", type: "home" },
+  { code: "boycie-house", displayName: "Boyce's", type: "home" },
   { code: "denzil-house", displayName: "Denzil's", type: "home" },
   {
     code: "one-eleven-club",
@@ -322,6 +334,18 @@ const LOCATIONS: readonly LocationSpec[] = [
   { code: "post-office", displayName: "Post Office", type: "civic", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "betting-shop", displayName: "The Bookies", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "shamrock-club", displayName: "Shamrock Club", type: "pub", openHours: { start: 19, end: 26 } },
+  {
+    code: "riverside-club",
+    displayName: "Down By The Riverside Club",
+    type: "pub",
+    // Envelope covers the wider Fri/Sat session (18→02); planner sees
+    // a single window. openSessions below is the truth — closed Sun/Mon.
+    openHours: { start: 18, end: 26 },
+    openSessions: [
+      { daysOfWeek: [2, 3, 4], start: 20, end: 24 },     // Tue–Thu 20:00–00:00
+      { daysOfWeek: DAYS_FRI_SAT, start: 18, end: 26 },  // Fri–Sat 18:00–02:00
+    ],
+  },
   { code: "dirty-barrys", displayName: "Dirty Barry's", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "raquel-flat", displayName: "Raquel's", type: "home" },
   { code: "cassandra-bank", displayName: "The Bank", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
@@ -790,7 +814,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "boyce",
-    displayName: "Boycie",
+    displayName: "Boyce",
     cash: 5000,
     ...makeRoutineFromSpans("boycie-house", [
       { from: 8, to: 9, location: "boycie-house" },
@@ -1174,6 +1198,25 @@ const ACTORS: readonly ActorSpec[] = [
     bribable: true,
   },
   {
+    code: "pc-hoskins",
+    displayName: "PC Terence Hoskins",
+    cash: 200,
+    // The straight cop on the beat — counterpart to Slater. Same
+    // station hours, same evening flexible window, but not bribable
+    // (default). Patrol override kicks in 09-15 across a small
+    // 3-venue beat (see `patrolOfficers` at the bottom of this file)
+    // — lighter presence than Slater so he's rarely the limiting
+    // factor but occasionally adds risk when their beats overlap.
+    ...makeRoutineFromSpans("off-map", [
+      { from: 8, to: 18, location: "police-station" },
+      { from: 18, to: 22, location: "FLEXIBLE" },
+    ]),
+    defaultLocation: "police-station",
+    homeLocation: "off-map",
+    transportCapacity: "boot",
+    awakeHours: { start: 7, end: 22 },
+  },
+  {
     code: "dirty-barry",
     displayName: "Dirty Barry",
     cash: 250,
@@ -1200,6 +1243,23 @@ const ACTORS: readonly ActorSpec[] = [
     defaultLocation: "starlight-rooms",
     homeLocation: "off-map",
     transportCapacity: "boot",
+    awakeHours: { start: 14, end: 23 },
+  },
+  {
+    code: "driscoll-brothers",
+    displayName: "The Driscoll Brothers",
+    cash: 2000,
+    // Plural-as-one: two brothers operating as a single in-world
+    // presence. Nocturnal villains based out of the Shamrock Club —
+    // only visible in-world during pub hours; off-map otherwise,
+    // same shape as Eugene McCarthy.
+    ...makeRoutineFromSpans("shamrock-club", [
+      { from: 20, to: 24, location: "shamrock-club" },
+      { from: 0, to: 2, location: "shamrock-club" },
+    ]),
+    defaultLocation: "shamrock-club",
+    homeLocation: "off-map",
+    transportCapacity: "van",
     awakeHours: { start: 14, end: 23 },
   },
   // ─── high-street shopkeepers ─────────────────────────────────────────
@@ -1380,32 +1440,34 @@ const DEFAULT_REACHABLE_CODES: readonly string[] = ["denzil", "monkey-harris", "
  * roles unless added here.
  */
 const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
-  player: ["player", "dealer", "family"],
-  boyce: ["dealer", "fence"],
+  player: ["dealer"],
+  boyce: ["dealer"],
   denzil: ["dealer"],
-  "monkey-harris": ["dealer", "fence"],
-  trigger: ["civilian", "official"],
+  "monkey-harris": ["dealer"],
+  trigger: ["dealer"],
   mike: ["pub"],
   "auction-house": ["official"],
-  rodney: ["dealer", "family"],
-  albert: ["civilian", "family"],
-  grandad: ["civilian", "family"],
-  marlene: ["civilian", "family"],
+  rodney: ["dealer"],
+  albert: ["household"],
+  grandad: ["household"],
+  marlene: ["household"],
   "mickey-pearce": ["dealer"],
   jevon: ["dealer"],
-  raquel: ["civilian"],
-  cassandra: ["civilian", "family"],
-  "alan-parry": ["civilian", "family"],
+  raquel: ["household"],
+  cassandra: ["household"],
+  "alan-parry": ["household"],
   sid: ["pub"],
   "alfie-flowers": ["supplier"],
   "ronnie-nelson": ["supplier"],
   mustapha: ["supplier"],
   arnie: ["supplier"],
   towser: ["supplier"],
-  "paddy-the-greek": ["supplier", "dealer"],
+  "paddy-the-greek": ["supplier"],
   slater: ["police"],
-  "dirty-barry": ["fence", "villain"],
+  "pc-hoskins": ["police"],
+  "dirty-barry": ["fence"],
   "eugene-mccarthy": ["villain"],
+  "driscoll-brothers": ["villain"],
   // High-street shopkeepers — buyers in shop-deal autonomy.
   "cyril-diamond": ["shopkeeper"],
   "margaret-bracelet": ["shopkeeper"],
@@ -1889,26 +1951,51 @@ export function seedPlaceholderSkin(
     ...(actorByCode.get("slater") !== undefined
       ? { patrolOfficerActorId: actorByCode.get("slater")! }
       : {}),
-    // Slater's patrol beat. Station-heavy by design; the venues
-    // where dealing happens (Nag's, Peckham Market, Sid's caff)
-    // get smaller weights so he turns up there occasionally.
-    ...(() => {
-      const candidates: { locationId: number; weight: number }[] = [];
-      const addCandidate = (code: string, weight: number) => {
-        const id = locByCode.get(code);
-        if (id !== undefined) candidates.push({ locationId: id, weight });
+    patrolOfficers: (() => {
+      const officers: PatrolOfficerSpec[] = [];
+      const buildBeat = (
+        actorCode: string,
+        weights: readonly [string, number][],
+        activeHours: ReadonlySet<number>,
+      ): void => {
+        const officerActorId = actorByCode.get(actorCode);
+        if (officerActorId === undefined) return;
+        const candidates: { locationId: number; weight: number }[] = [];
+        for (const [code, weight] of weights) {
+          const id = locByCode.get(code);
+          if (id !== undefined) candidates.push({ locationId: id, weight });
+        }
+        if (candidates.length === 0) return;
+        officers.push({ officerActorId, candidates, activeHours });
       };
-      addCandidate("police-station", 40);
-      addCandidate("peckham-market", 25);
-      addCandidate("nags", 15);
-      addCandidate("sids-cafe", 10);
-      addCandidate("hard-knock-cafe", 10);
-      return candidates.length > 0
-        ? {
-            patrolCandidates: candidates,
-            patrolActiveHours: new Set([8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
-          }
-        : {};
+      // Slater — station-heavy beat across his 08-17 shift. The
+      // venues where dealing happens (Nag's, Peckham Market, Sid's
+      // caff) get smaller weights so he turns up there occasionally.
+      buildBeat(
+        "slater",
+        [
+          ["police-station", 40],
+          ["peckham-market", 25],
+          ["nags", 15],
+          ["sids-cafe", 10],
+          ["hard-knock-cafe", 10],
+        ],
+        new Set([8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
+      );
+      // Hoskins — lighter presence, 09-15 with a small 3-venue
+      // beat. Supporting cast: rarely the limiting factor, but
+      // adds occasional risk when he overlaps with Slater on the
+      // same venue.
+      buildBeat(
+        "pc-hoskins",
+        [
+          ["police-station", 50],
+          ["peckham-market", 30],
+          ["nags", 20],
+        ],
+        new Set([9, 10, 11, 12, 13, 14, 15]),
+      );
+      return officers;
     })(),
     flexibleDailyModeActorIds,
     locationByCode: locByCode,
