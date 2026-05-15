@@ -1,176 +1,133 @@
+import { describe, it, expect } from "vitest";
+import { createRNG } from "../src/engine/core/rng.js";
+import { computeEstimate } from "../src/engine/perception/estimate.js";
+
 /**
- * Exploratory scenario — not a behavioural test. Shows what the current
- * `appraiseLot` produces across a spread of judgement values. Kept for
- * future fine-tuning of the judgement / band model and as an informal
- * snapshot — if numbers drift, something upstream in the appraisal
- * pipeline has changed.
+ * Snapshot of the new judgement engine's behaviour across the
+ * (expertise, j) grid. Drift in these numbers means the perception
+ * pipeline has shifted — intentional or otherwise. The doc commits
+ * to the four-case shape (confidently-wrong / confidently-right /
+ * haphazardly-wrong / hesitantly-right); the snapshot pins the
+ * specific statistical fingerprint that produces those four cases.
  *
- * Skipped by default. Run with:
- *   npx vitest run tests/judgement-scenario.test.ts --reporter=verbose
- * Remove `.skip` to enable.
+ * Anchor 80, truth 1000 — large gap so cluelessness shows up clearly
+ * as a centre near 80, not near 1000.
+ *
+ * The legacy `appraiseLot` exploratory tabulation that lived here
+ * before PR #1 was a noisy point-estimate model; it's been
+ * superseded by the band+mixture model in `computeEstimate`. The
+ * legacy path still runs at runtime (via `useJudgementForAppraisal:
+ * false`) but isn't pinned by a snapshot — the old behaviour is
+ * tracked by `tests/bidder-profile.test.ts` directly.
  */
 
-import { describe, it } from "vitest";
-import { appraiseLot } from "../src/engine/auction/bidder-profile.js";
-import { createRNG } from "../src/engine/core/rng.js";
-import type { AuctionLot } from "../src/engine/auction/types.js";
-import type { BidderProfile } from "../src/engine/auction/bidder-profile.js";
+const TRUTH = 1000;
+const ANCHOR = 80;
+const TRIALS = 4000;
 
-const TRUE_LOT_VALUE = 100;
-const J_VALUES = [0.10, 0.12, 0.30, 0.50, 0.80];
-const FLOOR_SCENARIOS = [60, 85, 100, 115];
-const TRIALS = 5000;
+const EXPERTISE_VALUES = [0.1, 0.3, 0.5, 0.8, 0.95];
+const J_VALUES = [0.1, 0.3, 0.5, 0.8, 0.95];
 
-function makeProfile(j: number): BidderProfile {
-  return {
-    appraisalAccuracy: new Map(),
-    defaultAppraisalAccuracy: j,
-    flawTypeDetection: new Map(),
-    defaultFlawTypeDetection: 0.5,
-  };
+function summarise(samples: readonly number[]): {
+  mean: number;
+  sd: number;
+  p10: number;
+  p50: number;
+  p90: number;
+} {
+  const sorted = [...samples].sort((a, b) => a - b);
+  const mean = samples.reduce((s, v) => s + v, 0) / samples.length;
+  const variance =
+    samples.reduce((s, v) => s + (v - mean) ** 2, 0) / samples.length;
+  const sd = Math.sqrt(variance);
+  const at = (q: number) => sorted[Math.floor(samples.length * q)] ?? 0;
+  return { mean, sd, p10: at(0.1), p50: at(0.5), p90: at(0.9) };
 }
 
-const lot: AuctionLot = {
-  id: 1,
-  sourcePoolId: null,
-  itemKindId: 1,
-  qualityTier: "fair",
-  quantity: 1,
-  floorPrice: 0,
-  listedDay: 1,
-  scheduledHour: null,
-  clearedDay: null,
-  clearedPrice: null,
-  clearedToActorId: null,
-  provenance: null,
-};
+function pad(label: string, width: number): string {
+  return label.length >= width
+    ? label
+    : label + " ".repeat(width - label.length);
+}
 
-describe.skip("judgement scenario (exploratory, no assertions)", () => {
-  it("tabulates appraiseLot behaviour across j values", () => {
-    console.log(
-      `\nTrue lot value: £${TRUE_LOT_VALUE} | RNG: deterministic, ${TRIALS} trials per j\n`,
-    );
+function rightPad(num: number, width: number): string {
+  const s = Math.round(num).toString();
+  return s.length >= width ? s : " ".repeat(width - s.length) + s;
+}
 
-    // ── Bid distribution table ────────────────────────────────────────
-    console.log("Bid valuation distribution (per bidder, in isolation):");
-    console.log(
-      "  j     | analytic range | mean   | sd    | p10    | p50    | p90    ",
-    );
-    console.log(
-      "  ------+----------------+--------+-------+--------+--------+--------",
-    );
-    type Sample = { j: number; samples: number[] };
-    const allSamples: Sample[] = [];
+function buildSnapshot(): string {
+  const lines: string[] = [];
+  lines.push(`Judgement engine — sample distribution`);
+  lines.push(`  truth=${TRUTH}, anchor=${ANCHOR}, trials/cell=${TRIALS}`);
+  lines.push("");
+  lines.push(
+    `  ${pad("exp", 5)}${pad("j", 5)}${pad("mean", 8)}${pad("sd", 8)}${pad("p10", 8)}${pad("p50", 8)}${pad("p90", 8)}`,
+  );
+  lines.push(`  ${"-".repeat(5 + 5 + 8 * 5)}`);
+  for (const expertise of EXPERTISE_VALUES) {
     for (const j of J_VALUES) {
-      const profile = makeProfile(j);
-      const rng = createRNG(`judgement-j${j}`);
+      const rng = createRNG(`scenario-exp${expertise}-j${j}`);
       const samples: number[] = [];
       for (let i = 0; i < TRIALS; i += 1) {
-        const r = appraiseLot({
-          profile,
-          lot,
-          category: "electrical",
-          flawType: null,
-          trueLotValue: TRUE_LOT_VALUE,
+        const r = computeEstimate({
+          arm: "price",
+          truth: TRUTH,
+          anchor: ANCHOR,
+          expertise,
+          j,
           rng,
         });
-        samples.push(r.valuation);
+        samples.push(r.sample);
       }
-      samples.sort((a, b) => a - b);
-      const mean = samples.reduce((s, v) => s + v, 0) / samples.length;
-      const variance =
-        samples.reduce((s, v) => s + (v - mean) ** 2, 0) / samples.length;
-      const sd = Math.sqrt(variance);
-      const p = (q: number) => samples[Math.floor(samples.length * q)] ?? 0;
-      const analyticMin = Math.max(0, TRUE_LOT_VALUE * j);
-      const analyticMax = TRUE_LOT_VALUE * (2 - j);
-      console.log(
-        `  ${j.toFixed(2)}  | £${String(analyticMin).padStart(3)}–£${String(analyticMax).padStart(3)}     ` +
-          `| £${mean.toFixed(0).padStart(4)} ` +
-          `| £${sd.toFixed(0).padStart(3)}  ` +
-          `| £${String(p(0.1)).padStart(4)}  ` +
-          `| £${String(p(0.5)).padStart(4)}  ` +
-          `| £${String(p(0.9)).padStart(4)}`,
-      );
-      allSamples.push({ j, samples });
-    }
-
-    // ── P(bid) at each floor ─────────────────────────────────────────
-    console.log("\nP(bid at all) — bidder bids iff valuation > floor:");
-    const floorHeader = FLOOR_SCENARIOS.map((f) => `£${String(f).padStart(3)}`).join(" | ");
-    console.log(`  j     | ${floorHeader}`);
-    console.log(`  ------+${"-".repeat(floorHeader.length + 2)}`);
-    for (const { j, samples } of allSamples) {
-      const row = FLOOR_SCENARIOS.map((floor) => {
-        const bidders = samples.filter((v) => v > floor).length;
-        return `${((bidders / samples.length) * 100).toFixed(0).padStart(3)}%`;
-      }).join(" | ");
-      console.log(`  ${j.toFixed(2)}  | ${row}`);
-    }
-
-    // ── Head-to-head — all 5 bid on the same lot ──────────────────────
-    console.log(
-      "\nHead-to-head: 5 bidders, same lot, true value £100, floor £85, 10 rounds:",
-    );
-    console.log("  round | " + J_VALUES.map((j) => `j=${j.toFixed(2)}`).join(" | ") + " | winner");
-    console.log("  ------+" + "-".repeat(56));
-    const headRng = J_VALUES.map((j) => ({
-      j,
-      profile: makeProfile(j),
-      rng: createRNG(`head-${j}`),
-    }));
-    for (let round = 1; round <= 10; round += 1) {
-      const bids: { j: number; valuation: number }[] = [];
-      for (const b of headRng) {
-        const r = appraiseLot({
-          profile: b.profile,
-          lot,
-          category: "electrical",
-          flawType: null,
-          trueLotValue: TRUE_LOT_VALUE,
-          rng: b.rng,
-        });
-        bids.push({ j: b.j, valuation: r.valuation });
-      }
-      const above = bids.filter((b) => b.valuation > 85);
-      const winner =
-        above.length === 0
-          ? "(no bid)"
-          : `j=${above.reduce((best, b) => (b.valuation > best.valuation ? b : best)).j.toFixed(2)}`;
-      const cells = bids
-        .map((b) => (b.valuation > 85 ? `£${String(b.valuation).padStart(4)}` : "  —  "))
-        .join(" | ");
-      console.log(`  ${String(round).padStart(5)} | ${cells} | ${winner}`);
-    }
-
-    // ── Stepped-j (proposed band model, no sub-band sharpness) ───────
-    console.log(
-      "\nUnder proposed stepped-j model — effective_accuracy = floor(j×10)/10:",
-    );
-    console.log("  j     | effective | analytic range");
-    console.log("  ------+-----------+----------------");
-    for (const j of J_VALUES) {
-      const effective = Math.floor(j * 10) / 10;
-      const min = Math.max(0, TRUE_LOT_VALUE * effective);
-      const max = TRUE_LOT_VALUE * (2 - effective);
-      console.log(
-        `  ${j.toFixed(2)}  |   ${effective.toFixed(2)}    | £${String(min).padStart(3)}–£${String(max).padStart(3)}`,
+      const s = summarise(samples);
+      lines.push(
+        `  ${pad(expertise.toFixed(2), 5)}${pad(j.toFixed(2), 5)}` +
+          `${rightPad(s.mean, 7)} ${rightPad(s.sd, 7)} ${rightPad(s.p10, 7)} ${rightPad(s.p50, 7)} ${rightPad(s.p90, 7)}`,
       );
     }
-    console.log(
-      "\nUnder stepped+sharpness — effective = floor(j×10)/10 + frac(j×10)×0.1:",
-    );
-    console.log("  j     | bands | sharp | effective | analytic range");
-    console.log("  ------+-------+-------+-----------+----------------");
-    for (const j of J_VALUES) {
-      const bands = Math.max(1, Math.floor(j * 10));
-      const sharp = j * 10 - Math.floor(j * 10);
-      const effective = Math.floor(j * 10) / 10 + sharp * 0.1;
-      const min = Math.max(0, TRUE_LOT_VALUE * effective);
-      const max = TRUE_LOT_VALUE * (2 - effective);
-      console.log(
-        `  ${j.toFixed(2)}  |  ${bands}    |  ${sharp.toFixed(2)} |   ${effective.toFixed(3)}   | £${String(min.toFixed(0)).padStart(3)}–£${String(max.toFixed(0)).padStart(3)}`,
-      );
-    }
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+describe("judgement engine — scenario snapshot", () => {
+  it("distribution fingerprint across (expertise × j) is stable", () => {
+    expect(buildSnapshot()).toMatchInlineSnapshot(`
+      "Judgement engine — sample distribution
+        truth=1000, anchor=80, trials/cell=4000
+
+        exp  j    mean    sd      p10     p50     p90     
+        --------------------------------------------------
+        0.10 0.10     170      85      50     172     292
+        0.10 0.30     173      59      85     173     261
+        0.10 0.50     172      35     120     172     221
+        0.10 0.80     172       9     169     172     175
+        0.10 0.95     172       2     171     172     173
+
+        0.30 0.10     352     174     106     352     602
+        0.30 0.30     354     121     171     356     528
+        0.30 0.50     357      73     249     357     461
+        0.30 0.80     356      19     349     356     363
+        0.30 0.95     356       4     354     356     358
+
+        0.50 0.10     539     265     166     533     916
+        0.50 0.30     543     185     274     541     820
+        0.50 0.50     538     110     375     540     695
+        0.50 0.80     540      28     530     540     551
+        0.50 0.95     540       6     537     540     543
+
+        0.80 0.10     811     400     239     808    1382
+        0.80 0.30     812     278     400     816    1217
+        0.80 0.50     814     170     557     815    1063
+        0.80 0.80     817      43     800     817     832
+        0.80 0.95     816       9     811     816     821
+
+        0.95 0.10     952     470     289     958    1615
+        0.95 0.30     949     323     469     951    1424
+        0.95 0.50     950     192     662     954    1230
+        0.95 0.80     955      50     936     955     972
+        0.95 0.95     954      10     948     954     960
+      "
+    `);
   });
 });
