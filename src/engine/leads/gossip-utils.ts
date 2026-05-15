@@ -22,6 +22,7 @@ export function toExchange(
     fromActorId,
     toActorId,
     lead: {
+      id: lead.id,
       kind: lead.kind,
       side: lead.side,
       subjectItemKindId: lead.subjectItemKindId,

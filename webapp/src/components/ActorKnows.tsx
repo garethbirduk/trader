@@ -18,6 +18,10 @@ interface Props {
 }
 
 interface ExchangedLead {
+  /** Lead id in the receiver's bag — added by the engine so the UI
+   *  can correlate received gossip with later detail-unlock events.
+   *  Optional for back-compat with older dumps that didn't carry it. */
+  readonly id?: number;
   readonly kind: "commodity" | "rep";
   readonly side: "supply" | "demand";
   /** Null for rep leads. */
@@ -170,6 +174,24 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
     return [...byLot.values()].sort((a, b) =>
       a.day !== b.day ? b.day - a.day : b.hour - a.hour,
     );
+  }, [dump.events, actorId, day, hour]);
+
+  // Two-tier gossip — track which received leads have been unlocked
+  // (their detail tier is visible to the holder). Default is locked;
+  // each `gossip.detail-unlocked` event for this actor flips one or
+  // more lead ids to unlocked. Locked rows render headline-only.
+  const unlockedLeadIds = useMemo<ReadonlySet<number>>(() => {
+    const out = new Set<number>();
+    for (const e of dump.events) {
+      if (e.type !== "gossip.detail-unlocked") continue;
+      if (e.askerActorId !== actorId) continue;
+      if (e.at.day > day || (e.at.day === day && e.at.hour > hour)) continue;
+      const leads = (e.unlockedLeads ?? []) as readonly { leadId: number; unlocked: boolean }[];
+      for (const u of leads) {
+        if (u.unlocked) out.add(u.leadId);
+      }
+    }
+    return out;
   }, [dump.events, actorId, day, hour]);
 
   // All gossip leads received by this actor — no dedup. The same fact
@@ -478,13 +500,19 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
             <div className="profile-section-label">Gossip leads</div>
           ) : null}
           {view === "timeline" ? (
-            <TimelineView rows={timelineRows} dump={dump} onSelect={onSelect} />
+            <TimelineView
+              rows={timelineRows}
+              dump={dump}
+              unlockedLeadIds={unlockedLeadIds}
+              onSelect={onSelect}
+            />
           ) : null}
           {view === "item" ? (
             <ByItemView
               groups={itemGroups}
               dump={dump}
               actorId={actorId}
+              unlockedLeadIds={unlockedLeadIds}
               onSelect={onSelect}
             />
           ) : null}
@@ -493,6 +521,7 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
               groups={personGroups}
               dump={dump}
               actorId={actorId}
+              unlockedLeadIds={unlockedLeadIds}
               onSelect={onSelect}
             />
           ) : null}
@@ -505,52 +534,81 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
 function TimelineView({
   rows,
   dump,
+  unlockedLeadIds,
   onSelect,
 }: {
   readonly rows: readonly LearnedRow[];
   readonly dump: RunDump;
+  readonly unlockedLeadIds: ReadonlySet<number>;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
     <ul>
-      {rows.map((r, i) => (
-        <li key={i} className="knows-row">
-          <div className="knows-stamp-line">
-            <span className="knows-stamp">
-              D{pad(r.day)} {pad(r.hour)}:00
-            </span>
-            <span className="knows-body">
-              from{" "}
-              <ActorChip
-                dump={dump}
-                actorId={r.fromActorId}
-                onSelect={onSelect}
-                size={14}
-              />{" "}
-              at{" "}
-              <LocationLink
-                dump={dump}
-                locationId={r.atLocationId}
-                onSelect={onSelect}
-              />
-            </span>
-          </div>
-          <div className="knows-fact">{formatLead(r.lead, dump, onSelect)}</div>
-        </li>
-      ))}
+      {rows.map((r, i) => {
+        const unlocked = isLeadUnlocked(r.lead, unlockedLeadIds);
+        return (
+          <li key={i} className="knows-row">
+            <div className="knows-stamp-line">
+              <span className="knows-stamp">
+                D{pad(r.day)} {pad(r.hour)}:00
+              </span>
+              <span className="knows-body">
+                from{" "}
+                <ActorChip
+                  dump={dump}
+                  actorId={r.fromActorId}
+                  onSelect={onSelect}
+                  size={14}
+                />{" "}
+                at{" "}
+                <LocationLink
+                  dump={dump}
+                  locationId={r.atLocationId}
+                  onSelect={onSelect}
+                />
+                {!unlocked ? (
+                  <span className="muted" title="Headline only — pay to unlock detail.">
+                    {" "}· headline
+                  </span>
+                ) : null}
+              </span>
+            </div>
+            <div className="knows-fact">
+              {unlocked
+                ? formatLead(r.lead, dump, onSelect)
+                : formatHeadline(r.lead, dump, onSelect)}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
+}
+
+/** A lead is unlocked if it's first-hand (rep, no id from gossip) or
+ *  its id appears in the unlock set. Defensive — old dumps that don't
+ *  carry lead ids fall back to "unlocked" so legacy rendering doesn't
+ *  regress to all-locked. */
+function isLeadUnlocked(
+  lead: ExchangedLead,
+  unlocked: ReadonlySet<number>,
+): boolean {
+  if (lead.kind === "rep") return true;
+  if (lead.id === undefined) return true;
+  return unlocked.has(lead.id);
 }
 
 function ByItemView({
   groups,
   dump,
   actorId,
+  unlockedLeadIds,
   onSelect,
 }: {
   readonly groups: readonly ItemGroup[];
   readonly dump: RunDump;
   readonly actorId: number;
+  readonly unlockedLeadIds: ReadonlySet<number>;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
@@ -588,6 +646,7 @@ function ByItemView({
                 showCounterparty={true}
                 dump={dump}
                 receiverActorId={actorId}
+                unlockedLeadIds={unlockedLeadIds}
                 onSelect={onSelect}
               />
             ) : null}
@@ -599,6 +658,7 @@ function ByItemView({
                 showCounterparty={true}
                 dump={dump}
                 receiverActorId={actorId}
+                unlockedLeadIds={unlockedLeadIds}
                 onSelect={onSelect}
               />
             ) : null}
@@ -613,11 +673,13 @@ function ByPersonView({
   groups,
   dump,
   actorId,
+  unlockedLeadIds,
   onSelect,
 }: {
   readonly groups: readonly PersonGroup[];
   readonly dump: RunDump;
   readonly actorId: number;
+  readonly unlockedLeadIds: ReadonlySet<number>;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
@@ -653,6 +715,7 @@ function ByPersonView({
                 showCounterparty={false}
                 dump={dump}
                 receiverActorId={actorId}
+                unlockedLeadIds={unlockedLeadIds}
                 onSelect={onSelect}
               />
             ) : null}
@@ -664,6 +727,7 @@ function ByPersonView({
                 showCounterparty={false}
                 dump={dump}
                 receiverActorId={actorId}
+                unlockedLeadIds={unlockedLeadIds}
                 onSelect={onSelect}
               />
             ) : null}
@@ -681,6 +745,7 @@ function SubgroupRows({
   showCounterparty,
   dump,
   receiverActorId,
+  unlockedLeadIds,
   onSelect,
 }: {
   readonly label: string;
@@ -694,6 +759,7 @@ function SubgroupRows({
    *  their bidder profile says, and uninspected hearsay carries its
    *  speaker's possibly-wrong tier verbatim). */
   readonly receiverActorId: number;
+  readonly unlockedLeadIds: ReadonlySet<number>;
   readonly onSelect: (s: Selection) => void;
 }) {
   const receiver = dump.actors.find((a) => a.id === receiverActorId);
@@ -705,8 +771,12 @@ function SubgroupRows({
   // equivalence is by item+tier.
   const conflictMap = new Map<string, { priceVaries: boolean; qtyVaries: boolean }>();
   {
+    // Only unlocked rows participate in conflict detection — the locked
+    // rows hide their numeric values, so disagreement on hidden data
+    // would be a badge with no visible cause.
     const subjectGroups = new Map<string, LearnedRow[]>();
     for (const r of rows) {
+      if (!isLeadUnlocked(r.lead, unlockedLeadIds)) continue;
       const k = subjectKey(r.lead);
       const arr = subjectGroups.get(k) ?? [];
       arr.push(r);
@@ -737,6 +807,7 @@ function SubgroupRows({
       </div>
       <ul className="knows-subgroup-rows">
         {rows.map((r, i) => {
+          const unlocked = isLeadUnlocked(r.lead, unlockedLeadIds);
           const k = subjectKey(r.lead);
           const conflict = conflictMap.get(k);
           // Retail estimate from the receiver's perspective — same
@@ -744,12 +815,13 @@ function SubgroupRows({
           // drives it: until the receiver inspects (auction-lot
           // mechanic only, not modelled here), they trust the
           // speaker's tier verbatim. Civilians with no bidder
-          // profile get no estimate.
+          // profile get no estimate. Locked rows skip this — there's
+          // no claimed tier to value yet.
           const item = dump.items.find(
             (it) => it.id === r.lead.subjectItemKindId,
           );
           const retailEstimate =
-            receiverProfile !== undefined && item !== undefined
+            unlocked && receiverProfile !== undefined && item !== undefined
               ? estimateUnitRetail(
                   receiverProfile,
                   item,
@@ -757,50 +829,83 @@ function SubgroupRows({
                   dump.economics,
                 )
               : null;
+          const counterpartyChip = r.lead.counterpartyActorId !== null ? (
+            <ActorChip
+              dump={dump}
+              actorId={r.lead.counterpartyActorId}
+              onSelect={onSelect}
+              size={12}
+            />
+          ) : (
+            <span className="muted">someone</span>
+          );
           return (
             <StockLine
               key={i}
               fact={
-                <>
-                  {showCounterparty ? (
-                    r.lead.counterpartyActorId !== null ? (
-                      <>
-                        <ActorChip
-                          dump={dump}
-                          actorId={r.lead.counterpartyActorId}
-                          onSelect={onSelect}
-                          size={12}
-                        />{" "}
-                        <span className="muted">has</span>{" "}
-                      </>
+                unlocked ? (
+                  <>
+                    {showCounterparty ? (
+                      r.lead.counterpartyActorId !== null ? (
+                        <>
+                          {counterpartyChip}{" "}
+                          <span className="muted">has</span>{" "}
+                        </>
+                      ) : (
+                        <span className="muted">someone has</span>
+                      )
                     ) : (
-                      <span className="muted">someone has</span>
-                    )
-                  ) : (
-                    <span className="muted">has</span>
-                  )}{" "}
-                  <StockValue divergent={conflict?.qtyVaries}>
-                    {r.lead.estimatedQuantity}
-                  </StockValue>{" "}
-                  {showItem && r.lead.subjectItemKindId !== null ? (
-                    <ItemRef
-                      dump={dump}
-                      id={r.lead.subjectItemKindId}
-                      onSelect={onSelect}
-                      variant="chip"
-                      qualityTier={r.lead.subjectQualityTier ?? undefined}
-                    />
-                  ) : r.lead.subjectQualityTier !== null ? (
-                    <span className={`tier tier-${r.lead.subjectQualityTier}`}>
-                      {r.lead.subjectQualityTier}
+                      <span className="muted">has</span>
+                    )}{" "}
+                    <StockValue divergent={conflict?.qtyVaries}>
+                      {r.lead.estimatedQuantity}
+                    </StockValue>{" "}
+                    {showItem && r.lead.subjectItemKindId !== null ? (
+                      <ItemRef
+                        dump={dump}
+                        id={r.lead.subjectItemKindId}
+                        onSelect={onSelect}
+                        variant="chip"
+                        qualityTier={r.lead.subjectQualityTier ?? undefined}
+                      />
+                    ) : r.lead.subjectQualityTier !== null ? (
+                      <span className={`tier tier-${r.lead.subjectQualityTier}`}>
+                        {r.lead.subjectQualityTier}
+                      </span>
+                    ) : null}{" "}
+                    <span className="muted">@</span>{" "}
+                    <StockValue divergent={conflict?.priceVaries}>
+                      £{r.lead.estimatedUnitPrice}
+                    </StockValue>
+                    <span className="muted">/u</span>
+                  </>
+                ) : (
+                  <>
+                    {showCounterparty ? (
+                      r.lead.counterpartyActorId !== null ? (
+                        <>{counterpartyChip}{" "}</>
+                      ) : (
+                        <span className="muted">someone </span>
+                      )
+                    ) : null}
+                    <span className="muted">
+                      {r.lead.side === "supply" ? "has" : "wants"}
+                    </span>{" "}
+                    {showItem && r.lead.subjectItemKindId !== null ? (
+                      <ItemRef
+                        dump={dump}
+                        id={r.lead.subjectItemKindId}
+                        onSelect={onSelect}
+                        variant="chip"
+                      />
+                    ) : (
+                      <span className="muted">(item)</span>
+                    )}{" "}
+                    <span className="muted" title="Headline only — pay to unlock detail.">
+                      · headline
                     </span>
-                  ) : null}{" "}
-                  <span className="muted">@</span>{" "}
-                  <StockValue divergent={conflict?.priceVaries}>
-                    £{r.lead.estimatedUnitPrice}
-                  </StockValue>
-                  <span className="muted">/u</span>
-                </>
+                  </>
+                )
               }
               meta={
                 <>
@@ -821,15 +926,43 @@ function SubgroupRows({
                     onSelect={onSelect}
                     size={12}
                   />{" "}
-                  · {r.lead.confidence}
-                  {r.lead.hopCount > 0 ? ` · hop ${r.lead.hopCount}` : ""} · D
-                  {pad(r.day)} {pad(r.hour)}:00
+                  {unlocked ? (
+                    <>
+                      · {r.lead.confidence}
+                      {r.lead.hopCount > 0 ? ` · hop ${r.lead.hopCount}` : ""} ·{" "}
+                    </>
+                  ) : (
+                    <>· </>
+                  )}
+                  D{pad(r.day)} {pad(r.hour)}:00
                 </>
               }
             />
           );
         })}
       </ul>
+    </>
+  );
+}
+
+function formatHeadline(
+  l: ExchangedLead,
+  dump: RunDump,
+  onSelect: (s: Selection) => void,
+): JSX.Element {
+  const item = dump.items.find((i) => i.id === l.subjectItemKindId);
+  const itemLabel = item?.displayName ?? `kind ${l.subjectItemKindId}`;
+  const cp = l.counterpartyActorId;
+  const verb = l.side === "supply" ? "has" : "wants";
+  return (
+    <>
+      {cp !== null ? (
+        <ActorChip dump={dump} actorId={cp} onSelect={onSelect} size={14} />
+      ) : (
+        <span className="muted">someone</span>
+      )}{" "}
+      {verb} {itemLabel}
+      <span className="muted"> · headline — buy a drink to learn more</span>
     </>
   );
 }

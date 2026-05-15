@@ -26,6 +26,10 @@ export interface GossipExchange {
   readonly fromActorId: number;
   readonly toActorId: number;
   readonly lead: {
+    /** The lead's database id in the receiver's bag — the row created
+     *  by this transfer. Lets the diary correlate this entry with
+     *  later `gossip.detail-unlocked` events that flip its lock state. */
+    readonly id: number;
     /** `commodity` is the legacy meaning (who has/wants stock). `rep`
      *  is a warning/vouch about a person. Same channel, same machinery,
      *  different content. */
@@ -381,6 +385,27 @@ export type WorldEvent =
       /** Optional — the deal id that triggered the alert (when the
        *  trigger was a pubdeal of stolen goods). */
       readonly sourceDealId?: number;
+    }
+  | {
+      readonly type: "gossip.detail-unlocked";
+      readonly at: Clock;
+      readonly atLocationId: number;
+      readonly askerActorId: number;
+      readonly partnerActorId: number;
+      readonly costPaid: number;
+      /** Who received the £ — the venue proprietor when there is one,
+       *  otherwise null (it sinks to the off-map account). */
+      readonly paidToActorId: number | null;
+      /** One row per locked headline the asker tried to unlock this
+       *  session. `unlocked` is true when the flag actually flipped;
+       *  false rows are still recorded so the diary shows the asker
+       *  paid £3 and looked at headlines that turned out to be already
+       *  unlocked or no-longer-held. v1: always all true (top-N pick
+       *  is from the currently-locked set). */
+      readonly unlockedLeads: readonly {
+        readonly leadId: number;
+        readonly unlocked: boolean;
+      }[];
     };
 
 export type EventHandler = (event: WorldEvent) => void;
@@ -539,6 +564,11 @@ export function consoleHandler(): EventHandler {
         console.log(
           `[${stamp}] pool.spawned${tag} pool=${e.poolId} item=${e.itemCode} tier=${e.qualityTier} qty=${e.quantity} window=£${e.openingUnitPrice}→£${e.closingUnitPrice} expires=D${String(e.expiryDay).padStart(2, "0")}${flavour}`,
         );
+        break;
+      }
+      case "gossip.detail-unlocked": {
+        const ids = e.unlockedLeads.map((u) => `${u.leadId}${u.unlocked ? "" : "*"}`).join(",");
+        console.log(`[${stamp}] gossip.detail-unlocked asker=${e.askerActorId} partner=${e.partnerActorId} loc=${e.atLocationId} cost=£${e.costPaid} leads=[${ids}]`);
         break;
       }
     }

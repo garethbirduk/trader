@@ -59,6 +59,7 @@ import { registerPubDealAutonomy } from "./world/pub-deal-autonomy.js";
 import { registerLocationGossip } from "./world/location-gossip.js";
 import { registerVisitorChat } from "./world/visitor-chat.js";
 import { registerPubDealGossip } from "./world/pub-deal-gossip.js";
+import { registerDetailUnlock } from "./world/detail-unlock.js";
 import { registerBrokerMaterialisation } from "./world/broker-materialisation.js";
 import { registerHeatReactions } from "./world/heat-reactions.js";
 import { registerHeatDecay } from "./world/heat-decay.js";
@@ -247,6 +248,22 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   // Deal-adjacent gossip. Every pubdeal — agreed or walked — leaks a
   // piece of news between the two would-be counterparties.
   registerPubDealGossip(world, { economics: skin.economics });
+
+  // Two-tier gossip — paid detail unlock. After a successful chat or
+  // proprietor gossip exchange, an eligible asker may "buy the partner
+  // a drink" for £3 and unlock the detail tier on their top-N locked
+  // headlines. Player-driven for the human-controlled actor; autonomous
+  // roll for NPCs. Excludes the player from the autonomy roll so their
+  // unlock is always intentional.
+  const detailUnlockAutonomy = new Set<number>(
+    [...skin.tradingActorIds].filter((id) => id !== skin.playerActorId),
+  );
+  registerDetailUnlock(world, {
+    bidderProfiles: skin.bidderProfiles,
+    infoTraderActorIds: new Set(skin.infoTraderActorIds),
+    autonomyEligibleActorIds: detailUnlockAutonomy,
+    economics: skin.economics,
+  });
 
   // Broker materialisation — at the pubs, brokers occasionally bring
   // their virtual producer in for an hour. Invert the per-producer

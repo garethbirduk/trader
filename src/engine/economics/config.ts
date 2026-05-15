@@ -184,6 +184,14 @@ export interface EconomicsConfig {
    * hoarding rubbish that no one will buy at any price.
    */
   readonly writeOff: WriteOffConfig;
+
+  /**
+   * Two-tier gossip — paid detail unlock. After a regular pub-chat
+   * gossip exchange, the asker can spend an hour and a small £ on
+   * a "drink session" with the partner, unlocking the detail tier
+   * on the top-N locked headlines in their bag.
+   */
+  readonly detailUnlock: DetailUnlockConfig;
 }
 
 export interface ShopSaleConfig {
@@ -245,6 +253,35 @@ export interface GossipMutationConfig {
    *  `subjectPoolId` cleared — a fact that's been semantically
    *  inverted is no longer grounded in the original supply pool. */
   readonly sideFlipChance: number;
+}
+
+export interface DetailUnlockConfig {
+  /** Set false to disable the unlock mechanic globally. */
+  readonly enabled: boolean;
+  /** Flat cost the asker pays per unlock session, in pence.
+   *  Default 300 (£3). */
+  readonly pricePence: number;
+  /** How many of the asker's locked headlines flip to detail tier per
+   *  session. Default 3 — top-N most recent. */
+  readonly unlockYield: number;
+  /** Asker must have at least this much cash (pence) to consider
+   *  initiating the action. Distinct from `pricePence`: this is the
+   *  general-solvency floor that makes the £3 spend worthwhile
+   *  in-character. Default 1000 (£10). */
+  readonly minCashPence: number;
+  /** Baseline probability per eligible chat that an NPC asker rolls
+   *  to ask. Stacks multiplicatively with the per-actor and interest
+   *  multipliers. Default 0.3. */
+  readonly baseProb: number;
+  /** Multiplier on baseProb when the asker is flagged as an
+   *  information-trader (Mike, Sid, Albert — the bar-stool gossips).
+   *  Default 2.0. */
+  readonly infoTraderProbMultiplier: number;
+  /** Probability bonus per locked headline whose subject category is
+   *  in the asker's bidder-profile interest band (appraisal accuracy
+   *  >= the planner's interestThreshold). Added linearly to baseProb
+   *  before multipliers. Default 0.15. */
+  readonly interestBonusPerMatch: number;
 }
 
 export interface OffMapAuctionConfig {
@@ -563,6 +600,15 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     feePerUnit: 2,
     skipFeeBelowCash: 50,
   },
+  detailUnlock: {
+    enabled: true,
+    pricePence: 300,
+    unlockYield: 3,
+    minCashPence: 1000,
+    baseProb: 0.3,
+    infoTraderProbMultiplier: 2.0,
+    interestBonusPerMatch: 0.15,
+  },
 };
 
 /**
@@ -633,6 +679,10 @@ export function resolveEconomicsConfig(
     writeOff: {
       ...DEFAULT_ECONOMICS_CONFIG.writeOff,
       ...(partial.writeOff ?? {}),
+    },
+    detailUnlock: {
+      ...DEFAULT_ECONOMICS_CONFIG.detailUnlock,
+      ...(partial.detailUnlock ?? {}),
     },
   };
 }

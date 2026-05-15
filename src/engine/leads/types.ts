@@ -65,4 +65,16 @@ export interface Lead {
    * given `subjectEventType`.
    */
   readonly subjectContextJson: string | null;
+  /**
+   * Two-tier gossip flag. When `true` the holder sees the full row.
+   * When `false` the holder sees only the headline (subject + side +
+   * holder); the value-bearing fields (`estimatedQuantity`,
+   * `estimatedUnitPrice`, `counterpartyActorId`, `subjectPoolId`) are
+   * NULL on disk until a paid unlock fills them in.
+   *
+   * First-hand creation (own stock, own wishlist, witness, lot
+   * inspection) sets this to `true`. Gossip transfer (`shareLead`,
+   * `clarifyLead`) sets it to `false`.
+   */
+  readonly detailUnlocked: boolean;
 }

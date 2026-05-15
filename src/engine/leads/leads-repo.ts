@@ -22,6 +22,12 @@ export interface InsertLeadInput {
   readonly hopCount?: number;
   readonly derivedFromLeadId?: number | null;
   readonly subjectPoolId?: number | null;
+  /**
+   * Two-tier gossip flag. Defaults to `true` (full detail visible).
+   * Gossip transfer paths pass `false`, signalling that the receiver
+   * only sees the headline until they pay to unlock the detail.
+   */
+  readonly detailUnlocked?: boolean;
 }
 
 interface LeadRow {
@@ -43,6 +49,7 @@ interface LeadRow {
   subject_pool_id: number | null;
   subject_event_type: string | null;
   subject_context_json: string | null;
+  detail_unlocked: number;
 }
 
 function rowToLead(r: LeadRow): Lead {
@@ -77,6 +84,7 @@ function rowToLead(r: LeadRow): Lead {
     subjectPoolId: r.subject_pool_id,
     subjectEventType: r.subject_event_type ?? null,
     subjectContextJson: r.subject_context_json ?? null,
+    detailUnlocked: r.detail_unlocked === 1,
   };
 }
 
@@ -89,14 +97,14 @@ export function insertLead(db: DB, input: InsertLeadInput): Lead {
          subject_target_actor_id, counterparty_actor_id,
          estimated_qty, estimated_unit_price, confidence,
          source_actor_id, acquired_day, hop_count, derived_from_lead_id,
-         subject_pool_id)
+         subject_pool_id, detail_unlocked)
        VALUES
         (@holder, @kind, @side,
          @item_kind, @tier,
          @target, @counterparty,
          @qty, @unit_price, @confidence,
          @source, @acquired_day, @hop_count, @derived_from,
-         @pool)`,
+         @pool, @detail_unlocked)`,
     )
     .run({
       holder: input.holderActorId,
@@ -114,6 +122,7 @@ export function insertLead(db: DB, input: InsertLeadInput): Lead {
       hop_count: input.hopCount ?? 0,
       derived_from: input.derivedFromLeadId ?? null,
       pool: input.subjectPoolId ?? null,
+      detail_unlocked: (input.detailUnlocked ?? true) ? 1 : 0,
     });
   const fetched = getLeadById(db, result.lastInsertRowid);
   if (!fetched) throw new Error("failed to fetch newly inserted lead");
@@ -132,6 +141,43 @@ export function getLeadsByHolder(db: DB, holderActorId: number): Lead[] {
     )
     .all({ id: holderActorId })
     .map(rowToLead);
+}
+
+/**
+ * Locked headlines in `holderActorId`'s bag — leads they've received via
+ * gossip but haven't paid to unlock. Returned most-recent-first
+ * (acquired_day DESC, id DESC) so callers can take the top-N for the
+ * paid-unlock action.
+ */
+export function getLockedLeadsByHolder(db: DB, holderActorId: number): Lead[] {
+  return db
+    .prepare<LeadRow>(
+      `SELECT * FROM leads
+       WHERE holder_actor_id = @id
+         AND detail_unlocked = 0
+       ORDER BY acquired_day DESC, id DESC`,
+    )
+    .all({ id: holderActorId })
+    .map(rowToLead);
+}
+
+/**
+ * Flip the detail_unlocked flag on a lead from 0 to 1. Returns the
+ * updated row, or null if the lead doesn't exist / was already
+ * unlocked. Used by the paid-unlock mechanic to promote a headline to
+ * detail tier in-place — the existing row's drifted detail fields
+ * become visible to the holder.
+ */
+export function unlockLeadDetail(db: DB, leadId: number): Lead | null {
+  const changes = db
+    .prepare(
+      `UPDATE leads
+       SET detail_unlocked = 1
+       WHERE id = @id AND detail_unlocked = 0`,
+    )
+    .run({ id: leadId }).changes;
+  if (changes === 0) return null;
+  return getLeadById(db, leadId);
 }
 
 /**
@@ -341,6 +387,10 @@ export function shareLead(
       hopCount: source.hopCount + 1,
       derivedFromLeadId: source.id,
       subjectPoolId: transferred.subjectPoolId,
+      // Two-tier gossip: the receiver only sees the headline until they
+      // pay to unlock. Detail fields are written but hidden at view-time
+      // until `detail_unlocked` flips.
+      detailUnlocked: false,
     });
   });
 }
