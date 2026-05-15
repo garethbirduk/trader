@@ -3,6 +3,7 @@ import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { Avatar } from "./Avatar.js";
 import { ActorRef, ItemRef, PoolRef } from "./Refs.js";
+import { colourFor } from "../lib/palette.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -195,10 +196,31 @@ export function ActorProfile({
         ) : null}
       </dl>
       {actor.bidderProfile !== undefined ? (
-        <ExpertiseSection profile={actor.bidderProfile} />
+        <ExpertiseSection
+          profile={actor.bidderProfile}
+          perceiverJ={resolvePerceiverJ(dump)}
+        />
       ) : null}
     </section>
   );
+}
+
+/**
+ * The player-actor's "general j" — drives how finely every belief-
+ * mediated number in the UI is rendered. Today's BidderProfile has
+ * no explicit per-arm j; the player's `defaultAppraisalAccuracy` is
+ * the closest proxy and matches the doc's "skin defaults set them
+ * equal per category for most actors" default. Future work: source
+ * from the player's `actor_arm_j` table when the player is allowed
+ * to be any NPC (todolist: "Player takeover — any NPC, not just Del").
+ *
+ * Fallback 1.0 = admin view (all 10 bands visible). Used when the
+ * dump has no player bidder profile (tests, exotic runs).
+ */
+function resolvePerceiverJ(dump: RunDump): number {
+  const playerId = dump.playerActorId;
+  const player = dump.actors.find((a) => a.id === playerId);
+  return player?.bidderProfile?.defaultAppraisalAccuracy ?? 1.0;
 }
 
 /**
@@ -207,16 +229,21 @@ export function ActorProfile({
  * specialties), their general competence floor, the flaw types they
  * notice, and the customer market they serve.
  *
- * Tier-label thresholds match the cinematic feel: an "Expert" reliably
- * pegs the value (~85%+); a "Clueless" punter is paying the wrong
- * price for the wrong thing. The defaults track the placeholder
- * cast — Boyce reads as a furniture/luggage specialist, Trigger
- * reads as Clueless everywhere, Mike reads as a food generalist.
+ * Colour is now driven by the judgement palette (docs/judgement.md
+ * "Display — band-collapsed colour palette"): a 10-stop blue→green→
+ * red ramp where high accuracy ≈ red. Crucially, *which* stops the
+ * UI distinguishes is gated by the player-actor's j — playing Trigger
+ * (j ≈ 0.3) collapses the screen to 3 visible bands, so a "Boyce is
+ * sharp" chip might be indistinguishable from "Boyce is okay-ish."
+ * That's the cinematic intent: low-j characters force the human to
+ * compensate via notes and memory.
  */
 function ExpertiseSection({
   profile,
+  perceiverJ,
 }: {
   readonly profile: NonNullable<RunDump["actors"][number]["bidderProfile"]>;
+  readonly perceiverJ: number;
 }) {
   const categories = useMemo(() => {
     const entries = Object.entries(profile.appraisalAccuracy ?? {});
@@ -241,7 +268,7 @@ function ExpertiseSection({
       .sort((a, b) => b.detection - a.detection);
   }, [profile]);
 
-  const defaultTier = tierForAccuracy(profile.defaultAppraisalAccuracy ?? 0.5);
+  const defaultAccuracy = profile.defaultAppraisalAccuracy ?? 0.5;
 
   // Don't render the section if the actor is a featureless generalist
   // with no specialties and no flaw eye — there's nothing to surface.
@@ -267,6 +294,7 @@ function ExpertiseSection({
                     <ExpertiseChip
                       label={c.category}
                       accuracy={c.accuracy}
+                      perceiverJ={perceiverJ}
                     />
                   </li>
                 ))}
@@ -276,11 +304,11 @@ function ExpertiseSection({
         ) : null}
         <dt>General eye</dt>
         <dd>
-          <span className={`badge badge-${defaultTier.cls}`}>
-            {defaultTier.label}
-          </span>{" "}
-          <span className="muted">
-            ({(profile.defaultAppraisalAccuracy ?? 0).toFixed(2)})
+          <span
+            className={`badge palette-stop-${colourFor(defaultAccuracy, perceiverJ)}`}
+            title={`accuracy ${defaultAccuracy.toFixed(2)}`}
+          >
+            {defaultAccuracy.toFixed(2)}
           </span>
         </dd>
         {flaws.length > 0 ? (
@@ -290,7 +318,11 @@ function ExpertiseSection({
               <ul className="profile-inline-list expertise-list">
                 {flaws.map((f) => (
                   <li key={f.flaw}>
-                    <ExpertiseChip label={f.flaw} accuracy={f.detection} />
+                    <ExpertiseChip
+                      label={f.flaw}
+                      accuracy={f.detection}
+                      perceiverJ={perceiverJ}
+                    />
                   </li>
                 ))}
               </ul>
@@ -316,29 +348,20 @@ function ExpertiseSection({
   );
 }
 
-interface AccuracyTier {
-  readonly label: string;
-  readonly cls: "expert" | "skilled" | "competent" | "novice" | "clueless";
-}
-
-function tierForAccuracy(accuracy: number): AccuracyTier {
-  if (accuracy >= 0.85) return { label: "Expert", cls: "expert" };
-  if (accuracy >= 0.65) return { label: "Skilled", cls: "skilled" };
-  if (accuracy >= 0.45) return { label: "Competent", cls: "competent" };
-  if (accuracy >= 0.25) return { label: "Some clue", cls: "novice" };
-  return { label: "Clueless", cls: "clueless" };
-}
-
 function ExpertiseChip({
   label,
   accuracy,
+  perceiverJ,
 }: {
   readonly label: string;
   readonly accuracy: number;
+  readonly perceiverJ: number;
 }) {
-  const tier = tierForAccuracy(accuracy);
   return (
-    <span className={`badge badge-${tier.cls}`} title={`${tier.label} (${accuracy.toFixed(2)})`}>
+    <span
+      className={`badge palette-stop-${colourFor(accuracy, perceiverJ)}`}
+      title={`${label} · accuracy ${accuracy.toFixed(2)}`}
+    >
       {label}
     </span>
   );

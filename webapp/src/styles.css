@@ -1317,33 +1317,61 @@ button.actor-row.actor-row-selected {
   border: 1px solid rgba(120, 80, 200, 0.4);
 }
 
-/* Expertise tier chips on the actor profile. Shows at a glance who's
- * a specialist (gold) vs a generalist (neutral) vs a punter
- * (warn-tinted). Tier thresholds in ActorProfile.tsx:tierForAccuracy. */
-.badge-expert {
-  background: rgba(212, 175, 55, 0.18);
-  color: #e0c060;
-  border: 1px solid rgba(212, 175, 55, 0.55);
+/* Judgement engine palette — 10-stop blue→green→red.
+ * See docs/judgement.md "Display — band-collapsed colour palette" and
+ * webapp/src/lib/palette.ts for the helper. Indices map to belief
+ * "magnitude" — for accuracy displays, low = blue (clueless) and
+ * high = red (expert). The palette is a neutral ruler; semantics
+ * come from context. Replaces the legacy 5-tier badge-{tier} system. */
+.palette-stop-0 {
+  background: rgba(30, 58, 138, 0.18);
+  color: #6a8dd6;
+  border: 1px solid rgba(30, 58, 138, 0.55);
 }
-.badge-skilled {
-  background: rgba(80, 160, 220, 0.16);
-  color: #7fb8e0;
-  border: 1px solid rgba(80, 160, 220, 0.45);
+.palette-stop-1 {
+  background: rgba(29, 78, 216, 0.16);
+  color: #6892e0;
+  border: 1px solid rgba(29, 78, 216, 0.5);
 }
-.badge-competent {
-  background: rgba(140, 140, 140, 0.12);
-  color: var(--text);
-  border: 1px solid rgba(140, 140, 140, 0.35);
+.palette-stop-2 {
+  background: rgba(14, 165, 233, 0.16);
+  color: #5cb8e8;
+  border: 1px solid rgba(14, 165, 233, 0.45);
 }
-.badge-novice {
-  background: rgba(140, 140, 140, 0.08);
-  color: var(--muted);
-  border: 1px solid rgba(140, 140, 140, 0.25);
+.palette-stop-3 {
+  background: rgba(20, 184, 166, 0.16);
+  color: #4ec5b3;
+  border: 1px solid rgba(20, 184, 166, 0.45);
 }
-.badge-clueless {
-  background: rgba(200, 100, 80, 0.12);
-  color: #d68a78;
-  border: 1px solid rgba(200, 100, 80, 0.4);
+.palette-stop-4 {
+  background: rgba(34, 197, 94, 0.16);
+  color: #5fd187;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+}
+.palette-stop-5 {
+  background: rgba(132, 204, 22, 0.18);
+  color: #a8d54a;
+  border: 1px solid rgba(132, 204, 22, 0.5);
+}
+.palette-stop-6 {
+  background: rgba(234, 179, 8, 0.18);
+  color: #e0c050;
+  border: 1px solid rgba(234, 179, 8, 0.55);
+}
+.palette-stop-7 {
+  background: rgba(245, 158, 11, 0.18);
+  color: #ebaa4a;
+  border: 1px solid rgba(245, 158, 11, 0.55);
+}
+.palette-stop-8 {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ed7b7b;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+.palette-stop-9 {
+  background: rgba(153, 27, 27, 0.18);
+  color: #d65555;
+  border: 1px solid rgba(153, 27, 27, 0.55);
 }
 /* Customer-market chips — slightly different palette so the
  * specialist axis and the market axis are visually distinct. */
