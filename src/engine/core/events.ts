@@ -387,6 +387,56 @@ export type WorldEvent =
       readonly sourceDealId?: number;
     }
   | {
+      readonly type: "actor.notebook-row-added";
+      readonly at: Clock;
+      readonly actorId: number;
+      /** `sell` = "I have this stock and someone wants it." `buy` =
+       *  "I have a buyer for this and someone's offering supply." */
+      readonly side: "sell" | "buy";
+      readonly itemKindId: number;
+      readonly counterpartyActorId: number;
+      /** My on-hand quantity for this item (sell-side) or null (buy-side). */
+      readonly myQty: number | null;
+      /** My weighted-average per-unit cost for this item (sell-side) or null. */
+      readonly myUnitCost: number | null;
+      /** The counterparty's gossiped quantity. Null on locked headlines. */
+      readonly theirQty: number | null;
+      /** The counterparty's gossiped per-unit price. Null on locked headlines. */
+      readonly theirUnitPrice: number | null;
+      /** Expected gross profit (sell-side) or expected onward gross (buy-side).
+       *  Null when locked or when the inputs aren't both known. */
+      readonly score: number | null;
+      /** Whether the underlying lead's detail tier is visible to the holder. */
+      readonly unlocked: boolean;
+      /** True when the counterparty's category accuracy for this item's
+       *  category is materially below their own default — i.e. an exploitable
+       *  blind spot. */
+      readonly counterpartyExploitable: boolean;
+    }
+  | {
+      readonly type: "actor.notebook-row-updated";
+      readonly at: Clock;
+      readonly actorId: number;
+      readonly side: "sell" | "buy";
+      readonly itemKindId: number;
+      readonly counterpartyActorId: number;
+      readonly myQty: number | null;
+      readonly myUnitCost: number | null;
+      readonly theirQty: number | null;
+      readonly theirUnitPrice: number | null;
+      readonly score: number | null;
+      readonly unlocked: boolean;
+      readonly counterpartyExploitable: boolean;
+    }
+  | {
+      readonly type: "actor.notebook-row-removed";
+      readonly at: Clock;
+      readonly actorId: number;
+      readonly side: "sell" | "buy";
+      readonly itemKindId: number;
+      readonly counterpartyActorId: number;
+    }
+  | {
       readonly type: "gossip.detail-unlocked";
       readonly at: Clock;
       readonly atLocationId: number;
@@ -571,6 +621,18 @@ export function consoleHandler(): EventHandler {
         console.log(`[${stamp}] gossip.detail-unlocked asker=${e.askerActorId} partner=${e.partnerActorId} loc=${e.atLocationId} cost=£${e.costPaid} leads=[${ids}]`);
         break;
       }
+      case "actor.notebook-row-added":
+      case "actor.notebook-row-updated": {
+        const verb = e.type === "actor.notebook-row-added" ? "row-added" : "row-updated";
+        const score = e.score === null ? "?" : `£${e.score}`;
+        const lock = e.unlocked ? "" : " · locked";
+        const flag = e.counterpartyExploitable ? " · ⚠exploit" : "";
+        console.log(`[${stamp}] actor.notebook-${verb} actor=${e.actorId} ${e.side} item=${e.itemKindId} cp=${e.counterpartyActorId} score=${score}${lock}${flag}`);
+        break;
+      }
+      case "actor.notebook-row-removed":
+        console.log(`[${stamp}] actor.notebook-row-removed actor=${e.actorId} ${e.side} item=${e.itemKindId} cp=${e.counterpartyActorId}`);
+        break;
     }
   };
 }

@@ -64,6 +64,7 @@ import { registerBrokerMaterialisation } from "./world/broker-materialisation.js
 import { registerHeatReactions } from "./world/heat-reactions.js";
 import { registerHeatDecay } from "./world/heat-decay.js";
 import { registerAuthoritySweep } from "./world/authority-sweep.js";
+import { registerNotebookDiff } from "./world/notebook.js";
 
 export interface SetupOptions {
   readonly seed: string;
@@ -583,6 +584,15 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     defaultReachableActorIds: skin.defaultReachableActorIds,
     economics: skin.economics,
     virtualProducersByCategory: skin.virtualProducersByCategory,
+  });
+
+  // Notebook diff — last in the hour-tick chain so it observes all
+  // state mutations the other mechanics produced this hour. Covers
+  // every actor with a bidder profile (the trading cast); civilians
+  // and virtual producers have no notebook.
+  registerNotebookDiff(world, {
+    actorIds: [...skin.bidderProfiles.keys()],
+    bidderProfiles: skin.bidderProfiles,
   });
 
   return { world, skin };

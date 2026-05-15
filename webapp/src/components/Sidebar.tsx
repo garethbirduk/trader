@@ -9,6 +9,7 @@ import { Avatar } from "./Avatar.js";
 import { ActorProfile } from "./ActorProfile.js";
 import { ActorDiary } from "./ActorDiary.js";
 import { ActorKnows } from "./ActorKnows.js";
+import { ActorNotebook } from "./ActorNotebook.js";
 import { ActorInventory } from "./ActorInventory.js";
 import { ActorRelations } from "./ActorRelations.js";
 import { LocationProfile } from "./LocationProfile.js";
@@ -124,6 +125,7 @@ export function Sidebar(props: Props) {
     const isLocation = selection.kind === "location";
     if (
       (lowerTab === "knows" ||
+        lowerTab === "notebook" ||
         lowerTab === "inventory" ||
         lowerTab === "relations") &&
       !isActor
@@ -341,6 +343,18 @@ export function Sidebar(props: Props) {
             Knows
           </button>
           <button
+            className={`side-tab ${lowerTab === "notebook" ? "side-tab-active" : ""}`}
+            onClick={() => setLowerTab("notebook")}
+            disabled={selection === null || selection.kind !== "actor"}
+            title={
+              selection?.kind === "location"
+                ? "Locations don't have notebooks"
+                : "Actionable trade rows derived from stock + leads"
+            }
+          >
+            Notebook
+          </button>
+          <button
             className={`side-tab ${lowerTab === "inventory" ? "side-tab-active" : ""}`}
             onClick={() => setLowerTab("inventory")}
             disabled={selection === null || selection.kind !== "actor"}
@@ -406,6 +420,16 @@ export function Sidebar(props: Props) {
                   dump={dump}
                   day={day}
                   hour={hour}
+                  actorId={selection.id}
+                  onSelect={setSelection}
+                />
+              )}
+              {selection.kind === "actor" && lowerTab === "notebook" && (
+                <ActorNotebook
+                  dump={dump}
+                  day={day}
+                  hour={hour}
+                  snapshot={snapshot}
                   actorId={selection.id}
                   onSelect={setSelection}
                 />

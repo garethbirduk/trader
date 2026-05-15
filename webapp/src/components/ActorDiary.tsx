@@ -423,6 +423,41 @@ function summarizeEvent(
           {String(e.targetHour).padStart(2, "0")}:00
         </>
       );
+    case "actor.notebook-row-added":
+    case "actor.notebook-row-updated": {
+      const verb = e.type === "actor.notebook-row-added" ? "noted" : "updated note";
+      const side = e.side === "sell" ? "wants" : "has";
+      const score =
+        typeof e.score === "number" ? (
+          <>
+            {" · "}
+            <strong className={(e.score as number) > 0 ? "" : "warn"}>
+              gross £{String(e.score)}
+            </strong>
+          </>
+        ) : null;
+      const exploit = e.counterpartyExploitable ? (
+        <span title="Counterparty has a category blind spot">{" ⚠"}</span>
+      ) : null;
+      const locked = e.unlocked === false ? (
+        <span className="muted"> · headline only</span>
+      ) : null;
+      return (
+        <>
+          {verb}: {A(e.counterpartyActorId)} {side} {I(e.itemKindId)}
+          {score}
+          {exploit}
+          {locked}
+        </>
+      );
+    }
+    case "actor.notebook-row-removed":
+      return (
+        <span className="muted">
+          dropped note: {A(e.counterpartyActorId)}{" "}
+          {e.side === "sell" ? "wants" : "has"} {I(e.itemKindId)}
+        </span>
+      );
     default:
       return <></>;
   }

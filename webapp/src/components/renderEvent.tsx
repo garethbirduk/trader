@@ -366,6 +366,41 @@ export function renderEvent(
           {A(e.actorId)}: {String(e.unitsSeized)} units seized, £{String(e.fine)} fine (heat was {String(e.heatBefore)})
         </>
       );
+    case "actor.notebook-row-added":
+    case "actor.notebook-row-updated": {
+      const verb = e.type === "actor.notebook-row-added" ? "noted" : "updated";
+      const side = e.side === "sell" ? "wants" : "has";
+      const score =
+        typeof e.score === "number" ? (
+          <>
+            {" · "}
+            <strong className={(e.score as number) > 0 ? "" : "warn"}>
+              gross £{String(e.score)}
+            </strong>
+          </>
+        ) : null;
+      const exploit = e.counterpartyExploitable ? (
+        <span title="Counterparty has a category blind spot — exploitable">{" ⚠"}</span>
+      ) : null;
+      const locked = e.unlocked === false ? (
+        <span className="muted"> · headline only</span>
+      ) : null;
+      return (
+        <>
+          {A(e.actorId)} {verb}: {A(e.counterpartyActorId)} {side} {I(e.itemKindId)}
+          {score}
+          {exploit}
+          {locked}
+        </>
+      );
+    }
+    case "actor.notebook-row-removed":
+      return (
+        <span className="muted">
+          {A(e.actorId)} dropped note: {A(e.counterpartyActorId)}{" "}
+          {e.side === "sell" ? "wants" : "has"} {I(e.itemKindId)}
+        </span>
+      );
     case "world.started":
       return <>seed {String(e.seed)}, {String(e.maxDays)} days</>;
     case "world.ended":
