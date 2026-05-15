@@ -14,6 +14,7 @@ import { RuleBasedAIPolicy } from "../../engine/policy/rule-based.js";
 import type { ActorPolicy } from "../../engine/policy/types.js";
 import type { BidderProfile } from "../../engine/auction/bidder-profile.js";
 import { seedKnowledgeProfiles } from "../../engine/knowledge/skin-seed.js";
+import { seedCategoryAnchors } from "../../engine/perception/anchors-repo.js";
 import type { FlawType, QualityTier } from "../../engine/stock/types.js";
 import type { TransportCapacity } from "../../engine/actors/types.js";
 import { EVERYDAY_ITEMS } from "./catalogue-everyday.js";
@@ -295,6 +296,34 @@ export interface OpenSession {
   readonly start: number;
   readonly end: number;
 }
+
+/**
+ * Per-category "uninformed prior" anchors for the judgement engine
+ * (docs/judgement.md). These are the £ values a member of the public
+ * with zero expertise on the category would guess an average item is
+ * worth. Used as the floor of `lerp(anchor, truth, expertise)` in
+ * every numeric `estimate()` call.
+ *
+ * Numbers are deliberately blunt — round-tens median-ish baselines
+ * across each category's catalogue, not careful averages. Tuning
+ * lives in the same play-testing loop as the rest of the economics
+ * knobs. Authors who want a category's clueless-guess to feel sharply
+ * different (e.g. a yuppie's "average electronics" anchor) can split
+ * per-archetype later; v1 is one number per category.
+ */
+const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map([
+  ["electrical", 50],
+  ["furniture", 70],
+  ["tools", 30],
+  ["decor", 20],
+  ["clothing", 40],
+  ["toys", 20],
+  ["luggage", 45],
+  ["food", 10],
+  ["safety", 50],
+  ["vehicles", 100],
+  ["novelty", 25],
+]);
 
 const DAYS_MON_FRI: readonly number[] = [1, 2, 3, 4, 5];
 const DAYS_MON_SAT: readonly number[] = [1, 2, 3, 4, 5, 6];
@@ -1753,6 +1782,15 @@ export function seedPlaceholderSkin(
   // skill grid is what consultations, the belief aggregator, and the
   // belief-anchored haggle read from.
   seedKnowledgeProfiles(db, bidderProfiles);
+
+  // Per-category "uninformed prior" — the floor of the
+  // `lerp(anchor, truth, expertise)` centre computation used by the
+  // judgement engine (docs/judgement.md). Tuning the table is part of
+  // the same play-testing loop as the rest of the economics knobs;
+  // numbers here are median-ish baselines for each category's
+  // catalogue, rounded to feel like "what would a punter on the
+  // street guess?" rather than a careful average.
+  seedCategoryAnchors(db, CATEGORY_ANCHORS);
 
   // Reachability map — resolve actor codes to ids.
   const reachableByCategory = new Map<string, readonly number[]>();
