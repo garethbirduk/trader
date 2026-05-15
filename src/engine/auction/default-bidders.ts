@@ -20,7 +20,7 @@ import {
   type EconomicsConfig,
 } from "../economics/config.js";
 import { estimateLotValue } from "../perception/lot-value.js";
-import { loadKnowledgeProfile } from "../knowledge/skills-repo.js";
+import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 
 export interface BidderOptions {
   /** Per-actor bidder profiles. Actors without one use `fallbackProfile`. */
@@ -172,16 +172,13 @@ export function makeBidders(
         // confusion-on-identity is a sale-floor / pub-deal mechanic,
         // not an auction one.
         //
-        // The knowledge-skill schema (migration 023) doesn't persist
-        // `customerTypes`; the in-memory BidderProfile carries it.
-        // Merge it onto the loaded profile so the customer-fit
-        // multiplier still applies under the new path.
-        const knowledgeProfile = {
-          ...loadKnowledgeProfile(db, a.id),
-          ...(profile.customerTypes !== undefined
-            ? { customerTypes: profile.customerTypes }
-            : {}),
-        };
+        // The in-memory BidderProfile is the auction's source of truth
+        // for an actor's appraisal skill — the persisted skills table
+        // is for consultations / beliefs / haggle-anchors, and isn't
+        // necessarily seeded for every actor a test cares about.
+        // Derive a KnowledgeProfile from the BidderProfile so the
+        // judgement engine reads the right per-category accuracies.
+        const knowledgeProfile = deriveKnowledgeProfile(profile);
         const result = estimateLotValue({
           db,
           actorId: a.id,

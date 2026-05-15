@@ -622,11 +622,12 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     infoTraderProbMultiplier: 2.0,
     interestBonusPerMatch: 0.15,
   },
-  // Off by default — the v1 PR-2 landing is a no-op behavioural change
-  // until a skin / test explicitly flips this on. Once snapshot tests
-  // pin the new four-case behaviour we default it to true (P8 in the
-  // implementation plan).
-  useJudgementForAppraisal: false,
+  // On by default — the scenario snapshot in judgement-scenario.test.ts
+  // pins the new four-case behaviour and the legacy appraiseLot path is
+  // still callable for tests that exercise it directly. Skins or tests
+  // that need the old behaviour pass `useJudgementForAppraisal: false`
+  // via resolveEconomicsConfig.
+  useJudgementForAppraisal: true,
 };
 
 /**
