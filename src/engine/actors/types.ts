@@ -86,4 +86,13 @@ export interface Actor {
    * the bribe clears his threshold. See `world/bribe.ts`.
    */
   readonly bribable: boolean;
+  /**
+   * Character arm scalar in [0, 1] — how charismatic / streetwise
+   * this actor reads as. Mike the publican (high) reads tells off
+   * a punter Trigger (low) trusts blindly. At pub-deal entry, the
+   * (buyer_social − seller_social) delta modifies the buyer's
+   * effective flaw-detection (see docs/judgement.md "the character
+   * arm — bidirectional reading"). Default 0.5 (neutral).
+   */
+  readonly socialScore: number;
 }

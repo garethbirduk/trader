@@ -15,6 +15,9 @@ export interface InsertActorInput {
   readonly isVirtual?: boolean;
   /** Whether this actor takes bribes. Default false. */
   readonly bribable?: boolean;
+  /** Character-arm scalar in [0, 1]. Default 0.5 (neutral). See
+   *  Actor.socialScore for the mechanic. */
+  readonly socialScore?: number;
 }
 
 interface ActorRow {
@@ -28,6 +31,7 @@ interface ActorRow {
   transport_capacity: string;
   is_virtual: number;
   bribable: number;
+  social_score: number;
 }
 
 function rowToActor(r: ActorRow): Actor {
@@ -45,6 +49,7 @@ function rowToActor(r: ActorRow): Actor {
     transportCapacity: r.transport_capacity,
     isVirtual: r.is_virtual === 1,
     bribable: (r.bribable ?? 0) === 1,
+    socialScore: r.social_score ?? 0.5,
   };
 }
 
@@ -55,14 +60,15 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
   const lockupLocationId = input.lockupLocationId ?? null;
   const isVirtual = input.isVirtual === true;
   const bribable = input.bribable === true;
+  const socialScore = clamp01(input.socialScore ?? 0.5);
   const result = db
     .prepare(
       `INSERT INTO actors (code, display_name, cash, transport_capacity,
                            home_location_id, lockup_location_id, is_virtual,
-                           bribable)
+                           bribable, social_score)
        VALUES (@code, @display_name, @cash, @transport_capacity,
                @home_location_id, @lockup_location_id, @is_virtual,
-               @bribable)`,
+               @bribable, @social_score)`,
     )
     .run({
       code: input.code,
@@ -73,6 +79,7 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
       lockup_location_id: lockupLocationId,
       is_virtual: isVirtual ? 1 : 0,
       bribable: bribable ? 1 : 0,
+      social_score: socialScore,
     });
   return {
     id: result.lastInsertRowid,
@@ -85,7 +92,27 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
     transportCapacity,
     isVirtual,
     bribable,
+    socialScore,
   };
+}
+
+export function setActorSocialScore(
+  db: DB,
+  actorId: number,
+  socialScore: number,
+): void {
+  const clamped = clamp01(socialScore);
+  db.prepare(`UPDATE actors SET social_score = @s WHERE id = @id`).run({
+    id: actorId,
+    s: clamped,
+  });
+}
+
+function clamp01(x: number): number {
+  if (!Number.isFinite(x)) return 0.5;
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
 }
 
 /** All non-virtual actors — the "live" cast that ticks. Virtual

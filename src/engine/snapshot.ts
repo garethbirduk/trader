@@ -178,6 +178,9 @@ export interface RunDump {
     /** Stage 6 — named external producer/consumer. They don't tick,
      *  don't have a location, don't pubdeal. */
     isVirtual: boolean;
+    /** Character-arm scalar in [0, 1] — drives the bidirectional
+     *  read at pub-deal entry (docs/judgement.md). */
+    socialScore: number;
     bidderProfile?: {
       appraisalAccuracy: Record<string, number>;
       defaultAppraisalAccuracy: number;
@@ -548,6 +551,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
         transportCapacity: a.transportCapacity,
         roles: skin.rolesByActorId.get(a.id) ?? [],
         isVirtual: a.isVirtual,
+        socialScore: a.socialScore,
         ...(profile !== undefined
           ? {
               bidderProfile: {

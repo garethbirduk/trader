@@ -85,6 +85,17 @@ export interface EstimateLotValueArgs {
    * legacy bidder pipeline.
    */
   readonly knownFlawType?: FlawType | null;
+  /**
+   * Additive modifier to the flaw-detection score before the coin
+   * toss — the character-arm hook (docs/judgement.md). Positive
+   * values let a high-social buyer spot tells a low-social seller
+   * can't conceal; negative values let a smooth-talking high-social
+   * seller suppress the buyer's tell-reading. The pub-deal wiring
+   * computes this as `economics.characterArmAlpha × (buyer_social −
+   * seller_social)`. The result is clamp01'd before the roll, so
+   * arbitrarily large bonuses still saturate at certain detection.
+   */
+  readonly flawDetectionBonus?: number;
 }
 
 export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
@@ -151,17 +162,29 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
   const perceivedUnitValue = Math.max(0, price.sample);
 
   // ── 4. Flaw detection (legacy mechanic, preserved) ────────────
+  // The character-arm hook adds a (possibly negative) bonus on top
+  // of the base detection score. Already-known flaws stay forced
+  // 100% — once you've been burned you always spot it, regardless
+  // of who's pitching.
   let flawDetected = false;
   let flawMultiplier = 1;
   if (actualItem.flawType !== null) {
-    const detectionScore =
-      args.knownFlawType === actualItem.flawType
-        ? 1
-        : profile.flawDetection.get(actualItem.flawType) ??
-          profile.defaultFlawDetection;
-    flawDetected = args.rng.next() < detectionScore;
-    if (flawDetected) {
+    if (args.knownFlawType === actualItem.flawType) {
+      flawDetected = true;
       flawMultiplier = economics.flawDiscount[actualItem.flawType];
+      // Still advance the RNG so seed-stability between knownFlaw
+      // and unknown-flaw branches stays predictable.
+      args.rng.next();
+    } else {
+      const base =
+        profile.flawDetection.get(actualItem.flawType) ??
+        profile.defaultFlawDetection;
+      const bonus = args.flawDetectionBonus ?? 0;
+      const effective = clamp01(base + bonus);
+      flawDetected = args.rng.next() < effective;
+      if (flawDetected) {
+        flawMultiplier = economics.flawDiscount[actualItem.flawType];
+      }
     }
   }
 
@@ -200,6 +223,13 @@ function requireItemKind(db: DB, kindId: number): ItemKind {
   const it = getItemKindById(db, kindId);
   if (!it) throw new Error(`estimateLotValue: item_kind ${kindId} not found`);
   return it;
+}
+
+function clamp01(x: number): number {
+  if (!Number.isFinite(x)) return 0;
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
 }
 
 function computeCustomerFit(

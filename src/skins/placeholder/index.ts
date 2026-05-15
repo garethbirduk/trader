@@ -250,6 +250,11 @@ interface ActorSpec {
   readonly flexibleDailyMode?: boolean;
   /** Whether this actor accepts bribes. Defaults to false. */
   readonly bribable?: boolean;
+  /** Character-arm scalar in [0, 1]. Defaults to 0.5 (neutral).
+   *  Drives the (buyer_social − seller_social) delta at pub-deal
+   *  entry which modifies the buyer's effective flaw-detection
+   *  (docs/judgement.md). */
+  readonly socialScore?: number;
   /** Per-day random lunch destination for employed civilians whose
    *  schedule is otherwise fixed. On each day in `daysOfWeek` the
    *  seed rolls one pick from `candidateCodes` and applies it to
@@ -863,6 +868,7 @@ const ACTORS: readonly ActorSpec[] = [
     code: "player",
     displayName: "Del Boy",
     cash: 2000,
+    socialScore: 0.75,
     ...makeRoutineFromSpans("peckham-flat", [
       { from: 6, to: 8, location: "peckham-flat" },
       { from: 8, to: 8.5, location: "sids-cafe" },
@@ -882,6 +888,7 @@ const ACTORS: readonly ActorSpec[] = [
     code: "boyce",
     displayName: "Boyce",
     cash: 5000,
+    socialScore: 0.7,
     ...makeRoutineFromSpans("boycie-house", [
       { from: 8, to: 9, location: "boycie-house" },
       { from: 9, to: 17, location: "FLEXIBLE" },
@@ -898,6 +905,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "denzil",
+    socialScore: 0.55,
     displayName: "Denzil",
     cash: 1500,
     ...makeRoutineFromSpans("denzil-house", [
@@ -931,6 +939,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "trigger",
+    socialScore: 0.2,
     displayName: "Trigger",
     cash: 200,
     // Trigger sweeps a beat — hourly diary of real spots along the
@@ -965,6 +974,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "mike",
+    socialScore: 0.85,
     displayName: "Mike Fisher",
     cash: 600,
     ...makeRoutineFromSpans("nags", [
@@ -990,6 +1000,7 @@ const ACTORS: readonly ActorSpec[] = [
   // ─── Trotter household ───────────────────────────────────────────────
   {
     code: "rodney",
+    socialScore: 0.45,
     displayName: "Rodney Trotter",
     cash: 200,
     ...makeRoutineFromSpans("peckham-flat", [
@@ -1006,6 +1017,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "albert",
+    socialScore: 0.65,
     displayName: "Uncle Albert",
     cash: 100,
     ...makeRoutineFromSpans("peckham-flat", [
@@ -1055,6 +1067,7 @@ const ACTORS: readonly ActorSpec[] = [
   // ─── pub regulars / sidekicks ───────────────────────────────────────
   {
     code: "mickey-pearce",
+    socialScore: 0.55,
     displayName: "Mickey Pearce",
     cash: 150,
     ...makeRoutineFromSpans("mickey-jevon-flat", [
@@ -1149,6 +1162,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "sid",
+    socialScore: 0.75,
     displayName: "Sid",
     cash: 400,
     ...makeRoutineFromSpans("sids-cafe", [
@@ -1246,6 +1260,7 @@ const ACTORS: readonly ActorSpec[] = [
   // ─── enemies / wildcards ────────────────────────────────────────────
   {
     code: "slater",
+    socialScore: 0.85,
     displayName: "DCI Roy Slater",
     cash: 300,
     // Slater patrols — his routine reads as "station" but the
@@ -1313,6 +1328,7 @@ const ACTORS: readonly ActorSpec[] = [
   },
   {
     code: "driscoll-brothers",
+    socialScore: 0.9,
     displayName: "The Driscoll Brothers",
     cash: 2000,
     // Plural-as-one: two brothers operating as a single in-world
@@ -1659,6 +1675,7 @@ export function seedPlaceholderSkin(
       homeLocationId: homeId,
       lockupLocationId: lockupId,
       ...(spec.bribable === true ? { bribable: true } : {}),
+      ...(spec.socialScore !== undefined ? { socialScore: spec.socialScore } : {}),
     });
     actorByCode.set(spec.code, a.id);
     actorLockupLocByCode.set(spec.code, lockupId);

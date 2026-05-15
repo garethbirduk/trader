@@ -188,6 +188,23 @@ export function ActorProfile({
         ) : null}
         <dt>Reachable pools</dt>
         <dd>{reachablePools}</dd>
+        {actor.socialScore !== undefined ? (
+          <>
+            <dt
+              title="Character arm — how easily this actor reads tells and conceals dodginess. Modifies flaw-detection at pub-deal entry."
+            >
+              Social
+            </dt>
+            <dd>
+              <span
+                className={`badge palette-stop-${colourFor(actor.socialScore, resolvePerceiverJ(dump))}`}
+                title={`social score ${actor.socialScore.toFixed(2)}`}
+              >
+                {actor.socialScore.toFixed(2)}
+              </span>
+            </dd>
+          </>
+        ) : null}
         {pendingPayoutTotal > 0 ? (
           <>
             <dt>In transit</dt>

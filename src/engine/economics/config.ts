@@ -194,6 +194,19 @@ export interface EconomicsConfig {
   readonly detailUnlock: DetailUnlockConfig;
 
   /**
+   * Character-arm weight (docs/judgement.md, "the character arm —
+   * bidirectional reading"). The buyer's effective flaw detection
+   * at pub-deal entry is `base + α × (buyer_social − seller_social)`,
+   * where α is this knob. 0 disables the character arm entirely;
+   * 1.0 makes a full-range social delta (-1 to +1) able to swing
+   * flaw detection across its full range. Default 0.5 — big enough
+   * to matter on the cinematic asymmetric pairings (Mike vs Trigger
+   * fencing scam_bait), small enough that base detection still
+   * dominates same-score pairings.
+   */
+  readonly characterArmAlpha: number;
+
+  /**
    * Judgement engine (docs/judgement.md) — staged migration flag.
    * When false, valuation runs through the legacy `appraiseLot` /
    * `estimateUnitRetail` pipelines. When true (default), all
@@ -632,6 +645,7 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     infoTraderProbMultiplier: 2.0,
     interestBonusPerMatch: 0.15,
   },
+  characterArmAlpha: 0.5,
   // On by default — the scenario snapshot in judgement-scenario.test.ts
   // pins the new four-case behaviour and the legacy appraiseLot path is
   // still callable for tests that exercise it directly. Skins or tests

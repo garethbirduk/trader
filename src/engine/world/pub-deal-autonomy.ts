@@ -445,6 +445,21 @@ function runOneAttempt(args: {
   const knownBuyerFlaw =
     item.flawType !== null &&
     actorKnowsFlaw(world.db, buyerId, item.id, item.flawType);
+
+  // Character arm (docs/judgement.md). The buyer's effective flaw
+  // detection picks up a bonus when their social score exceeds the
+  // seller's, and a penalty when the seller has the upper hand. Same-
+  // score pairings cancel out — base flaw detection alone decides.
+  // Mike (0.85) reading Boyce (0.7) gets +0.075 detection; Boyce
+  // pitching the same wares to Trigger (0.2) gives Trigger −0.25
+  // detection. The α weight (default 0.5) lives in economics config.
+  const buyerActor = getActorById(world.db, buyerId);
+  const sellerActorForRead = getActorById(world.db, sellerId);
+  const socialDelta =
+    (buyerActor?.socialScore ?? 0.5) -
+    (sellerActorForRead?.socialScore ?? 0.5);
+  const flawDetectionBonus = economics.characterArmAlpha * socialDelta;
+
   let appraisedValuation: number;
   if (economics.useJudgementForAppraisal) {
     const knowledgeProfile = deriveKnowledgeProfile(buyerProfile);
@@ -457,6 +472,7 @@ function runOneAttempt(args: {
       profileOverride: knowledgeProfile,
       perceivedKindIdOverride: item.id,
       perceivedTierOverride: perceivedTier,
+      flawDetectionBonus,
       ...(knownBuyerFlaw && item.flawType !== null
         ? { knownFlawType: item.flawType }
         : {}),

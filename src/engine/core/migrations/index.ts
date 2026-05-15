@@ -28,6 +28,7 @@ import { m026ClearanceKnowledge } from "./026-clearance-knowledge.js";
 import { m027StallsBribery } from "./027-stalls-bribery.js";
 import { m028LeadDetailUnlocked } from "./028-lead-detail-unlocked.js";
 import { m029PerceptionAnchorsAndArmJ } from "./029-perception-anchors-and-arm-j.js";
+import { m030ActorSocialScore } from "./030-actor-social-score.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -64,4 +65,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m027StallsBribery,
   m028LeadDetailUnlocked,
   m029PerceptionAnchorsAndArmJ,
+  m030ActorSocialScore,
 ];

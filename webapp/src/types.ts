@@ -30,6 +30,10 @@ export interface RunActor {
    *  routine, location, or any in-world position. Optional for
    *  back-compat with older dumps. */
   readonly isVirtual?: boolean;
+  /** Character-arm scalar in [0, 1] — drives the bidirectional read
+   *  at pub-deal entry (docs/judgement.md). Optional for back-compat
+   *  with dumps generated before the character arm shipped. */
+  readonly socialScore?: number;
   /** Bidder profile snapshot — used to compute retail estimates. */
   readonly bidderProfile?: BidderProfileDump;
 }
