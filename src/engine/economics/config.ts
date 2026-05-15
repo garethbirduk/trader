@@ -194,15 +194,17 @@ export interface EconomicsConfig {
   readonly detailUnlock: DetailUnlockConfig;
 
   /**
-   * Judgement engine v1 (docs/judgement.md) — staged migration flag.
-   * When false (default), auction-lot valuation runs through the
-   * legacy `appraiseLot` pipeline. When true, the bidder pipeline
-   * routes through `estimateLotValue` — the compositional
-   * Identity ∘ Condition ∘ Price pathway that produces the four-case
-   * behaviour (confidently-wrong / confidently-right / haphazardly-
-   * wrong / hesitantly-right). Other call sites (pub-deal, market,
-   * shop) still call legacy paths regardless of this flag; their
-   * migration is gated on later phases.
+   * Judgement engine (docs/judgement.md) — staged migration flag.
+   * When false, valuation runs through the legacy `appraiseLot`
+   * pipeline. When true (default), call sites route through
+   * `estimateLotValue` — the compositional Identity ∘ Condition ∘
+   * Price pathway that produces the four-case behaviour (confidently-
+   * wrong / confidently-right / haphazardly-wrong / hesitantly-right).
+   *
+   * Covers both auction-lot valuation (`default-bidders.ts`) and
+   * pub-deal buyer appraisal (`pub-deal-autonomy.ts`). Market-sale
+   * and shop-sale still go through `estimateUnitRetail` regardless
+   * of this flag; their migration is a later phase.
    */
   readonly useJudgementForAppraisal: boolean;
 }

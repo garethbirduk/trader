@@ -5,6 +5,8 @@ import {
   appraiseLot,
 } from "../auction/bidder-profile.js";
 import { estimateUnitRetail } from "../auction/estimate.js";
+import { estimateLotValue } from "../perception/lot-value.js";
+import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
 import { getActorById } from "../actors/actors-repo.js";
 import { TRANSIT_DAYS_BY_TIER, TRANSPORT_LIMITS } from "../actors/types.js";
@@ -420,16 +422,51 @@ function runOneAttempt(args: {
     clearedPrice: null,
     clearedToActorId: null,
   };
-  const appraisal = appraiseLot({
-    profile: buyerProfile,
-    lot: fakeLot,
-    category: item.category,
-    flawType: item.flawType,
-    itemTargetCustomers: item.targetCustomers,
-    trueLotValue: trueLotValueAtIdeal,
-    rng: world.rng,
-    economics,
-  });
+  // Buyer's RRP estimate at the proposed bag size. Routes through the
+  // judgement engine when the flag is on (docs/judgement.md) — same
+  // composition as the auction call site, with the pubdeal-specific
+  // signals plumbed through as overrides:
+  //   • identity is overridden to the actual kindId — the seller is
+  //     naming the goods in the pitch, the buyer isn't squinting at
+  //     a stall trying to tell a Rolex from a Rulex
+  //   • condition is overridden to `perceivedTier` — the existing
+  //     pubBuyerTierMode logic decides whether the buyer accepts the
+  //     seller's tier claim or substitutes a pessimistic assumed tier
+  //   • knownFlawType short-circuits the detection roll when the
+  //     buyer has previously been burned by this item kind's flaw
+  const knownBuyerFlaw =
+    item.flawType !== null &&
+    actorKnowsFlaw(world.db, buyerId, item.id, item.flawType);
+  let appraisedValuation: number;
+  if (economics.useJudgementForAppraisal) {
+    const knowledgeProfile = deriveKnowledgeProfile(buyerProfile);
+    const result = estimateLotValue({
+      db: world.db,
+      actorId: buyerId,
+      lot: fakeLot,
+      rng: world.rng,
+      economics,
+      profileOverride: knowledgeProfile,
+      perceivedKindIdOverride: item.id,
+      perceivedTierOverride: perceivedTier,
+      ...(knownBuyerFlaw && item.flawType !== null
+        ? { knownFlawType: item.flawType }
+        : {}),
+    });
+    appraisedValuation = result.perceivedLotValue;
+  } else {
+    const appraisal = appraiseLot({
+      profile: buyerProfile,
+      lot: fakeLot,
+      category: item.category,
+      flawType: item.flawType,
+      itemTargetCustomers: item.targetCustomers,
+      trueLotValue: trueLotValueAtIdeal,
+      rng: world.rng,
+      economics,
+    });
+    appraisedValuation = appraisal.valuation;
+  }
 
   // Seller's own retail estimate — deterministic tier-anchored mid over
   // the bag they actually hold (excludes forward-sourceable; you don't
@@ -445,7 +482,7 @@ function runOneAttempt(args: {
   // appraisal at the full proposed bag; seller's is their deterministic
   // mid over their actual on-hand stock.
   if (
-    appraisal.valuation < economics.pubDealRrpFloor ||
+    appraisedValuation < economics.pubDealRrpFloor ||
     sellerRrp < economics.pubDealRrpFloor
   ) {
     world.events.emit({
@@ -457,7 +494,7 @@ function runOneAttempt(args: {
       itemKindId: item.id,
       qualityTier: seedLot.qualityTier,
       sellerRrp,
-      buyerRrp: appraisal.valuation,
+      buyerRrp: appraisedValuation,
       floor: economics.pubDealRrpFloor,
     });
     return;
@@ -468,7 +505,7 @@ function runOneAttempt(args: {
 
   // Buyer's total ceiling = appraised retail × fraction, capped by cash.
   const buyerTotalCeiling = Math.min(
-    Math.round(appraisal.valuation * economics.pubBuyerCeilingFraction),
+    Math.round(appraisedValuation * economics.pubBuyerCeilingFraction),
     buyer.cash,
   );
   if (buyerTotalCeiling < 1) return;
