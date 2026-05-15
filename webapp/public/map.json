@@ -110,7 +110,11 @@
     },
     "shamrock-club": {
       "x": 1360,
-      "y": 320
+      "y": 310
+    },
+    "riverside-club": {
+      "x": 1170,
+      "y": -100
     },
     "goldfingers": {
       "x": 230,
@@ -151,6 +155,14 @@
     "throne-co": {
       "x": 1490,
       "y": 320
+    },
+    "spanner-motors": {
+      "x": 370,
+      "y": 980
+    },
+    "camshaft-autos": {
+      "x": 790,
+      "y": 520
     }
   },
   "waypoints": {
@@ -327,10 +339,6 @@
     [
       "wp_8",
       "wp_7"
-    ],
-    [
-      "wp_14",
-      "dirty-barrys"
     ],
     [
       "wp_15",
@@ -537,12 +545,32 @@
       "wp_18"
     ],
     [
-      "ratners-peckham",
-      "sparks-electrical"
-    ],
-    [
       "betting-shop",
       "post-office"
+    ],
+    [
+      "riverside-club",
+      "wp_21"
+    ],
+    [
+      "ratners-peckham",
+      "camshaft-autos"
+    ],
+    [
+      "sparks-electrical",
+      "camshaft-autos"
+    ],
+    [
+      "camshaft-autos",
+      "lockup"
+    ],
+    [
+      "dirty-barrys",
+      "spanner-motors"
+    ],
+    [
+      "spanner-motors",
+      "wp_14"
     ]
   ],
   "offMap": {

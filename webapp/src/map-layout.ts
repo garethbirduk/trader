@@ -50,6 +50,7 @@ export const DEFAULT_LAYOUT: MapLayout = {
     "transworld-depot": { x: 1330, y: 700 },
     "denzil-house": { x: 1480, y: 860 },
     "shamrock-club": { x: 1330, y: 990 },
+    "riverside-club": { x: 1180, y: 990 },
   },
   waypoints: {
     wp_NW: { x: 280, y: 290 },
@@ -109,6 +110,7 @@ export const DEFAULT_LAYOUT: MapLayout = {
     ["transworld-depot", "denzil-house"],
     ["transworld-depot", "shamrock-club"],
     ["shamrock-club", "off-map"],
+    ["riverside-club", "shamrock-club"],
   ],
   offMap: {
     "off-map": true,

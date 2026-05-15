@@ -370,6 +370,11 @@ const LOCATIONS: readonly LocationSpec[] = [
   { code: "hi-tech-hut", displayName: "Hi-Tech Hut", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "comfy-corner", displayName: "Comfy Corner", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
   { code: "throne-co", displayName: "Throne & Co", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
+  // Vehicle-parts garages — proprietors are vehicle/tools specialists.
+  // Different shift patterns: Spanner runs a full-trade week (Mon-Sat
+  // early-start parts shop); Camshaft trades to a smarter Mon-Fri rhythm.
+  { code: "spanner-motors", displayName: "Spanner Motors", type: "business", openHours: { start: 8, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
+  { code: "camshaft-autos", displayName: "Camshaft Autos", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
 ];
 
 /**
@@ -379,7 +384,19 @@ const LOCATIONS: readonly LocationSpec[] = [
  * decide where shop-sale attempts can fire, and the actor list to
  * constrain who can be the *buyer* (dealer-sells-to-shopkeeper only).
  */
-const HIGH_STREET_SHOPS: readonly { readonly shopCode: string; readonly keeperCode: string }[] = [
+interface HighStreetShopSpec {
+  readonly shopCode: string;
+  readonly keeperCode: string;
+  /** Override the default 9-17 keeper shift. */
+  readonly hours?: { readonly from: number; readonly to: number };
+  /** When true, the keeper keeps their full schedule on Sat/Sun (matches
+   *  Sid's caff pattern). Defaults to false → weekday-only keeper, off-map
+   *  Sat/Sun. The location's `openDaysOfWeek` is the canonical
+   *  customer-facing schedule; this just covers the keeper's diary. */
+  readonly worksWeekends?: boolean;
+}
+
+const HIGH_STREET_SHOPS: readonly HighStreetShopSpec[] = [
   { shopCode: "goldfingers", keeperCode: "cyril-diamond" },
   { shopCode: "ratners-peckham", keeperCode: "margaret-bracelet" },
   { shopCode: "patels", keeperCode: "ranjit-patel" },
@@ -390,6 +407,8 @@ const HIGH_STREET_SHOPS: readonly { readonly shopCode: string; readonly keeperCo
   { shopCode: "hi-tech-hut", keeperCode: "brian-yardley" },
   { shopCode: "comfy-corner", keeperCode: "doris-whittle" },
   { shopCode: "throne-co", keeperCode: "reg-throne" },
+  { shopCode: "spanner-motors", keeperCode: "eddie-spanner", hours: { from: 8, to: 16 }, worksWeekends: true },
+  { shopCode: "camshaft-autos", keeperCode: "vince-camshaft" },
 ];
 
 const SHOPKEEPER_DISPLAY_NAMES: Readonly<Record<string, string>> = {
@@ -403,6 +422,8 @@ const SHOPKEEPER_DISPLAY_NAMES: Readonly<Record<string, string>> = {
   "brian-yardley": "Brian Yardley",
   "doris-whittle": "Doris Whittle",
   "reg-throne": "Reg Throne",
+  "eddie-spanner": "Eddie Spanner",
+  "vince-camshaft": "Vince Camshaft",
 };
 
 /**
@@ -424,6 +445,8 @@ const SHOP_SPECIALTIES_BY_CODE: Readonly<Record<string, readonly string[]>> = {
   "hi-tech-hut": ["electrical", "tools"],
   "comfy-corner": ["furniture", "decor"],
   "throne-co": ["furniture", "decor"],
+  "spanner-motors": ["vehicles", "tools"],
+  "camshaft-autos": ["vehicles", "tools"],
 };
 
 /**
@@ -707,6 +730,20 @@ const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {
     perCategory: { furniture: 0.95, decor: 0.7 },
     defaultFlawDetection: 0.7,
     customerTypes: ["yuppies", "businesses"],
+  },
+  "eddie-spanner": {
+    defaultAccuracy: 0.3,
+    perCategory: { vehicles: 0.95, tools: 0.75 },
+    defaultFlawDetection: 0.8,
+    perFlawDetection: { dangerous: 0.9, faulty: 0.85 },
+    customerTypes: ["tradesmen", "dads"],
+  },
+  "vince-camshaft": {
+    defaultAccuracy: 0.3,
+    perCategory: { vehicles: 0.95, tools: 0.75 },
+    defaultFlawDetection: 0.8,
+    perFlawDetection: { dangerous: 0.9, faulty: 0.85 },
+    customerTypes: ["tradesmen", "dads"],
   },
   // ─── off-map dealers (the wider trade scene) ─────────────────────────
   // Sharp inside their lane, generalist-noisy outside it. Each appears
@@ -1266,20 +1303,26 @@ const ACTORS: readonly ActorSpec[] = [
   // All keep the same 9-17 schedule at their respective shop and
   // overnight off-map. They're buyers in shop-deal autonomy; their
   // category specialisation lives in their bidder profile, not here.
-  ...HIGH_STREET_SHOPS.map(({ shopCode, keeperCode }): ActorSpec => ({
-    code: keeperCode,
-    displayName: SHOPKEEPER_DISPLAY_NAMES[keeperCode] ?? keeperCode,
-    cash: 2500,
-    ...makeRoutineFromSpans("off-map", [
-      { from: 9, to: 17, location: shopCode },
-    ]),
-    // Shops shut Saturday and Sunday — keeper stays off-map.
-    ...weekendSpans("off-map", []),
-    defaultLocation: shopCode,
-    homeLocation: "off-map",
-    transportCapacity: "none",
-    awakeHours: { start: 8, end: 18 },
-  })),
+  ...HIGH_STREET_SHOPS.map(({ shopCode, keeperCode, hours, worksWeekends }): ActorSpec => {
+    const fromH = hours?.from ?? 9;
+    const toH = hours?.to ?? 17;
+    const base = {
+      code: keeperCode,
+      displayName: SHOPKEEPER_DISPLAY_NAMES[keeperCode] ?? keeperCode,
+      cash: 2500,
+      ...makeRoutineFromSpans("off-map", [
+        { from: fromH, to: toH, location: shopCode },
+      ]),
+      defaultLocation: shopCode,
+      homeLocation: "off-map",
+      transportCapacity: "none" as TransportCapacity,
+      awakeHours: { start: Math.max(0, fromH - 1), end: Math.min(24, toH + 1) },
+    };
+    // Mon-Fri keepers stay off-map at weekends; Mon-Sat keepers keep their
+    // weekday rhythm Sat/Sun (engine policy has no Sat/Sun split — the
+    // location's openDaysOfWeek is the customer-facing truth).
+    return worksWeekends ? base : { ...base, ...weekendSpans("off-map", []) };
+  }),
   // ─── off-map dealers ─────────────────────────────────────────────────
   // The wider trade scene from neighbouring areas. Each travels to
   // Sotheby's during gallery (8-11) + auction (11-16) hours on
@@ -1479,6 +1522,8 @@ const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
   "brian-yardley": ["shopkeeper"],
   "doris-whittle": ["shopkeeper"],
   "reg-throne": ["shopkeeper"],
+  "eddie-spanner": ["shopkeeper"],
+  "vince-camshaft": ["shopkeeper"],
   // Off-map dealers — wider trade scene tag for the filter rail.
   "slough-stan": ["off-map-dealer"],
   "croydon-carl": ["off-map-dealer"],

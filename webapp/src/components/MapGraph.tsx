@@ -44,7 +44,7 @@ function syncFromLayout(layout: MapLayout): void {
 
 const SHORT_LABELS: Record<string, string> = {
   "peckham-flat": "Del's",
-  "boycie-house": "Boycie's",
+  "boycie-house": "Boyce's",
   "denzil-house": "Denzil's",
   "boyce-auto-sales": "Boyce Autos",
   "transworld-depot": "Transworld",
