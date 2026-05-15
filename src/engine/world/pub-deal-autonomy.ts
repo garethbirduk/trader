@@ -1,10 +1,6 @@
 import type { World, Unsubscribe } from "../core/world.js";
 import type { BidderProfile } from "../auction/bidder-profile.js";
-import {
-  FALLBACK_BIDDER_PROFILE,
-  appraiseLot,
-} from "../auction/bidder-profile.js";
-import { estimateUnitRetail } from "../auction/estimate.js";
+import { FALLBACK_BIDDER_PROFILE } from "../auction/bidder-profile.js";
 import { estimateLotValue } from "../perception/lot-value.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
@@ -19,7 +15,7 @@ import { getRepLeadAbout, getSupplyLeadsForItem } from "../leads/leads-repo.js";
 import { getPoolById } from "../pools/pools-repo.js";
 import { attemptPubDeal } from "../mechanics/pub-deal/attempt.js";
 import type { AuctionLot } from "../auction/types.js";
-import type { FlawType, QualityTier } from "../stock/types.js";
+import type { QualityTier } from "../stock/types.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -370,52 +366,38 @@ function runOneAttempt(args: {
       : seedLot.qualityTier;
   const tierMult = economics.tierMultipliers[perceivedTier];
 
-  // Build the buyer's profile, forcing flaw detection if they already know
-  // about this item kind's flaw.
-  const baseProfile = profiles.get(buyerId) ?? FALLBACK_BIDDER_PROFILE;
-  const buyerProfile =
-    item.flawType !== null &&
-    actorKnowsFlaw(world.db, buyerId, item.id, item.flawType)
-      ? withForcedFlawDetection(baseProfile, item.flawType)
-      : baseProfile;
+  // Buyer's profile — the judgement engine handles "previously
+  // burned by this flaw" via the knownFlawType arg below; no need
+  // to pre-mutate the profile.
+  const buyerProfile = profiles.get(buyerId) ?? FALLBACK_BIDDER_PROFILE;
 
   // Seller's profile + per-unit belief band. The belief drives the
   // haggle floor and target — cost basis is sunk and no longer
   // anchors the negotiation (todolist:104-107).
   const sellerProfile = profiles.get(sellerId) ?? FALLBACK_BIDDER_PROFILE;
-  const sellerBeliefEstimate = economics.useJudgementForAppraisal
-    ? estimatePriceBand({
-        db: world.db,
-        actorId: sellerId,
-        category: item.category,
-        truth:
-          item.baseValue * economics.tierMultipliers[seedLot.qualityTier],
-        profileOverride: deriveKnowledgeProfile(sellerProfile),
-      })
-    : estimateUnitRetail(sellerProfile, item, seedLot.qualityTier, economics);
-  // Buyer's per-unit belief band, used for the event snapshot and
-  // (potentially) for the ceiling. The actual ceiling routes through
-  // `estimateLotValue` (or `appraiseLot` on the legacy path) below;
-  // this band is diagnostic only.
-  const buyerBeliefEstimate = economics.useJudgementForAppraisal
-    ? estimatePriceBand({
-        db: world.db,
-        actorId: buyerId,
-        category: item.category,
-        truth: item.baseValue * economics.tierMultipliers[perceivedTier],
-        profileOverride: deriveKnowledgeProfile(buyerProfile),
-      })
-    : estimateUnitRetail(buyerProfile, item, perceivedTier, economics);
+  const sellerBeliefEstimate = estimatePriceBand({
+    db: world.db,
+    actorId: sellerId,
+    category: item.category,
+    truth: item.baseValue * economics.tierMultipliers[seedLot.qualityTier],
+    profileOverride: deriveKnowledgeProfile(sellerProfile),
+  });
+  // Buyer's per-unit belief band, used for the event snapshot only.
+  // The buyer's actual ceiling routes through `estimateLotValue`
+  // below, which is the engine's authoritative valuation.
+  const buyerBeliefEstimate = estimatePriceBand({
+    db: world.db,
+    actorId: buyerId,
+    category: item.category,
+    truth: item.baseValue * economics.tierMultipliers[perceivedTier],
+    profileOverride: deriveKnowledgeProfile(buyerProfile),
+  });
   const trueRrpPerUnit =
     item.baseValue * economics.tierMultipliers[seedLot.qualityTier];
 
   // Synthetic AuctionLot for appraisal at the seller's ideal qty — we
   // need the buyer's RRP estimate at full proposed size for the £100
   // gate.
-  const trueLotValueAtIdeal = Math.max(
-    1,
-    Math.round(item.baseValue * tierMult * sellerIdealQty),
-  );
   const fakeLot: AuctionLot = {
     id: -1,
     sourcePoolId: null,
@@ -430,10 +412,8 @@ function runOneAttempt(args: {
     clearedPrice: null,
     clearedToActorId: null,
   };
-  // Buyer's RRP estimate at the proposed bag size. Routes through the
-  // judgement engine when the flag is on (docs/judgement.md) — same
-  // composition as the auction call site, with the pubdeal-specific
-  // signals plumbed through as overrides:
+  // Buyer's RRP estimate at the proposed bag size. Same compositional
+  // path as the auction call site, with pubdeal-specific overrides:
   //   • identity is overridden to the actual kindId — the seller is
   //     naming the goods in the pitch, the buyer isn't squinting at
   //     a stall trying to tell a Rolex from a Rulex
@@ -442,17 +422,15 @@ function runOneAttempt(args: {
   //     seller's tier claim or substitutes a pessimistic assumed tier
   //   • knownFlawType short-circuits the detection roll when the
   //     buyer has previously been burned by this item kind's flaw
+  //   • flawDetectionBonus carries the character-arm delta: the
+  //     buyer reads tells better when their social exceeds seller's
   const knownBuyerFlaw =
     item.flawType !== null &&
     actorKnowsFlaw(world.db, buyerId, item.id, item.flawType);
 
-  // Character arm (docs/judgement.md). The buyer's effective flaw
-  // detection picks up a bonus when their social score exceeds the
-  // seller's, and a penalty when the seller has the upper hand. Same-
-  // score pairings cancel out — base flaw detection alone decides.
-  // Mike (0.85) reading Boyce (0.7) gets +0.075 detection; Boyce
-  // pitching the same wares to Trigger (0.2) gives Trigger −0.25
-  // detection. The α weight (default 0.5) lives in economics config.
+  // Character arm (docs/judgement.md). Mike (0.85) reading Boyce
+  // (0.7) gets +0.075 detection; Boyce pitching to Trigger (0.2)
+  // gives Trigger −0.25. Same-score pairings cancel out.
   const buyerActor = getActorById(world.db, buyerId);
   const sellerActorForRead = getActorById(world.db, sellerId);
   const socialDelta =
@@ -460,37 +438,22 @@ function runOneAttempt(args: {
     (sellerActorForRead?.socialScore ?? 0.5);
   const flawDetectionBonus = economics.characterArmAlpha * socialDelta;
 
-  let appraisedValuation: number;
-  if (economics.useJudgementForAppraisal) {
-    const knowledgeProfile = deriveKnowledgeProfile(buyerProfile);
-    const result = estimateLotValue({
-      db: world.db,
-      actorId: buyerId,
-      lot: fakeLot,
-      rng: world.rng,
-      economics,
-      profileOverride: knowledgeProfile,
-      perceivedKindIdOverride: item.id,
-      perceivedTierOverride: perceivedTier,
-      flawDetectionBonus,
-      ...(knownBuyerFlaw && item.flawType !== null
-        ? { knownFlawType: item.flawType }
-        : {}),
-    });
-    appraisedValuation = result.perceivedLotValue;
-  } else {
-    const appraisal = appraiseLot({
-      profile: buyerProfile,
-      lot: fakeLot,
-      category: item.category,
-      flawType: item.flawType,
-      itemTargetCustomers: item.targetCustomers,
-      trueLotValue: trueLotValueAtIdeal,
-      rng: world.rng,
-      economics,
-    });
-    appraisedValuation = appraisal.valuation;
-  }
+  const knowledgeProfile = deriveKnowledgeProfile(buyerProfile);
+  const valuationResult = estimateLotValue({
+    db: world.db,
+    actorId: buyerId,
+    lot: fakeLot,
+    rng: world.rng,
+    economics,
+    profileOverride: knowledgeProfile,
+    perceivedKindIdOverride: item.id,
+    perceivedTierOverride: perceivedTier,
+    flawDetectionBonus,
+    ...(knownBuyerFlaw && item.flawType !== null
+      ? { knownFlawType: item.flawType }
+      : {}),
+  });
+  const appraisedValuation = valuationResult.perceivedLotValue;
 
   // Seller's own retail estimate — deterministic tier-anchored mid over
   // the bag they actually hold (excludes forward-sourceable; you don't
@@ -648,11 +611,3 @@ function runOneAttempt(args: {
   // proposalQty vs the seller's lot quantity at the time of agreement.
 }
 
-function withForcedFlawDetection(
-  profile: BidderProfile,
-  flawType: FlawType,
-): BidderProfile {
-  const merged = new Map(profile.flawTypeDetection);
-  merged.set(flawType, 1);
-  return { ...profile, flawTypeDetection: merged };
-}

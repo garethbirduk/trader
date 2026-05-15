@@ -9,7 +9,6 @@ import {
   FALLBACK_BIDDER_PROFILE,
   type BidderProfile,
 } from "../auction/bidder-profile.js";
-import { estimateUnitRetail } from "../auction/estimate.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import {
@@ -164,22 +163,15 @@ export function registerShopSale(
         opts.bidderProfiles.get(shop.keeperActorId) ?? FALLBACK_BIDDER_PROFILE;
       // Keeper's belief band — surfaced on the event for the UI, not
       // used to gate sales (customer drives the realised price).
-      const sellerEstimate = economics.useJudgementForAppraisal
-        ? estimatePriceBand({
-            db: world.db,
-            actorId: shop.keeperActorId,
-            category: item.category,
-            truth:
-              item.baseValue *
-              economics.tierMultipliers[displayed.qualityTier as QualityTier],
-            profileOverride: deriveKnowledgeProfile(profile),
-          })
-        : estimateUnitRetail(
-            profile,
-            item,
-            displayed.qualityTier as QualityTier,
-            economics,
-          );
+      const sellerEstimate = estimatePriceBand({
+        db: world.db,
+        actorId: shop.keeperActorId,
+        category: item.category,
+        truth:
+          item.baseValue *
+          economics.tierMultipliers[displayed.qualityTier as QualityTier],
+        profileOverride: deriveKnowledgeProfile(profile),
+      });
 
       // Build a per-shop flow config. The persona mix's
       // populationWeight is biased by spec.personaWeightMultipliers,

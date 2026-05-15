@@ -12,13 +12,6 @@ import { computeEstimate } from "../src/engine/perception/estimate.js";
  *
  * Anchor 80, truth 1000 — large gap so cluelessness shows up clearly
  * as a centre near 80, not near 1000.
- *
- * The legacy `appraiseLot` exploratory tabulation that lived here
- * before PR #1 was a noisy point-estimate model; it's been
- * superseded by the band+mixture model in `computeEstimate`. The
- * legacy path still runs at runtime (via `useJudgementForAppraisal:
- * false`) but isn't pinned by a snapshot — the old behaviour is
- * tracked by `tests/bidder-profile.test.ts` directly.
  */
 
 const TRUTH = 1000;

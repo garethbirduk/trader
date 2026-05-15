@@ -206,28 +206,6 @@ export interface EconomicsConfig {
    */
   readonly characterArmAlpha: number;
 
-  /**
-   * Judgement engine (docs/judgement.md) — staged migration flag.
-   * When false, valuation runs through the legacy `appraiseLot` /
-   * `estimateUnitRetail` pipelines. When true (default), all
-   * perception call sites route through the judgement engine:
-   *
-   *   • Buyer appraisal — auction (`default-bidders.ts`) and pubdeal
-   *     (`pub-deal-autonomy.ts`) — uses `estimateLotValue` (the
-   *     compositional Identity ∘ Condition ∘ Price pathway that
-   *     produces the four-case behaviour: confidently-wrong /
-   *     confidently-right / haphazardly-wrong / hesitantly-right).
-   *   • Seller / keeper price-belief bands — pubdeal seller floor
-   *     and target, market-sale stall belief, shop-sale keeper
-   *     belief — uses `estimatePriceBand` (deterministic centre +
-   *     band, no mixture sampling).
-   *
-   * Off-mode keeps the legacy code paths runnable for regression
-   * comparison; the v1 tests in `bidder-profile.test.ts` and
-   * `pub-deal-*.test.ts` cover both. Future PRs may retire the
-   * legacy shims once we're confident nothing depends on them.
-   */
-  readonly useJudgementForAppraisal: boolean;
 }
 
 export interface ShopSaleConfig {
@@ -646,12 +624,6 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     interestBonusPerMatch: 0.15,
   },
   characterArmAlpha: 0.5,
-  // On by default — the scenario snapshot in judgement-scenario.test.ts
-  // pins the new four-case behaviour and the legacy appraiseLot path is
-  // still callable for tests that exercise it directly. Skins or tests
-  // that need the old behaviour pass `useJudgementForAppraisal: false`
-  // via resolveEconomicsConfig.
-  useJudgementForAppraisal: true,
 };
 
 /**

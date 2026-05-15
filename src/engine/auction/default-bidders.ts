@@ -11,10 +11,9 @@ import {
 } from "./knowledge-repo.js";
 import {
   FALLBACK_BIDDER_PROFILE,
-  appraiseLot,
   type BidderProfile,
 } from "./bidder-profile.js";
-import type { FlawType, QualityTier } from "../stock/types.js";
+import type { QualityTier } from "../stock/types.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -100,7 +99,6 @@ export function makeBidders(
   const fallback = opts.fallbackProfile ?? FALLBACK_BIDDER_PROFILE;
   const minCash = opts.minCashToParticipate ?? 100;
   const exclude = new Set(opts.excludeActorCodes ?? ["auction-house"]);
-  const tierMult = opts.tierMultipliers ?? economics.tierMultipliers;
   const requireLocation = opts.requireActorAtLocationId;
   const requireKnowledge = opts.requireKnowledge ?? false;
   const assumedTier: QualityTier =
@@ -111,16 +109,6 @@ export function makeBidders(
   return (db, lot, _day, rng) => {
     const item = getItemKindById(db, lot.itemKindId);
     if (!item) return [];
-    // Two valuations: one against the lot's true tier (used by
-    // inspected bidders) and one against the assumed tier (used by
-    // un-inspected bidders who still know about the lot).
-    const trueLotValue = Math.round(
-      item.baseValue * (tierMult[lot.qualityTier] ?? 1) * lot.quantity,
-    );
-    const guessedLotValue = Math.round(
-      item.baseValue * (tierMult[assumedTier] ?? 1) * lot.quantity,
-    );
-
     const bidders: AuctionBidder[] = [];
     for (const a of listActors(db)) {
       if (exclude.has(a.code)) continue;
@@ -150,68 +138,39 @@ export function makeBidders(
       // behaviour: bidders see the lot's actual tier. Inspection only
       // matters when gating is on.
       const inspected = !requireKnowledge || actorHasInspectedLot(db, a.id, lot.id);
-      const baseProfile = profiles.get(a.id) ?? fallback;
-      // If the actor has previously learned this item's flaw type
-      // (via inspection or by being burned), force their detection to
-      // 1.0 for that flaw — they always apply the discount on bids
-      // for this item kind.
+      const profile = profiles.get(a.id) ?? fallback;
       const knowsFlaw =
         item.flawType !== null && actorKnowsFlaw(db, a.id, item.id, item.flawType);
-      const profile = knowsFlaw && item.flawType !== null
-        ? withForcedFlawDetection(baseProfile, item.flawType)
-        : baseProfile;
 
-      let valuation: number;
-      if (economics.useJudgementForAppraisal) {
-        // Judgement engine path. Uninspected bidders see the listing
-        // (kind id from the catalogue, qty, floor) but not the tier —
-        // they substitute the assumed tier. Inspected bidders run the
-        // full Identity ∘ Condition ∘ Price composition against
-        // truth. Identity is overridden to the listing's kindId
-        // because the auction listing names the kind explicitly;
-        // confusion-on-identity is a sale-floor / pub-deal mechanic,
-        // not an auction one.
-        //
-        // The in-memory BidderProfile is the auction's source of truth
-        // for an actor's appraisal skill — the persisted skills table
-        // is for consultations / beliefs / haggle-anchors, and isn't
-        // necessarily seeded for every actor a test cares about.
-        // Derive a KnowledgeProfile from the BidderProfile so the
-        // judgement engine reads the right per-category accuracies.
-        const knowledgeProfile = deriveKnowledgeProfile(profile);
-        const result = estimateLotValue({
-          db,
-          actorId: a.id,
-          lot,
-          rng,
-          economics,
-          profileOverride: knowledgeProfile,
-          perceivedKindIdOverride: lot.itemKindId,
-          ...(inspected ? {} : { perceivedTierOverride: assumedTier }),
-          ...(knowsFlaw && item.flawType !== null
-            ? { knownFlawType: item.flawType }
-            : {}),
-        });
-        valuation = result.perceivedLotValue;
-      } else {
-        // Legacy path — preserved verbatim.
-        const lotForAppraisal: AuctionLot = inspected
-          ? lot
-          : { ...lot, qualityTier: assumedTier };
-        const lotValueForAppraisal = inspected ? trueLotValue : guessedLotValue;
-        const appraisal = appraiseLot({
-          profile,
-          lot: lotForAppraisal,
-          category: item.category,
-          flawType: item.flawType,
-          trueLotValue: lotValueForAppraisal,
-          itemTargetCustomers: item.targetCustomers,
-          rng,
-          economics,
-        });
-        valuation = appraisal.valuation;
-      }
-      const ceiling = Math.min(valuation, a.cash);
+      // Judgement engine path (docs/judgement.md). Uninspected bidders
+      // see the listing (kind id from the catalogue, qty, floor) but
+      // not the tier — they substitute the assumed tier. Inspected
+      // bidders run the full Identity ∘ Condition ∘ Price composition
+      // against truth. Identity is overridden to the listing's kindId
+      // because the auction listing names the kind explicitly;
+      // confusion-on-identity is a sale-floor / pub-deal mechanic.
+      //
+      // The in-memory BidderProfile is the auction's source of truth
+      // for an actor's appraisal skill — the persisted skills table
+      // is for consultations / beliefs / haggle-anchors, and isn't
+      // necessarily seeded for every actor a test cares about. Derive
+      // a KnowledgeProfile from the BidderProfile so the judgement
+      // engine reads the right per-category accuracies.
+      const knowledgeProfile = deriveKnowledgeProfile(profile);
+      const result = estimateLotValue({
+        db,
+        actorId: a.id,
+        lot,
+        rng,
+        economics,
+        profileOverride: knowledgeProfile,
+        perceivedKindIdOverride: lot.itemKindId,
+        ...(inspected ? {} : { perceivedTierOverride: assumedTier }),
+        ...(knowsFlaw && item.flawType !== null
+          ? { knownFlawType: item.flawType }
+          : {}),
+      });
+      const ceiling = Math.min(result.perceivedLotValue, a.cash);
 
       if (ceiling < lot.floorPrice) continue;
       bidders.push({ actorId: a.id, ceiling });
@@ -246,18 +205,6 @@ export function makeBidders(
  * tier-multiplier formula but in the same general neighbourhood.
  */
 export const makeDefaultBidders = makeBidders;
-
-function withForcedFlawDetection(
-  profile: BidderProfile,
-  flawType: FlawType,
-): BidderProfile {
-  const merged = new Map(profile.flawTypeDetection);
-  merged.set(flawType, 1);
-  return {
-    ...profile,
-    flawTypeDetection: merged,
-  };
-}
 
 function actorBusyInspectingThisHour(
   db: DB,

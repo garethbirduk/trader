@@ -1,22 +1,26 @@
 /**
- * Judgement engine — public surface. v1 lands the numeric two-knob
- * band model behind `estimate()`; the UI palette ships alongside.
- * See docs/judgement.md for the full architectural brief.
+ * Judgement engine — public surface (docs/judgement.md). Every
+ * perception call site in the engine routes through this module:
  *
- * What's wired up in v1:
- *   • `estimate({ db, actorId, arm: 'price', category, truth, rng })`
- *     — produces a centred band + a mixture-shaped sample.
- *   • `colourFor(value, perceiverJ)` — band-collapsed palette index.
+ *   • `estimateLotValue` — Identity ∘ Condition ∘ Price composition
+ *     for auction-lot and pubdeal-buyer appraisal. Returns a £
+ *     valuation, the per-arm breakdown, and flaw / customer-fit
+ *     multipliers.
+ *   • `estimatePriceBand` — RNG-free centre + band for "what does
+ *     this actor think this is worth" diagnostic surfaces and
+ *     belief-anchored haggle floors / targets.
+ *   • `estimate` — single-decision sample from the price arm
+ *     directly. Used by the scenario snapshot to pin the four-case
+ *     distributional shape.
+ *   • `estimateIdentity` / `estimateCondition` — categorical and
+ *     ordinal arms. Used by `estimateLotValue` internally; surfaced
+ *     for any future call site that wants the per-arm result.
+ *   • `colourFor(value, perceiverJ)` — band-collapsed palette index
+ *     for the UI; resolution gated by the player-actor's j.
  *
- * What's NOT wired up yet (later phases):
- *   • `arm: 'identity' | 'condition' | 'character'` — the helper
- *     throws to keep call sites honest. Identity / condition will
- *     route through the same centred-band shape once the auction
- *     composition lands; character ships with the pub-deal social-
- *     delta phase.
- *   • Migration of `appraiseLot` / `estimateUnitRetail` / pub-deal /
- *     market / shop sale to call this helper. Today's call sites
- *     keep reading through the legacy bridge.
+ * The character arm wires in at pub-deal entry as a flawDetectionBonus
+ * on estimateLotValue — see docs/judgement.md "the character arm —
+ * bidirectional reading" and `pub-deal-autonomy.ts`.
  */
 
 export {

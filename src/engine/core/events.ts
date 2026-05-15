@@ -80,8 +80,8 @@ export type WorldEvent =
       readonly turns: readonly NegotiationTurnSnapshot[];
       /** Seller's per-unit belief band at the moment of agreement —
        *  what they thought a unit was worth as they shook hands.
-       *  Snapshot of `estimateUnitRetail` against the seller's
-       *  bidder profile. Optional for back-compat with older dumps. */
+       *  Snapshot of `estimatePriceBand` against the seller's
+       *  knowledge profile. Optional for back-compat with older dumps. */
       readonly sellerBelief?: { readonly low: number; readonly high: number };
       /** Buyer's per-unit belief band at the moment of agreement.
        *  The two-band diff is the asymmetric-knowledge surface area. */

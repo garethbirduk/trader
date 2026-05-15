@@ -8,70 +8,17 @@ import { persistKnowledgeProfile } from "../src/engine/knowledge/skills-repo.js"
 import { setActorArmJ } from "../src/engine/perception/arm-j-repo.js";
 import { seedCategoryAnchors } from "../src/engine/perception/anchors-repo.js";
 import {
-  DEFAULT_ECONOMICS_CONFIG,
-  resolveEconomicsConfig,
-} from "../src/engine/economics/config.js";
-import {
   FALLBACK_KNOWLEDGE_PROFILE,
   type KnowledgeProfile,
 } from "../src/engine/knowledge/types.js";
-import type { BidderProfile } from "../src/engine/auction/bidder-profile.js";
 import { createRNG } from "../src/engine/core/rng.js";
 
 function profileWith(over: Partial<KnowledgeProfile>): KnowledgeProfile {
   return { ...FALLBACK_KNOWLEDGE_PROFILE, ...over };
 }
 
-const JUDGEMENT_CONFIG = resolveEconomicsConfig({
-  useJudgementForAppraisal: true,
-});
-
-const ECON_OFF = DEFAULT_ECONOMICS_CONFIG;
-
-describe("default-bidders — useJudgementForAppraisal flag", () => {
-  it("flag off (default) preserves legacy appraiseLot output exactly", () => {
-    // Two identical setups, same seed, both with flag off — output is
-    // deterministic and the existing bidder-profile.test.ts pins it.
-    // This test just confirms the flag-off path doesn't accidentally
-    // route through the judgement engine.
-    const db = freshDB();
-    insertActor(db, { code: "auction-house", displayName: "H" });
-    const aid = insertActor(db, {
-      code: "boyce",
-      displayName: "Boyce",
-      cash: 100000,
-    }).id;
-    const item = insertItemKind(db, {
-      code: "v",
-      displayName: "v",
-      category: "electrical",
-      baseValue: 100,
-    });
-    const lot = insertAuctionLot(db, {
-      itemKindId: item.id,
-      qualityTier: "good",
-      quantity: 10,
-      floorPrice: 50,
-      listedDay: 1,
-    });
-    const bidder: BidderProfile = {
-      appraisalAccuracy: new Map([["electrical", 0.8]]),
-      defaultAppraisalAccuracy: 0.5,
-      flawTypeDetection: new Map(),
-      defaultFlawTypeDetection: 0.5,
-    };
-    const find = makeBidders({
-      profiles: new Map([[aid, bidder]]),
-      economics: ECON_OFF,
-    });
-    const bidders = find(db, lot, 1, createRNG("legacy"));
-    expect(bidders).toHaveLength(1);
-    // Just assert the bidder exists with a plausible ceiling — the
-    // exact ceiling is pinned by bidder-profile.test.ts.
-    expect(bidders[0]?.ceiling).toBeGreaterThan(0);
-  });
-
-  it("flag on: expert with full skill produces ceiling close to truth", () => {
+describe("default-bidders — judgement engine end-to-end", () => {
+  it("expert with full skill produces ceiling close to truth", () => {
     const db = freshDB();
     insertActor(db, { code: "auction-house", displayName: "H" });
     const aid = insertActor(db, {
@@ -121,7 +68,6 @@ describe("default-bidders — useJudgementForAppraisal flag", () => {
             },
           ],
         ]),
-        economics: JUDGEMENT_CONFIG,
       });
       const bidders = find(db, lot, 1, createRNG(`expert-${i}`));
       expect(bidders).toHaveLength(1);
@@ -131,7 +77,7 @@ describe("default-bidders — useJudgementForAppraisal flag", () => {
     expect(Math.abs(mean - TRUTH) / TRUTH).toBeLessThan(0.05);
   });
 
-  it("flag on: clueless bidder with high j produces ceiling anchored near the prior, well below truth", () => {
+  it("clueless bidder with high j produces ceiling anchored near the prior, well below truth", () => {
     const db = freshDB();
     insertActor(db, { code: "auction-house", displayName: "H" });
     const aid = insertActor(db, {
@@ -183,7 +129,6 @@ describe("default-bidders — useJudgementForAppraisal flag", () => {
             },
           ],
         ]),
-        economics: JUDGEMENT_CONFIG,
       });
       const bidders = find(db, lot, 1, createRNG(`clueless-${i}`));
       expect(bidders).toHaveLength(1);
@@ -194,7 +139,7 @@ describe("default-bidders — useJudgementForAppraisal flag", () => {
     expect(mean).toBeLessThan(TRUTH * 0.3);
   });
 
-  it("flag on: head-to-head, expert beats clueless on a £1100 lot", () => {
+  it("head-to-head, expert beats clueless on a £1100 lot", () => {
     const db = freshDB();
     insertActor(db, { code: "auction-house", displayName: "H" });
     const expert = insertActor(db, {
@@ -268,7 +213,6 @@ describe("default-bidders — useJudgementForAppraisal flag", () => {
             },
           ],
         ]),
-        economics: JUDGEMENT_CONFIG,
       });
       const bidders = find(db, lot, 1, createRNG(`h2h-${i}`));
       const eb = bidders.find((b) => b.actorId === expert);

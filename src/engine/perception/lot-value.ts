@@ -21,9 +21,9 @@ import type { EstimateResult } from "./types.js";
 /**
  * Compositional auction-lot valuation — Identity ∘ Condition ∘ Price.
  *
- * Replicates the v1 `appraiseLot` surface (an actor's ceiling for a
- * given lot, including flaw + customer-fit discounts) but routes the
- * three perception axes through the new judgement engine
+ * Authoritative buyer-valuation pipeline — an actor's ceiling for a
+ * given lot, including flaw + customer-fit discounts. Routes the
+ * three perception axes through the judgement engine
  * (docs/judgement.md §"Composition"):
  *
  *   1. Identity arm  → which kind does the actor think this is?
@@ -42,10 +42,10 @@ import type { EstimateResult } from "./types.js";
  *     substitutes a pessimistic-realist guess (typically
  *     `economics.pubAssumedTier`).
  *
- * Flaw detection + customer-fit multipliers are preserved from the
- * legacy `appraiseLot` — the doc parks both at the price-arm
- * boundary in v1, leaving flaw integration with the character arm
- * for a later phase.
+ * Flaw detection is composed with the character arm via the
+ * `flawDetectionBonus` arg — see `pub-deal-autonomy.ts` for the
+ * social-delta wiring. Customer-fit multiplier is applied to the
+ * final perceivedLotValue.
  */
 
 export interface LotValuation {
