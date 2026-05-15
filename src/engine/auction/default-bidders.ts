@@ -19,6 +19,8 @@ import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
 } from "../economics/config.js";
+import { estimateLotValue } from "../perception/lot-value.js";
+import { loadKnowledgeProfile } from "../knowledge/skills-repo.js";
 
 export interface BidderOptions {
   /** Per-actor bidder profiles. Actors without one use `fallbackProfile`. */
@@ -153,26 +155,65 @@ export function makeBidders(
       // (via inspection or by being burned), force their detection to
       // 1.0 for that flaw — they always apply the discount on bids
       // for this item kind.
-      const profile =
-        item.flawType !== null && actorKnowsFlaw(db, a.id, item.id, item.flawType)
-          ? withForcedFlawDetection(baseProfile, item.flawType)
-          : baseProfile;
-      // Uninspected bidders see the listing (item kind, qty, floor) but
-      // not the quality tier; they bid against the assumed-tier guess.
-      const lotForAppraisal: AuctionLot = inspected
-        ? lot
-        : { ...lot, qualityTier: assumedTier };
-      const lotValueForAppraisal = inspected ? trueLotValue : guessedLotValue;
-      const { valuation } = appraiseLot({
-        profile,
-        lot: lotForAppraisal,
-        category: item.category,
-        flawType: item.flawType,
-        trueLotValue: lotValueForAppraisal,
-        itemTargetCustomers: item.targetCustomers,
-        rng,
-        economics,
-      });
+      const knowsFlaw =
+        item.flawType !== null && actorKnowsFlaw(db, a.id, item.id, item.flawType);
+      const profile = knowsFlaw && item.flawType !== null
+        ? withForcedFlawDetection(baseProfile, item.flawType)
+        : baseProfile;
+
+      let valuation: number;
+      if (economics.useJudgementForAppraisal) {
+        // Judgement engine path. Uninspected bidders see the listing
+        // (kind id from the catalogue, qty, floor) but not the tier —
+        // they substitute the assumed tier. Inspected bidders run the
+        // full Identity ∘ Condition ∘ Price composition against
+        // truth. Identity is overridden to the listing's kindId
+        // because the auction listing names the kind explicitly;
+        // confusion-on-identity is a sale-floor / pub-deal mechanic,
+        // not an auction one.
+        //
+        // The knowledge-skill schema (migration 023) doesn't persist
+        // `customerTypes`; the in-memory BidderProfile carries it.
+        // Merge it onto the loaded profile so the customer-fit
+        // multiplier still applies under the new path.
+        const knowledgeProfile = {
+          ...loadKnowledgeProfile(db, a.id),
+          ...(profile.customerTypes !== undefined
+            ? { customerTypes: profile.customerTypes }
+            : {}),
+        };
+        const result = estimateLotValue({
+          db,
+          actorId: a.id,
+          lot,
+          rng,
+          economics,
+          profileOverride: knowledgeProfile,
+          perceivedKindIdOverride: lot.itemKindId,
+          ...(inspected ? {} : { perceivedTierOverride: assumedTier }),
+          ...(knowsFlaw && item.flawType !== null
+            ? { knownFlawType: item.flawType }
+            : {}),
+        });
+        valuation = result.perceivedLotValue;
+      } else {
+        // Legacy path — preserved verbatim.
+        const lotForAppraisal: AuctionLot = inspected
+          ? lot
+          : { ...lot, qualityTier: assumedTier };
+        const lotValueForAppraisal = inspected ? trueLotValue : guessedLotValue;
+        const appraisal = appraiseLot({
+          profile,
+          lot: lotForAppraisal,
+          category: item.category,
+          flawType: item.flawType,
+          trueLotValue: lotValueForAppraisal,
+          itemTargetCustomers: item.targetCustomers,
+          rng,
+          economics,
+        });
+        valuation = appraisal.valuation;
+      }
       const ceiling = Math.min(valuation, a.cash);
 
       if (ceiling < lot.floorPrice) continue;

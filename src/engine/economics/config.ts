@@ -192,6 +192,19 @@ export interface EconomicsConfig {
    * on the top-N locked headlines in their bag.
    */
   readonly detailUnlock: DetailUnlockConfig;
+
+  /**
+   * Judgement engine v1 (docs/judgement.md) — staged migration flag.
+   * When false (default), auction-lot valuation runs through the
+   * legacy `appraiseLot` pipeline. When true, the bidder pipeline
+   * routes through `estimateLotValue` — the compositional
+   * Identity ∘ Condition ∘ Price pathway that produces the four-case
+   * behaviour (confidently-wrong / confidently-right / haphazardly-
+   * wrong / hesitantly-right). Other call sites (pub-deal, market,
+   * shop) still call legacy paths regardless of this flag; their
+   * migration is gated on later phases.
+   */
+  readonly useJudgementForAppraisal: boolean;
 }
 
 export interface ShopSaleConfig {
@@ -609,6 +622,11 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     infoTraderProbMultiplier: 2.0,
     interestBonusPerMatch: 0.15,
   },
+  // Off by default — the v1 PR-2 landing is a no-op behavioural change
+  // until a skin / test explicitly flips this on. Once snapshot tests
+  // pin the new four-case behaviour we default it to true (P8 in the
+  // implementation plan).
+  useJudgementForAppraisal: false,
 };
 
 /**

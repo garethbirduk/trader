@@ -49,3 +49,20 @@ export {
   type PerArmDials,
   type ResolveDialsArgs,
 } from "./expertise.js";
+
+export {
+  estimateIdentity,
+  estimateCondition,
+  estimateIdentityPure,
+  estimateConditionPure,
+  type IdentityArmResult,
+  type ConditionArmResult,
+  type IdentityArgs,
+  type ConditionArgs,
+} from "./arms.js";
+
+export {
+  estimateLotValue,
+  type LotValuation,
+  type EstimateLotValueArgs,
+} from "./lot-value.js";
