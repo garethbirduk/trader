@@ -6,6 +6,7 @@ import {
 } from "../auction/bidder-profile.js";
 import { estimateUnitRetail } from "../auction/estimate.js";
 import { estimateLotValue } from "../perception/lot-value.js";
+import { estimatePriceBand } from "../perception/estimate.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
 import { getActorById } from "../actors/actors-repo.js";
@@ -382,22 +383,29 @@ function runOneAttempt(args: {
   // haggle floor and target — cost basis is sunk and no longer
   // anchors the negotiation (todolist:104-107).
   const sellerProfile = profiles.get(sellerId) ?? FALLBACK_BIDDER_PROFILE;
-  const sellerBeliefEstimate = estimateUnitRetail(
-    sellerProfile,
-    item,
-    seedLot.qualityTier,
-    economics,
-  );
+  const sellerBeliefEstimate = economics.useJudgementForAppraisal
+    ? estimatePriceBand({
+        db: world.db,
+        actorId: sellerId,
+        category: item.category,
+        truth:
+          item.baseValue * economics.tierMultipliers[seedLot.qualityTier],
+        profileOverride: deriveKnowledgeProfile(sellerProfile),
+      })
+    : estimateUnitRetail(sellerProfile, item, seedLot.qualityTier, economics);
   // Buyer's per-unit belief band, used for the event snapshot and
-  // (potentially) for the ceiling. The existing ceiling logic still
-  // routes through `appraiseLot` below; keeping that path intact so
-  // this change touches the seller side only.
-  const buyerBeliefEstimate = estimateUnitRetail(
-    buyerProfile,
-    item,
-    perceivedTier,
-    economics,
-  );
+  // (potentially) for the ceiling. The actual ceiling routes through
+  // `estimateLotValue` (or `appraiseLot` on the legacy path) below;
+  // this band is diagnostic only.
+  const buyerBeliefEstimate = economics.useJudgementForAppraisal
+    ? estimatePriceBand({
+        db: world.db,
+        actorId: buyerId,
+        category: item.category,
+        truth: item.baseValue * economics.tierMultipliers[perceivedTier],
+        profileOverride: deriveKnowledgeProfile(buyerProfile),
+      })
+    : estimateUnitRetail(buyerProfile, item, perceivedTier, economics);
   const trueRrpPerUnit =
     item.baseValue * economics.tierMultipliers[seedLot.qualityTier];
 

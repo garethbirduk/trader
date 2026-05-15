@@ -183,6 +183,73 @@ export function steppedJ(j: number): number {
   return floor / 10 + frac * SHARPNESS_DAMPING;
 }
 
+/**
+ * RNG-free variant of `estimate` for the price arm — returns just
+ * the deterministic centre + band {low, high} without drawing a
+ * mixture sample. Diagnostic surfaces (market/shop sellerBelief in
+ * events, UI retail-estimate chips) and belief-anchored seller
+ * haggle floors / targets in pub-deal autonomy use this instead of
+ * `estimate()` to avoid consuming extra RNG draws and to keep the
+ * "what does this person THINK the price band is" framing
+ * separate from "what do they actually quote on a single decision."
+ */
+export interface PriceBandResult {
+  readonly centre: number;
+  readonly low: number;
+  readonly high: number;
+  readonly expertise: number;
+  readonly j: number;
+}
+
+export interface PriceBandArgs {
+  readonly db: DB;
+  readonly actorId: number;
+  readonly category: string;
+  readonly truth: number;
+  readonly profileOverride?: KnowledgeProfile;
+}
+
+export function estimatePriceBand(args: PriceBandArgs): PriceBandResult {
+  if (!Number.isFinite(args.truth) || args.truth < 0) {
+    throw new Error(
+      `estimatePriceBand: truth must be finite >= 0; got ${args.truth}`,
+    );
+  }
+  const dials = resolvePerArmDials({
+    db: args.db,
+    actorId: args.actorId,
+    arm: "price",
+    key: args.category,
+    ...(args.profileOverride !== undefined
+      ? { profileOverride: args.profileOverride }
+      : {}),
+  });
+  const anchor = getCategoryAnchor(args.db, args.category);
+  return computePriceBand({
+    truth: args.truth,
+    anchor,
+    expertise: dials.expertise,
+    j: dials.j,
+  });
+}
+
+/** Pure variant — no DB. Centre and band for a numeric belief. */
+export function computePriceBand(args: {
+  readonly truth: number;
+  readonly anchor: number;
+  readonly expertise: number;
+  readonly j: number;
+}): PriceBandResult {
+  const expertise = clamp01(args.expertise);
+  const j = clamp01(args.j);
+  const centre = args.anchor + (args.truth - args.anchor) * expertise;
+  const effectiveJ = steppedJ(j);
+  const spreadFactor = 1 - effectiveJ;
+  const low = Math.max(0, centre * (1 - spreadFactor));
+  const high = Math.max(low, centre * (1 + spreadFactor));
+  return { centre, low, high, expertise, j };
+}
+
 function clamp01(x: number): number {
   if (!Number.isFinite(x)) return 0;
   if (x < 0) return 0;

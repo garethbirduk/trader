@@ -195,16 +195,24 @@ export interface EconomicsConfig {
 
   /**
    * Judgement engine (docs/judgement.md) — staged migration flag.
-   * When false, valuation runs through the legacy `appraiseLot`
-   * pipeline. When true (default), call sites route through
-   * `estimateLotValue` — the compositional Identity ∘ Condition ∘
-   * Price pathway that produces the four-case behaviour (confidently-
-   * wrong / confidently-right / haphazardly-wrong / hesitantly-right).
+   * When false, valuation runs through the legacy `appraiseLot` /
+   * `estimateUnitRetail` pipelines. When true (default), all
+   * perception call sites route through the judgement engine:
    *
-   * Covers both auction-lot valuation (`default-bidders.ts`) and
-   * pub-deal buyer appraisal (`pub-deal-autonomy.ts`). Market-sale
-   * and shop-sale still go through `estimateUnitRetail` regardless
-   * of this flag; their migration is a later phase.
+   *   • Buyer appraisal — auction (`default-bidders.ts`) and pubdeal
+   *     (`pub-deal-autonomy.ts`) — uses `estimateLotValue` (the
+   *     compositional Identity ∘ Condition ∘ Price pathway that
+   *     produces the four-case behaviour: confidently-wrong /
+   *     confidently-right / haphazardly-wrong / hesitantly-right).
+   *   • Seller / keeper price-belief bands — pubdeal seller floor
+   *     and target, market-sale stall belief, shop-sale keeper
+   *     belief — uses `estimatePriceBand` (deterministic centre +
+   *     band, no mixture sampling).
+   *
+   * Off-mode keeps the legacy code paths runnable for regression
+   * comparison; the v1 tests in `bidder-profile.test.ts` and
+   * `pub-deal-*.test.ts` cover both. Future PRs may retire the
+   * legacy shims once we're confident nothing depends on them.
    */
   readonly useJudgementForAppraisal: boolean;
 }

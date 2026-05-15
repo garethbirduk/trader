@@ -36,10 +36,14 @@ export {
 export {
   estimate,
   computeEstimate,
+  estimatePriceBand,
+  computePriceBand,
   steppedJ,
   SHARPNESS_DAMPING,
   TIGHT_KERNEL_HALF_WIDTH_FRAC,
   type EstimateArgs,
+  type PriceBandArgs,
+  type PriceBandResult,
 } from "./estimate.js";
 
 export {
