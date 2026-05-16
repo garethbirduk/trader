@@ -1,6 +1,9 @@
 import type { World, Unsubscribe } from "../core/world.js";
+import type { EconomicsConfig } from "../economics/config.js";
 import { getDealById, getDealLinesByDealId } from "../deals/deals-repo.js";
+import { getItemKindById } from "../stock/items-repo.js";
 import { insertLead, getRepLeadAbout } from "../leads/leads-repo.js";
+import { estimatePriceBand } from "../perception/estimate.js";
 
 /**
  * Reputation reactions — Stage 5.
@@ -14,7 +17,14 @@ import { insertLead, getRepLeadAbout } from "../leads/leads-repo.js";
  *   • `estimatedQuantity`    = severity: 1 if this is the buyer's
  *     first registered grievance about this seller, else += 1 onto
  *     the existing lead's severity (we update in place).
- *   • `estimatedUnitPrice`   = total £ damage from this default.
+ *   • `estimatedUnitPrice`   = perceived £ damage from this default —
+ *     the burned actor's belief about the value of what they were
+ *     owed, sampled per-line through the judgement engine's price band
+ *     (docs/judgement.md). Replaces the prior ledger-truth formula
+ *     (deal line `qty × unitPrice`). A clueless buyer who overpaid
+ *     reports a smaller surprise gap; a sharp buyer who negotiated a
+ *     steal reports a larger one. Gossip onward carries the burned
+ *     party's perception, not the objective loss.
  *
  * Side is fixed at 'supply' — this is a "negative rep" warning. The
  * design notes a future positive-rep ("vouch") channel that could use
@@ -25,21 +35,41 @@ import { insertLead, getRepLeadAbout } from "../leads/leads-repo.js";
  * — "I heard Trigger burned Boyce" two hops down from "Boyce burned
  * Trigger" — is the role-reversal mutation kicking in.
  */
-export function registerReputationReactions(world: World): Unsubscribe {
+export function registerReputationReactions(
+  world: World,
+  opts: { readonly economics: EconomicsConfig },
+): Unsubscribe {
   return world.events.subscribe((e) => {
     if (e.type !== "deal.defaulted") return;
 
     const burned = e.buyerActorId; // they paid (or expected delivery) and got nothing
     const defaulter = e.sellerActorId;
 
-    // Damage figure — sum of every line's qty × unitPrice on the deal.
-    // We pull it via the deal repo rather than via the event because the
-    // event doesn't embed the totals.
     const deal = getDealById(world.db, e.dealId);
     if (!deal) return;
     const lines = getDealLinesByDealId(world.db, e.dealId);
-    const damage = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
-    const damageOnLead = Math.max(1, damage);
+
+    // Perceived damage — sum the burned actor's price-band centre for
+    // each line's (category, tier-adjusted truth). If the item kind
+    // can't be resolved (skin oddity), fall back to the line's deal
+    // price for that line so we never silently zero out the severity.
+    let perceived = 0;
+    for (const line of lines) {
+      const item = getItemKindById(world.db, line.itemKindId);
+      if (item === null) {
+        perceived += line.quantity * line.unitPrice;
+        continue;
+      }
+      const truth = item.baseValue * opts.economics.tierMultipliers[line.qualityTier];
+      const band = estimatePriceBand({
+        db: world.db,
+        actorId: burned,
+        category: item.category,
+        truth,
+      });
+      perceived += line.quantity * Math.max(0, band.centre);
+    }
+    const damageOnLead = Math.max(1, Math.round(perceived));
 
     // De-duplicate: if the burned party already holds a rep lead about
     // this defaulter (first-hand or via gossip), we don't spawn a parallel

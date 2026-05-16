@@ -4,6 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip } from "./Links.js";
 import { ItemRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
+import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -37,7 +38,12 @@ interface NotebookRow {
   readonly theirUnitPrice: number | null;
   readonly score: number | null;
   readonly unlocked: boolean;
-  readonly counterpartyExploitable: boolean;
+  /** Counterparty's appraisal accuracy on this row's category, or null
+   *  when they have no bidder profile. Rendered as a palette-coloured
+   *  dot through the player's perceiver-j (docs/judgement.md). */
+  readonly counterpartyAccuracy: number | null;
+  /** Category label for the dot's tooltip ("Furniture · accuracy 0.45"). */
+  readonly counterpartyCategory: string | null;
   /** Buy-side only: who the best onward buyer is, when known. */
   readonly onwardBuyerActorId: number | null;
   /** Buy-side only: best onward unit price among unlocked demand leads. */
@@ -54,9 +60,9 @@ function preferLead(a: BagLead, b: BagLead): BagLead {
   return a;
 }
 
-const EXPLOIT_MARGIN = 0.15;
-
 export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: Props) {
+  const perceiverJ = useMemo(() => resolvePerceiverJ(dump), [dump]);
+
   // Locked-lead set — same replay ActorKnows uses.
   const unlockedLeadIds = useMemo<ReadonlySet<number>>(() => {
     const out = new Set<number>();
@@ -134,12 +140,14 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
     return out;
   }, [dump.actors]);
 
-  function isExploitable(cpId: number, itemKindId: number): boolean {
+  /** Counterparty's per-category appraisal accuracy on the row's
+   *  category — fed to the palette dot. Null when the counterparty
+   *  has no bidder profile (civilians, virtual producers). */
+  function counterpartyAccuracyOn(cpId: number, itemKindId: number): number | null {
     const p = profileByActor.get(cpId);
-    if (p === undefined) return false;
+    if (p === undefined) return null;
     const category = categoryByItem.get(itemKindId) ?? "_";
-    const cat = p.appraisalAccuracy[category] ?? p.defaultAppraisalAccuracy;
-    return cat < p.defaultAppraisalAccuracy - EXPLOIT_MARGIN;
+    return p.appraisalAccuracy[category] ?? p.defaultAppraisalAccuracy;
   }
 
   // Stock aggregated by item kind.
@@ -199,7 +207,8 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
         theirUnitPrice,
         score,
         unlocked,
-        counterpartyExploitable: isExploitable(lead.counterpartyActorId, lead.itemKindId),
+        counterpartyAccuracy: counterpartyAccuracyOn(lead.counterpartyActorId, lead.itemKindId),
+        counterpartyCategory: categoryByItem.get(lead.itemKindId) ?? null,
         onwardBuyerActorId: null,
         onwardUnitPrice: null,
       });
@@ -214,6 +223,12 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
       const theirQty = unlocked ? lead.estimatedQuantity : null;
       const theirUnitPrice = unlocked ? lead.estimatedUnitPrice : null;
       const onward = bestOnward.get(lead.itemKindId);
+      // Drop self-pair rows: when the only onward buyer the holder knows
+      // about is the same actor as the supplier, the "trade" is just
+      // their bid/ask spread — not an opportunity. The supply knowledge
+      // is still surfaced in ActorKnows; the notebook is the
+      // buy-to-flip lane and reserves space for cross-actor flips.
+      if (onward !== undefined && onward.actorId === lead.counterpartyActorId) continue;
       const score =
         unlocked && theirQty !== null && theirUnitPrice !== null && onward !== undefined
           ? (onward.price - theirUnitPrice) * theirQty
@@ -228,7 +243,8 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
         theirUnitPrice,
         score,
         unlocked,
-        counterpartyExploitable: isExploitable(lead.counterpartyActorId, lead.itemKindId),
+        counterpartyAccuracy: counterpartyAccuracyOn(lead.counterpartyActorId, lead.itemKindId),
+        counterpartyCategory: categoryByItem.get(lead.itemKindId) ?? null,
         onwardBuyerActorId: onward?.actorId ?? null,
         onwardUnitPrice: onward?.price ?? null,
       });
@@ -266,7 +282,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
           <div className="profile-section-label">Stock I have → who wants it</div>
           <ul className="knows-subgroup-rows">
             {sellRows.map((r) => (
-              <SellRow key={`s-${r.itemKindId}-${r.counterpartyActorId}`} row={r} dump={dump} onSelect={onSelect} />
+              <SellRow key={`s-${r.itemKindId}-${r.counterpartyActorId}`} row={r} dump={dump} perceiverJ={perceiverJ} onSelect={onSelect} />
             ))}
           </ul>
         </>
@@ -277,7 +293,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
           <div className="profile-section-label">Stock I want → who has it</div>
           <ul className="knows-subgroup-rows">
             {buyRows.map((r) => (
-              <BuyRow key={`b-${r.itemKindId}-${r.counterpartyActorId}`} row={r} dump={dump} onSelect={onSelect} />
+              <BuyRow key={`b-${r.itemKindId}-${r.counterpartyActorId}`} row={r} dump={dump} perceiverJ={perceiverJ} onSelect={onSelect} />
             ))}
           </ul>
         </>
@@ -298,10 +314,12 @@ function byScoreDesc(a: NotebookRow, b: NotebookRow): number {
 function SellRow({
   row,
   dump,
+  perceiverJ,
   onSelect,
 }: {
   readonly row: NotebookRow;
   readonly dump: RunDump;
+  readonly perceiverJ: number;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
@@ -309,22 +327,19 @@ function SellRow({
       fact={
         row.unlocked ? (
           <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />{" "}
+            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">wants</span>{" "}
             <StockValue>{row.theirQty}</StockValue>{" "}
             <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
             <span className="muted">@</span>{" "}
             <StockValue>£{row.theirUnitPrice}</StockValue>
             <span className="muted">/u</span>
-            {row.counterpartyExploitable ? (
-              <span className="knows-conflict-badge" title="Counterparty has a category blind spot — exploitable">
-                {" ⚠"}
-              </span>
-            ) : null}
           </>
         ) : (
           <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />{" "}
+            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">wants</span>{" "}
             <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
             <span className="muted" title="Headline only — pay to unlock detail.">
@@ -351,10 +366,12 @@ function SellRow({
 function BuyRow({
   row,
   dump,
+  perceiverJ,
   onSelect,
 }: {
   readonly row: NotebookRow;
   readonly dump: RunDump;
+  readonly perceiverJ: number;
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
@@ -362,22 +379,19 @@ function BuyRow({
       fact={
         row.unlocked ? (
           <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />{" "}
+            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">has</span>{" "}
             <StockValue>{row.theirQty}</StockValue>{" "}
             <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
             <span className="muted">@</span>{" "}
             <StockValue>£{row.theirUnitPrice}</StockValue>
             <span className="muted">/u</span>
-            {row.counterpartyExploitable ? (
-              <span className="knows-conflict-badge" title="Counterparty has a category blind spot — exploitable">
-                {" ⚠"}
-              </span>
-            ) : null}
           </>
         ) : (
           <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />{" "}
+            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">has</span>{" "}
             <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
             <span className="muted" title="Headline only — pay to unlock detail.">
@@ -403,6 +417,35 @@ function BuyRow({
           <span className="muted">no onward buyer yet</span>
         )
       }
+    />
+  );
+}
+
+/**
+ * Palette-coloured dot showing the counterparty's appraisal accuracy
+ * on the row's category. Colour is gated by the player-actor's j —
+ * playing Trigger (j ≈ 0.3) grains the dots down to ~3 distinguishable
+ * stops, so "wholly exploitable" and "competent generalist" blur
+ * together. That's the perceiver-j model doing its job: replacing the
+ * old binary ⚠ tell with a continuous read the character can mis-see.
+ */
+function CounterpartyDot({
+  row,
+  perceiverJ,
+}: {
+  readonly row: NotebookRow;
+  readonly perceiverJ: number;
+}) {
+  if (row.counterpartyAccuracy === null) return null;
+  const stop = colourFor(row.counterpartyAccuracy, perceiverJ);
+  const cat = row.counterpartyCategory ?? "";
+  const title = cat === ""
+    ? `accuracy ${row.counterpartyAccuracy.toFixed(2)}`
+    : `${cat} · accuracy ${row.counterpartyAccuracy.toFixed(2)}`;
+  return (
+    <span
+      className={`notebook-counterparty-dot palette-stop-${stop}`}
+      title={title}
     />
   );
 }

@@ -514,7 +514,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   // Trust/heat reactions are event-driven.
   registerTrustReactions(world);
   registerHeatReactions(world);
-  registerReputationReactions(world);
+  registerReputationReactions(world, { economics: skin.economics });
 
   // Day-scoped bookkeeping. Pending-payouts drains first so any cash
   // arriving today is in actors' hands before they decide where to
@@ -592,7 +592,6 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   // and virtual producers have no notebook.
   registerNotebookDiff(world, {
     actorIds: [...skin.bidderProfiles.keys()],
-    bidderProfiles: skin.bidderProfiles,
   });
 
   return { world, skin };

@@ -8,7 +8,6 @@ import { insertActor } from "../src/engine/actors/actors-repo.js";
 import { insertItemKind } from "../src/engine/stock/items-repo.js";
 import { insertStockLot, decrementLotQuantity } from "../src/engine/stock/lots-repo.js";
 import { insertLead, unlockLeadDetail } from "../src/engine/leads/leads-repo.js";
-import { FALLBACK_BIDDER_PROFILE, type BidderProfile } from "../src/engine/auction/bidder-profile.js";
 import {
   computeNotebookRows,
   registerNotebookDiff,
@@ -47,7 +46,7 @@ describe("notebook compute + diff", () => {
 
   it("empty bag + no stock produces no rows", () => {
     const { localDb, me } = seed();
-    const rows = computeNotebookRows(localDb, me.id, new Map());
+    const rows = computeNotebookRows(localDb, me.id);
     expect(rows).toHaveLength(0);
   });
 
@@ -61,7 +60,7 @@ describe("notebook compute + diff", () => {
       acquiredUnitPrice: 4,
       acquiredDay: 1,
     });
-    const rows = computeNotebookRows(localDb, me.id, new Map());
+    const rows = computeNotebookRows(localDb, me.id);
     expect(rows).toHaveLength(0);
   });
 
@@ -85,7 +84,7 @@ describe("notebook compute + diff", () => {
       estimatedUnitPrice: 9,
       acquiredDay: 1,
     });
-    const rows = computeNotebookRows(localDb, me.id, new Map());
+    const rows = computeNotebookRows(localDb, me.id);
     expect(rows).toHaveLength(1);
     const r = rows[0]!;
     expect(r.side).toBe("sell");
@@ -120,7 +119,7 @@ describe("notebook compute + diff", () => {
       acquiredDay: 1,
       detailUnlocked: false,
     });
-    const rows = computeNotebookRows(localDb, me.id, new Map());
+    const rows = computeNotebookRows(localDb, me.id);
     expect(rows).toHaveLength(1);
     const r = rows[0]!;
     expect(r.unlocked).toBe(false);
@@ -155,7 +154,7 @@ describe("notebook compute + diff", () => {
       estimatedUnitPrice: 8,
       acquiredDay: 1,
     });
-    const rows = computeNotebookRows(localDb, me.id, new Map());
+    const rows = computeNotebookRows(localDb, me.id);
     // Sell-side: no stock on hand → no row. Buy-side: yes.
     expect(rows).toHaveLength(1);
     const r = rows[0]!;
@@ -163,40 +162,6 @@ describe("notebook compute + diff", () => {
     expect(r.counterpartyActorId).toBe(mickey.id);
     // (12 - 8) × 15 = 60
     expect(r.score).toBe(60);
-  });
-
-  it("exploitable flag fires when counterparty's category accuracy is materially below their default", () => {
-    const { localDb, me, boyce, item } = seed();
-    insertStockLot(localDb, {
-      ownerActorId: me.id,
-      itemKindId: item.id,
-      qualityTier: "fair",
-      quantity: 5,
-      acquiredUnitPrice: 4,
-      acquiredDay: 1,
-    });
-    insertLead(localDb, {
-      holderActorId: me.id,
-      side: "demand",
-      subjectItemKindId: item.id,
-      subjectQualityTier: "fair",
-      counterpartyActorId: boyce.id,
-      estimatedQuantity: 5,
-      estimatedUnitPrice: 9,
-      acquiredDay: 1,
-    });
-    // Boyce is a furniture specialist but clueless on electrical.
-    const boyceProfile: BidderProfile = {
-      ...FALLBACK_BIDDER_PROFILE,
-      defaultAppraisalAccuracy: 0.8,
-      appraisalAccuracy: new Map([["electrical", 0.2]]),
-    };
-    const rows = computeNotebookRows(
-      localDb,
-      me.id,
-      new Map([[boyce.id, boyceProfile]]),
-    );
-    expect(rows[0]!.counterpartyExploitable).toBe(true);
   });
 
   it("diff hook emits row-added when a row materialises and row-removed when stock drops to zero", () => {
@@ -207,7 +172,6 @@ describe("notebook compute + diff", () => {
     world.events.subscribe(handler);
     registerNotebookDiff(world, {
       actorIds: [me.id],
-      bidderProfiles: new Map(),
     });
     world.start();
 
@@ -259,7 +223,6 @@ describe("notebook compute + diff", () => {
     world.events.subscribe(handler);
     registerNotebookDiff(world, {
       actorIds: [me.id],
-      bidderProfiles: new Map(),
     });
     world.start();
 

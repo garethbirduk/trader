@@ -42,12 +42,29 @@ export const PALETTE_HEX: readonly string[] = [
 
 /**
  * How many bands a perceiver at this j can distinguish.
- * `bands = max(1, floor(j * 10))`. j=0 → still 1 band (everything
- * looks the same colour); j=1.0 → the full 10.
+ * `bands = max(2, floor(j * 10))`. Minimum 2 because a single band
+ * collapses every value to one colour — useless as a signal. At j=0
+ * the perceiver still sees a binary "high vs low" split (worst band
+ * vs best band); from j=0.2 upwards the formula scales smoothly to
+ * the full 10 at j=1.0.
  */
 export function bandCount(perceiverJ: number): number {
   const clamped = clamp01(perceiverJ);
-  return Math.max(1, Math.floor(clamped * PALETTE_STOPS));
+  return Math.max(2, Math.floor(clamped * PALETTE_STOPS));
+}
+
+export interface ColourForOptions {
+  /**
+   * Flip the palette direction. When `false` (default) the palette
+   * is value-monotonic — low value → blue end, high value → red end
+   * — which is the natural ruler for "price", "accuracy", "cost".
+   * When `true` the returned stop is mirrored across the midpoint so
+   * low value → red, high value → blue. Use for surfaces where
+   * "good for the viewer" sits at the low end of the value scale —
+   * e.g. condition (broken=low=bad=red, mint=high=good=blue), or
+   * demand-side prices viewed from the seller's perspective.
+   */
+  readonly invert?: boolean;
 }
 
 /**
@@ -63,7 +80,11 @@ export function bandCount(perceiverJ: number): number {
  * normalising upstream — e.g. a £-band's mid divided by its truth-
  * adjusted max, an accuracy scalar, etc.
  */
-export function colourFor(value: number, perceiverJ: number): number {
+export function colourFor(
+  value: number,
+  perceiverJ: number,
+  opts?: ColourForOptions,
+): number {
   const v = clamp01(value);
   const bands = bandCount(perceiverJ);
   // Which of the perceiver's `bands` bins does v fall into?
@@ -71,10 +92,11 @@ export function colourFor(value: number, perceiverJ: number): number {
   const i = Math.min(bands - 1, Math.floor(v * bands));
   // Band midpoint, mapped onto the 10-stop ruler.
   const midpoint = (i + 0.5) / bands;
-  return Math.min(
+  const stop = Math.min(
     PALETTE_STOPS - 1,
     Math.floor(midpoint * PALETTE_STOPS),
   );
+  return opts?.invert === true ? PALETTE_STOPS - 1 - stop : stop;
 }
 
 function clamp01(x: number): number {

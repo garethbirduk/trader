@@ -1,5 +1,7 @@
 import type { DB } from "../core/db.js";
 import { getPoolById } from "../pools/pools-repo.js";
+import { getItemKindById } from "../stock/items-repo.js";
+import { estimatePriceBand } from "../perception/estimate.js";
 import { insertLead } from "./leads-repo.js";
 import type { Lead } from "./types.js";
 
@@ -15,6 +17,12 @@ import type { Lead } from "./types.js";
  * Trader Bob about 200 vacuums"). For ambient pools, the counterparty
  * is the reachable actor themselves — "I am the one with access" — so
  * gossiping the lead onward retains the access-holder's identity.
+ *
+ * `estimatedUnitPrice` is the reaching actor's *belief* about the
+ * pool's unit price, sampled from the judgement engine's price band:
+ * `centre = lerp(category anchor, truth, expertise)`. Clueless seeders
+ * gossip numbers near the category anchor; experts gossip near truth.
+ * Replaces the prior truth-as-belief seed (docs/judgement.md).
  */
 export function seedSupplyLeadsForPool(
   db: DB,
@@ -23,6 +31,8 @@ export function seedSupplyLeadsForPool(
 ): Lead[] {
   const pool = getPoolById(db, poolId);
   if (!pool) return [];
+  const item = getItemKindById(db, pool.itemKindId);
+  const category = item?.category ?? "_unknown";
   const reach = db
     .prepare<{ actor_id: number }>(
       `SELECT actor_id FROM pool_reachability WHERE pool_id = @pool ORDER BY actor_id ASC`,
@@ -31,6 +41,12 @@ export function seedSupplyLeadsForPool(
     .map((r) => r.actor_id);
   const leads: Lead[] = [];
   for (const actorId of reach) {
+    const band = estimatePriceBand({
+      db,
+      actorId,
+      category,
+      truth: pool.openingUnitPrice,
+    });
     leads.push(
       insertLead(db, {
         holderActorId: actorId,
@@ -39,7 +55,7 @@ export function seedSupplyLeadsForPool(
         subjectQualityTier: pool.qualityTier,
         counterpartyActorId: pool.ownerActorId ?? actorId,
         estimatedQuantity: pool.quantityRemaining,
-        estimatedUnitPrice: pool.openingUnitPrice,
+        estimatedUnitPrice: Math.max(1, Math.round(band.centre)),
         confidence: "warm",
         sourceActorId: null,
         acquiredDay: atDay,

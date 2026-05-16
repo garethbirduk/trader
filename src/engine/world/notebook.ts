@@ -20,10 +20,8 @@
 
 import type { DB } from "../core/db.js";
 import type { World, Unsubscribe } from "../core/world.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
 import { getLeadsByHolder } from "../leads/leads-repo.js";
 import { getStockLotsByOwner } from "../stock/lots-repo.js";
-import { getItemKindById } from "../stock/items-repo.js";
 import type { Lead } from "../leads/types.js";
 
 export type NotebookSide = "sell" | "buy";
@@ -45,10 +43,6 @@ export interface NotebookRow {
   readonly score: number | null;
   /** True when the underlying lead's detail tier is visible. */
   readonly unlocked: boolean;
-  /** True when the counterparty's per-category appraisal accuracy on
-   *  this item's category is materially below their own default —
-   *  i.e. an exploitable blind spot. */
-  readonly counterpartyExploitable: boolean;
 }
 
 /** Field-by-field equality for diff detection. */
@@ -59,8 +53,7 @@ function rowsEqual(a: NotebookRow, b: NotebookRow): boolean {
     a.theirQty === b.theirQty &&
     a.theirUnitPrice === b.theirUnitPrice &&
     a.score === b.score &&
-    a.unlocked === b.unlocked &&
-    a.counterpartyExploitable === b.counterpartyExploitable
+    a.unlocked === b.unlocked
   );
 }
 
@@ -77,27 +70,22 @@ function preferLead(a: Lead, b: Lead): Lead {
   return a.id > b.id ? a : b;
 }
 
-/** Materially below own default — surfaces "they don't know this category." */
-const EXPLOIT_MARGIN = 0.15;
-
-function isExploitable(
-  profile: BidderProfile | undefined,
-  category: string,
-): boolean {
-  if (profile === undefined) return false;
-  const cat = profile.appraisalAccuracy.get(category) ?? profile.defaultAppraisalAccuracy;
-  return cat < profile.defaultAppraisalAccuracy - EXPLOIT_MARGIN;
-}
-
 /**
  * Compute the full notebook row set for `actorId`. Pure function over
  * the current DB state — no side effects. Used by the diff hook here
  * and by tests directly.
+ *
+ * Counterparty-character reads (was: a binary `counterpartyExploitable`
+ * flag thresholded on per-category appraisal accuracy) were removed
+ * when the judgement engine took over UI valuation — the webapp dot
+ * routes through `colourFor(accuracy, perceiverJ)` directly off the
+ * counterparty's bidder profile, so the engine row no longer needs to
+ * pre-thresh anything (docs/judgement.md). The diary log similarly
+ * dropped its `⚠exploit` suffix.
  */
 export function computeNotebookRows(
   db: DB,
   actorId: number,
-  bidderProfiles: ReadonlyMap<number, BidderProfile>,
 ): NotebookRow[] {
   const leads = getLeadsByHolder(db, actorId).filter(
     (l) => l.kind === "commodity" && l.subjectItemKindId !== null && l.counterpartyActorId !== null,
@@ -128,18 +116,6 @@ export function computeNotebookRows(
   const itemsIWant = new Set<number>();
   for (const l of bestDemand.values()) itemsIWant.add(l.subjectItemKindId!);
 
-  // Cache item-category lookups so we don't hammer the DB.
-  const categoryByItem = new Map<number, string>();
-  function categoryOf(itemKindId: number): string {
-    let c = categoryByItem.get(itemKindId);
-    if (c === undefined) {
-      const item = getItemKindById(db, itemKindId);
-      c = item?.category ?? "_unknown";
-      categoryByItem.set(itemKindId, c);
-    }
-    return c;
-  }
-
   const rows: NotebookRow[] = [];
 
   // ── Sell-side: my stock × demand leads ───────────────────────────
@@ -166,10 +142,6 @@ export function computeNotebookRows(
       theirUnitPrice,
       score,
       unlocked,
-      counterpartyExploitable: isExploitable(
-        bidderProfiles.get(cp),
-        categoryOf(itemKindId),
-      ),
     });
   }
 
@@ -209,10 +181,6 @@ export function computeNotebookRows(
       theirUnitPrice,
       score,
       unlocked,
-      counterpartyExploitable: isExploitable(
-        bidderProfiles.get(cp),
-        categoryOf(itemKindId),
-      ),
     });
   }
 
@@ -224,9 +192,6 @@ export interface NotebookDiffConfig {
    *  bidder profiles (i.e. trading characters); civilians and virtual
    *  producers are excluded. */
   readonly actorIds: readonly number[];
-  /** Counterparty profiles — used for exploit-flag detection. Must
-   *  cover every actor that can appear as a counterparty on a lead. */
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
 }
 
 /**
@@ -249,7 +214,7 @@ export function registerNotebookDiff(
     for (const actorId of config.actorIds) {
       const prev = cache.get(actorId) ?? new Map<string, NotebookRow>();
       const next = new Map<string, NotebookRow>();
-      const rows = computeNotebookRows(world.db, actorId, config.bidderProfiles);
+      const rows = computeNotebookRows(world.db, actorId);
       for (const r of rows) next.set(rowKey(r), r);
 
       // Removed: in prev but not in next.
@@ -282,7 +247,6 @@ export function registerNotebookDiff(
             theirUnitPrice: row.theirUnitPrice,
             score: row.score,
             unlocked: row.unlocked,
-            counterpartyExploitable: row.counterpartyExploitable,
           });
         } else if (!rowsEqual(old, row)) {
           world.events.emit({
@@ -298,7 +262,6 @@ export function registerNotebookDiff(
             theirUnitPrice: row.theirUnitPrice,
             score: row.score,
             unlocked: row.unlocked,
-            counterpartyExploitable: row.counterpartyExploitable,
           });
         }
       }

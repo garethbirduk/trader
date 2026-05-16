@@ -24,6 +24,7 @@ import {
   FALLBACK_BIDDER_PROFILE,
   type BidderProfile,
 } from "../src/engine/auction/bidder-profile.js";
+import { DEFAULT_ECONOMICS_CONFIG } from "../src/engine/economics/config.js";
 import type { DB } from "../src/engine/core/db.js";
 import type { WorldEvent } from "../src/engine/core/events.js";
 
@@ -71,7 +72,7 @@ describe("reputation leads (Stage 5)", () => {
       });
       const events: WorldEvent[] = [];
       world.events.subscribe((e) => events.push(e));
-      registerReputationReactions(world);
+      registerReputationReactions(world, { economics: DEFAULT_ECONOMICS_CONFIG });
 
       world.events.emit({
         type: "deal.defaulted",
@@ -88,8 +89,16 @@ describe("reputation leads (Stage 5)", () => {
       expect(rep!.kind).toBe("rep");
       expect(rep!.subjectTargetActorId).toBe(seller.id);
       expect(rep!.counterpartyActorId).toBe(buyer.id);
-      // Damage on lead = qty × unitPrice = 10 × 8 = 80.
-      expect(rep!.estimatedUnitPrice).toBe(80);
+      // Damage on lead = the burned actor's perceived value of what they
+      // were owed, summed across lines (docs/judgement.md). With the
+      // default economics + fallback knowledge profile + no seeded
+      // anchors (DEFAULT_ANCHOR_FALLBACK = 30):
+      //   truth/unit  = item.baseValue × tierMult[good] = 30 × 1.1 = 33
+      //   expertise   = defaultPriceAccuracy (fallback) = 0.6
+      //   anchor      = DEFAULT_ANCHOR_FALLBACK = 30
+      //   centre      = anchor + (truth - anchor) × expertise = 31.8
+      //   damage      = qty × centre = 10 × 31.8 = 318
+      expect(rep!.estimatedUnitPrice).toBe(318);
       expect(rep!.confidence).toBe("warm");
       expect(rep!.hopCount).toBe(0);
 
@@ -117,7 +126,7 @@ describe("reputation leads (Stage 5)", () => {
         startDay: 2,
         startHour: 10,
       });
-      registerReputationReactions(world);
+      registerReputationReactions(world, { economics: DEFAULT_ECONOMICS_CONFIG });
 
       // Two defaults in a row from the same pair.
       for (let i = 0; i < 2; i += 1) {

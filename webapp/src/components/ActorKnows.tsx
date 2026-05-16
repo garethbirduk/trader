@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { RunDump } from "../types.js";
+import type { RunDump, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, ItemRef, LotRef } from "./Refs.js";
@@ -57,7 +57,6 @@ interface LotKnowledgeRow {
   readonly lotId: number;
   readonly via: string;
   readonly fromActorId: number | null;
-  readonly inspected: boolean;
 }
 
 interface ItemGroup {
@@ -127,7 +126,11 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
   }
 
   // Auction-lot knowledge from `auction.knowledge-acquired` and
-  // `auction.lot-inspected` events. Same shape as before.
+  // `auction.lot-inspected` events. Inspection state itself isn't
+  // rendered here — that's a time-anchored event surfaced in
+  // ActorDiary / SceneDeck. We only keep inspection events as a
+  // fallback source for "this actor has seen this lot" when no
+  // prior knowledge-acquired event exists for the same lot.
   const lotRows = useMemo<readonly LotKnowledgeRow[]>(() => {
     const byLot = new Map<number, LotKnowledgeRow>();
     const events = [...dump.events]
@@ -143,38 +146,40 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
       );
     for (const e of events) {
       const lotId = e.auctionLotId as number;
-      const existing = byLot.get(lotId);
+      if (byLot.has(lotId)) continue;
       if (e.type === "auction.knowledge-acquired") {
-        if (existing === undefined) {
-          byLot.set(lotId, {
-            day: e.at.day,
-            hour: e.at.hour,
-            lotId,
-            via: String(e.via),
-            fromActorId:
-              typeof e.fromActorId === "number" ? e.fromActorId : null,
-            inspected: false,
-          });
-        }
+        byLot.set(lotId, {
+          day: e.at.day,
+          hour: e.at.hour,
+          lotId,
+          via: String(e.via),
+          fromActorId:
+            typeof e.fromActorId === "number" ? e.fromActorId : null,
+        });
       } else {
-        if (existing === undefined) {
-          byLot.set(lotId, {
-            day: e.at.day,
-            hour: e.at.hour,
-            lotId,
-            via: "inspected",
-            fromActorId: null,
-            inspected: true,
-          });
-        } else {
-          byLot.set(lotId, { ...existing, inspected: true });
-        }
+        byLot.set(lotId, {
+          day: e.at.day,
+          hour: e.at.hour,
+          lotId,
+          via: "inspected",
+          fromActorId: null,
+        });
       }
     }
     return [...byLot.values()].sort((a, b) =>
       a.day !== b.day ? b.day - a.day : b.hour - a.hour,
     );
   }, [dump.events, actorId, day, hour]);
+
+  // Lot detail lookup — most recent snapshot entry per lot id. Used to
+  // render lot rows in the StockLine pattern (item, tier, qty, floor).
+  const lotById = useMemo<ReadonlyMap<number, SnapshotAuctionLot>>(() => {
+    const out = new Map<number, SnapshotAuctionLot>();
+    for (const snap of dump.snapshots) {
+      for (const lot of snap.auctionLots) out.set(lot.id, lot);
+    }
+    return out;
+  }, [dump.snapshots]);
 
   // Two-tier gossip — track which received leads have been unlocked
   // (their detail tier is visible to the holder). Default is locked;
@@ -455,40 +460,15 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
       {lotRows.length > 0 ? (
         <>
           <div className="profile-section-label">Auction lots</div>
-          <ul>
+          <ul className="knows-subgroup-rows">
             {lotRows.map((r) => (
-              <li key={r.lotId} className="knows-row">
-                <div className="knows-stamp-line">
-                  <span className="knows-stamp">
-                    D{pad(r.day)} {pad(r.hour)}:00
-                  </span>
-                  <span className="knows-body">
-                    <LotRef
-                      dump={dump}
-                      id={r.lotId}
-                      onSelect={onSelect}
-                      variant="chip"
-                    />{" "}
-                    <span className="muted">
-                      via {r.via}
-                      {r.inspected ? " · inspected" : ""}
-                    </span>
-                    {r.fromActorId !== null ? (
-                      <>
-                        {" "}
-                        <span className="muted">from</span>{" "}
-                        <ActorRef
-                          dump={dump}
-                          id={r.fromActorId}
-                          onSelect={onSelect}
-                          variant="chip"
-                          size={14}
-                        />
-                      </>
-                    ) : null}
-                  </span>
-                </div>
-              </li>
+              <LotKnowledgeLine
+                key={r.lotId}
+                row={r}
+                lot={lotById.get(r.lotId) ?? null}
+                dump={dump}
+                onSelect={onSelect}
+              />
             ))}
           </ul>
         </>
@@ -528,6 +508,90 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
         </>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * Auction-lot knowledge row — rendered in the StockLine pattern so the
+ * lot reads the same way as inventory / deal-line / gossip-supply
+ * rows elsewhere in the UI. The provenance ("via paper", "via gossip
+ * from X") sits in the meta line; the timestamp sits in front. Drops
+ * the legacy "· inspected" suffix — inspection is a time-anchored
+ * event and lives in ActorDiary / SceneDeck.
+ */
+function LotKnowledgeLine({
+  row,
+  lot,
+  dump,
+  onSelect,
+}: {
+  readonly row: LotKnowledgeRow;
+  readonly lot: SnapshotAuctionLot | null;
+  readonly dump: RunDump;
+  readonly onSelect: (s: Selection) => void;
+}) {
+  if (lot === null) {
+    // Fallback: lot detail not in any snapshot (very old dumps,
+    // edge cases). Render the bare chip so we don't crash.
+    return (
+      <StockLine
+        fact={
+          <>
+            <span className="knows-stamp">
+              D{pad(row.day)} {pad(row.hour)}:00
+            </span>{" "}
+            <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />
+          </>
+        }
+        meta={<>via {row.via}</>}
+      />
+    );
+  }
+  return (
+    <StockLine
+      fact={
+        <>
+          <span className="knows-stamp">
+            D{pad(row.day)} {pad(row.hour)}:00
+          </span>{" "}
+          <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />{" "}
+          <span className="muted">·</span>{" "}
+          <StockValue>{lot.quantity}</StockValue>{" "}
+          <ItemRef dump={dump} id={lot.itemKindId} onSelect={onSelect} variant="chip" />{" "}
+          <span className="muted">({lot.qualityTier})</span>{" "}
+          <span className="muted">@ floor</span>{" "}
+          <StockValue>£{lot.floorPrice}</StockValue>
+        </>
+      }
+      meta={
+        <>
+          via {row.via}
+          {row.fromActorId !== null ? (
+            <>
+              {" "}
+              <span>from</span>{" "}
+              <ActorRef
+                dump={dump}
+                id={row.fromActorId}
+                onSelect={onSelect}
+                variant="chip"
+                size={12}
+              />
+            </>
+          ) : null}
+          {lot.scheduledHour !== undefined && lot.scheduledHour !== null ? (
+            <> · scheduled {pad(lot.scheduledHour)}:00</>
+          ) : null}
+          {lot.clearedDay !== null ? (
+            <>
+              {" "}
+              · cleared D{pad(lot.clearedDay)}
+              {lot.clearedPrice !== null ? <> @ £{lot.clearedPrice}</> : null}
+            </>
+          ) : null}
+        </>
+      }
+    />
   );
 }
 

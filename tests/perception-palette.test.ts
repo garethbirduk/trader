@@ -22,16 +22,16 @@ describe("bandCount — j gates resolution", () => {
     expect(bandCount(0.5)).toBe(5);
   });
 
-  it("j=0.1 collapses to 1 band", () => {
-    expect(bandCount(0.1)).toBe(1);
+  it("j=0.1 collapses to 2 bands (the minimum)", () => {
+    expect(bandCount(0.1)).toBe(2);
   });
 
-  it("j=0 still leaves at least 1 band (everything one colour)", () => {
-    expect(bandCount(0)).toBe(1);
+  it("j=0 still leaves 2 bands (high vs low — single band is uninformative)", () => {
+    expect(bandCount(0)).toBe(2);
   });
 
   it("out-of-range j is clamped", () => {
-    expect(bandCount(-0.5)).toBe(1);
+    expect(bandCount(-0.5)).toBe(2);
     expect(bandCount(2.0)).toBe(10);
   });
 });
@@ -75,5 +75,22 @@ describe("colourFor — band-collapsed mapping", () => {
       expect(idx).toBeGreaterThanOrEqual(prev);
       prev = idx;
     }
+  });
+
+  it("invert: true mirrors the stop across the palette midpoint", () => {
+    // For every value × j combination, invert flips the returned stop
+    // to (PALETTE_STOPS - 1 - stop). Both directions still land in
+    // the valid range.
+    for (const v of [0, 0.2, 0.5, 0.8, 1.0]) {
+      for (const j of [0.2, 0.5, 1.0]) {
+        const normal = colourFor(v, j);
+        const inverted = colourFor(v, j, { invert: true });
+        expect(inverted).toBe(PALETTE_STOPS - 1 - normal);
+      }
+    }
+  });
+
+  it("invert: false is the default (omitting opts == invert: false)", () => {
+    expect(colourFor(0.7, 1.0)).toBe(colourFor(0.7, 1.0, { invert: false }));
   });
 });

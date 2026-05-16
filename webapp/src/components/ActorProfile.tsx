@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { Avatar } from "./Avatar.js";
 import { ActorRef, ItemRef, PoolRef } from "./Refs.js";
-import { colourFor } from "../lib/palette.js";
+import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -197,7 +197,7 @@ export function ActorProfile({
             </dt>
             <dd>
               <span
-                className={`badge palette-stop-${colourFor(actor.socialScore, resolvePerceiverJ(dump))}`}
+                className={`badge palette-stop-${colourFor(actor.socialScore, resolvePerceiverJ(dump), { invert: isPlayer })}`}
                 title={`social score ${actor.socialScore.toFixed(2)}`}
               >
                 {actor.socialScore.toFixed(2)}
@@ -216,28 +216,11 @@ export function ActorProfile({
         <ExpertiseSection
           profile={actor.bidderProfile}
           perceiverJ={resolvePerceiverJ(dump)}
+          invert={isPlayer}
         />
       ) : null}
     </section>
   );
-}
-
-/**
- * The player-actor's "general j" — drives how finely every belief-
- * mediated number in the UI is rendered. Today's BidderProfile has
- * no explicit per-arm j; the player's `defaultAppraisalAccuracy` is
- * the closest proxy and matches the doc's "skin defaults set them
- * equal per category for most actors" default. Future work: source
- * from the player's `actor_arm_j` table when the player is allowed
- * to be any NPC (todolist: "Player takeover — any NPC, not just Del").
- *
- * Fallback 1.0 = admin view (all 10 bands visible). Used when the
- * dump has no player bidder profile (tests, exotic runs).
- */
-function resolvePerceiverJ(dump: RunDump): number {
-  const playerId = dump.playerActorId;
-  const player = dump.actors.find((a) => a.id === playerId);
-  return player?.bidderProfile?.defaultAppraisalAccuracy ?? 1.0;
 }
 
 /**
@@ -258,9 +241,16 @@ function resolvePerceiverJ(dump: RunDump): number {
 function ExpertiseSection({
   profile,
   perceiverJ,
+  invert,
 }: {
   readonly profile: NonNullable<RunDump["actors"][number]["bidderProfile"]>;
   readonly perceiverJ: number;
+  /** Flip the palette so high competence reads blue (good for the
+   *  actor being described) — passed in when the profile belongs to
+   *  the player's actor. Other actors' profiles stay value-monotonic
+   *  so their high competence reads red (bad for the player as a
+   *  potential counterparty). */
+  readonly invert: boolean;
 }) {
   const categories = useMemo(() => {
     const entries = Object.entries(profile.appraisalAccuracy ?? {});
@@ -312,6 +302,7 @@ function ExpertiseSection({
                       label={c.category}
                       accuracy={c.accuracy}
                       perceiverJ={perceiverJ}
+                      invert={invert}
                     />
                   </li>
                 ))}
@@ -322,7 +313,7 @@ function ExpertiseSection({
         <dt>General eye</dt>
         <dd>
           <span
-            className={`badge palette-stop-${colourFor(defaultAccuracy, perceiverJ)}`}
+            className={`badge palette-stop-${colourFor(defaultAccuracy, perceiverJ, { invert })}`}
             title={`accuracy ${defaultAccuracy.toFixed(2)}`}
           >
             {defaultAccuracy.toFixed(2)}
@@ -369,14 +360,16 @@ function ExpertiseChip({
   label,
   accuracy,
   perceiverJ,
+  invert,
 }: {
   readonly label: string;
   readonly accuracy: number;
   readonly perceiverJ: number;
+  readonly invert: boolean;
 }) {
   return (
     <span
-      className={`badge palette-stop-${colourFor(accuracy, perceiverJ)}`}
+      className={`badge palette-stop-${colourFor(accuracy, perceiverJ, { invert })}`}
       title={`${label} · accuracy ${accuracy.toFixed(2)}`}
     >
       {label}

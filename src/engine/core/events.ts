@@ -408,10 +408,6 @@ export type WorldEvent =
       readonly score: number | null;
       /** Whether the underlying lead's detail tier is visible to the holder. */
       readonly unlocked: boolean;
-      /** True when the counterparty's category accuracy for this item's
-       *  category is materially below their own default — i.e. an exploitable
-       *  blind spot. */
-      readonly counterpartyExploitable: boolean;
     }
   | {
       readonly type: "actor.notebook-row-updated";
@@ -426,7 +422,6 @@ export type WorldEvent =
       readonly theirUnitPrice: number | null;
       readonly score: number | null;
       readonly unlocked: boolean;
-      readonly counterpartyExploitable: boolean;
     }
   | {
       readonly type: "actor.notebook-row-removed";
@@ -626,8 +621,7 @@ export function consoleHandler(): EventHandler {
         const verb = e.type === "actor.notebook-row-added" ? "row-added" : "row-updated";
         const score = e.score === null ? "?" : `£${e.score}`;
         const lock = e.unlocked ? "" : " · locked";
-        const flag = e.counterpartyExploitable ? " · ⚠exploit" : "";
-        console.log(`[${stamp}] actor.notebook-${verb} actor=${e.actorId} ${e.side} item=${e.itemKindId} cp=${e.counterpartyActorId} score=${score}${lock}${flag}`);
+        console.log(`[${stamp}] actor.notebook-${verb} actor=${e.actorId} ${e.side} item=${e.itemKindId} cp=${e.counterpartyActorId} score=${score}${lock}`);
         break;
       }
       case "actor.notebook-row-removed":

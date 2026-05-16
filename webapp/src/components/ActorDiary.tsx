@@ -436,9 +436,6 @@ function summarizeEvent(
             </strong>
           </>
         ) : null;
-      const exploit = e.counterpartyExploitable ? (
-        <span title="Counterparty has a category blind spot">{" ⚠"}</span>
-      ) : null;
       const locked = e.unlocked === false ? (
         <span className="muted"> · headline only</span>
       ) : null;
@@ -446,7 +443,6 @@ function summarizeEvent(
         <>
           {verb}: {A(e.counterpartyActorId)} {side} {I(e.itemKindId)}
           {score}
-          {exploit}
           {locked}
         </>
       );

@@ -431,6 +431,23 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 .knows-conflict-badge { color: #ffb84d; }
 
+/* Notebook counterparty dot — small filled circle that reads through
+ * the player's perceiver-j (docs/judgement.md). Picks up its fill
+ * from the palette-stop-N class's `color` value via currentColor, so
+ * the dot is saturated rather than the muted badge-fill background.
+ * Placed adjacent to the counterparty's ActorChip; replaces the
+ * legacy binary ⚠ exploit badge. */
+.notebook-counterparty-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+  margin-left: 4px;
+  margin-right: 2px;
+}
+
 /* Shared two-line "verb + qty + item(tier) + price · meta" row used by
  * the gossip ledger, inventory, deal lines, and any other view that
  * makes a stock proposition. Content varies per context but the
@@ -727,6 +744,30 @@ button.cat-child-row:hover { background: var(--panel-2); }
 .clearance-booked { border-color: rgba(80, 160, 220, 0.5); }
 .clearance-resolved { border-color: var(--accent-2); }
 .clearance-expired { opacity: 0.6; }
+
+.scene-tag-inspection {
+  background: rgba(140, 170, 200, 0.85);
+  color: #0d0d12;
+}
+.scene-inspection .inspection-events {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.inspection-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-size: 12px;
+}
 .market-histogram {
   display: flex;
   width: 100%;

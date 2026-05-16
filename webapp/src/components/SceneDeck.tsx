@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent, SnapshotAuctionLot, SnapshotDeal } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
-import { ActorRef } from "./Refs.js";
+import { ActorRef, ItemRef, LotRef } from "./Refs.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
 
@@ -163,6 +163,29 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
           render: () => <RaidScene event={e} dump={dump} onSelect={onSelect} />,
         });
       });
+
+    // Inspections — auction.lot-inspected events during the pre-auction
+    // inspection window. One tab listing every inspector × lot pair
+    // this hour. (Was previously only surfaced as a "· inspected"
+    // suffix on the Knows-tab auction-lots row, which conflated time-
+    // anchored state with persistent knowledge.)
+    const inspections = eventsThisHour.filter(
+      (e) => e.type === "auction.lot-inspected",
+    );
+    if (inspections.length > 0) {
+      list.push({
+        key: "inspections",
+        label: `Inspections (${inspections.length})`,
+        render: () => (
+          <InspectionScene
+            events={inspections}
+            snapshot={snapshot}
+            dump={dump}
+            onSelect={onSelect}
+          />
+        ),
+      });
+    }
 
     // Clearance lifecycle — one tab per hour covering every listed /
     // booked / resolved / expired event.
@@ -1481,6 +1504,87 @@ function RaidScene({
       {codes.length > 0 ? (
         <div className="scene-row muted">{codes.join(", ")}</div>
       ) : null}
+    </section>
+  );
+}
+
+/**
+ * Inspection scene — per-hour list of `auction.lot-inspected` pairs.
+ * Renders inspector → lot rows showing the lot's item, tier, and
+ * floor price so the player can see *what* the actor poked at, not
+ * just the lot id. Replaces the legacy "· inspected" suffix on the
+ * Knows-tab Auction-lots row (inspection is a time-anchored event,
+ * not a persistent knowledge attribute).
+ */
+function InspectionScene({
+  events,
+  snapshot,
+  dump,
+  onSelect,
+}: {
+  readonly events: readonly RunEvent[];
+  readonly snapshot: DaySnapshot | null;
+  readonly dump: RunDump;
+  readonly onSelect: (s: Selection) => void;
+}) {
+  const lotById = useMemo<ReadonlyMap<number, SnapshotAuctionLot>>(() => {
+    const out = new Map<number, SnapshotAuctionLot>();
+    // Prefer the current snapshot (matches what the player sees in
+    // the lot panel today), then fall back to any earlier snapshot.
+    if (snapshot !== null) {
+      for (const l of snapshot.auctionLots) out.set(l.id, l);
+    }
+    for (const snap of dump.snapshots) {
+      for (const l of snap.auctionLots) {
+        if (!out.has(l.id)) out.set(l.id, l);
+      }
+    }
+    return out;
+  }, [snapshot, dump.snapshots]);
+
+  return (
+    <section className="scene scene-inspection">
+      <header className="scene-header">
+        <span className="scene-tag scene-tag-inspection">Inspections</span>
+        <span className="muted">
+          · {events.length} event{events.length === 1 ? "" : "s"}
+        </span>
+      </header>
+      <ul className="inspection-events">
+        {events.map((e, i) => {
+          const actorId = e.actorId as number;
+          const lotId = e.auctionLotId as number;
+          const lot = lotById.get(lotId) ?? null;
+          return (
+            <li key={i} className="inspection-row">
+              <span className="muted">🔨</span>
+              <ActorChip
+                dump={dump}
+                actorId={actorId}
+                onSelect={onSelect}
+                size={14}
+              />{" "}
+              <span className="muted">inspected</span>{" "}
+              <LotRef dump={dump} id={lotId} onSelect={onSelect} variant="chip" />
+              {lot !== null ? (
+                <>
+                  {" "}
+                  <span className="muted">·</span>{" "}
+                  <span>{lot.quantity}</span>{" "}
+                  <ItemRef
+                    dump={dump}
+                    id={lot.itemKindId}
+                    onSelect={onSelect}
+                    variant="chip"
+                  />{" "}
+                  <span className="muted">({lot.qualityTier})</span>{" "}
+                  <span className="muted">@ floor £{lot.floorPrice}</span>
+                </>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
