@@ -20,6 +20,7 @@ import { listActors } from "./actors/actors-repo.js";
 import { listItemKinds } from "./stock/items-repo.js";
 import { listLocations } from "./locations/locations.js";
 import { getAllCategoryAnchors } from "./perception/anchors-repo.js";
+import { getAllCategoryConditionAnchors } from "./perception/condition-anchors-repo.js";
 import { getActorAllArmJ } from "./perception/arm-j-repo.js";
 import type { SkinSeedResult } from "../skins/placeholder/index.js";
 
@@ -248,6 +249,13 @@ export interface RunDump {
    *  lerp. Shipped to the webapp so BeliefChip can mirror the engine's
    *  price-band math client-side. */
   readonly categoryAnchors: Record<string, number>;
+  /** Per-category condition-arm anchor in [0, 1] — analogous to
+   *  `categoryAnchors` but for the v2 condition arm's quality scalar.
+   *  Tools-style categories anchor low (beaten-up); electronics-style
+   *  anchor higher. Shipped for future use by webapp surfaces that
+   *  want to display "what tier would this actor expect by default
+   *  here?" without round-tripping through a tier sample. */
+  readonly categoryConditionAnchors: Record<string, number>;
 }
 
 export function captureSnapshot(db: DB, day: number): DaySnapshot {
@@ -629,5 +637,8 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
     // without a DB roundtrip (docs/judgement.md "The generic anchor
     // table").
     categoryAnchors: Object.fromEntries(getAllCategoryAnchors(db)),
+    categoryConditionAnchors: Object.fromEntries(
+      getAllCategoryConditionAnchors(db),
+    ),
   };
 }

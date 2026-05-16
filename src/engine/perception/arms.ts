@@ -7,6 +7,10 @@ import type { QualityTier } from "../stock/types.js";
 import type { KnowledgeProfile } from "../knowledge/types.js";
 import { resolvePerArmDials, resolvePerArmDialsPure } from "./expertise.js";
 import { steppedJ, TIGHT_KERNEL_HALF_WIDTH_FRAC } from "./estimate.js";
+import {
+  DEFAULT_CONDITION_ANCHOR_FALLBACK,
+  getCategoryConditionAnchor,
+} from "./condition-anchors-repo.js";
 
 /**
  * Categorical / ordinal arms — identity and condition.
@@ -127,6 +131,7 @@ export function estimateCondition(args: ConditionArgs): ConditionArmResult {
     truthTier: args.truthTier,
     expertise: dials.expertise,
     j: dials.j,
+    anchor: getCategoryConditionAnchor(args.db, args.category),
     rng: args.rng,
   });
 }
@@ -177,6 +182,10 @@ export function estimateConditionPure(args: {
   readonly category: string;
   readonly rng: SeededRNG;
   readonly storedJ?: number | null;
+  /** Per-category condition anchor in [0, 1]. Defaults to the global
+   *  fallback (0.5) when the caller doesn't have a specific anchor —
+   *  matches the v1 behaviour exactly so existing tests stay valid. */
+  readonly anchor?: number;
 }): ConditionArmResult {
   const dials = resolvePerArmDialsPure({
     profile: args.profile,
@@ -188,23 +197,21 @@ export function estimateConditionPure(args: {
     truthTier: args.truthTier,
     expertise: dials.expertise,
     j: dials.j,
+    anchor: args.anchor ?? DEFAULT_CONDITION_ANCHOR_FALLBACK,
     rng: args.rng,
   });
 }
 
 /**
- * Default condition anchor — the "uninformed prior" quality scalar.
- * A clueless actor's centre lerps from this toward truth. 0.5 = the
- * midpoint quality (the "fair" tier), which is the natural lay
- * person's assumption when they have no per-category condition eye.
+ * Default condition anchor — used when no per-category override is
+ * supplied. Re-exported from `condition-anchors-repo.ts` (0.5) so
+ * callers can fall back without depending on the repo directly.
  *
- * v1 of this arm uses a single global anchor. A per-category
- * `category_condition_anchors` table is the obvious extension if
- * play-testing shows certain categories need different priors (eg
- * tools tend to be beaten-up; electronics tend to be near-new) but
- * we don't have data to motivate that distinction yet.
+ * The actual anchor used by `estimateCondition` is read per-category
+ * from the `category_condition_anchors` table (skin-seeded; rows
+ * missing → fall back to this default). Pure variants accept an
+ * explicit `anchor` parameter.
  */
-const CONDITION_ANCHOR = 0.5;
 
 /** Tier midpoints on the [0, 1] quality scale — five tiers, five
  *  equal bands, midpoints at 0.1, 0.3, 0.5, 0.7, 0.9. Indexed by
@@ -249,18 +256,22 @@ export function perceivedTierCentre(args: {
       ? { profileOverride: args.profileOverride }
       : {}),
   });
-  return computePerceivedTierCentre(args.truthTier, dials.expertise);
+  const anchor = getCategoryConditionAnchor(args.db, args.category);
+  return computePerceivedTierCentre(args.truthTier, dials.expertise, anchor);
 }
 
 /** Pure variant — no DB. Tests and the snapshot-style internal
- *  recompute use this directly. */
+ *  recompute use this directly. Anchor defaults to the global
+ *  fallback (0.5) when the caller doesn't have a per-category value. */
 export function computePerceivedTierCentre(
   truthTier: QualityTier,
   expertise: number,
+  anchor: number = DEFAULT_CONDITION_ANCHOR_FALLBACK,
 ): QualityTier {
   const e = clamp01(expertise);
+  const a = clamp01(anchor);
   const truthQuality = TIER_QUALITY.get(truthTier) ?? 0.5;
-  const centre = CONDITION_ANCHOR + (truthQuality - CONDITION_ANCHOR) * e;
+  const centre = a + (truthQuality - a) * e;
   return tierForQuality(centre);
 }
 
@@ -286,14 +297,16 @@ function runConditionBand(args: {
   readonly truthTier: QualityTier;
   readonly expertise: number;
   readonly j: number;
+  readonly anchor: number;
   readonly rng: SeededRNG;
 }): ConditionArmResult {
   const expertise = clamp01(args.expertise);
   const j = clamp01(args.j);
+  const anchor = clamp01(args.anchor);
   const truthQuality = TIER_QUALITY.get(args.truthTier) ?? 0.5;
 
   // Centre lerps from the uninformed anchor toward truth by expertise.
-  const centre = CONDITION_ANCHOR + (truthQuality - CONDITION_ANCHOR) * expertise;
+  const centre = anchor + (truthQuality - anchor) * expertise;
 
   // Spread tied to j: full quality range at j=0, collapses at j=1.
   // The full quality range is [0, 1], so spreadFactor is the

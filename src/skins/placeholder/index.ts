@@ -15,6 +15,7 @@ import type { ActorPolicy } from "../../engine/policy/types.js";
 import type { BidderProfile } from "../../engine/auction/bidder-profile.js";
 import { seedKnowledgeProfiles } from "../../engine/knowledge/skin-seed.js";
 import { seedCategoryAnchors } from "../../engine/perception/anchors-repo.js";
+import { seedCategoryConditionAnchors } from "../../engine/perception/condition-anchors-repo.js";
 import { setActorArmJ } from "../../engine/perception/arm-j-repo.js";
 import type { FlawType, QualityTier } from "../../engine/stock/types.js";
 import type { TransportCapacity } from "../../engine/actors/types.js";
@@ -329,6 +330,39 @@ const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map([
   ["safety", 50],
   ["vehicles", 100],
   ["novelty", 25],
+]);
+
+/**
+ * Per-category condition anchor in [0, 1] — the v2 condition arm's
+ * "what does a clueless actor's centre quality lerp toward?" prior.
+ * Read in `arms.ts` via `getCategoryConditionAnchor`. Numbers are the
+ * skin author's hunch about a category's typical condition; play-
+ * testing will reshape them.
+ *
+ *   0.0 → broken-end prior ("most of this category is junk")
+ *   0.5 → fair-end prior (engine fallback when a row is missing)
+ *   1.0 → mint-end prior ("most of this category is near-new")
+ *
+ * Tools, vehicles, and food anchor below 0.5 — tools and motors get
+ * thrashed; food spoils. Electronics and safety gear anchor slightly
+ * above — these were mostly engineered to last and the survivors look
+ * passable. Clothing and decor sit at the global default — wide
+ * variance, no clueless-prior lean. Toys, novelty, and luggage anchor
+ * slightly below — knock-off and second-hand outflow is the dominant
+ * channel.
+ */
+const CATEGORY_CONDITION_ANCHORS: ReadonlyMap<string, number> = new Map([
+  ["electrical", 0.55],
+  ["furniture", 0.45],
+  ["tools", 0.35],
+  ["decor", 0.5],
+  ["clothing", 0.5],
+  ["toys", 0.4],
+  ["luggage", 0.4],
+  ["food", 0.3],
+  ["safety", 0.6],
+  ["vehicles", 0.3],
+  ["novelty", 0.4],
 ]);
 
 const DAYS_MON_FRI: readonly number[] = [1, 2, 3, 4, 5];
@@ -1825,6 +1859,7 @@ export function seedPlaceholderSkin(
   // catalogue, rounded to feel like "what would a punter on the
   // street guess?" rather than a careful average.
   seedCategoryAnchors(db, CATEGORY_ANCHORS);
+  seedCategoryConditionAnchors(db, CATEGORY_CONDITION_ANCHORS);
 
   // Per-actor arm-j overrides — characters whose decisiveness is
   // explicitly decoupled from their expertise (docs/judgement.md "Per-arm

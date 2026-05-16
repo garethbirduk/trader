@@ -8,9 +8,13 @@ import { persistKnowledgeProfile } from "../src/engine/knowledge/skills-repo.js"
 import {
   estimateCondition,
   estimateConditionPure,
+  computePerceivedTierCentre,
   estimateIdentity,
   estimateIdentityPure,
 } from "../src/engine/perception/arms.js";
+import {
+  setCategoryConditionAnchor,
+} from "../src/engine/perception/condition-anchors-repo.js";
 import { pairCode } from "../src/engine/knowledge/types.js";
 import {
   FALLBACK_KNOWLEDGE_PROFILE,
@@ -338,5 +342,126 @@ describe("estimateCondition (DB-backed)", () => {
     // everything.
     expect(onTier).toBeGreaterThan(0);
     expect(onTier).toBeLessThan(trials);
+  });
+});
+
+describe("condition anchor — per-category prior", () => {
+  it("pure: anchor parameter shifts a clueless actor's centre tier", () => {
+    // Clueless actor (expertise=0) centres on the anchor regardless
+    // of truth. With anchor=0.1 (broken-end prior), they always read
+    // "broken"; with anchor=0.9 (mint-end), they always read "mint".
+    // Truth tier is ignored when expertise=0; the lerp degenerates
+    // to anchor.
+    const low = computePerceivedTierCentre("good", 0, 0.1);
+    const high = computePerceivedTierCentre("good", 0, 0.9);
+    expect(low).toBe("broken");
+    expect(high).toBe("mint");
+  });
+
+  it("pure: anchor parameter is irrelevant at full expertise", () => {
+    // expertise=1 collapses the lerp to truth, regardless of anchor.
+    for (const anchor of [0, 0.3, 0.5, 0.7, 1]) {
+      expect(computePerceivedTierCentre("shoddy", 1, anchor)).toBe("shoddy");
+      expect(computePerceivedTierCentre("mint", 1, anchor)).toBe("mint");
+    }
+  });
+
+  it("pure: default fallback (no anchor passed) reproduces v1 0.5 anchor", () => {
+    // Without the per-category anchor parameter, the function should
+    // behave exactly as v1 did — anchor = 0.5 (fair-tier midpoint).
+    // A clueless actor (expertise=0) always centres on "fair".
+    for (const truth of ["broken", "shoddy", "fair", "good", "mint"] as const) {
+      expect(computePerceivedTierCentre(truth, 0)).toBe("fair");
+    }
+  });
+
+  it("DB-backed: estimateCondition reads the per-category anchor", () => {
+    const db = freshDB();
+    const aid = insertActor(db, {
+      code: "trigger",
+      displayName: "Trigger",
+      cash: 100,
+      role: "civilian",
+      transportCapacity: "none",
+      isVirtual: false,
+    }).id;
+    persistKnowledgeProfile(
+      db,
+      aid,
+      profileWith({
+        conditionAccuracy: new Map([["tools", 0]]),
+        defaultConditionAccuracy: 0,
+      }),
+    );
+    // Seed a beaten-up prior for tools (anchor 0.1 ≈ broken-end).
+    setCategoryConditionAnchor(db, "tools", 0.1);
+    // Clueless actor + anchor 0.1 + j defaulting to 0 means centre
+    // sits near broken-end and the band still spans [0, 1] (j=0).
+    // The MAJORITY of trials should land in the bottom two tiers
+    // (broken/shoddy), not uniformly across all five — even with
+    // uniform draws across [0, 1], a centre at 0.1 with wide spread
+    // still biases downward because the band is clamped.
+    const counts: Record<string, number> = {
+      broken: 0, shoddy: 0, fair: 0, good: 0, mint: 0,
+    };
+    const trials = 500;
+    for (let i = 0; i < trials; i += 1) {
+      const r = estimateCondition({
+        db,
+        actorId: aid,
+        truthTier: "good",
+        category: "tools",
+        rng: createRNG(`cond-anchor-tools-${i}`),
+      });
+      counts[r.perceivedTier]! += 1;
+    }
+    // Centre = 0.1, spread = 0.5 → band = [0, 0.6]. Sample is mostly
+    // uniform across that. Bottom three tiers (broken / shoddy / fair)
+    // span [0, 0.6] entirely, so they should dominate; mint should be
+    // essentially absent.
+    const bottomShare = (counts.broken! + counts.shoddy! + counts.fair!) / trials;
+    expect(bottomShare).toBeGreaterThan(0.85);
+    expect(counts.mint! / trials).toBeLessThan(0.05);
+  });
+
+  it("DB-backed: missing row falls back to 0.5 (v1 default)", () => {
+    const db = freshDB();
+    const aid = insertActor(db, {
+      code: "rodney",
+      displayName: "Rodney",
+      cash: 100,
+      role: "civilian",
+      transportCapacity: "none",
+      isVirtual: false,
+    }).id;
+    persistKnowledgeProfile(
+      db,
+      aid,
+      profileWith({
+        conditionAccuracy: new Map([["luxury", 0]]),
+        defaultConditionAccuracy: 0,
+      }),
+    );
+    // No anchor row seeded for "luxury" → fallback 0.5 → centre = 0.5.
+    // With j=0 the band spans [0, 1] and the draw is uniform; each
+    // tier sees ~20% of trials.
+    const counts: Record<string, number> = {
+      broken: 0, shoddy: 0, fair: 0, good: 0, mint: 0,
+    };
+    const trials = 500;
+    for (let i = 0; i < trials; i += 1) {
+      const r = estimateCondition({
+        db,
+        actorId: aid,
+        truthTier: "good",
+        category: "luxury",
+        rng: createRNG(`cond-anchor-default-${i}`),
+      });
+      counts[r.perceivedTier]! += 1;
+    }
+    // All five tiers should appear at non-trivial frequency.
+    for (const tier of ["broken", "shoddy", "fair", "good", "mint"]) {
+      expect(counts[tier]! / trials).toBeGreaterThan(0.1);
+    }
   });
 });

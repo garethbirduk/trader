@@ -260,6 +260,12 @@ export interface RunDump {
    *  lerp. Used by BeliefChip to render perceiver-relative belief bands
    *  client-side. Optional for older dumps. */
   readonly categoryAnchors?: Readonly<Record<string, number>>;
+  /** Per-category condition-arm anchor in [0, 1] — the analogous prior
+   *  for perceived condition. Future webapp surfaces that want to show
+   *  "what tier would this actor expect by default in this category?"
+   *  read it via `conditionAnchorFor(dump, category)`. Optional for
+   *  older dumps. */
+  readonly categoryConditionAnchors?: Readonly<Record<string, number>>;
   /** Legacy single-hour auction; replaced by start/end. Older dumps
    *  populate this; newer dumps populate the window pair instead. */
   readonly auctionHour?: number;

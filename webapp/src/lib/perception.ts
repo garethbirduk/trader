@@ -94,6 +94,18 @@ export function anchorFor(dump: RunDump, category: string): number {
 }
 
 /**
+ * Resolve the condition-arm anchor for a category — the v2 condition
+ * arm's quality-scalar [0, 1] prior. Falls back to the engine's
+ * `DEFAULT_CONDITION_ANCHOR_FALLBACK` (0.5) when the dump pre-dates
+ * the field or the category isn't seeded. Surfaces that want to
+ * show "what tier would a clueless actor expect here by default?"
+ * read this.
+ */
+export function conditionAnchorFor(dump: RunDump, category: string): number {
+  return dump.categoryConditionAnchors?.[category] ?? 0.5;
+}
+
+/**
  * Tier-adjusted anchor — `anchor × tierMult[tier]`. Use when the
  * truth value passed to `priceBandFor` is itself tier-adjusted
  * (i.e. `baseValue × tierMult[tier]`). Without this, a clueless
