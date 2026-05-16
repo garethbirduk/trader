@@ -36,6 +36,13 @@ export interface RunActor {
   readonly socialScore?: number;
   /** Bidder profile snapshot — used to compute retail estimates. */
   readonly bidderProfile?: BidderProfileDump;
+  /** Per-arm j overrides from the engine's `actor_arm_j` table —
+   *  surfaces "stored j != expertise" cases (decisive-but-wrong or
+   *  hesitant-but-right characters). Missing arms fall back to the
+   *  actor's expertise for that arm (skin default). Optional for
+   *  back-compat with dumps generated before the arm-j surface
+   *  shipped through the dump. */
+  readonly armJ?: Partial<Record<"identity" | "condition" | "price" | "character", number>>;
 }
 
 export interface BidderProfileDump {

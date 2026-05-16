@@ -77,6 +77,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                       item.category,
                       truth,
                       anchorFor(dump, item.category),
+                      actor?.armJ?.price,
                     )
                   : null;
               return (

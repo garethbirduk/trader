@@ -20,6 +20,7 @@ import { listActors } from "./actors/actors-repo.js";
 import { listItemKinds } from "./stock/items-repo.js";
 import { listLocations } from "./locations/locations.js";
 import { getAllCategoryAnchors } from "./perception/anchors-repo.js";
+import { getActorAllArmJ } from "./perception/arm-j-repo.js";
 import type { SkinSeedResult } from "../skins/placeholder/index.js";
 
 export interface DealLineDump {
@@ -189,6 +190,10 @@ export interface RunDump {
       defaultFlawTypeDetection: number;
       customerTypes: readonly string[];
     };
+    /** Per-arm j overrides from the `actor_arm_j` table. Only the
+     *  arms with a stored row appear; missing arms fall back to the
+     *  actor's expertise for that arm (skin default). */
+    armJ?: Partial<Record<"identity" | "condition" | "price" | "character", number>>;
   }[];
   readonly actorRoutines: readonly {
     actorId: number;
@@ -547,6 +552,13 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
     events,
     actors: listActors(db).map((a) => {
       const profile = skin.bidderProfiles.get(a.id);
+      const armJMap = getActorAllArmJ(db, a.id);
+      const armJ =
+        armJMap.size > 0
+          ? (Object.fromEntries(armJMap) as Partial<
+              Record<"identity" | "condition" | "price" | "character", number>
+            >)
+          : undefined;
       return {
         id: a.id,
         code: a.code,
@@ -569,6 +581,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
               },
             }
           : {}),
+        ...(armJ !== undefined ? { armJ } : {}),
       };
     }),
     actorRoutines: routineEntries,

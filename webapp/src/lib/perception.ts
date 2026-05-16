@@ -43,23 +43,24 @@ function steppedJ(j: number): number {
  *
  *   • `expertise` is sourced from the actor's `appraisalAccuracy[category]`
  *     (falling back to `defaultAppraisalAccuracy`).
- *   • `j` mirrors the engine's "no row in `actor_arm_j` → fall back
- *     to expertise" default. The placeholder skin doesn't seed
- *     per-actor j overrides today, so j = expertise everywhere.
- *
- * Tests / future skins that DO override j would render slightly off
- * from the engine here until the dump also surfaces per-actor-arm-j.
+ *   • `j` reads from the actor's stored `armJ.price` override when
+ *     present; otherwise falls back to expertise (matching the
+ *     engine's `getActorArmJ ?? expertise` resolution in
+ *     `perception/expertise.ts`).
  */
 export function priceBandFor(
   profile: BidderProfileDump,
   category: string,
   truth: number,
   anchor: number,
+  /** Optional stored j override for the price arm — usually
+   *  `actor.armJ?.price`. */
+  storedJ?: number,
 ): PriceBandResult {
   const expertise = clamp01(
     profile.appraisalAccuracy[category] ?? profile.defaultAppraisalAccuracy,
   );
-  const j = expertise; // skin default; see comment above.
+  const j = storedJ !== undefined ? clamp01(storedJ) : expertise;
   return computePriceBand({ truth, anchor, expertise, j });
 }
 

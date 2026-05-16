@@ -190,6 +190,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                         item.category,
                         truth,
                         anchorFor(dump, item.category),
+                        seller.armJ?.price,
                       ).centre,
                     ),
                   )
@@ -204,6 +205,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                         item.category,
                         truth,
                         anchorFor(dump, item.category),
+                        buyer.armJ?.price,
                       ).centre,
                     ),
                   )

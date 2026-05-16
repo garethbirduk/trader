@@ -89,6 +89,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                         item.category,
                         truth,
                         anchorFor(dump, item.category),
+                        owner?.armJ?.price,
                       )
                     : null;
                 return (

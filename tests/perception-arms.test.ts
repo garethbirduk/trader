@@ -111,70 +111,132 @@ describe("estimateConditionPure", () => {
     }
   });
 
-  it("clueless always slips to an adjacent tier", () => {
+  it("clueless (expertise=0, j=0) produces a roughly uniform distribution across all five tiers", () => {
+    // v2: centre lerps to the condition anchor (0.5 = fair) and the
+    // band spans the full quality range. At j=0 the draw is uniform
+    // — perceived tier is essentially a coin flip across all five.
+    // Replaces v1's "always adjacent" pin.
     const profile = profileWith({
       conditionAccuracy: new Map([["electrical", 0]]),
     });
-    for (let i = 0; i < 50; i += 1) {
+    const counts: Record<string, number> = {
+      broken: 0, shoddy: 0, fair: 0, good: 0, mint: 0,
+    };
+    const trials = 1000;
+    for (let i = 0; i < trials; i += 1) {
       const r = estimateConditionPure({
         profile,
         truthTier: "good",
         category: "electrical",
-        rng: createRNG(`cond-clueless-${i}`),
+        rng: createRNG(`cond-clueless-uniform-${i}`),
       });
-      expect(r.passed).toBe(false);
-      // 'good' is adjacent to 'mint' and 'fair'.
-      expect(["mint", "fair"]).toContain(r.perceivedTier);
+      counts[r.perceivedTier]! += 1;
+    }
+    // Each tier sits in a 0.2-wide slice of [0, 1]; a true uniform
+    // would land 20% each. Generous tolerance for sample noise.
+    for (const tier of ["broken", "shoddy", "fair", "good", "mint"]) {
+      const frac = counts[tier]! / trials;
+      expect(frac).toBeGreaterThan(0.12);
+      expect(frac).toBeLessThan(0.28);
     }
   });
 
-  it("mint slips only downwards to good (clamped at top)", () => {
+  it("clueless with truth=mint can see any tier (not clamped to adjacent)", () => {
+    // v1 pinned "mint → only good"; v2 lets the band span the full
+    // quality range when expertise is 0, so the actor can see
+    // anything including broken with bad luck.
     const profile = profileWith({
       conditionAccuracy: new Map([["electrical", 0]]),
     });
-    for (let i = 0; i < 30; i += 1) {
+    const seen = new Set<string>();
+    for (let i = 0; i < 500; i += 1) {
       const r = estimateConditionPure({
         profile,
         truthTier: "mint",
         category: "electrical",
-        rng: createRNG(`cond-mint-${i}`),
+        rng: createRNG(`cond-mint-anything-${i}`),
       });
-      expect(r.perceivedTier).toBe("good");
+      seen.add(r.perceivedTier);
     }
+    // All five tiers should appear at least once across 500 trials.
+    expect(seen.size).toBe(5);
   });
 
-  it("broken slips only upwards to shoddy (clamped at bottom)", () => {
+  it("clueless with truth=broken can see any tier (not clamped to adjacent)", () => {
     const profile = profileWith({
       conditionAccuracy: new Map([["electrical", 0]]),
     });
-    for (let i = 0; i < 30; i += 1) {
+    const seen = new Set<string>();
+    for (let i = 0; i < 500; i += 1) {
       const r = estimateConditionPure({
         profile,
         truthTier: "broken",
         category: "electrical",
-        rng: createRNG(`cond-broken-${i}`),
+        rng: createRNG(`cond-broken-anything-${i}`),
       });
-      expect(r.perceivedTier).toBe("shoddy");
+      seen.add(r.perceivedTier);
     }
+    expect(seen.size).toBe(5);
   });
 
-  it("expertise sourced per-category, falls back to default for unknown category", () => {
+  it("expertise sourced per-category — unknown category falls back to default", () => {
+    // v2 derived `passed` semantically the same way, but the failure
+    // distribution is no longer adjacent-only. We assert the
+    // mechanical category fallback (zero expertise → noisy reads)
+    // rather than a specific tier outcome.
     const profile = profileWith({
       conditionAccuracy: new Map([["electrical", 1.0]]),
       defaultConditionAccuracy: 0,
     });
-    // Unknown category → default = 0 → always slips
-    let passes = 0;
-    for (let i = 0; i < 100; i += 1) {
-      const r = estimateConditionPure({
+    let passesElec = 0;
+    let passesFurn = 0;
+    const trials = 100;
+    for (let i = 0; i < trials; i += 1) {
+      const elec = estimateConditionPure({
+        profile,
+        truthTier: "good",
+        category: "electrical",
+        rng: createRNG(`cond-cat-elec-${i}`),
+      });
+      const furn = estimateConditionPure({
         profile,
         truthTier: "good",
         category: "furniture",
-        rng: createRNG(`cond-unknown-${i}`),
+        rng: createRNG(`cond-cat-furn-${i}`),
       });
-      if (r.passed) passes += 1;
+      if (elec.passed) passesElec += 1;
+      if (furn.passed) passesFurn += 1;
     }
-    expect(passes).toBe(0);
+    // Electrical specialist → all hits truth. Unknown category →
+    // falls to default (0), so band is wide → ~20% chance of
+    // landing on "good" by uniform luck.
+    expect(passesElec).toBe(trials);
+    expect(passesFurn / trials).toBeGreaterThan(0.05);
+    expect(passesFurn / trials).toBeLessThan(0.35);
+  });
+
+  it("mid-expertise produces a band centred near truth, narrower than clueless", () => {
+    // v2-specific: a 0.5-expertise / 0.5-j actor's centre sits
+    // halfway between anchor and truth, and the band's half-width
+    // is (1 - effectiveJ) / 2. At j=0.5 effectiveJ=0.5 → half-width
+    // 0.25. Outcomes should cluster around truth, not span the full
+    // range.
+    const profile = profileWith({
+      conditionAccuracy: new Map([["electrical", 0.5]]),
+    });
+    let onOrAdjacent = 0;
+    const trials = 500;
+    for (let i = 0; i < trials; i += 1) {
+      const r = estimateConditionPure({
+        profile,
+        truthTier: "good",
+        category: "electrical",
+        rng: createRNG(`cond-mid-${i}`),
+      });
+      if (["fair", "good", "mint"].includes(r.perceivedTier)) onOrAdjacent += 1;
+    }
+    // Most outcomes should be within one tier of truth.
+    expect(onOrAdjacent / trials).toBeGreaterThan(0.7);
   });
 });
 
@@ -235,7 +297,7 @@ describe("estimateIdentity (DB-backed)", () => {
 });
 
 describe("estimateCondition (DB-backed)", () => {
-  it("loads expertise from persisted profile", () => {
+  it("loads expertise from persisted profile and produces band-and-sample reads", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "trigger",
@@ -253,7 +315,13 @@ describe("estimateCondition (DB-backed)", () => {
         defaultConditionAccuracy: 0,
       }),
     );
-    for (let i = 0; i < 30; i += 1) {
+    // Truth = "fair" = quality 0.5 = the condition anchor. A clueless
+    // actor at j=0 draws uniformly across [0, 1]. About 20% of trials
+    // should snap back to "fair" by luck (the central tier slice).
+    let onTier = 0;
+    const seen = new Set<string>();
+    const trials = 200;
+    for (let i = 0; i < trials; i += 1) {
       const r = estimateCondition({
         db,
         actorId: aid,
@@ -261,8 +329,14 @@ describe("estimateCondition (DB-backed)", () => {
         category: "electrical",
         rng: createRNG(`e2e-cond-${i}`),
       });
-      expect(r.passed).toBe(false);
-      expect(["good", "shoddy"]).toContain(r.perceivedTier);
+      seen.add(r.perceivedTier);
+      if (r.passed) onTier += 1;
     }
+    // Should see a wide range of tier outcomes, not just adjacents.
+    expect(seen.size).toBeGreaterThanOrEqual(4);
+    // Passes happen at ~20% by uniform luck; assert it isn't zero or
+    // everything.
+    expect(onTier).toBeGreaterThan(0);
+    expect(onTier).toBeLessThan(trials);
   });
 });

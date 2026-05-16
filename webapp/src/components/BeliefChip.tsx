@@ -87,7 +87,7 @@ export function BeliefChip({
   const anchor = anchorFor(dump, item.category);
   const band =
     profile !== undefined && truth !== null
-      ? priceBandFor(profile, item.category, truth, anchor)
+      ? priceBandFor(profile, item.category, truth, anchor, observer?.armJ?.price)
       : null;
 
   const unitPrice = band !== null ? Math.max(0, Math.round(band.centre)) : null;

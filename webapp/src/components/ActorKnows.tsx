@@ -892,6 +892,7 @@ function SubgroupRows({
                   item.category,
                   truth,
                   anchorFor(dump, item.category),
+                  receiver?.armJ?.price,
                 )
               : null;
           const retailLabel = retailBand !== null

@@ -188,7 +188,7 @@ function RetailEstimateTable({
                   );
                 }
                 const anchor = anchorFor(dump, item.category);
-                const band = priceBandFor(a.bidderProfile!, item.category, truth, anchor);
+                const band = priceBandFor(a.bidderProfile!, item.category, truth, anchor, a.armJ?.price);
                 const centre = Math.max(0, Math.round(band.centre));
                 const low = Math.max(0, Math.round(band.low));
                 const high = Math.max(0, Math.round(band.high));
