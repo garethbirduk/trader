@@ -4,10 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ItemRef, LocationRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import {
-  estimateUnitRetail,
-  formatRetailEstimate,
-} from "../lib/retail-estimate.js";
+import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -71,13 +68,15 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
             .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
             .map((lot) => {
               const item = dump.items.find((i) => i.id === lot.itemKindId);
-              const retail =
-                profile !== undefined && item !== undefined
-                  ? estimateUnitRetail(
+              const truth =
+                item !== undefined ? tierTruth(item, lot.qualityTier, dump.economics) : null;
+              const retailBand =
+                profile !== undefined && item !== undefined && truth !== null
+                  ? priceBandFor(
                       profile,
-                      item,
-                      lot.qualityTier,
-                      dump.economics,
+                      item.category,
+                      truth,
+                      anchorFor(dump, item.category),
                     )
                   : null;
               return (
@@ -101,14 +100,14 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                   }
                   meta={
                     <>
-                      {retail !== null ? (
+                      {retailBand !== null ? (
                         <span
-                          title={`${actor?.displayName ?? "owner"}'s retail estimate based on category accuracy`}
+                          title={`${actor?.displayName ?? "owner"}'s belief about resale value — judgement engine centre + band (docs/judgement.md)`}
                         >
-                          ~£{formatRetailEstimate(retail)} retail
+                          ~{formatBand(retailBand.centre, retailBand.low, retailBand.high)} retail
                         </span>
                       ) : null}
-                      {retail !== null ? <span>·</span> : null}
+                      {retailBand !== null ? <span>·</span> : null}
                       <span>acquired D{lot.acquiredDay}</span>
                       {lot.locationId !== null ? (
                         <>
@@ -206,4 +205,15 @@ function DealRow({
       </ul>
     </li>
   );
+}
+
+/** Render a price band as `£mid` when low === high or `£mid (£low–£high)`
+ *  otherwise. Matches the legacy `formatRetailEstimate` shape for visual
+ *  stability across the retail-estimate → judgement-engine migration. */
+function formatBand(centre: number, low: number, high: number): string {
+  const mid = Math.max(0, Math.round(centre));
+  const lo = Math.max(0, Math.round(low));
+  const hi = Math.max(0, Math.round(high));
+  if (lo === hi) return `£${mid}`;
+  return `£${mid} (£${lo}–£${hi})`;
 }

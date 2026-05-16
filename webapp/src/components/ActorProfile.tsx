@@ -330,6 +330,7 @@ function ExpertiseSection({
                       label={f.flaw}
                       accuracy={f.detection}
                       perceiverJ={perceiverJ}
+                      invert={invert}
                     />
                   </li>
                 ))}

@@ -248,6 +248,11 @@ export interface RunDump {
    *  reproduce retail estimates and ceilings client-side. Optional for
    *  older dumps. */
   readonly economics?: EconomicsDump;
+  /** Per-category anchor table — the "uninformed prior" floor of the
+   *  judgement engine's `centre = anchor + (truth - anchor) × expertise`
+   *  lerp. Used by BeliefChip to render perceiver-relative belief bands
+   *  client-side. Optional for older dumps. */
+  readonly categoryAnchors?: Readonly<Record<string, number>>;
   /** Legacy single-hour auction; replaced by start/end. Older dumps
    *  populate this; newer dumps populate the window pair instead. */
   readonly auctionHour?: number;

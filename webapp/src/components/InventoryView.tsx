@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { estimateUnitRetail, formatRetailEstimate } from "../lib/retail-estimate.js";
+import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -80,13 +80,15 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
             <ul className="inv-lots">
               {sortedLots.map((lot) => {
                 const item = dump.items.find((i) => i.id === lot.itemKindId);
-                const retail =
-                  profile !== undefined && item !== undefined
-                    ? estimateUnitRetail(
+                const truth =
+                  item !== undefined ? tierTruth(item, lot.qualityTier, dump.economics) : null;
+                const retailBand =
+                  profile !== undefined && item !== undefined && truth !== null
+                    ? priceBandFor(
                         profile,
-                        item,
-                        lot.qualityTier,
-                        dump.economics,
+                        item.category,
+                        truth,
+                        anchorFor(dump, item.category),
                       )
                     : null;
                 return (
@@ -110,14 +112,14 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                     }
                     meta={
                       <>
-                        {retail !== null ? (
+                        {retailBand !== null ? (
                           <span
-                            title={`${owner?.displayName ?? "owner"}'s retail estimate based on category accuracy`}
+                            title={`${owner?.displayName ?? "owner"}'s belief about resale value — judgement engine centre + band (docs/judgement.md)`}
                           >
-                            ~£{formatRetailEstimate(retail)} retail
+                            ~{formatBand(retailBand.centre, retailBand.low, retailBand.high)} retail
                           </span>
                         ) : null}
-                        {retail !== null ? <span>·</span> : null}
+                        {retailBand !== null ? <span>·</span> : null}
                         <span>acquired D{lot.acquiredDay}</span>
                         {lot.locationId !== null ? (
                           <>
@@ -142,4 +144,12 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
       })}
     </div>
   );
+}
+
+function formatBand(centre: number, low: number, high: number): string {
+  const mid = Math.max(0, Math.round(centre));
+  const lo = Math.max(0, Math.round(low));
+  const hi = Math.max(0, Math.round(high));
+  if (lo === hi) return `£${mid}`;
+  return `£${mid} (£${lo}–£${hi})`;
 }

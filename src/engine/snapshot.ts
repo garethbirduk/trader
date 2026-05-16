@@ -19,6 +19,7 @@ import type { WorldEvent } from "./core/events.js";
 import { listActors } from "./actors/actors-repo.js";
 import { listItemKinds } from "./stock/items-repo.js";
 import { listLocations } from "./locations/locations.js";
+import { getAllCategoryAnchors } from "./perception/anchors-repo.js";
 import type { SkinSeedResult } from "../skins/placeholder/index.js";
 
 export interface DealLineDump {
@@ -237,6 +238,11 @@ export interface RunDump {
     estimateSpreadAtFullAccuracy: number;
     pubBuyerCeilingFraction: number;
   };
+  /** Per-category anchor table — the "uninformed prior" floor of the
+   *  judgement engine's `centre = anchor + (truth - anchor) × expertise`
+   *  lerp. Shipped to the webapp so BeliefChip can mirror the engine's
+   *  price-band math client-side. */
+  readonly categoryAnchors: Record<string, number>;
 }
 
 export function captureSnapshot(db: DB, day: number): DaySnapshot {
@@ -603,5 +609,12 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
       estimateSpreadAtFullAccuracy: skin.economics.estimateSpreadAtFullAccuracy,
       pubBuyerCeilingFraction: skin.economics.pubBuyerCeilingFraction,
     },
+    // Per-category anchor table — the "uninformed prior" floor of the
+    // `centre = anchor + (truth - anchor) × expertise` lerp in the
+    // judgement engine's price band. Shipped to the webapp so client-
+    // side BeliefChip rendering can mirror the engine's perception math
+    // without a DB roundtrip (docs/judgement.md "The generic anchor
+    // table").
+    categoryAnchors: Object.fromEntries(getAllCategoryAnchors(db)),
   };
 }

@@ -4,10 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, ItemRef, LotRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import {
-  estimateUnitRetail,
-  formatRetailEstimate,
-} from "../lib/retail-estimate.js";
+import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -874,25 +871,32 @@ function SubgroupRows({
           const unlocked = isLeadUnlocked(r.lead, unlockedLeadIds);
           const k = subjectKey(r.lead);
           const conflict = conflictMap.get(k);
-          // Retail estimate from the receiver's perspective — same
-          // shape as inventory's retail column. The claimed tier
-          // drives it: until the receiver inspects (auction-lot
-          // mechanic only, not modelled here), they trust the
-          // speaker's tier verbatim. Civilians with no bidder
-          // profile get no estimate. Locked rows skip this — there's
-          // no claimed tier to value yet.
+          // Retail estimate from the receiver's perspective, routed
+          // through the judgement engine's `priceBandFor` (centre =
+          // lerp(anchor, truth, expertise); spread = 1 - j). The
+          // claimed tier drives the truth basis: until the receiver
+          // inspects (auction-lot mechanic only, not modelled here),
+          // they trust the speaker's tier verbatim. Civilians with no
+          // bidder profile get no estimate. Locked rows skip this —
+          // there's no claimed tier to value yet.
           const item = dump.items.find(
             (it) => it.id === r.lead.subjectItemKindId,
           );
-          const retailEstimate =
-            unlocked && receiverProfile !== undefined && item !== undefined
-              ? estimateUnitRetail(
+          const claimedTier = r.lead.subjectQualityTier ?? "fair";
+          const truth =
+            item !== undefined ? tierTruth(item, claimedTier, dump.economics) : null;
+          const retailBand =
+            unlocked && receiverProfile !== undefined && item !== undefined && truth !== null
+              ? priceBandFor(
                   receiverProfile,
-                  item,
-                  r.lead.subjectQualityTier ?? "fair",
-                  dump.economics,
+                  item.category,
+                  truth,
+                  anchorFor(dump, item.category),
                 )
               : null;
+          const retailLabel = retailBand !== null
+            ? formatBand(retailBand.centre, retailBand.low, retailBand.high)
+            : null;
           const counterpartyChip = r.lead.counterpartyActorId !== null ? (
             <ActorChip
               dump={dump}
@@ -973,12 +977,12 @@ function SubgroupRows({
               }
               meta={
                 <>
-                  {retailEstimate !== null ? (
+                  {retailLabel !== null ? (
                     <>
                       <span
-                        title={`Your retail estimate at the claimed tier (${r.lead.subjectQualityTier ?? "fair"}), based on your category accuracy. Inspect the lot to tighten the range.`}
+                        title={`Your belief at the claimed tier (${r.lead.subjectQualityTier ?? "fair"}), via the judgement engine's price band (centre lerps from category anchor toward truth by your expertise; spread tightens with your j).`}
                       >
-                        ~£{formatRetailEstimate(retailEstimate)} retail
+                        ~{retailLabel} retail
                       </span>
                       <span>·</span>
                     </>
@@ -1062,4 +1066,16 @@ function formatLead(
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n);
+}
+
+/** Render a price band as `£mid` when low === high (perfect judgement)
+ *  or `£mid (£low–£high)` otherwise. Matches the legacy
+ *  `formatRetailEstimate` shape so the row visual is stable across
+ *  the retail-estimate migration. */
+function formatBand(centre: number, low: number, high: number): string {
+  const mid = Math.max(0, Math.round(centre));
+  const lo = Math.max(0, Math.round(low));
+  const hi = Math.max(0, Math.round(high));
+  if (lo === hi) return `£${mid}`;
+  return `£${mid} (£${lo}–£${hi})`;
 }

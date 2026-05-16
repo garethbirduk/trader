@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
-import { estimateUnitRetail, formatRetailEstimate } from "../lib/retail-estimate.js";
+import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -181,16 +181,21 @@ function RetailEstimateTable({
                 />
               </td>
               {TIERS_FOR_TABLE.map((t) => {
-                const est = estimateUnitRetail(
-                  a.bidderProfile!,
-                  item,
-                  t,
-                  dump.economics,
-                );
+                const truth = tierTruth(item, t, dump.economics);
+                if (truth === null) {
+                  return (
+                    <td key={t} className="num muted">—</td>
+                  );
+                }
+                const anchor = anchorFor(dump, item.category);
+                const band = priceBandFor(a.bidderProfile!, item.category, truth, anchor);
+                const centre = Math.max(0, Math.round(band.centre));
+                const low = Math.max(0, Math.round(band.low));
+                const high = Math.max(0, Math.round(band.high));
+                const label =
+                  low === high ? `£${centre}` : `£${centre} (£${low}–£${high})`;
                 return (
-                  <td key={t} className="num muted">
-                    {formatRetailEstimate(est)}
-                  </td>
+                  <td key={t} className="num muted">{label}</td>
                 );
               })}
             </tr>

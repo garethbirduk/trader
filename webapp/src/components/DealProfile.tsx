@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
+import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -173,19 +174,65 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
       {deal.lines.length > 0 ? (
         <div className="loc-people">
           <div className="profile-section-label">Lines</div>
-          {deal.lines.map((l, i) => (
-            <div key={i} className="loc-person-row">
-              <ItemRef
-                dump={dump}
-                id={l.itemKindId}
-                onSelect={onSelect}
-                variant="chip"
-                qualityTier={l.qualityTier}
-              />
-              <span className="muted">×{l.quantity}</span>
-              <span className="muted">@ £{l.unitPrice}</span>
-            </div>
-          ))}
+          {deal.lines.map((l, i) => {
+            const item = dump.items.find((it) => it.id === l.itemKindId);
+            const truth =
+              item !== undefined ? tierTruth(item, l.qualityTier, dump.economics) : null;
+            const seller = dump.actors.find((a) => a.id === deal.sellerActorId);
+            const buyer = dump.actors.find((a) => a.id === deal.buyerActorId);
+            const sellerCentre =
+              seller?.bidderProfile !== undefined && item !== undefined && truth !== null
+                ? Math.max(
+                    0,
+                    Math.round(
+                      priceBandFor(
+                        seller.bidderProfile,
+                        item.category,
+                        truth,
+                        anchorFor(dump, item.category),
+                      ).centre,
+                    ),
+                  )
+                : null;
+            const buyerCentre =
+              buyer?.bidderProfile !== undefined && item !== undefined && truth !== null
+                ? Math.max(
+                    0,
+                    Math.round(
+                      priceBandFor(
+                        buyer.bidderProfile,
+                        item.category,
+                        truth,
+                        anchorFor(dump, item.category),
+                      ).centre,
+                    ),
+                  )
+                : null;
+            return (
+              <div key={i} className="loc-person-row">
+                <ItemRef
+                  dump={dump}
+                  id={l.itemKindId}
+                  onSelect={onSelect}
+                  variant="chip"
+                  qualityTier={l.qualityTier}
+                />
+                <span className="muted">×{l.quantity}</span>
+                <span className="muted">@ £{l.unitPrice}</span>
+                {sellerCentre !== null || buyerCentre !== null ? (
+                  <span
+                    className="muted"
+                    title="Per-line belief centres from each side's perception (judgement engine). The agreed price sits between (or outside) these — the gap is the asymmetric-knowledge surface."
+                  >
+                    {" · "}
+                    {sellerCentre !== null ? <>seller £{sellerCentre}</> : null}
+                    {sellerCentre !== null && buyerCentre !== null ? " / " : null}
+                    {buyerCentre !== null ? <>buyer £{buyerCentre}</> : null}
+                  </span>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       ) : null}
       {sellerBelief !== null || buyerBelief !== null || truePricePerUnit !== null ? (

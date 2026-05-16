@@ -5,6 +5,7 @@ import { ActorChip } from "./Links.js";
 import { ItemRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
+import { TierTag } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -21,6 +22,7 @@ interface BagLead {
   readonly id?: number;
   readonly side: "supply" | "demand";
   readonly itemKindId: number;
+  readonly itemTier: string | null;
   readonly counterpartyActorId: number;
   readonly estimatedQuantity: number;
   readonly estimatedUnitPrice: number;
@@ -31,6 +33,7 @@ interface BagLead {
 interface NotebookRow {
   readonly side: "sell" | "buy";
   readonly itemKindId: number;
+  readonly itemTier: string | null;
   readonly counterpartyActorId: number;
   readonly myQty: number | null;
   readonly myUnitCost: number | null;
@@ -92,6 +95,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
           readonly kind: "commodity" | "rep";
           readonly side: "supply" | "demand";
           readonly subjectItemKindId: number | null;
+          readonly subjectQualityTier: string | null;
           readonly counterpartyActorId: number | null;
           readonly estimatedQuantity: number;
           readonly estimatedUnitPrice: number;
@@ -109,6 +113,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
           ...(l.id !== undefined ? { id: l.id } : {}),
           side: l.side,
           itemKindId: l.subjectItemKindId,
+          itemTier: l.subjectQualityTier,
           counterpartyActorId: l.counterpartyActorId,
           estimatedQuantity: l.estimatedQuantity,
           estimatedUnitPrice: l.estimatedUnitPrice,
@@ -200,6 +205,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
       out.push({
         side: "sell",
         itemKindId: lead.itemKindId,
+        itemTier: lead.itemTier,
         counterpartyActorId: lead.counterpartyActorId,
         myQty: stock.qty,
         myUnitCost,
@@ -236,6 +242,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
       out.push({
         side: "buy",
         itemKindId: lead.itemKindId,
+        itemTier: lead.itemTier,
         counterpartyActorId: lead.counterpartyActorId,
         myQty: null,
         myUnitCost: null,
@@ -331,7 +338,8 @@ function SellRow({
             <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">wants</span>{" "}
             <StockValue>{row.theirQty}</StockValue>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
+            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
+            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
             <span className="muted">@</span>{" "}
             <StockValue>£{row.theirUnitPrice}</StockValue>
             <span className="muted">/u</span>
@@ -341,7 +349,8 @@ function SellRow({
             <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
             <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">wants</span>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
+            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
+            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
             <span className="muted" title="Headline only — pay to unlock detail.">
               · unlock to evaluate
             </span>
@@ -383,7 +392,8 @@ function BuyRow({
             <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">has</span>{" "}
             <StockValue>{row.theirQty}</StockValue>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
+            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
+            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
             <span className="muted">@</span>{" "}
             <StockValue>£{row.theirUnitPrice}</StockValue>
             <span className="muted">/u</span>
@@ -393,7 +403,8 @@ function BuyRow({
             <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
             <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">has</span>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />{" "}
+            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
+            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
             <span className="muted" title="Headline only — pay to unlock detail.">
               · unlock to evaluate
             </span>
