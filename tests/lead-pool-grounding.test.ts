@@ -14,6 +14,7 @@ import {
 } from "../src/engine/locations/locations.js";
 import { insertPool } from "../src/engine/pools/pools-repo.js";
 import { seedSupplyLeadsForPool } from "../src/engine/leads/seed-from-pool.js";
+import { DEFAULT_ECONOMICS_CONFIG } from "../src/engine/economics/config.js";
 import {
   getLeadsByHolder,
   getSupplyLeadsForItem,
@@ -56,7 +57,7 @@ describe("lead-pool grounding", () => {
       reachableBy: [denzil.id],
     });
 
-    seedSupplyLeadsForPool(localDb, pool.id, 1);
+    seedSupplyLeadsForPool(localDb, pool.id, 1, DEFAULT_ECONOMICS_CONFIG);
 
     const leads = getLeadsByHolder(localDb, denzil.id);
     expect(leads).toHaveLength(1);
@@ -88,7 +89,7 @@ describe("lead-pool grounding", () => {
       closingUnitPrice: 6,
       reachableBy: [denzil.id],
     });
-    seedSupplyLeadsForPool(localDb, pool.id, 1);
+    seedSupplyLeadsForPool(localDb, pool.id, 1, DEFAULT_ECONOMICS_CONFIG);
 
     // Denzil → Mike → Del (two gossip hops).
     const denzilLead = getLeadsByHolder(localDb, denzil.id)[0]!;
@@ -128,7 +129,7 @@ describe("lead-pool grounding", () => {
       closingUnitPrice: 6,
       reachableBy: [denzil.id],
     });
-    seedSupplyLeadsForPool(localDb, pool.id, 1);
+    seedSupplyLeadsForPool(localDb, pool.id, 1, DEFAULT_ECONOMICS_CONFIG);
 
     expect(getLocationProprietor(localDb, nags.id)).toBe(mike.id);
 
@@ -184,7 +185,7 @@ describe("lead-pool grounding", () => {
       closingUnitPrice: 10,
       reachableBy: [supplier.id],
     });
-    seedSupplyLeadsForPool(localDb, pool.id, 1);
+    seedSupplyLeadsForPool(localDb, pool.id, 1, DEFAULT_ECONOMICS_CONFIG);
     // Gossip the supplier's self-lead onto the seller — they now "know"
     // about pool reach via supplier.
     const supplierLead = getLeadsByHolder(localDb, supplier.id)[0]!;
@@ -252,7 +253,7 @@ describe("lead-pool grounding", () => {
       closingUnitPrice: 10,
       reachableBy: [supplier.id],
     });
-    seedSupplyLeadsForPool(localDb, pool.id, 1);
+    seedSupplyLeadsForPool(localDb, pool.id, 1, DEFAULT_ECONOMICS_CONFIG);
     const supplierLead = getLeadsByHolder(localDb, supplier.id)[0]!;
     // Both sellers receive the same lead via gossip.
     shareLead(localDb, supplier.id, sellerA.id, supplierLead.id, 1);
@@ -327,7 +328,7 @@ describe("lead-pool grounding", () => {
       closingUnitPrice: 100,
       reachableBy: [supplier.id],
     });
-    seedSupplyLeadsForPool(localDb, pool.id, 1);
+    seedSupplyLeadsForPool(localDb, pool.id, 1, DEFAULT_ECONOMICS_CONFIG);
     const supplierLead = getLeadsByHolder(localDb, supplier.id)[0]!;
     shareLead(localDb, supplier.id, seller.id, supplierLead.id, 1);
 

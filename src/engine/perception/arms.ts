@@ -219,6 +219,51 @@ const TIER_QUALITY: ReadonlyMap<QualityTier, number> = new Map<QualityTier, numb
   ["mint", 0.9],
 ]);
 
+/**
+ * Deterministic "centre tier" — what tier the actor's condition belief
+ * centres on, given their expertise. RNG-free: doesn't sample from
+ * the band, just snaps the centre quality to its nearest tier. Used
+ * by gossip-lead seeders (`seed-from-stock`, `seed-from-pool`) to set
+ * `subjectQualityTier` so that a clueless seeder propagates a wrong
+ * tier through gossip, the same way `estimatePriceBand` already sets
+ * `estimatedUnitPrice`.
+ *
+ * Note that j has no effect on the centre — it only widens the band
+ * around it. So a clueless seeder always centres on the condition
+ * anchor (≈ "fair"), regardless of their j. An expert seeder always
+ * centres on truth.
+ */
+export function perceivedTierCentre(args: {
+  readonly db: DB;
+  readonly actorId: number;
+  readonly truthTier: QualityTier;
+  readonly category: string;
+  readonly profileOverride?: KnowledgeProfile;
+}): QualityTier {
+  const dials = resolvePerArmDials({
+    db: args.db,
+    actorId: args.actorId,
+    arm: "condition",
+    key: args.category,
+    ...(args.profileOverride !== undefined
+      ? { profileOverride: args.profileOverride }
+      : {}),
+  });
+  return computePerceivedTierCentre(args.truthTier, dials.expertise);
+}
+
+/** Pure variant — no DB. Tests and the snapshot-style internal
+ *  recompute use this directly. */
+export function computePerceivedTierCentre(
+  truthTier: QualityTier,
+  expertise: number,
+): QualityTier {
+  const e = clamp01(expertise);
+  const truthQuality = TIER_QUALITY.get(truthTier) ?? 0.5;
+  const centre = CONDITION_ANCHOR + (truthQuality - CONDITION_ANCHOR) * e;
+  return tierForQuality(centre);
+}
+
 /** Snap a quality scalar in [0, 1] to the nearest tier (one of five
  *  equal bands). Sample at 0.05 → broken; at 0.95 → mint. */
 function tierForQuality(q: number): QualityTier {

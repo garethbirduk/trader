@@ -86,6 +86,8 @@ export function registerMarketSale(
         truth:
           item.baseValue *
           economics.tierMultipliers[displayed.qualityTier as QualityTier],
+        tierMultiplier:
+          economics.tierMultipliers[displayed.qualityTier as QualityTier],
         profileOverride: deriveKnowledgeProfile(profile),
       });
 

@@ -2,8 +2,11 @@ import type { DB } from "../core/db.js";
 import { getPoolById } from "../pools/pools-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { estimatePriceBand } from "../perception/estimate.js";
+import { perceivedTierCentre } from "../perception/arms.js";
 import { insertLead } from "./leads-repo.js";
 import type { Lead } from "./types.js";
+import type { QualityTier } from "../stock/types.js";
+import type { EconomicsConfig } from "../economics/config.js";
 
 /**
  * Generate first-hand supply leads for every actor with reach to the
@@ -18,21 +21,31 @@ import type { Lead } from "./types.js";
  * is the reachable actor themselves — "I am the one with access" — so
  * gossiping the lead onward retains the access-holder's identity.
  *
- * `estimatedUnitPrice` is the reaching actor's *belief* about the
- * pool's unit price, sampled from the judgement engine's price band:
- * `centre = lerp(category anchor, truth, expertise)`. Clueless seeders
- * gossip numbers near the category anchor; experts gossip near truth.
- * Replaces the prior truth-as-belief seed (docs/judgement.md).
+ * Both `estimatedUnitPrice` and `subjectQualityTier` route through the
+ * judgement engine so the seeder's character shapes downstream gossip:
+ *
+ *   • Price — `estimatePriceBand` centre lerps from the category anchor
+ *     toward the pool's opening unit price by the seeder's price
+ *     expertise.
+ *   • Tier — `perceivedTierCentre` lerps from the condition anchor
+ *     ("fair") toward the pool's truth tier by their condition
+ *     expertise.
+ *
+ * Clueless seeders propagate generic numbers and a wrong tier; experts
+ * propagate truth. Replaces the prior truth-as-belief seed
+ * (docs/judgement.md).
  */
 export function seedSupplyLeadsForPool(
   db: DB,
   poolId: number,
   atDay: number,
+  economics: EconomicsConfig,
 ): Lead[] {
   const pool = getPoolById(db, poolId);
   if (!pool) return [];
   const item = getItemKindById(db, pool.itemKindId);
   const category = item?.category ?? "_unknown";
+  const tierMult = economics.tierMultipliers[pool.qualityTier as QualityTier];
   const reach = db
     .prepare<{ actor_id: number }>(
       `SELECT actor_id FROM pool_reachability WHERE pool_id = @pool ORDER BY actor_id ASC`,
@@ -46,13 +59,20 @@ export function seedSupplyLeadsForPool(
       actorId,
       category,
       truth: pool.openingUnitPrice,
+      tierMultiplier: tierMult,
+    });
+    const perceivedTier = perceivedTierCentre({
+      db,
+      actorId,
+      truthTier: pool.qualityTier,
+      category,
     });
     leads.push(
       insertLead(db, {
         holderActorId: actorId,
         side: "supply",
         subjectItemKindId: pool.itemKindId,
-        subjectQualityTier: pool.qualityTier,
+        subjectQualityTier: perceivedTier,
         counterpartyActorId: pool.ownerActorId ?? actorId,
         estimatedQuantity: pool.quantityRemaining,
         estimatedUnitPrice: Math.max(1, Math.round(band.centre)),

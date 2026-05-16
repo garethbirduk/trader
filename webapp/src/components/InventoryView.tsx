@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -88,7 +88,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                         profile,
                         item.category,
                         truth,
-                        anchorFor(dump, item.category),
+                        tieredAnchorFor(dump, item.category, lot.qualityTier),
                         owner?.armJ?.price,
                       )
                     : null;

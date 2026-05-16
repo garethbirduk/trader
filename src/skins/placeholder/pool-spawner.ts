@@ -138,7 +138,7 @@ export function registerPoolSpawner(
 
       // Seed first-hand supply leads so reachable actors *know* about
       // the pool — and so the pool reference can propagate via gossip.
-      seedSupplyLeadsForPool(world.db, pool.id, day);
+      seedSupplyLeadsForPool(world.db, pool.id, day, economics);
 
       world.events.emit({
         type: "pool.spawned",

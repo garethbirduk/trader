@@ -380,6 +380,7 @@ function runOneAttempt(args: {
     actorId: sellerId,
     category: item.category,
     truth: item.baseValue * economics.tierMultipliers[seedLot.qualityTier],
+    tierMultiplier: economics.tierMultipliers[seedLot.qualityTier],
     profileOverride: deriveKnowledgeProfile(sellerProfile),
   });
   // Buyer's per-unit belief band, used for the event snapshot only.
@@ -390,6 +391,7 @@ function runOneAttempt(args: {
     actorId: buyerId,
     category: item.category,
     truth: item.baseValue * economics.tierMultipliers[perceivedTier],
+    tierMultiplier: economics.tierMultipliers[perceivedTier],
     profileOverride: deriveKnowledgeProfile(buyerProfile),
   });
   const trueRrpPerUnit =

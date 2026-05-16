@@ -62,6 +62,11 @@ export interface EstimateArgs {
   readonly anchorCategory?: string;
   /** Truth — what `estimate()` returns at expertise=1 *and* j=1. */
   readonly truth: number;
+  /** Tier-adjustment multiplier applied to the category anchor.
+   *  Same semantics as `estimatePriceBand.tierMultiplier` — see
+   *  that doc comment. Pass when truth is already tier-adjusted
+   *  (`baseValue × tierMult[perceivedTier]`). */
+  readonly tierMultiplier?: number;
   readonly rng: SeededRNG;
   /**
    * Optional cached profile override. Hot loops (auction composition,
@@ -100,8 +105,12 @@ export function estimate(args: EstimateArgs): EstimateResult {
   });
 
   const anchorCat = args.anchorCategory ?? args.key;
-  const anchor =
+  const baseAnchor =
     anchorCat !== undefined ? getCategoryAnchor(args.db, anchorCat) : 0;
+  const anchor =
+    args.tierMultiplier !== undefined && Number.isFinite(args.tierMultiplier)
+      ? baseAnchor * args.tierMultiplier
+      : baseAnchor;
 
   return computeEstimate({
     arm: args.arm,
@@ -206,6 +215,21 @@ export interface PriceBandArgs {
   readonly actorId: number;
   readonly category: string;
   readonly truth: number;
+  /**
+   * Tier-adjustment multiplier applied to the category anchor — e.g.
+   * `economics.tierMultipliers[perceivedTier]`. Without this, a
+   * clueless actor inspecting a broken item still anchors at the
+   * (good-shape) category price prior, producing a wildly over-
+   * estimated belief. With it, the anchor scales with perceived
+   * condition: broken jeans → low anchor, mint jeans → high anchor.
+   *
+   * Callers whose `truth` is tier-adjusted (everything in the engine
+   * that computes `baseValue × tierMult[tier]`) should pass the same
+   * multiplier here. Callers whose truth is a fixed reference number
+   * with no tier scaling (e.g. sunk cost from a stock lot) should
+   * omit it and the anchor stays category-only.
+   */
+  readonly tierMultiplier?: number;
   readonly profileOverride?: KnowledgeProfile;
 }
 
@@ -224,7 +248,11 @@ export function estimatePriceBand(args: PriceBandArgs): PriceBandResult {
       ? { profileOverride: args.profileOverride }
       : {}),
   });
-  const anchor = getCategoryAnchor(args.db, args.category);
+  const baseAnchor = getCategoryAnchor(args.db, args.category);
+  const anchor =
+    args.tierMultiplier !== undefined && Number.isFinite(args.tierMultiplier)
+      ? baseAnchor * args.tierMultiplier
+      : baseAnchor;
   return computePriceBand({
     truth: args.truth,
     anchor,

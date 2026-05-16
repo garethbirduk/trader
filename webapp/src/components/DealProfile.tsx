@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
-import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -189,7 +189,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                         seller.bidderProfile,
                         item.category,
                         truth,
-                        anchorFor(dump, item.category),
+                        tieredAnchorFor(dump, item.category, l.qualityTier),
                         seller.armJ?.price,
                       ).centre,
                     ),
@@ -204,7 +204,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                         buyer.bidderProfile,
                         item.category,
                         truth,
-                        anchorFor(dump, item.category),
+                        tieredAnchorFor(dump, item.category, l.qualityTier),
                         buyer.armJ?.price,
                       ).centre,
                     ),

@@ -15,6 +15,7 @@ import type { ActorPolicy } from "../../engine/policy/types.js";
 import type { BidderProfile } from "../../engine/auction/bidder-profile.js";
 import { seedKnowledgeProfiles } from "../../engine/knowledge/skin-seed.js";
 import { seedCategoryAnchors } from "../../engine/perception/anchors-repo.js";
+import { setActorArmJ } from "../../engine/perception/arm-j-repo.js";
 import type { FlawType, QualityTier } from "../../engine/stock/types.js";
 import type { TransportCapacity } from "../../engine/actors/types.js";
 import { EVERYDAY_ITEMS } from "./catalogue-everyday.js";
@@ -694,6 +695,22 @@ const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {
     defaultFlawDetection: 0.4,
     perFlawDetection: { faulty: 0.3, scam_bait: 0.3 },
     customerTypes: ["market-punters"],
+  },
+  // Mickey Pearce — the confident schemer. Mediocre across the board
+  // with a slight knack for "wheeler-dealer" categories (clothing,
+  // novelty). His distinctive trait is set via `actor_arm_j` below:
+  // a HIGH price-j paired with LOW price-expertise produces the
+  // "decisive but wrong" archetype the doc anticipated. He commits
+  // tightly to centred-on-the-anchor beliefs, sounding confident
+  // while drifting toward generic category numbers regardless of the
+  // actual goods. The first actor in the cast to deliberately decouple
+  // j from expertise.
+  "mickey-pearce": {
+    defaultAccuracy: 0.35,
+    perCategory: { clothing: 0.5, novelty: 0.55 },
+    defaultFlawDetection: 0.3,
+    perFlawDetection: { scam_bait: 0.45 },
+    customerTypes: ["market-punters", "yuppies"],
   },
   "auction-house": {
     defaultAccuracy: 0.5,
@@ -1809,6 +1826,23 @@ export function seedPlaceholderSkin(
   // street guess?" rather than a careful average.
   seedCategoryAnchors(db, CATEGORY_ANCHORS);
 
+  // Per-actor arm-j overrides — characters whose decisiveness is
+  // explicitly decoupled from their expertise (docs/judgement.md "Per-arm
+  // dials"). Without a row in `actor_arm_j`, j falls back to expertise
+  // (the doc's "skin defaults set them equal" rule). The placeholder
+  // skin uses these sparingly — only when a character's distinctive
+  // trait is the decisiveness gap, not the expertise level.
+  //
+  // Mickey Pearce — the confident schemer. Low price-expertise paired
+  // with a deliberately high price-j: he commits tightly to his
+  // anchor-drifted centre and sounds sure of himself while talking
+  // wheeler-dealer nonsense. The narrative read: he KNOWS what he
+  // thinks; he just doesn't know what it's worth.
+  const mickeyId = actorByCode.get("mickey-pearce");
+  if (mickeyId !== undefined) {
+    setActorArmJ(db, { actorId: mickeyId, arm: "price", j: 0.85 });
+  }
+
   // Reachability map — resolve actor codes to ids.
   const reachableByCategory = new Map<string, readonly number[]>();
   for (const [cat, codes] of Object.entries(REACHABLE_BY_CATEGORY)) {
@@ -2190,7 +2224,7 @@ function seedStarterStock(
         locationId: locId,
       });
 
-      seedSupplyLeadForStockLot(db, lot, 1);
+      seedSupplyLeadForStockLot(db, lot, 1, economics);
     }
   }
 }

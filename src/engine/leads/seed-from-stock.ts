@@ -1,9 +1,11 @@
 import type { DB } from "../core/db.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { estimatePriceBand } from "../perception/estimate.js";
+import { perceivedTierCentre } from "../perception/arms.js";
 import { insertLead } from "./leads-repo.js";
 import type { Lead } from "./types.js";
-import type { StockLot } from "../stock/types.js";
+import type { StockLot, QualityTier } from "../stock/types.js";
+import type { EconomicsConfig } from "../economics/config.js";
 
 /**
  * Generate a first-hand "I have this stock" supply lead for the owner of
@@ -15,32 +17,46 @@ import type { StockLot } from "../stock/types.js";
  * Unlike pool-derived leads, stock leads carry no `subjectPoolId` — there
  * is no shared upstream source to dedup against.
  *
- * `estimatedUnitPrice` is the owner's *belief* about resale value,
- * sampled from the judgement engine's price band with their sunk cost
- * (`acquiredUnitPrice`) as the truth anchor: a category-expert owner's
- * belief stays near cost; a clueless owner's belief drifts toward the
- * category anchor. That number is what propagates onward in gossip
- * (docs/judgement.md), so the seeder's expertise shapes downstream
- * notebooks and haggle anchors.
+ * Both `estimatedUnitPrice` and `subjectQualityTier` route through the
+ * judgement engine so the seeder's character shapes downstream gossip:
+ *
+ *   • Price — `estimatePriceBand` centre lerps from the category anchor
+ *     toward the lot's sunk-cost truth by the owner's price expertise.
+ *   • Tier — `perceivedTierCentre` lerps from the condition anchor
+ *     ("fair") toward the lot's truth tier by their condition expertise.
+ *
+ * A clueless owner gossips a wrong tier alongside a generic price; an
+ * expert owner propagates truth. The notebook's tier glyph and the
+ * downstream `priceBandFor` retail calls all read these seeded values,
+ * so a low-expertise seeder's character is visible end-to-end.
  */
 export function seedSupplyLeadForStockLot(
   db: DB,
   lot: StockLot,
   atDay: number,
+  economics: EconomicsConfig,
 ): Lead {
   const item = getItemKindById(db, lot.itemKindId);
   const category = item?.category ?? "_unknown";
+  const tierMult = economics.tierMultipliers[lot.qualityTier as QualityTier];
   const band = estimatePriceBand({
     db,
     actorId: lot.ownerActorId,
     category,
     truth: lot.acquiredUnitPrice,
+    tierMultiplier: tierMult,
+  });
+  const perceivedTier = perceivedTierCentre({
+    db,
+    actorId: lot.ownerActorId,
+    truthTier: lot.qualityTier,
+    category,
   });
   return insertLead(db, {
     holderActorId: lot.ownerActorId,
     side: "supply",
     subjectItemKindId: lot.itemKindId,
-    subjectQualityTier: lot.qualityTier,
+    subjectQualityTier: perceivedTier,
     counterpartyActorId: lot.ownerActorId,
     estimatedQuantity: lot.quantity,
     estimatedUnitPrice: Math.max(1, Math.round(band.centre)),

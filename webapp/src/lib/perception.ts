@@ -47,6 +47,9 @@ function steppedJ(j: number): number {
  *     present; otherwise falls back to expertise (matching the
  *     engine's `getActorArmJ ?? expertise` resolution in
  *     `perception/expertise.ts`).
+ *   • `anchor` is the per-category prior; callers using tier-adjusted
+ *     truth should pre-multiply by `tierMult[perceivedTier]` (see
+ *     `tieredAnchorFor` helper).
  */
 export function priceBandFor(
   profile: BidderProfileDump,
@@ -88,6 +91,29 @@ export function computePriceBand(args: {
  */
 export function anchorFor(dump: RunDump, category: string): number {
   return dump.categoryAnchors?.[category] ?? 30;
+}
+
+/**
+ * Tier-adjusted anchor — `anchor × tierMult[tier]`. Use when the
+ * truth value passed to `priceBandFor` is itself tier-adjusted
+ * (i.e. `baseValue × tierMult[tier]`). Without this, a clueless
+ * actor inspecting a broken item still anchors at the category
+ * average and ends up massively over-estimating; with it the anchor
+ * scales linearly with perceived condition.
+ *
+ * Falls back to the category anchor unchanged when tier is null or
+ * not in the economics multiplier map (older dumps, exotic tiers).
+ */
+export function tieredAnchorFor(
+  dump: RunDump,
+  category: string,
+  tier: string | null,
+): number {
+  const base = anchorFor(dump, category);
+  if (tier === null) return base;
+  const mult = dump.economics?.tierMultipliers?.[tier];
+  if (mult === undefined || !Number.isFinite(mult)) return base;
+  return base * mult;
 }
 
 /**

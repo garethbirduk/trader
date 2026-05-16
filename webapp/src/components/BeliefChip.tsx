@@ -28,7 +28,7 @@ import type { Selection } from "../App.js";
 import { ItemRef } from "./Refs.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 import {
-  anchorFor,
+  tieredAnchorFor,
   priceBandFor,
   tierTruth,
 } from "../lib/perception.js";
@@ -84,7 +84,7 @@ export function BeliefChip({
   const truthTier = qualityTier ?? "good";
   const truth = tierTruth(item, truthTier, dump.economics);
 
-  const anchor = anchorFor(dump, item.category);
+  const anchor = tieredAnchorFor(dump, item.category, truthTier);
   const band =
     profile !== undefined && truth !== null
       ? priceBandFor(profile, item.category, truth, anchor, observer?.armJ?.price)

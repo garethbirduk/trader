@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ItemRef, LocationRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -76,7 +76,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                       profile,
                       item.category,
                       truth,
-                      anchorFor(dump, item.category),
+                      tieredAnchorFor(dump, item.category, lot.qualityTier),
                       actor?.armJ?.price,
                     )
                   : null;

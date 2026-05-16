@@ -156,6 +156,7 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
     arm: "price",
     key: perceivedItem.category,
     truth: perceivedTruthUnit,
+    tierMultiplier: tierMult,
     rng: args.rng,
     profileOverride: profile,
   });

@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, ItemRef, LotRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -891,7 +891,7 @@ function SubgroupRows({
                   receiverProfile,
                   item.category,
                   truth,
-                  anchorFor(dump, item.category),
+                  tieredAnchorFor(dump, item.category, claimedTier),
                   receiver?.armJ?.price,
                 )
               : null;

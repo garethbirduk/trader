@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
-import { anchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -187,7 +187,7 @@ function RetailEstimateTable({
                     <td key={t} className="num muted">—</td>
                   );
                 }
-                const anchor = anchorFor(dump, item.category);
+                const anchor = tieredAnchorFor(dump, item.category, t);
                 const band = priceBandFor(a.bidderProfile!, item.category, truth, anchor, a.armJ?.price);
                 const centre = Math.max(0, Math.round(band.centre));
                 const low = Math.max(0, Math.round(band.low));

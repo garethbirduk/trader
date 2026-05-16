@@ -63,6 +63,8 @@ export {
   estimateCondition,
   estimateIdentityPure,
   estimateConditionPure,
+  perceivedTierCentre,
+  computePerceivedTierCentre,
   type IdentityArmResult,
   type ConditionArmResult,
   type IdentityArgs,
