@@ -31,6 +31,7 @@ import { m029PerceptionAnchorsAndArmJ } from "./029-perception-anchors-and-arm-j
 import { m030ActorSocialScore } from "./030-actor-social-score.js";
 import { m031ConditionAnchors } from "./031-condition-anchors.js";
 import { m032RemoveIdentityArm } from "./032-remove-identity-arm.js";
+import { m033JudgementLog } from "./033-judgement-log.js";
 
 /**
  * Ordered list of all migrations the engine will apply. Append, never
@@ -70,4 +71,5 @@ export const ALL_MIGRATIONS: readonly Migration[] = [
   m030ActorSocialScore,
   m031ConditionAnchors,
   m032RemoveIdentityArm,
+  m033JudgementLog,
 ];

@@ -72,3 +72,19 @@ export {
   type LotValuation,
   type EstimateLotValueArgs,
 } from "./lot-value.js";
+
+export {
+  insertJudgement,
+  getJudgementById,
+  getJudgementByContextRef,
+  listJudgementsByDay,
+  listJudgementsByActorDay,
+  pruneJudgementsOlderThan,
+  type JudgementArm,
+  type JudgementContextKind,
+  type JudgementPayload,
+  type JudgementRecord,
+  type PriceArmPayload,
+  type CompositePayload,
+  type InsertJudgementArgs,
+} from "./judgement-log-repo.js";
