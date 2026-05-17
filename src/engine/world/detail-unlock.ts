@@ -15,6 +15,8 @@ import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
 } from "../economics/config.js";
+import { resolvePerArmDials } from "../perception/expertise.js";
+import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 
 export interface DetailUnlockOptions {
   /** Per-actor bidder profile. Used to compute the interest bonus when
@@ -163,16 +165,27 @@ function countInterestMatches(
 ): number {
   const profile = opts.bidderProfiles.get(asker);
   if (profile === undefined) return 0;
-  const threshold = economics.planner.interestThreshold;
+  // Route the per-category interest check through the judgement
+  // engine's per-arm resolver rather than reading the legacy
+  // `appraisalAccuracy` scalar directly. Numerically equivalent
+  // today (deriveKnowledgeProfile copies appraisalAccuracy into
+  // priceAccuracy), but means the test diverges automatically when
+  // skins set per-arm overrides in the NPC-specialists pass.
+  const knowledgeProfile = deriveKnowledgeProfile(profile);
+  const threshold = economics.detailUnlock.categoryInterestThreshold;
   let n = 0;
   for (const lead of locked) {
     if (lead.subjectItemKindId === null) continue;
     const item = getItemKindById(world.db, lead.subjectItemKindId);
     if (item === null) continue;
-    const acc =
-      profile.appraisalAccuracy.get(item.category) ??
-      profile.defaultAppraisalAccuracy;
-    if (acc >= threshold) n += 1;
+    const dials = resolvePerArmDials({
+      db: world.db,
+      actorId: asker,
+      arm: "price",
+      key: item.category,
+      profileOverride: knowledgeProfile,
+    });
+    if (dials.expertise >= threshold) n += 1;
   }
   return n;
 }

@@ -292,10 +292,17 @@ export interface DetailUnlockConfig {
    *  Default 2.0. */
   readonly infoTraderProbMultiplier: number;
   /** Probability bonus per locked headline whose subject category is
-   *  in the asker's bidder-profile interest band (appraisal accuracy
-   *  >= the planner's interestThreshold). Added linearly to baseProb
-   *  before multipliers. Default 0.15. */
+   *  one the asker has decent price-arm expertise in (the engine's
+   *  per-arm `expertise >= categoryInterestThreshold`). Added
+   *  linearly to baseProb before multipliers. Default 0.15. */
   readonly interestBonusPerMatch: number;
+  /** Price-arm expertise threshold above which a locked headline's
+   *  subject category counts toward `interestBonusPerMatch`. Read
+   *  through `resolvePerArmDials` so per-arm divergence from the
+   *  legacy bidder-profile scalar takes effect once skins set
+   *  per-arm overrides. Default 0.6 — preserves the legacy
+   *  threshold value. */
+  readonly categoryInterestThreshold: number;
 }
 
 export interface OffMapAuctionConfig {
@@ -332,13 +339,24 @@ export interface PlannerConfig {
    *  scoring candidate wins (no normalisation, no random draw — this
    *  is a deterministic argmax with optional jitter). */
   readonly baseWeights: Readonly<Record<PlannerCandidateKind, number>>;
-  /** Bonus per known docket lot that falls in a category the actor's
-   *  profile rates >= interestThreshold. Pulls strongly toward auction
-   *  when an actor knows interesting lots are on. */
+  /** Bonus per known docket lot that the actor judges interesting —
+   *  see `interestValueToFloorRatio` for the test. Pulls strongly
+   *  toward auction when an actor knows good lots are on. */
   readonly lotInterestWeight: number;
-  /** Category-accuracy threshold above which a docket lot counts as
-   *  "interesting". Default 0.6 (matches the legacy mode picker). */
-  readonly interestThreshold: number;
+  /** A known docket lot counts as "interesting" when the actor's
+   *  perceived per-lot value (via the judgement engine's price arm,
+   *  assuming `pubAssumedTier` since the listing hides the tier) is
+   *  at least this multiple of the lot's floor price. Default 1.0 —
+   *  the actor thinks the lot is worth at least the reserve. Set
+   *  >1.0 to require headroom; <1.0 for speculative attendance.
+   *
+   *  Replaces the legacy skill-threshold gate (raw
+   *  `appraisalAccuracy[cat] >= 0.6`). The judgement engine produces
+   *  the same in-wheelhouse signal naturally: a clueless actor's
+   *  centre lerps toward the category anchor and stays below floor
+   *  on non-junk lots; an expert's centre lerps toward truth and
+   *  exceeds floor on underpriced lots. */
+  readonly interestValueToFloorRatio: number;
   /** Auction baseline applied when the actor knows nothing about today's
    *  docket but a docket exists — "go and see" curiosity. Set to 0 to
    *  disable speculative attendance. */
@@ -501,7 +519,7 @@ const DEFAULT_PLANNER: PlannerConfig = {
     home: 0.1,
   },
   lotInterestWeight: 0.6,
-  interestThreshold: 0.6,
+  interestValueToFloorRatio: 1.0,
   speculativeAuctionWeight: 0.15,
   inventoryFullDrive: 0.04,
   inventoryEmptyDrive: 0.0,
@@ -622,6 +640,7 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
     baseProb: 0.3,
     infoTraderProbMultiplier: 2.0,
     interestBonusPerMatch: 0.15,
+    categoryInterestThreshold: 0.6,
   },
   characterArmAlpha: 0.5,
 };

@@ -11,6 +11,8 @@ import {
   type PlannerCandidateKind,
 } from "../economics/config.js";
 import { isWeekend } from "../core/calendar.js";
+import { estimatePriceBand } from "../perception/estimate.js";
+import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 
 /**
  * Per-actor, per-(day, hour) destination override decided by the
@@ -190,15 +192,33 @@ export function registerActorPlanner(
       );
       const knownIds = new Set(getKnownLotIdsByActor(world.db, actorId));
       const knownDocketLots = docket.filter((l) => knownIds.has(l.id));
+      // "Interesting lot" = the actor's perceived per-lot value (via
+      // the judgement engine's price arm) >= floor × ratio. The
+      // listing hides the tier, so we assume `pubAssumedTier` —
+      // matches the uninspected-bidder path in default-bidders.ts.
+      // estimatePriceBand is RNG-free, so the hourly planner doesn't
+      // shimmer or consume RNG draws.
       let interestingCount = 0;
       if (profile !== undefined) {
+        const knowledgeProfile = deriveKnowledgeProfile(profile);
+        const assumedTier = economics.pubAssumedTier;
+        const assumedMult = economics.tierMultipliers[assumedTier];
         for (const lot of knownDocketLots) {
           const item = getItemKindById(world.db, lot.itemKindId);
           if (item === null) continue;
-          const acc =
-            profile.appraisalAccuracy.get(item.category) ??
-            profile.defaultAppraisalAccuracy;
-          if (acc >= cfg.interestThreshold) interestingCount += 1;
+          const truthUnit = item.baseValue * assumedMult;
+          const band = estimatePriceBand({
+            db: world.db,
+            actorId,
+            category: item.category,
+            truth: truthUnit,
+            tierMultiplier: assumedMult,
+            profileOverride: knowledgeProfile,
+          });
+          const perceivedLotValue = band.centre * lot.quantity;
+          if (perceivedLotValue >= lot.floorPrice * cfg.interestValueToFloorRatio) {
+            interestingCount += 1;
+          }
         }
       }
 
