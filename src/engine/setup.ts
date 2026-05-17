@@ -538,6 +538,8 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     paperFromHour: skin.paperFromHour,
     phoneCapableLocationIds: skin.allPubLocationIds,
     bookerActorIds: new Set(skin.tradingActorIds),
+    bidderProfiles: skin.bidderProfiles,
+    economics: skin.economics,
   });
   // Market stall mode + Slater patrol (todolist #3 + #4). Sellers
   // register their stall each day (legit £20 fee or free-but-risky

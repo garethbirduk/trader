@@ -1,11 +1,12 @@
 import type { World, Unsubscribe } from "../core/world.js";
-import { listSpawnableItemKinds } from "../stock/items-repo.js";
+import { getItemKindById, listSpawnableItemKinds } from "../stock/items-repo.js";
 import type { QualityTier } from "../stock/types.js";
 import {
   bookClearance,
   expireListing,
   getBookingsForListing,
   getListingsScheduledFor,
+  getLotsForListing,
   getOpenListings,
   insertClearanceListing,
 } from "../clearance/clearance-repo.js";
@@ -19,6 +20,13 @@ import { getActorsAtLocation } from "../locations/locations.js";
 import { getActorById, listActors } from "../actors/actors-repo.js";
 import { getStockLotsByOwner } from "../stock/lots-repo.js";
 import { seedWitnessLeads } from "../witness/seed-witness-leads.js";
+import { estimatePriceBand } from "../perception/estimate.js";
+import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
+import type { BidderProfile } from "../auction/bidder-profile.js";
+import {
+  DEFAULT_ECONOMICS_CONFIG,
+  type EconomicsConfig,
+} from "../economics/config.js";
 
 /**
  * House-clearance autonomy (todolist #9).
@@ -65,6 +73,27 @@ export interface ClearanceAutonomyOptions {
   /** Hour window during which NPCs phone in bookings. */
   readonly bookStartHour?: number;
   readonly bookEndHour?: number;
+  /** Per-actor bidder profiles, keyed by actor id. When provided, the
+   *  booking decision filters known listings through the judgement
+   *  engine's price arm: only listings whose perceived total haul
+   *  value (summed across lots) >= fee × `bookValueToFeeRatio` are
+   *  candidates. A clearance specialist with strong expertise in the
+   *  listing's categories sees centre lerp toward truth and finds
+   *  good listings attractive; a generalist's centre lerps toward
+   *  the category anchor and rejects more. Omitting `bidderProfiles`
+   *  falls back to the legacy no-appraisal behaviour. */
+  readonly bidderProfiles?: ReadonlyMap<number, BidderProfile>;
+  /** Min ratio of perceived haul value (price-arm centre × qty,
+   *  summed across lots) to fee for a listing to be a booking
+   *  candidate. Default 2.0 — the NPC wants to clear at least 2×
+   *  the fee to make the trip worth the phone call. Ignored when
+   *  `bidderProfiles` is not supplied. */
+  readonly bookValueToFeeRatio?: number;
+  /** Economics bundle — supplies the tier multipliers used to
+   *  reconstruct each lot's truth-price for the price arm. Defaults
+   *  to `DEFAULT_ECONOMICS_CONFIG`. Ignored when `bidderProfiles`
+   *  is not supplied. */
+  readonly economics?: EconomicsConfig;
 }
 
 const DEFAULT_FLAVOUR_PHRASES = [
@@ -105,6 +134,9 @@ export function registerClearanceAutonomy(
   const bookCashMult = opts.bookCashMultiplier ?? 1.5;
   const bookStartHour = opts.bookStartHour ?? 8;
   const bookEndHour = opts.bookEndHour ?? 17;
+  const bidderProfiles = opts.bidderProfiles ?? null;
+  const bookValueToFeeRatio = opts.bookValueToFeeRatio ?? 2.0;
+  const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
 
   // 1. Morning spawn.
   const onSpawn = world.onDayStart((day) => {
@@ -215,7 +247,43 @@ export function registerClearanceAutonomy(
         const totalUnits = lots.reduce((s, l) => s + l.quantity, 0);
         if (totalUnits > 100) continue;
 
-        const listing = world.rng.pick(fresh);
+        // Judgement engine — appraise each candidate listing's total
+        // haul value (sum of price-arm centre × qty across lots) and
+        // drop listings whose perceived value < fee × ratio. The
+        // listing reveals each lot's tier in the headline, so this is
+        // a Price-only consumer (per docs/judgement.md: clearance is
+        // listed as Condition + Price, but with stated tiers there's
+        // no condition uncertainty for the booker — the price arm
+        // alone produces the in-wheelhouse signal). Without a profile
+        // the actor falls back to the legacy "any known listing is a
+        // candidate" behaviour.
+        let attractive = fresh;
+        const profile = bidderProfiles?.get(actorId);
+        if (profile !== undefined) {
+          const knowledgeProfile = deriveKnowledgeProfile(profile);
+          attractive = fresh.filter((listing) => {
+            const listingLots = getLotsForListing(world.db, listing.id);
+            let perceivedTotal = 0;
+            for (const lot of listingLots) {
+              const item = getItemKindById(world.db, lot.itemKindId);
+              if (item === null) continue;
+              const mult = economics.tierMultipliers[lot.qualityTier];
+              const band = estimatePriceBand({
+                db: world.db,
+                actorId,
+                category: item.category,
+                truth: item.baseValue * mult,
+                tierMultiplier: mult,
+                profileOverride: knowledgeProfile,
+              });
+              perceivedTotal += band.centre * lot.quantity;
+            }
+            return perceivedTotal >= fee * bookValueToFeeRatio;
+          });
+          if (attractive.length === 0) continue;
+        }
+
+        const listing = world.rng.pick(attractive);
         // Pick the earliest reasonable scheduled hour the NPC can
         // realistically race for — at least 1h from now, capped at
         // 20:00 so the run loop has time to resolve.
