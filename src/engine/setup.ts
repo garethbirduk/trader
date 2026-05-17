@@ -407,6 +407,8 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     proceedsActorId: skin.auctionHouseActorId,
     attemptChance: 0.5,
     claimQuantity: 8,
+    bidderProfiles: skin.bidderProfiles,
+    economics: skin.economics,
   });
   registerPubDealAutonomy(world, {
     pubLocationIds: skin.pubLocationIds,
