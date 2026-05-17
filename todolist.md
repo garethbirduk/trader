@@ -30,14 +30,6 @@
   - **BeliefChip: centre + width indicator.** Chip continues to display `centre` (deterministic) but gains a small visual cue for band width so the player reads the uncertainty without the text shimmering. Compromise between stable rendering and an honest "this is a noisy read" signal; no stable-seed plumbing needed.
   - *(armJ archetype seeding — "hesitant but right" specialist etc. — folded into the NPC trading specialists item above, where the per-actor `actor_arm_j` knob lives alongside category expertise and channel preferences. One coordinated per-actor pass, not a second skin edit.)*
 
-- **Remove the identity-arm scaffolding.** The "Is this a Rolex or a Rulex?" framing leaked in from a generic two-axis judgement template and doesn't match this game — goods are *watches*, *chandeliers*, *silver cutlery*; the category is given, what varies is condition and value. The arm is already a no-op in practice (most calls return no confusable pair). Touches:
-  - Drop the Identity row from the axes table in `docs/judgement.md` (around :74); rewrite the surrounding prose so the model reads as two arms (condition + price), with character on top.
-  - Follow-up migration to drop the `confusable_item_pairs` table created in `023-knowledge-axes.ts`.
-  - Delete `src/engine/knowledge/confusable-pairs-repo.ts`.
-  - Simplify the confusable-pair gating in `src/engine/perception/arms.ts` (the v2-no-op comment goes with it).
-  - Scrub `src/engine/knowledge/consult.ts` and `types.ts` for "five-axis" / Identity assumptions; update any tests that exercised the arm (`tests/perception-arms.test.ts`, `tests/knowledge-consult.test.ts`, `tests/knowledge-schema.test.ts`, `tests/knowledge-watch-arc.test.ts`).
-  - **Rule for period-vs-reproduction, sterling-vs-plate, and similar "is it real?" distinctions:** resolved case by case at item-seeding time — sometimes a quality difference on the same itemKind, sometimes a separate itemKind, never a generic identity layer. No new framework absorbs these.
-
 - **Character-arm noise v2 — route social reads through the judgement engine.** v1 (`socialScore` on actors) is a public scalar with an exact `(buyer_social − seller_social)` delta. v2 makes each actor's *perception of another's character* a band, mirroring how condition v2 noised the truth read.
   - **Per-actor `character_expertise` and `character_j`.** New knobs on the actor profile; defaults set so most civilians stay near v1 behaviour. Trigger gets low character_j (mis-reads a wrong'un as a friend); the Driscolls get high character_j to match their high socialScore (they read marks well in both directions).
   - **`estimateCharacter(perceiver, target, rng)` returns a noisy perceived social score.** Distinct from v1's source of dumbness: in v1 Trigger eats scams because his own `socialScore` is low; in v2 he *also* eats them because his read of others is noisy. The two compound.

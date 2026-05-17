@@ -46,6 +46,15 @@ the realistic shape "usually I'm right, but occasionally I have a wild
 miss" — distinct from today's uniform-jitter model where every draw is
 equally likely anywhere in the band.
 
+**Rule of thumb on what doesn't fit:** "is this real?" questions
+(period vs reproduction, sterling vs silver-plate, real vs fake) are
+resolved case by case at item-seeding time — sometimes a quality
+difference on the same itemKind, sometimes a separate itemKind, never
+a generic identity layer. Identity confusion as a perception arm got
+ripped out (m032); the goods in this game are *watches*, *chandeliers*,
+*silver cutlery* — the category is given and what varies is condition
+and value.
+
 ### The four cases
 
 The orthogonality of expertise and j gives four behavioural cases:
@@ -63,7 +72,7 @@ express*: today, low accuracy always reads as "uncertain", never as
 
 ---
 
-## The four perception arms
+## The three perception arms
 
 A "valuation" is not one belief; it is a *composition* of independent
 sub-beliefs. Each runs the same two-knob machinery on its own
@@ -71,9 +80,8 @@ expertise and j:
 
 | Arm | What's being estimated | Existing engine surface |
 |---|---|---|
-| **Identity** | "Is this a Rolex or a Rulex?" | `knowledge/confusable-pairs-repo.ts` |
-| **Condition** | "Mint or fair?" | `flawTypeDetection`, plus tier-perception (today implicit) |
-| **Price** | "What does a mint Rolex go for?" | `appraisalAccuracy[category]` |
+| **Condition** | "Mint or broken?" | `flawTypeDetection`, plus tier-perception |
+| **Price** | "What does a mint watch go for?" | `appraisalAccuracy[category]` |
 | **Character** | "Will this person honour the deal?" | **new** — no current surface |
 
 The character arm is genuinely new. Today the engine has *historical*
@@ -86,31 +94,31 @@ character arm fixes it.
 
 ### Composition
 
-Estimates from the arms chain multiplicatively into a final valuation:
+Estimates from the arms chain into a final valuation:
 
 ```
-perceived_value = price_estimate(perceived_identity, perceived_condition)
+perceived_value = price_estimate(category, perceived_condition)
 ```
 
-Compound uncertainty: a novice on watches gets all three arms wrong and
-ends up at £30 on a £1000 watch (wrong identity → wrong tier → wrong
-price). A specialist gets all three close and lands within ±10%.
-There's no separate "higher-level judgement" combining the arms —
-composition naturally produces the final estimate's accuracy as the
-product of the arms' accuracies.
+Compound uncertainty: a novice on watches misreads the tier (thinks a
+mint watch is broken) and lerps their price toward the category anchor,
+ending well below true value. A specialist gets both arms close and
+lands within ±10%. There's no separate "higher-level judgement"
+combining the arms — composition naturally produces the final
+estimate's accuracy as the product of the arms' accuracies.
 
 ### Which arms apply where
 
 Different decisions consume different subsets:
 
-| Decision | Identity | Condition | Price | Character |
-|---|---|---|---|---|
-| Auction lot appraisal | ✓ | ✓ | ✓ | — |
-| Pub-deal counterparty | ✓ | ✓ | ✓ | ✓ |
-| Market hour pricing | ✓ | ✓ | ✓ | — |
-| Notebook sell-side row | ✓ | ✓ | ✓ | ✓ |
-| Clearance booking | — | ✓ | ✓ | — |
-| Pool claim decision | — | — | ✓ | — |
+| Decision | Condition | Price | Character |
+|---|---|---|---|
+| Auction lot appraisal | ✓ | ✓ | — |
+| Pub-deal counterparty | ✓ | ✓ | ✓ |
+| Market hour pricing | ✓ | ✓ | — |
+| Notebook sell-side row | ✓ | ✓ | ✓ |
+| Clearance booking | ✓ | ✓ | — |
+| Pool claim decision | — | ✓ | — |
 
 One helper per arm; call sites pick which to consult.
 
@@ -197,8 +205,8 @@ game experiences from the same engine state.
 
 Each actor carries, per arm:
 
-- `expertise` — per-category (Identity, Condition, Price) or
-  per-archetype (Character). Scalar in [0, 1].
+- `expertise` — per-category (Condition, Price) or per-archetype
+  (Character). Scalar in [0, 1].
 - `j` — per-arm scalar in [0, 1]. Each arm has its own j: Mike has
   high character-j (good people-reader), low price-j on electronics
   (a mug for flashy gear). Trigger has low j on every arm.
@@ -211,8 +219,8 @@ condition; etc).
 
 This is a meaningful schema expansion. Today's bidder profile carries
 `appraisalAccuracy + flawTypeDetection + customerTypes`. The new model
-adds per-arm expertise per category × 4 arms + 4 j values. For ~20
-trading actors and ~6 categories that's ~28 dials per actor.
+adds per-arm expertise per category × 3 arms + 3 j values. For ~20
+trading actors and ~6 categories that's ~21 dials per actor.
 Mitigation: sensible defaults shared across most actors, override only
 where character distinctiveness lives.
 
