@@ -275,6 +275,20 @@ export function decayLeads(
        )`,
     ).run({ today, delete_threshold: deleteThresholdDays });
 
+    // Cascade-delete the lead_disclosures rows that reference these
+    // leads — the disclosure FK is NOT NULL so we can't null it out,
+    // and a stale disclosure row pointing at a deleted lead is
+    // meaningless anyway (the lead the asker paid to unlock no longer
+    // exists). m025 didn't ship with ON DELETE CASCADE; this is the
+    // cleanup. Same delete predicate as the lead delete below.
+    db.prepare(
+      `DELETE FROM lead_disclosures
+       WHERE lead_id IN (
+         SELECT id FROM leads
+         WHERE (@today - acquired_day) >= @delete_threshold
+       )`,
+    ).run({ today, delete_threshold: deleteThresholdDays });
+
     const deleted = db
       .prepare(
         `DELETE FROM leads
