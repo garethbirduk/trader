@@ -10,6 +10,11 @@ import {
   type BidderProfile,
 } from "../auction/bidder-profile.js";
 import { estimatePriceBand } from "../perception/estimate.js";
+import {
+  buildPriceArmPayload,
+  insertJudgement,
+} from "../perception/judgement-log-repo.js";
+import { getCategoryAnchor } from "../perception/anchors-repo.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
@@ -163,17 +168,39 @@ export function registerShopSale(
         opts.bidderProfiles.get(shop.keeperActorId) ?? FALLBACK_BIDDER_PROFILE;
       // Keeper's belief band — surfaced on the event for the UI, not
       // used to gate sales (customer drives the realised price).
+      const tierMult =
+        economics.tierMultipliers[displayed.qualityTier as QualityTier];
+      const truthUnit = item.baseValue * tierMult;
       const sellerEstimate = estimatePriceBand({
         db: world.db,
         actorId: shop.keeperActorId,
         category: item.category,
-        truth:
-          item.baseValue *
-          economics.tierMultipliers[displayed.qualityTier as QualityTier],
-        tierMultiplier:
-          economics.tierMultipliers[displayed.qualityTier as QualityTier],
+        truth: truthUnit,
+        tierMultiplier: tierMult,
         profileOverride: deriveKnowledgeProfile(profile),
       });
+
+      // Audit trail (docs/judgement.md). Persist the keeper's
+      // belief band so the SceneDeck shop event can pop the math.
+      const sellerJudgementId = insertJudgement(world.db, {
+        day: clock.day,
+        hour: clock.hour,
+        actorId: shop.keeperActorId,
+        arm: "price",
+        contextKind: "shop-seller-belief",
+        contextRefId: displayed.id,
+        payload: buildPriceArmPayload({
+          itemKindId: item.id,
+          category: item.category,
+          truthTier: displayed.qualityTier,
+          truthUnit,
+          anchor: getCategoryAnchor(world.db, item.category) * tierMult,
+          tierMultiplier: tierMult,
+          band: sellerEstimate,
+          quantity: displayed.quantity,
+        }),
+      });
+      void sellerJudgementId;
 
       // Build a per-shop flow config. The persona mix's
       // populationWeight is biased by spec.personaWeightMultipliers,
@@ -183,9 +210,7 @@ export function registerShopSale(
       const histogram = rollCustomerHistogram(clock.hour, shopFlowConfig, world.rng);
       if (histogram.totalCount === 0) continue;
 
-      const truePricePerUnit =
-        item.baseValue *
-        economics.tierMultipliers[displayed.qualityTier as QualityTier];
+      const truePricePerUnit = truthUnit;
 
       let unitsSold = 0;
       let revenue = 0;

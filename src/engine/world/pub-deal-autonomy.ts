@@ -3,6 +3,10 @@ import type { BidderProfile } from "../auction/bidder-profile.js";
 import { FALLBACK_BIDDER_PROFILE } from "../auction/bidder-profile.js";
 import { estimateLotValue } from "../perception/lot-value.js";
 import { estimatePriceBand } from "../perception/estimate.js";
+import {
+  buildCompositePayloadFromLotValuation,
+  insertJudgement,
+} from "../perception/judgement-log-repo.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
 import { getActorById } from "../actors/actors-repo.js";
@@ -452,6 +456,33 @@ function runOneAttempt(args: {
       : {}),
   });
   const appraisedValuation = valuationResult.perceivedLotValue;
+
+  // Audit trail (docs/judgement.md). Persist the buyer's appraisal —
+  // the most decision-driving judgement in the flow (gates the £100
+  // floor, sets the ceiling, carries the character-arm social-delta
+  // contribution). Context ref is the seller's stock lot id; the
+  // UI joins (buyer_actor_id, day, hour, seedLot.id) → judgement.
+  const buyerJudgementPayload = buildCompositePayloadFromLotValuation({
+    db: world.db,
+    lot: fakeLot,
+    item,
+    economics,
+    valuation: valuationResult,
+    flawDetectionBonus,
+    ...(knownBuyerFlaw && item.flawType !== null
+      ? { knownFlawType: item.flawType }
+      : {}),
+  });
+  const buyerJudgementId = insertJudgement(world.db, {
+    day: clock.day,
+    hour: clock.hour,
+    actorId: buyerId,
+    arm: "composite",
+    contextKind: "pubdeal-appraisal",
+    contextRefId: seedLot.id,
+    payload: buyerJudgementPayload,
+  });
+  void buyerJudgementId;
 
   // Seller's own retail estimate — deterministic tier-anchored mid over
   // the bag they actually hold (excludes forward-sourceable; you don't

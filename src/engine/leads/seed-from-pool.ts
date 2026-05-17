@@ -3,6 +3,11 @@ import { getPoolById } from "../pools/pools-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import { perceivedTierCentre } from "../perception/arms.js";
+import {
+  buildPriceArmPayload,
+  insertJudgement,
+} from "../perception/judgement-log-repo.js";
+import { getCategoryAnchor } from "../perception/anchors-repo.js";
 import { insertLead } from "./leads-repo.js";
 import type { Lead } from "./types.js";
 import type { QualityTier } from "../stock/types.js";
@@ -40,6 +45,10 @@ export function seedSupplyLeadsForPool(
   poolId: number,
   atDay: number,
   economics: EconomicsConfig,
+  /** Hour the seeding happened — written into the audit row. Default
+   *  0 for callers that don't have a world clock (skin seed pass,
+   *  tests). Production hooks pass `world.clock.hour`. */
+  atHour: number = 0,
 ): Lead[] {
   const pool = getPoolById(db, poolId);
   if (!pool) return [];
@@ -67,23 +76,46 @@ export function seedSupplyLeadsForPool(
       truthTier: pool.qualityTier,
       category,
     });
-    leads.push(
-      insertLead(db, {
-        holderActorId: actorId,
-        side: "supply",
-        subjectItemKindId: pool.itemKindId,
-        subjectQualityTier: perceivedTier,
-        counterpartyActorId: pool.ownerActorId ?? actorId,
-        estimatedQuantity: pool.quantityRemaining,
-        estimatedUnitPrice: Math.max(1, Math.round(band.centre)),
-        confidence: "warm",
-        sourceActorId: null,
-        acquiredDay: atDay,
-        hopCount: 0,
-        derivedFromLeadId: null,
-        subjectPoolId: poolId,
-      }),
-    );
+    const lead = insertLead(db, {
+      holderActorId: actorId,
+      side: "supply",
+      subjectItemKindId: pool.itemKindId,
+      subjectQualityTier: perceivedTier,
+      counterpartyActorId: pool.ownerActorId ?? actorId,
+      estimatedQuantity: pool.quantityRemaining,
+      estimatedUnitPrice: Math.max(1, Math.round(band.centre)),
+      confidence: "warm",
+      sourceActorId: null,
+      acquiredDay: atDay,
+      hopCount: 0,
+      derivedFromLeadId: null,
+      subjectPoolId: poolId,
+    });
+    leads.push(lead);
+
+    // Audit trail (docs/judgement.md). One row per (reachable actor,
+    // pool) — captures why a clueless seeder propagated a wrong
+    // price even though the underlying pool was the same.
+    if (item !== null) {
+      insertJudgement(db, {
+        day: atDay,
+        hour: atHour,
+        actorId,
+        arm: "price",
+        contextKind: "lead-seed",
+        contextRefId: lead.id,
+        payload: buildPriceArmPayload({
+          itemKindId: pool.itemKindId,
+          category: item.category,
+          truthTier: pool.qualityTier,
+          truthUnit: pool.openingUnitPrice,
+          anchor: getCategoryAnchor(db, item.category) * tierMult,
+          tierMultiplier: tierMult,
+          band,
+          quantity: pool.quantityRemaining,
+        }),
+      });
+    }
   }
   return leads;
 }

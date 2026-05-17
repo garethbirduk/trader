@@ -7,6 +7,11 @@ import {
   type BidderProfile,
 } from "../auction/bidder-profile.js";
 import { estimatePriceBand } from "../perception/estimate.js";
+import {
+  buildPriceArmPayload,
+  insertJudgement,
+} from "../perception/judgement-log-repo.js";
+import { getCategoryAnchor } from "../perception/anchors-repo.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
@@ -79,22 +84,44 @@ export function registerMarketSale(
       // Seller's belief band — what the seller thinks the lot is worth.
       // Kept on the event for the deal/profile UI to render the
       // "what the seller thought" range; not used to gate the sale.
+      const tierMult =
+        economics.tierMultipliers[displayed.qualityTier as QualityTier];
+      const truthUnit = item.baseValue * tierMult;
       const sellerEstimate = estimatePriceBand({
         db: world.db,
         actorId: seller.id,
         category: item.category,
-        truth:
-          item.baseValue *
-          economics.tierMultipliers[displayed.qualityTier as QualityTier],
-        tierMultiplier:
-          economics.tierMultipliers[displayed.qualityTier as QualityTier],
+        truth: truthUnit,
+        tierMultiplier: tierMult,
         profileOverride: deriveKnowledgeProfile(profile),
       });
 
       // True retail per unit — what the engine knows the lot is worth.
       // Unknown to the seller. Drives the customer's willingness window.
-      const truePricePerUnit =
-        item.baseValue * economics.tierMultipliers[displayed.qualityTier as QualityTier];
+      const truePricePerUnit = truthUnit;
+
+      // Audit trail (docs/judgement.md). Persist the seller's
+      // belief band so the SceneDeck market event can pop the math
+      // behind the sellerBelief range.
+      const sellerJudgementId = insertJudgement(world.db, {
+        day: clock.day,
+        hour: clock.hour,
+        actorId: seller.id,
+        arm: "price",
+        contextKind: "market-seller-belief",
+        contextRefId: displayed.id,
+        payload: buildPriceArmPayload({
+          itemKindId: item.id,
+          category: item.category,
+          truthTier: displayed.qualityTier,
+          truthUnit,
+          anchor: getCategoryAnchor(world.db, item.category) * tierMult,
+          tierMultiplier: tierMult,
+          band: sellerEstimate,
+          quantity: displayed.quantity,
+        }),
+      });
+      void sellerJudgementId;
 
       let unitsSold = 0;
       let revenue = 0;

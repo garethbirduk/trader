@@ -2,6 +2,11 @@ import type { DB } from "../core/db.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import { perceivedTierCentre } from "../perception/arms.js";
+import {
+  buildPriceArmPayload,
+  insertJudgement,
+} from "../perception/judgement-log-repo.js";
+import { getCategoryAnchor } from "../perception/anchors-repo.js";
 import { insertLead } from "./leads-repo.js";
 import type { Lead } from "./types.js";
 import type { StockLot, QualityTier } from "../stock/types.js";
@@ -35,6 +40,10 @@ export function seedSupplyLeadForStockLot(
   lot: StockLot,
   atDay: number,
   economics: EconomicsConfig,
+  /** Hour the seeding happened — written into the audit row. Default
+   *  0 for callers that don't have a world clock (skin seed pass,
+   *  tests). Production hooks pass `world.clock.hour`. */
+  atHour: number = 0,
 ): Lead {
   const item = getItemKindById(db, lot.itemKindId);
   const category = item?.category ?? "_unknown";
@@ -52,7 +61,7 @@ export function seedSupplyLeadForStockLot(
     truthTier: lot.qualityTier,
     category,
   });
-  return insertLead(db, {
+  const lead = insertLead(db, {
     holderActorId: lot.ownerActorId,
     side: "supply",
     subjectItemKindId: lot.itemKindId,
@@ -67,4 +76,29 @@ export function seedSupplyLeadForStockLot(
     derivedFromLeadId: null,
     subjectPoolId: null,
   });
+
+  // Audit trail (docs/judgement.md). Lead row already persists the
+  // seeded number, but the audit captures expertise/j/anchor so the
+  // UI can show why a clueless seeder propagated a wrong price.
+  if (item !== null) {
+    insertJudgement(db, {
+      day: atDay,
+      hour: atHour,
+      actorId: lot.ownerActorId,
+      arm: "price",
+      contextKind: "lead-seed",
+      contextRefId: lead.id,
+      payload: buildPriceArmPayload({
+        itemKindId: lot.itemKindId,
+        category: item.category,
+        truthTier: lot.qualityTier,
+        truthUnit: lot.acquiredUnitPrice,
+        anchor: getCategoryAnchor(db, item.category) * tierMult,
+        tierMultiplier: tierMult,
+        band,
+        quantity: lot.quantity,
+      }),
+    });
+  }
+  return lead;
 }
