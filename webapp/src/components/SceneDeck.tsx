@@ -5,6 +5,13 @@ import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, ItemRef, LotRef } from "./Refs.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
+import {
+  getJudgementById,
+  indexJudgements,
+  isComposite,
+  type JudgementIndex,
+} from "../lib/judgement-log.js";
+import { formatCompositeMath } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -523,7 +530,9 @@ function AuctionLotPlayer({
   readonly itemName: (id: number) => string;
 }) {
   const bidders =
-    (event.bidders as readonly { actorId: number; ceiling: number }[] | undefined) ?? [];
+    (event.bidders as
+      | readonly { actorId: number; ceiling: number; judgementId?: number }[]
+      | undefined) ?? [];
   const attendees =
     (event.attendees as readonly number[] | undefined) ?? [];
   const effectiveFloor =
@@ -540,6 +549,15 @@ function AuctionLotPlayer({
   const frames = useMemo(
     () => buildBidFrames(bidders, effectiveFloor, finalPrice, winnerId),
     [bidders, effectiveFloor, finalPrice, winnerId],
+  );
+
+  // Judgement audit index — built once per dump load
+  // (docs/judgement.md). Bidder rows look up by judgementId to pop
+  // the per-arm Condition → Price → multipliers math behind each
+  // ceiling. Empty index when the dump pre-dates the audit field.
+  const judgementIdx = useMemo<JudgementIndex>(
+    () => indexJudgements(dump),
+    [dump],
   );
 
   const lotKey = (event.auctionLotId as number) ?? -1;
@@ -663,6 +681,24 @@ function AuctionLotPlayer({
                   const isWinner = isFinal && b.actorId === winnerId;
                   const openingAsk = rungAtOrBelow(effectiveFloor);
                   const belowOpening = rungAtOrBelow(b.ceiling) < openingAsk;
+                  // Judgement audit lookup. Bidder snapshots carry
+                  // judgementId via AuctionBidderSnapshot; the
+                  // composite payload reconstructs the per-arm chain.
+                  const judgement =
+                    b.judgementId !== undefined
+                      ? getJudgementById(judgementIdx, b.judgementId)
+                      : null;
+                  const bidderActor = dump.actors.find((a) => a.id === b.actorId);
+                  const bidderName =
+                    bidderActor?.displayName ?? bidderActor?.code ?? `actor#${b.actorId}`;
+                  const ceilingTitle =
+                    judgement !== null && isComposite(judgement) && lot !== null
+                      ? formatCompositeMath({
+                          observerName: bidderName,
+                          itemName: itemName(judgement.payload.itemKindId),
+                          payload: judgement.payload,
+                        })
+                      : undefined;
                   return (
                     <li
                       key={b.actorId}
@@ -677,7 +713,10 @@ function AuctionLotPlayer({
                       }`}
                     >
                       <ActorChip dump={dump} actorId={b.actorId} onSelect={onSelect} size={14} />
-                      <span className="muted">
+                      <span
+                        className="muted"
+                        {...(ceilingTitle !== undefined ? { title: ceilingTitle } : {})}
+                      >
                         {belowOpening ? `below opening (£${b.ceiling})` : `ceiling £${b.ceiling}`}
                       </span>
                     </li>

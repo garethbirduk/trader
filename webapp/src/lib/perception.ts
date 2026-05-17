@@ -151,6 +151,124 @@ function clamp01(x: number): number {
   return x;
 }
 
+import type { CompositePayload, PriceArmPayload } from "../types.js";
+
+/**
+ * Format the composite (LotValuation) decomposition as a multi-line
+ * tooltip — the per-arm chain the doc calls for
+ * (docs/judgement.md — "Per-arm decomposition view"). Shows the
+ * Condition arm's perceived tier (or "(seller's claim)" when the
+ * condition arm was bypassed via override), then the Price arm at
+ * that perceived tier, then the flaw + character-arm contribution
+ * and customer-fit multipliers stacked onto the final perceived
+ * lot value. So a player hovering an auction bidder sees the chain
+ * "Trigger thought it was broken (Condition whiffed) AND under-
+ * valued the broken tier (Price anchored low) → £40 ceiling on a
+ * £1000 lot." Character-arm bonus surfaced inline when non-zero.
+ */
+export function formatCompositeMath(args: {
+  readonly observerName: string;
+  readonly itemName: string;
+  readonly payload: CompositePayload;
+}): string {
+  const { observerName, itemName, payload } = args;
+  const lines: string[] = [
+    `${observerName} · ${itemName} (${payload.category}, truth ${payload.truthTier})`,
+    `Composite valuation (Condition → Price → multipliers):`,
+    "",
+    "── Condition arm ──",
+  ];
+  if (payload.conditionOverridden) {
+    lines.push(
+      `  override — uses ${payload.perceivedTier} directly (seller named it / listing hides truth)`,
+    );
+  } else if (payload.condition !== null) {
+    const ePct = (payload.condition.expertise * 100).toFixed(0);
+    const jStr = payload.condition.j.toFixed(2);
+    const anchorStr = payload.condition.anchor.toFixed(2);
+    lines.push(
+      `  expertise ${ePct}%, j=${jStr}, anchor q=${anchorStr}`,
+      `  → perceived tier: ${payload.perceivedTier}` +
+        (payload.perceivedTier === payload.truthTier
+          ? " (truth)"
+          : ` (truth=${payload.truthTier})`),
+    );
+  }
+  lines.push("");
+  lines.push("── Price arm (at perceived tier) ──");
+  const p = payload.price;
+  const pEpct = (p.expertise * 100).toFixed(0);
+  const pJ = p.j.toFixed(2);
+  lines.push(
+    `  truth   £${Math.round(p.truthUnit)}/u  (baseValue × tierMult ${p.tierMultiplier.toFixed(2)})`,
+    `  anchor  £${Math.round(p.anchor)}/u`,
+    `  centre = lerp(anchor, truth, ${pEpct}%) = £${Math.round(p.centre)}/u`,
+    `  j=${pJ} → band [£${Math.round(p.low)}, £${Math.round(p.high)}]/u`,
+    `  sample (RNG)  £${Math.round(p.sample)}/u → perceived unit £${Math.round(payload.perceivedUnitValue)}/u`,
+  );
+  lines.push("");
+  lines.push("── Flaw + multipliers ──");
+  if (payload.flaw.itemFlawType !== null) {
+    const known = payload.flaw.knownFlawType === payload.flaw.itemFlawType;
+    if (known) {
+      lines.push(
+        `  flaw '${payload.flaw.itemFlawType}' — known from prior burn (forced detect)`,
+      );
+    } else if (payload.flaw.detectionBonus !== 0) {
+      const sign = payload.flaw.detectionBonus >= 0 ? "+" : "";
+      lines.push(
+        `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus ${sign}${payload.flaw.detectionBonus.toFixed(3)}`,
+      );
+    } else {
+      lines.push(`  flaw '${payload.flaw.itemFlawType}' — unmodified detection roll`);
+    }
+    lines.push(
+      `  detected: ${payload.flaw.detected ? "yes" : "no"} → multiplier ×${payload.flaw.multiplier.toFixed(2)}`,
+    );
+  } else {
+    lines.push("  no flaw on this item");
+  }
+  if (payload.customerFitMultiplier !== 1) {
+    lines.push(`  customer-fit ×${payload.customerFitMultiplier.toFixed(2)}`);
+  }
+  lines.push("");
+  lines.push(
+    `Final  £${Math.round(payload.perceivedUnitValue)}/u × ${payload.quantity} × multipliers = £${payload.perceivedLotValue} total`,
+  );
+  return lines.join("\n");
+}
+
+/**
+ * Format a persisted price-arm payload as a hover tooltip — the
+ * counterpart to `formatPriceArmMath` but reading from the audit
+ * log rather than re-deriving from the dump. Used by sites that
+ * already have a RunJudgement reference (lead seeders, market /
+ * shop sellerBelief events).
+ */
+export function formatPriceArmMathFromPayload(args: {
+  readonly observerName: string;
+  readonly itemName: string;
+  readonly payload: PriceArmPayload;
+}): string {
+  const { observerName, itemName, payload } = args;
+  return formatPriceArmMath({
+    observerName,
+    itemName,
+    category: payload.category,
+    truthTier: payload.truthTier,
+    truthUnit: payload.truthUnit,
+    anchor: payload.anchor,
+    band: {
+      centre: payload.centre,
+      low: payload.low,
+      high: payload.high,
+      expertise: payload.expertise,
+      j: payload.j,
+    },
+    quantity: payload.quantity ?? 1,
+  });
+}
+
 /**
  * Format the price-arm derivation as a multi-line string for a
  * browser-native `title` tooltip — the first slice of the judgement
