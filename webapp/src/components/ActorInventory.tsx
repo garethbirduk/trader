@@ -2,14 +2,9 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotDeal, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
-import { ItemRef, LocationRef } from "./Refs.js";
-import { StockLine, StockValue } from "./StockLine.js";
-import {
-  tieredAnchorFor,
-  priceBandFor,
-  tierTruth,
-  formatPriceArmMath,
-} from "../lib/perception.js";
+import { LocationRef } from "./Refs.js";
+import { StockLine } from "./StockLine.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -20,9 +15,6 @@ interface Props {
 }
 
 export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props) {
-  const actor = dump.actors.find((a) => a.id === actorId);
-  const profile = actor?.bidderProfile;
-
   const lots = useMemo<readonly SnapshotStockLot[]>(() => {
     if (snapshot === null) return [];
     return snapshot.stockLots.filter((l) => l.ownerActorId === actorId);
@@ -71,76 +63,43 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
           {lots
             .slice()
             .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
-            .map((lot) => {
-              const item = dump.items.find((i) => i.id === lot.itemKindId);
-              const truth =
-                item !== undefined ? tierTruth(item, lot.qualityTier, dump.economics) : null;
-              const retailBand =
-                profile !== undefined && item !== undefined && truth !== null
-                  ? priceBandFor(
-                      profile,
-                      item.category,
-                      truth,
-                      tieredAnchorFor(dump, item.category, lot.qualityTier),
-                      actor?.armJ?.price,
-                    )
-                  : null;
-              return (
-                <StockLine
-                  key={lot.id}
-                  fact={
-                    <>
-                      <span className="muted">has</span>{" "}
-                      <StockValue>{lot.quantity}</StockValue>{" "}
-                      <ItemRef
-                        dump={dump}
-                        id={lot.itemKindId}
-                        onSelect={onSelect}
-                        variant="chip"
-                        qualityTier={lot.qualityTier}
-                      />{" "}
-                      <span className="muted">@</span>{" "}
-                      <StockValue>£{lot.acquiredUnitPrice}</StockValue>
-                      <span className="muted">/u</span>
-                    </>
-                  }
-                  meta={
-                    <>
-                      {retailBand !== null && item !== undefined && truth !== null ? (
-                        <span
-                          title={formatPriceArmMath({
-                            observerName: actor?.displayName ?? actor?.code ?? "owner",
-                            itemName: item.displayName,
-                            category: item.category,
-                            truthTier: lot.qualityTier,
-                            truthUnit: truth,
-                            anchor: tieredAnchorFor(dump, item.category, lot.qualityTier),
-                            band: retailBand,
-                            quantity: lot.quantity,
-                          })}
-                        >
-                          ~{formatBand(retailBand.centre, retailBand.low, retailBand.high)} retail
-                        </span>
-                      ) : null}
-                      {retailBand !== null ? <span>·</span> : null}
-                      <span>acquired D{lot.acquiredDay}</span>
-                      {lot.locationId !== null ? (
-                        <>
-                          <span>·</span>
-                          <LocationRef
-                            dump={dump}
-                            id={lot.locationId}
-                            onSelect={onSelect}
-                            variant="chip"
-                            size={12}
-                          />
-                        </>
-                      ) : null}
-                    </>
-                  }
-                />
-              );
-            })}
+            .map((lot) => (
+              <StockLine
+                key={lot.id}
+                fact={
+                  <>
+                    <span className="muted">has</span>{" "}
+                    <BeliefChip
+                      dump={dump}
+                      itemKindId={lot.itemKindId}
+                      qualityTier={lot.qualityTier}
+                      quantity={lot.quantity}
+                      observerActorId={actorId}
+                      onSelect={onSelect}
+                    />
+                  </>
+                }
+                meta={
+                  <>
+                    <span>cost £{lot.acquiredUnitPrice}/u</span>
+                    <span>·</span>
+                    <span>acquired D{lot.acquiredDay}</span>
+                    {lot.locationId !== null ? (
+                      <>
+                        <span>·</span>
+                        <LocationRef
+                          dump={dump}
+                          id={lot.locationId}
+                          onSelect={onSelect}
+                          variant="chip"
+                          size={12}
+                        />
+                      </>
+                    ) : null}
+                  </>
+                }
+              />
+            ))}
         </ul>
       )}
 
@@ -192,10 +151,11 @@ function DealRow({
   readonly counterpartyKind: "buyer" | "seller";
   readonly onSelect: (s: Selection) => void;
 }) {
-  const itemName = (id: number) =>
-    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
   const cpId = counterpartyKind === "buyer" ? deal.buyerActorId : deal.sellerActorId;
   const arrow = counterpartyKind === "buyer" ? "→" : "←";
+  // Observer for each line is the side viewing this row: sells render
+  // the seller's belief, buys render the buyer's belief.
+  const observerId = counterpartyKind === "buyer" ? deal.sellerActorId : deal.buyerActorId;
   return (
     <li className="actor-inv-deal">
       <div className="actor-inv-deal-head">
@@ -209,26 +169,23 @@ function DealRow({
             · <LocationLink dump={dump} locationId={deal.deliveryLocationId} onSelect={onSelect} />
           </span>
         ) : null}
-        <span className="muted">· £{deal.totalPrice}</span>
+        <span className="muted">· agreed £{deal.totalPrice}</span>
       </div>
       <ul className="actor-inv-deal-lines">
         {deal.lines.map((line, i) => (
-          <li key={i} className="muted">
-            {line.quantity} {itemName(line.itemKindId)} ({line.qualityTier}) @ £{line.unitPrice}
+          <li key={i}>
+            <BeliefChip
+              dump={dump}
+              itemKindId={line.itemKindId}
+              qualityTier={line.qualityTier}
+              quantity={line.quantity}
+              observerActorId={observerId}
+              onSelect={onSelect}
+            />
+            <span className="muted"> · agreed £{line.unitPrice}/u</span>
           </li>
         ))}
       </ul>
     </li>
   );
-}
-
-/** Render a price band as `£mid` when low === high or `£mid (£low–£high)`
- *  otherwise. Matches the legacy `formatRetailEstimate` shape for visual
- *  stability across the retail-estimate → judgement-engine migration. */
-function formatBand(centre: number, low: number, high: number): string {
-  const mid = Math.max(0, Math.round(centre));
-  const lo = Math.max(0, Math.round(low));
-  const hi = Math.max(0, Math.round(high));
-  if (lo === hi) return `£${mid}`;
-  return `£${mid} (£${lo}–£${hi})`;
 }

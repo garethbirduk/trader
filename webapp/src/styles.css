@@ -481,31 +481,66 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   border-radius: 2px;
 }
 
-/* BeliefChip — "stock-from-observer-POV" component (see
- * webapp/src/components/BeliefChip.tsx). The chip wraps an
- * inline `qty × item @ £unit/u = £total [tier]` row with palette-
- * coloured condition tag. Item + per-unit + total all use
- * tabular-nums for column alignment in tables. */
-.belief-chip {
+/* StockChip — the one true rendering of a stock reference (see
+ * webapp/src/components/BeliefChip.tsx). Format:
+ * `Name Nx £unit = total [Tier]`. Numbers use tabular-nums so column
+ * alignment holds inside tables. The leading name is a clickable
+ * button (item profile link) that strips its default chrome so the
+ * chip reads as plain text. */
+/* Whole chip is one boxed pill — same visual language as `.lot-bidder`
+ * in the auction scene. Panel background, bordered, rounded corners,
+ * gap-separated fields. Border is colour-coded by item category;
+ * hover lifts the border to its bright variant. Click anywhere on
+ * the chip selects the item profile. */
+.stock-chip {
   display: inline-flex;
+  gap: 4px;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
-.belief-chip-qty,
-.belief-chip-unit,
-.belief-chip-total {
+.stock-chip {
+  --chip-cat: var(--border);
+}
+.stock-chip:hover {
+  border-color: var(--chip-cat);
+  box-shadow: 0 0 0 1px var(--chip-cat) inset;
+}
+
+/* Category palette — a curated set chosen to read distinctly. Each
+ * rule sets the per-category colour as a custom property so border
+ * and hover-glow stay in sync. */
+.stock-chip-cat-electrical { --chip-cat: #4fc3f7; border-color: var(--chip-cat); }
+.stock-chip-cat-vehicles   { --chip-cat: #5e8eff; border-color: var(--chip-cat); }
+.stock-chip-cat-furniture  { --chip-cat: #a87148; border-color: var(--chip-cat); }
+.stock-chip-cat-luggage    { --chip-cat: #c0a060; border-color: var(--chip-cat); }
+.stock-chip-cat-clothing   { --chip-cat: #d96b9c; border-color: var(--chip-cat); }
+.stock-chip-cat-decor      { --chip-cat: #b07bd6; border-color: var(--chip-cat); }
+.stock-chip-cat-food       { --chip-cat: #f08e3f; border-color: var(--chip-cat); }
+.stock-chip-cat-tools      { --chip-cat: #8a8a98; border-color: var(--chip-cat); }
+.stock-chip-cat-toys       { --chip-cat: #f3c84a; border-color: var(--chip-cat); }
+.stock-chip-cat-novelty    { --chip-cat: #e74cc7; border-color: var(--chip-cat); }
+.stock-chip-cat-safety     { --chip-cat: #e74c3c; border-color: var(--chip-cat); }
+.stock-chip-qty,
+.stock-chip-unit,
+.stock-chip-total {
   font-variant-numeric: tabular-nums;
 }
-.belief-chip-total {
+.stock-chip-total {
   font-weight: 600;
 }
-.belief-chip-tier {
+.stock-chip-tier {
   font-size: 10px;
   padding: 1px 4px;
   border-radius: 2px;
   letter-spacing: 0.04em;
-  text-transform: lowercase;
 }
 
 /* "Inventory" tab — actor's stock and open delivery promises. */
@@ -1754,13 +1789,27 @@ button.actor-row.actor-row-selected {
   gap: 0;
 }
 .deal-lines {
-  width: 100%;
-  border-collapse: collapse;
   font-size: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-.deal-lines td {
-  padding: 3px 8px;
+.deal-line {
+  padding: 4px 0;
   border-bottom: 1px dotted var(--border);
+}
+.deal-line:last-child { border-bottom: none; }
+.deal-line-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.deal-line-label {
+  min-width: 64px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
+import { ActorRef, LocationRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 import {
   tieredAnchorFor,
   priceBandFor,
@@ -242,15 +243,15 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                 : "";
             return (
               <div key={i} className="loc-person-row">
-                <ItemRef
+                <BeliefChip
                   dump={dump}
-                  id={l.itemKindId}
-                  onSelect={onSelect}
-                  variant="chip"
+                  itemKindId={l.itemKindId}
                   qualityTier={l.qualityTier}
+                  quantity={l.quantity}
+                  observerActorId={null}
+                  onSelect={onSelect}
                 />
-                <span className="muted">×{l.quantity}</span>
-                <span className="muted">@ £{l.unitPrice}</span>
+                <span className="muted">agreed £{l.unitPrice}/u</span>
                 {sellerCentre !== null || buyerCentre !== null ? (
                   <span className="muted" title={beliefTitle}>
                     {" · "}

@@ -5,7 +5,7 @@ import { ActorChip } from "./Links.js";
 import { ItemRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
-import { TierTag } from "./BeliefChip.js";
+import { BeliefChip, TierTag } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -332,17 +332,20 @@ function SellRow({
   return (
     <StockLine
       fact={
-        row.unlocked ? (
+        row.unlocked && row.theirQty !== null ? (
           <>
             <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
             <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">wants</span>{" "}
-            <StockValue>{row.theirQty}</StockValue>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
-            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
-            <span className="muted">@</span>{" "}
-            <StockValue>£{row.theirUnitPrice}</StockValue>
-            <span className="muted">/u</span>
+            <BeliefChip
+              dump={dump}
+              itemKindId={row.itemKindId}
+              qualityTier={row.itemTier}
+              quantity={row.theirQty}
+              observerActorId={row.counterpartyActorId}
+              perceiverJ={perceiverJ}
+              onSelect={onSelect}
+            />
           </>
         ) : (
           <>
@@ -386,17 +389,20 @@ function BuyRow({
   return (
     <StockLine
       fact={
-        row.unlocked ? (
+        row.unlocked && row.theirQty !== null ? (
           <>
             <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
             <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
             <span className="muted">has</span>{" "}
-            <StockValue>{row.theirQty}</StockValue>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
-            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
-            <span className="muted">@</span>{" "}
-            <StockValue>£{row.theirUnitPrice}</StockValue>
-            <span className="muted">/u</span>
+            <BeliefChip
+              dump={dump}
+              itemKindId={row.itemKindId}
+              qualityTier={row.itemTier}
+              quantity={row.theirQty}
+              observerActorId={row.counterpartyActorId}
+              perceiverJ={perceiverJ}
+              onSelect={onSelect}
+            />
           </>
         ) : (
           <>

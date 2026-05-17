@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 import {
   tieredAnchorFor,
   priceBandFor,
@@ -103,8 +104,14 @@ export function ItemProfile({ dump, day, snapshot, itemId, onSelect }: Props) {
           <div className="profile-section-label">By quality</div>
           {[...stockSummary.byTier.entries()].map(([tier, qty]) => (
             <div key={tier} className="loc-person-row">
-              <span className={`tier tier-${tier}`}>{tier}</span>
-              <span className="muted">×{qty}</span>
+              <BeliefChip
+                dump={dump}
+                itemKindId={itemId}
+                qualityTier={tier}
+                quantity={qty}
+                observerActorId={null}
+                onSelect={onSelect}
+              />
             </div>
           ))}
         </div>

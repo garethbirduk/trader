@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, ItemRef, LocationRef, PoolRef } from "./Refs.js";
+import { ActorRef, LocationRef, PoolRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -47,14 +48,14 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
       <dl className="profile-stats">
         <dt>Item</dt>
         <dd>
-          <ItemRef
+          <BeliefChip
             dump={dump}
-            id={lot.itemKindId}
-            onSelect={onSelect}
-            variant="chip"
+            itemKindId={lot.itemKindId}
             qualityTier={lot.qualityTier}
+            quantity={lot.quantity}
+            observerActorId={null}
+            onSelect={onSelect}
           />
-          <span className="muted"> ×{lot.quantity}</span>
         </dd>
         <dt>Floor</dt>
         <dd>£{lot.floorPrice}</dd>

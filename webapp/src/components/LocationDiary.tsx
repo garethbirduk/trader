@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { RunDump, RunEvent, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip } from "./Links.js";
-import { ActorRef, DealRef, ItemRef, LotRef, PoolRef } from "./Refs.js";
+import { ActorRef, DealRef, LotRef, PoolRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 import { resolveAuctionWindow } from "../lib/auction-window.js";
 import { dayLabel } from "../lib/calendar.js";
 
@@ -358,14 +359,14 @@ function AuctionLotRow({
   return (
     <li>
       <LotRef dump={dump} id={lot.id} onSelect={onSelect} variant="chip" />{" "}
-      <ItemRef
+      <BeliefChip
         dump={dump}
-        id={lot.itemKindId}
-        onSelect={onSelect}
-        variant="chip"
+        itemKindId={lot.itemKindId}
         qualityTier={lot.qualityTier}
+        quantity={lot.quantity}
+        observerActorId={null}
+        onSelect={onSelect}
       />{" "}
-      ×{lot.quantity}{" "}
       <span className="muted">floor £{lot.floorPrice}</span>{" "}
       {lot.clearedDay !== null && lot.clearedToActorId !== null ? (
         <span className="muted">
@@ -457,12 +458,6 @@ function summarizeLocEvent(
     ) : (
       <span className="muted">?</span>
     );
-  const I = (id: unknown) =>
-    typeof id === "number" ? (
-      <ItemRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
-    ) : (
-      <span className="muted">?</span>
-    );
   const Lot = (id: unknown) =>
     typeof id === "number" ? (
       <LotRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
@@ -509,7 +504,15 @@ function summarizeLocEvent(
     case "pubdeal.attempted":
       return (
         <>
-          {A(e.sellerActorId)} → {A(e.buyerActorId)} re {I(e.itemKindId)} ×{String(e.quantity)}
+          {A(e.sellerActorId)} → {A(e.buyerActorId)} re{" "}
+          <BeliefChip
+            dump={dump}
+            itemKindId={Number(e.itemKindId)}
+            qualityTier={e.qualityTier as string | null ?? null}
+            quantity={Number(e.quantity)}
+            observerActorId={null}
+            onSelect={onSelect}
+          />
         </>
       );
     case "pubdeal.agreed":
@@ -576,8 +579,18 @@ function summarizeLocEvent(
     case "market.hour-summary":
       return (
         <>
-          {A(e.sellerActorId)}: {String(e.unitsSold)}/{String(e.unitsOffered)} ×{" "}
-          {I(e.itemKindId)} @ £{String(e.pricePerUnit)}/u — rev £{String(e.revenue)}
+          {A(e.sellerActorId)}: sold{" "}
+          <BeliefChip
+            dump={dump}
+            itemKindId={Number(e.itemKindId)}
+            qualityTier={e.qualityTier as string | null ?? null}
+            quantity={Number(e.unitsSold)}
+            observerActorId={null}
+            onSelect={onSelect}
+          />{" "}
+          <span className="muted">
+            of {String(e.unitsOffered)} offered @ £{String(e.pricePerUnit)}/u — rev £{String(e.revenue)}
+          </span>
         </>
       );
     default:

@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
-import { ActorRef, DealRef, ItemRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { ActorRef, DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 import { dayLabel, isWeekend } from "../lib/calendar.js";
 
 interface Props {
@@ -188,9 +189,20 @@ function summarizeEvent(
     ) : (
       <span className="muted">?</span>
     );
-  const I = (id: unknown) =>
+  const I = (
+    id: unknown,
+    qualityTier?: string | null,
+    quantity?: number | null,
+  ) =>
     typeof id === "number" ? (
-      <ItemRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
+      <BeliefChip
+        dump={dump}
+        itemKindId={id}
+        qualityTier={qualityTier ?? null}
+        quantity={quantity ?? null}
+        observerActorId={null}
+        onSelect={onSelect}
+      />
     ) : (
       <span className="muted">?</span>
     );
@@ -265,7 +277,7 @@ function summarizeEvent(
           {typeof e.itemKindId === "number" ? (
             <>
               {" — "}
-              {I(e.itemKindId)} ×{String(e.quantity)}
+              {I(e.itemKindId, e.qualityTier as string | null | undefined, Number(e.quantity))}
             </>
           ) : (
             <> ×{String(e.quantity)}</>
@@ -354,10 +366,8 @@ function summarizeEvent(
     case "stock.written-off":
       return e.ownerActorId === actorId ? (
         <>
-          skipped {String(e.quantity)}× {I(e.itemKindId)}{" "}
-          <span className="muted">
-            ({String(e.qualityTier)} · fee £{String(e.feePaid)})
-          </span>
+          skipped {I(e.itemKindId, String(e.qualityTier), Number(e.quantity))}{" "}
+          <span className="muted">(fee £{String(e.feePaid)})</span>
         </>
       ) : (
         <></>
@@ -412,8 +422,8 @@ function summarizeEvent(
     case "market.hour-summary":
       return (
         <>
-          sold {String(e.unitsSold)}× {I(e.itemKindId)} @ £{String(e.pricePerUnit)}/u
-          {" "}<span className="muted">(rev £{String(e.revenue)})</span>
+          sold {I(e.itemKindId, e.qualityTier as string | null | undefined, Number(e.unitsSold))}{" "}
+          <span className="muted">@ £{String(e.pricePerUnit)}/u (rev £{String(e.revenue)})</span>
         </>
       );
     case "actor.planned":

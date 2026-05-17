@@ -1,6 +1,7 @@
 import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, DealRef, ItemRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { ActorRef, DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 /**
  * Translate one event into a human-readable React fragment, looking up
@@ -36,18 +37,63 @@ export function renderEvent(
     ) : (
       <span className="muted">{String(id)}</span>
     );
-  const I = (id: unknown, qualityTier?: string) =>
+  /** RRP / truth chip — observer=null. */
+  const I = (
+    id: unknown,
+    qualityTier?: string | null,
+    quantity?: number | null,
+  ) =>
     typeof id === "number" ? (
-      <ItemRef
+      <BeliefChip
         dump={dump}
-        id={id}
+        itemKindId={id}
+        qualityTier={qualityTier ?? null}
+        quantity={quantity ?? null}
+        observerActorId={null}
         onSelect={onSelect}
-        variant="chip"
-        qualityTier={qualityTier}
       />
     ) : (
       <span className="muted">{String(id)}</span>
     );
+  /** Actor-POV chip — observer set, judgement engine drives the
+   *  unit price. Use after `I()` to compose the layering pattern
+   *  (RRP first, then one chip per actor in the event). */
+  const IPov = (
+    id: unknown,
+    qualityTier: string | null | undefined,
+    quantity: number | null | undefined,
+    observerActorId: number,
+  ) =>
+    typeof id === "number" ? (
+      <BeliefChip
+        dump={dump}
+        itemKindId={id}
+        qualityTier={qualityTier ?? null}
+        quantity={quantity ?? null}
+        observerActorId={observerActorId}
+        onSelect={onSelect}
+      />
+    ) : null;
+  /** Transactional chip — actor-POV at a fixed agreed / realised
+   *  unit price. Used for SOLD / AGREED chips in the centre panel. */
+  const ITxn = (
+    id: unknown,
+    qualityTier: string | null | undefined,
+    quantity: number | null | undefined,
+    observerActorId: number,
+    unitPrice: number,
+  ) =>
+    typeof id === "number" ? (
+      <BeliefChip
+        dump={dump}
+        itemKindId={id}
+        qualityTier={qualityTier ?? null}
+        quantity={quantity ?? null}
+        observerActorId={observerActorId}
+        unitPriceOverride={unitPrice}
+        onSelect={onSelect}
+      />
+    ) : null;
   const Deal = (id: unknown) =>
     typeof id === "number" ? (
       <DealRef dump={dump} id={id} onSelect={onSelect} variant="chip" />
@@ -78,17 +124,24 @@ export function renderEvent(
       return (
         <>
           {tag}
-          {I(e.itemKindId, String(e.qualityTier))} — qty {String(e.quantity)},
-          window £{String(e.openingUnitPrice)}→£{String(e.closingUnitPrice)},
-          expires D{String(e.expiryDay).padStart(2, "0")}
+          {I(e.itemKindId, String(e.qualityTier), Number(e.quantity))}{" "}
+          <span className="muted">
+            window £{String(e.openingUnitPrice)}→£{String(e.closingUnitPrice)},
+            expires D{String(e.expiryDay).padStart(2, "0")}
+          </span>
           {flavour}
         </>
       );
     }
-    case "pool.flushed":
+    case "pool.flushed": {
+      const pool = findPool(dump, e.poolId as number);
       return (
         <>
-          {Pool(e.poolId)} qty {String(e.quantity)} → {String(e.destination)}
+          {Pool(e.poolId)} ·{" "}
+          {pool !== null
+            ? I(pool.itemKindId, pool.qualityTier, Number(e.quantity))
+            : <span className="muted">qty {String(e.quantity)}</span>}{" "}
+          <span className="muted">→ {String(e.destination)}</span>
           {e.auctionLotId !== null && e.auctionLotId !== undefined ? (
             <>
               {" ("}
@@ -98,18 +151,47 @@ export function renderEvent(
           ) : null}
         </>
       );
-    case "pool.claimed":
+    }
+    case "pool.claimed": {
+      const pool = findPool(dump, e.poolId as number);
       return (
         <>
-          {A(e.actorId)} grabbed {String(e.quantity)} units @ £{String(e.unitPrice)} from {Pool(e.poolId)}
+          {A(e.actorId)} grabbed{" "}
+          {pool !== null ? (
+            <>
+              {I(pool.itemKindId, pool.qualityTier, Number(e.quantity))}
+              {IPov(pool.itemKindId, pool.qualityTier, Number(e.quantity), Number(e.actorId))}
+            </>
+          ) : (
+            <span className="muted">{String(e.quantity)} units</span>
+          )}{" "}
+          <span className="muted">@ £{String(e.unitPrice)}/u from {Pool(e.poolId)}</span>
         </>
       );
-    case "auction.cleared":
+    }
+    case "auction.cleared": {
+      const lot = findAuctionLot(dump, e.auctionLotId as number);
+      const winnerId = e.winnerActorId as number | null;
       return (
         <>
-          {Lot(e.auctionLotId)}<span className="ref-arrow">→</span>{A(e.winnerActorId)}: total £{String(e.totalPrice)} (≈ £{String(e.unitPrice)}/unit)
+          {Lot(e.auctionLotId)}
+          {lot !== null ? (
+            <>
+              {" · "}
+              {I(lot.itemKindId, lot.qualityTier, lot.quantity)}
+              {winnerId !== null
+                ? IPov(lot.itemKindId, lot.qualityTier, lot.quantity, winnerId)
+                : null}
+            </>
+          ) : null}{" "}
+          <span className="ref-arrow">→</span>{" "}
+          {A(e.winnerActorId)}{" "}
+          <span className="muted">
+            for £{String(e.totalPrice)} (£{String(e.unitPrice)}/u)
+          </span>
         </>
       );
+    }
     case "auction.unsold":
       return (
         <>
@@ -186,6 +268,9 @@ export function renderEvent(
       const offered = Number(e.unitsOffered);
       const rev = Number(e.revenue);
       const footfall = Number(e.footfall);
+      const price = Number(e.pricePerUnit);
+      const sellerId = Number(e.sellerActorId);
+      const tierStr = String(e.qualityTier);
       const mix = (e.customerMix ?? {}) as Record<string, number>;
       const mixStr = Object.entries(mix)
         .filter(([, n]) => n > 0)
@@ -193,13 +278,26 @@ export function renderEvent(
         .join(", ");
       return (
         <>
-          {A(e.sellerActorId)} sold {sold}/{offered} ×{" "}
-          {I(e.itemKindId, String(e.qualityTier))} @ £{String(e.pricePerUnit)}/u —{" "}
-          rev £{rev}{" "}
-          <span className="muted">
-            (footfall {footfall}
-            {mixStr.length > 0 ? `: ${mixStr}` : ""})
-          </span>
+          {A(e.sellerActorId)} ·{" "}
+          {I(e.itemKindId, tierStr, offered)}
+          {IPov(e.itemKindId, tierStr, offered, sellerId)}
+          {sold > 0 ? (
+            <>
+              {" "}
+              <span className="muted">SOLD</span>{" "}
+              {ITxn(e.itemKindId, tierStr, sold, sellerId, price)}
+              <span className="muted">
+                to passing trade · rev £{rev}{" "}
+                (footfall {footfall}
+                {mixStr.length > 0 ? `: ${mixStr}` : ""})
+              </span>
+            </>
+          ) : (
+            <span className="muted">
+              {" "}· 0 sold (footfall {footfall}
+              {mixStr.length > 0 ? `: ${mixStr}` : ""})
+            </span>
+          )}
         </>
       );
     }
@@ -237,7 +335,10 @@ export function renderEvent(
         <>
           {A(e.sellerActorId)}
           <span className="ref-arrow">→</span>
-          {A(e.buyerActorId)}: {I(e.itemKindId, String(e.qualityTier))} ×{String(e.quantity)}
+          {A(e.buyerActorId)}:{" "}
+          {I(e.itemKindId, String(e.qualityTier), Number(e.quantity))}
+          {IPov(e.itemKindId, String(e.qualityTier), Number(e.quantity), Number(e.sellerActorId))}
+          {IPov(e.itemKindId, String(e.qualityTier), Number(e.quantity), Number(e.buyerActorId))}
         </>
       );
     case "pubdeal.agreed":
@@ -245,7 +346,11 @@ export function renderEvent(
         <>
           {Deal(e.dealId)}: {A(e.sellerActorId)}
           <span className="ref-arrow">→</span>
-          {A(e.buyerActorId)} — {String(e.quantity)} @ £{String(e.unitPrice)}/unit
+          {A(e.buyerActorId)}{" "}
+          <span className="muted">AGREED</span>{" "}
+          {ITxn(e.itemKindId, e.qualityTier as string | null | undefined, Number(e.quantity), Number(e.sellerActorId), Number(e.unitPrice))}
+          <span className="muted">to</span>{" "}
+          {ITxn(e.itemKindId, e.qualityTier as string | null | undefined, Number(e.quantity), Number(e.buyerActorId), Number(e.unitPrice))}
         </>
       );
     case "pubdeal.walked":
@@ -310,8 +415,8 @@ export function renderEvent(
     case "regional-clearance.listed":
       return (
         <>
-          New lot: {I(e.itemKindId)} ×{String(e.quantity)} ({String(e.qualityTier)}){" "}
-          floor £{String(e.floorPrice)}
+          New lot: {I(e.itemKindId, String(e.qualityTier), Number(e.quantity))}{" "}
+          <span className="muted">floor £{String(e.floorPrice)}</span>
           {e.provenance !== null && e.provenance !== undefined ? (
             <> <span className="muted">— {String(e.provenance)}</span></>
           ) : null}
@@ -320,10 +425,10 @@ export function renderEvent(
     case "stock.written-off":
       return (
         <>
-          {A(e.ownerActorId)} skipped {String(e.quantity)}× {I(e.itemKindId)}{" "}
-          <span className="muted">
-            ({String(e.qualityTier)} · fee £{String(e.feePaid)})
-          </span>
+          {A(e.ownerActorId)} skipped{" "}
+          {I(e.itemKindId, String(e.qualityTier), Number(e.quantity))}
+          {IPov(e.itemKindId, String(e.qualityTier), Number(e.quantity), Number(e.ownerActorId))}
+          {" "}<span className="muted">(fee £{String(e.feePaid)})</span>
         </>
       );
     case "gossip.exchanged": {
@@ -408,4 +513,31 @@ export function renderEvent(
     default:
       return <code>{JSON.stringify(e)}</code>;
   }
+}
+
+/** Find a pool's stock-shape (itemKindId + qualityTier) across all
+ *  snapshots — the pool may have been flushed and pruned from the
+ *  current snapshot, but `itemKindId`/`qualityTier` are immutable. */
+function findPool(
+  dump: RunDump,
+  poolId: number,
+): { itemKindId: number; qualityTier: string } | null {
+  for (const snap of dump.snapshots) {
+    const found = snap.pools.find((p) => p.id === poolId);
+    if (found !== undefined) return found;
+  }
+  return null;
+}
+
+/** Same for auction lots — pulled across snapshots so a long-cleared
+ *  lot still resolves its item/tier/quantity for chip rendering. */
+function findAuctionLot(
+  dump: RunDump,
+  lotId: number,
+): { itemKindId: number; qualityTier: string; quantity: number } | null {
+  for (const snap of dump.snapshots) {
+    const found = snap.auctionLots.find((l) => l.id === lotId);
+    if (found !== undefined) return found;
+  }
+  return null;
 }

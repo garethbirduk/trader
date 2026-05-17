@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DaySnapshot, RunDump, RunEvent, SnapshotAuctionLot, SnapshotDeal } from "../types.js";
+import type { DaySnapshot, RunDump, RunEvent, SnapshotAuctionLot, SnapshotDeal, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, ItemRef, LotRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
 import {
@@ -143,7 +144,7 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
         key: "market",
         label: `Market (${market.length})`,
         render: () => (
-          <MarketScene events={market} dump={dump} onSelect={onSelect} />
+          <MarketScene events={market} dump={dump} snapshot={snapshot} onSelect={onSelect} />
         ),
       });
     }
@@ -357,12 +358,18 @@ function AuctionLotOnView({
     lot.scheduledHour !== undefined && lot.scheduledHour !== null
       ? { day, hour: lot.scheduledHour }
       : null;
+  void itemName;
   return (
     <article className="lot-card lot-card-onview">
       <div className="lot-line">
-        <strong>{itemName(lot.itemKindId)}</strong>
-        <span className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</span>
-        <span>×{lot.quantity}</span>
+        <BeliefChip
+          dump={dump}
+          itemKindId={lot.itemKindId}
+          qualityTier={lot.qualityTier}
+          quantity={lot.quantity}
+          observerActorId={null}
+          onSelect={onSelect}
+        />
         <span className="muted">floor £{lot.floorPrice}</span>
       </div>
       <div className="lot-bidline">
@@ -638,11 +645,14 @@ function AuctionLotPlayer({
     <article className={cardClass}>
       <div className="lot-line">
         {lot !== null ? (
-          <>
-            <strong>{itemName(lot.itemKindId)}</strong>
-            <span className={`tier tier-${lot.qualityTier}`}>{lot.qualityTier}</span>
-            <span>×{lot.quantity}</span>
-          </>
+          <BeliefChip
+            dump={dump}
+            itemKindId={lot.itemKindId}
+            qualityTier={lot.qualityTier}
+            quantity={lot.quantity}
+            observerActorId={null}
+            onSelect={onSelect}
+          />
         ) : (
           <strong>lot {lotKey}</strong>
         )}
@@ -1056,11 +1066,14 @@ function PubdealHagglePlayer({
           {itemId !== undefined ? (
             <>
               <span className="muted">·</span>
-              <span>×{qty}</span>
-              <strong>{itemName(itemId)}</strong>
-              {tier !== undefined ? (
-                <span className={`tier tier-${tier}`}>{tier}</span>
-              ) : null}
+              <BeliefChip
+                dump={dump}
+                itemKindId={itemId}
+                qualityTier={tier ?? null}
+                quantity={qty ?? null}
+                observerActorId={null}
+                onSelect={onSelect}
+              />
             </>
           ) : null}
         </div>
@@ -1431,8 +1444,6 @@ function GossipScene({
   readonly dump: RunDump;
   readonly onSelect: (s: Selection) => void;
 }) {
-  const itemName = (id: number) =>
-    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
   return (
     <section className="scene scene-gossip">
       <header className="scene-header">
@@ -1497,12 +1508,38 @@ function GossipScene({
                         ) : (
                           <span className="muted">someone</span>
                         )}{" "}
-                        {verb} {lead.estimatedQuantity}{" "}
-                        {itemName(lead.subjectItemKindId)}{" "}
-                        <span className="muted">
-                          ({lead.subjectQualityTier ?? "?"}) @ £
-                          {lead.estimatedUnitPrice} · {lead.confidence}
-                        </span>
+                        <span className="muted">{verb}</span>{" "}
+                        {lead.subjectItemKindId !== null ? (
+                          <>
+                            <BeliefChip
+                              dump={dump}
+                              itemKindId={lead.subjectItemKindId}
+                              qualityTier={lead.subjectQualityTier ?? null}
+                              quantity={lead.estimatedQuantity ?? null}
+                              observerActorId={null}
+                              onSelect={onSelect}
+                            />
+                            <BeliefChip
+                              dump={dump}
+                              itemKindId={lead.subjectItemKindId}
+                              qualityTier={lead.subjectQualityTier ?? null}
+                              quantity={lead.estimatedQuantity ?? null}
+                              observerActorId={x.fromActorId ?? null}
+                              onSelect={onSelect}
+                            />
+                            <BeliefChip
+                              dump={dump}
+                              itemKindId={lead.subjectItemKindId}
+                              qualityTier={lead.subjectQualityTier ?? null}
+                              quantity={lead.estimatedQuantity ?? null}
+                              observerActorId={x.toActorId ?? null}
+                              onSelect={onSelect}
+                            />
+                          </>
+                        ) : (
+                          <span className="muted">[rep lead]</span>
+                        )}{" "}
+                        <span className="muted">· {lead.confidence}</span>
                       </li>
                     );
                   })}
@@ -1609,15 +1646,23 @@ function InspectionScene({
                 <>
                   {" "}
                   <span className="muted">·</span>{" "}
-                  <span>{lot.quantity}</span>{" "}
-                  <ItemRef
+                  <BeliefChip
                     dump={dump}
-                    id={lot.itemKindId}
+                    itemKindId={lot.itemKindId}
+                    qualityTier={lot.qualityTier}
+                    quantity={lot.quantity}
+                    observerActorId={null}
                     onSelect={onSelect}
-                    variant="chip"
+                  />
+                  <BeliefChip
+                    dump={dump}
+                    itemKindId={lot.itemKindId}
+                    qualityTier={lot.qualityTier}
+                    quantity={lot.quantity}
+                    observerActorId={actorId}
+                    onSelect={onSelect}
                   />{" "}
-                  <span className="muted">({lot.qualityTier})</span>{" "}
-                  <span className="muted">@ floor £{lot.floorPrice}</span>
+                  <span className="muted">floor £{lot.floorPrice}</span>
                 </>
               ) : null}
             </li>
@@ -1753,10 +1798,12 @@ function ClearanceScene({
 function MarketScene({
   events,
   dump,
+  snapshot,
   onSelect,
 }: {
   readonly events: readonly RunEvent[];
   readonly dump: RunDump;
+  readonly snapshot: DaySnapshot | null;
   readonly onSelect: (s: Selection) => void;
 }) {
   // All sellers this hour share the same footfall + customer mix —
@@ -1770,8 +1817,6 @@ function MarketScene({
     1,
     Object.values(customerMix).reduce((s, n) => s + Number(n), 0),
   );
-  const itemName = (id: number) =>
-    dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
   const totalSold = events.reduce(
     (s, e) => s + Number(e.unitsSold ?? 0),
     0,
@@ -1829,11 +1874,34 @@ function MarketScene({
         {events.map((e, i) => {
           const sellerId = e.sellerActorId as number;
           const itemId = e.itemKindId as number;
-          const tier = String(e.qualityTier ?? "");
+          const tier = (e.qualityTier as string | null) ?? null;
           const price = Number(e.pricePerUnit ?? 0);
           const sold = Number(e.unitsSold ?? 0);
           const offered = Number(e.unitsOffered ?? 0);
           const revenue = Number(e.revenue ?? 0);
+          const stockLotId = e.stockLotId as number | undefined;
+          // Profit needs cost basis. The lot may have been fully sold
+          // by the current day, so fall back to scanning every snapshot
+          // for the first hit — acquiredUnitPrice is immutable.
+          let lot: SnapshotStockLot | null = null;
+          if (stockLotId !== undefined) {
+            if (snapshot !== null) {
+              lot = snapshot.stockLots.find((l) => l.id === stockLotId) ?? null;
+            }
+            if (lot === null) {
+              for (const snap of dump.snapshots) {
+                const found = snap.stockLots.find((l) => l.id === stockLotId);
+                if (found !== undefined) {
+                  lot = found;
+                  break;
+                }
+              }
+            }
+          }
+          const costPerUnit = lot?.acquiredUnitPrice ?? null;
+          const profit = costPerUnit !== null
+            ? revenue - sold * costPerUnit
+            : null;
           const soldByPersona =
             (e.soldByPersona as Record<string, number> | undefined) ?? {};
           const soldOut = sold > 0 && sold === offered;
@@ -1856,19 +1924,53 @@ function MarketScene({
                     size={20}
                   />
                   <span className="muted">·</span>
-                  <strong>{itemName(itemId)}</strong>
-                  <span className={`tier tier-${tier}`}>{tier}</span>
+                  <BeliefChip
+                    dump={dump}
+                    itemKindId={itemId}
+                    qualityTier={tier}
+                    quantity={offered}
+                    observerActorId={null}
+                    onSelect={onSelect}
+                  />
+                  <BeliefChip
+                    dump={dump}
+                    itemKindId={itemId}
+                    qualityTier={tier}
+                    quantity={offered}
+                    observerActorId={sellerId}
+                    onSelect={onSelect}
+                  />
                 </div>
                 <div className="lot-bidline">
-                  <span className="lot-price">£{price}</span>
                   {empty ? (
                     <span className="lot-hammer lot-hammer-unsold">
-                      0 sold
+                      0 sold · footfall passed
                     </span>
                   ) : (
-                    <span className="lot-hammer">
-                      ★ {sold}/{offered} sold · rev £{revenue}
-                    </span>
+                    <>
+                      <span className="muted">SOLD</span>
+                      <BeliefChip
+                        dump={dump}
+                        itemKindId={itemId}
+                        qualityTier={tier}
+                        quantity={sold}
+                        observerActorId={sellerId}
+                        unitPriceOverride={price}
+                        onSelect={onSelect}
+                      />
+                      <span className="muted">
+                        to passing trade · rev £{revenue}
+                        {profit !== null ? (
+                          <>
+                            {" · "}
+                            <strong className={profit >= 0 ? "" : "warn"}>
+                              {profit >= 0 ? "+" : "−"}£{Math.abs(profit)}
+                            </strong>{" "}
+                            profit
+                          </>
+                        ) : null}
+                      </span>
+                    </>
                   )}
                 </div>
                 {Object.keys(soldByPersona).length > 0 ? (

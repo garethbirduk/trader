@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { Avatar } from "./Avatar.js";
-import { ActorRef, ItemRef, PoolRef } from "./Refs.js";
+import { ActorRef, PoolRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 
 interface Props {
@@ -453,15 +454,13 @@ function VirtualActorProfile({
                   ) : (
                     <span>pool {p.id}</span>
                   )}{" "}
-                  <span className="muted">
-                    {p.quantityRemaining}×{" "}
-                  </span>
-                  <ItemRef
+                  <BeliefChip
                     dump={dump}
-                    id={p.itemKindId}
-                    onSelect={onSelect ?? (() => {})}
-                    variant="chip"
+                    itemKindId={p.itemKindId}
                     qualityTier={p.qualityTier}
+                    quantity={p.quantityRemaining}
+                    observerActorId={null}
+                    onSelect={onSelect ?? (() => {})}
                   />
                 </li>
               ))}

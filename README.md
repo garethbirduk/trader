@@ -25,13 +25,12 @@ npm test
 ## Layout
 
 ```
-src/engine/         Core engine: clock, db, types, stock, deals, etc.
-src/mechanics/      Pluggable interaction modules.
-src/skins/          Content packs (item kinds, actors, locations, prices).
-src/drivers/        ActorPolicy + NegotiationDriver implementations.
-src/headless/       CLI runner for self-running simulations.
-tests/              Invariant + scenario tests.
-webapp/             React viewer (static and live modes).
+src/engine/             Core engine: clock, db, types, stock, deals, etc.
+src/engine/mechanics/   Pluggable interaction modules.
+src/skins/              Content packs (item kinds, actors, locations, prices).
+src/headless/           CLI runner for self-running simulations.
+tests/                  Invariant + scenario tests.
+webapp/                 React viewer (static and live modes).
 ```
 
 ## Hosting

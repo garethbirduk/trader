@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { DaySnapshot, RunDump, SnapshotPool } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, ItemRef, PoolRef } from "./Refs.js";
+import { ActorRef, PoolRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -110,15 +111,15 @@ function PoolCard({
         </span>
         <span className="pool-status">{status}</span>
         <span className="pool-item">
-          <ItemRef
+          <BeliefChip
             dump={dump}
-            id={pool.itemKindId}
-            onSelect={onSelect}
-            variant="chip"
+            itemKindId={pool.itemKindId}
             qualityTier={pool.qualityTier}
+            quantity={pool.quantityRemaining}
+            observerActorId={null}
+            onSelect={onSelect}
           />
         </span>
-        <span className="pool-qty">qty {pool.quantityRemaining}</span>
       </header>
       <DecayMiniGraph
         openingPrice={pool.openingUnitPrice}

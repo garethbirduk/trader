@@ -1,14 +1,9 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
-import { StockLine, StockValue } from "./StockLine.js";
-import {
-  tieredAnchorFor,
-  priceBandFor,
-  tierTruth,
-  formatPriceArmMath,
-} from "../lib/perception.js";
+import { ActorRef, LocationRef } from "./Refs.js";
+import { StockLine } from "./StockLine.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -61,8 +56,6 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
           (s, l) => s + l.quantity * l.acquiredUnitPrice,
           0,
         );
-        const owner = dump.actors.find((a) => a.id === ownerId);
-        const profile = owner?.bidderProfile;
         const sortedLots = lots
           .slice()
           .sort((a, b) =>
@@ -83,88 +76,47 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
               </span>
             </header>
             <ul className="inv-lots">
-              {sortedLots.map((lot) => {
-                const item = dump.items.find((i) => i.id === lot.itemKindId);
-                const truth =
-                  item !== undefined ? tierTruth(item, lot.qualityTier, dump.economics) : null;
-                const retailBand =
-                  profile !== undefined && item !== undefined && truth !== null
-                    ? priceBandFor(
-                        profile,
-                        item.category,
-                        truth,
-                        tieredAnchorFor(dump, item.category, lot.qualityTier),
-                        owner?.armJ?.price,
-                      )
-                    : null;
-                return (
-                  <StockLine
-                    key={lot.id}
-                    fact={
-                      <>
-                        <span className="muted">has</span>{" "}
-                        <StockValue>{lot.quantity}</StockValue>{" "}
-                        <ItemRef
-                          dump={dump}
-                          id={lot.itemKindId}
-                          onSelect={onSelect}
-                          variant="chip"
-                          qualityTier={lot.qualityTier}
-                        />{" "}
-                        <span className="muted">@</span>{" "}
-                        <StockValue>£{lot.acquiredUnitPrice}</StockValue>
-                        <span className="muted">/u</span>
-                      </>
-                    }
-                    meta={
-                      <>
-                        {retailBand !== null && item !== undefined && truth !== null ? (
-                          <span
-                            title={formatPriceArmMath({
-                              observerName: owner?.displayName ?? owner?.code ?? "owner",
-                              itemName: item.displayName,
-                              category: item.category,
-                              truthTier: lot.qualityTier,
-                              truthUnit: truth,
-                              anchor: tieredAnchorFor(dump, item.category, lot.qualityTier),
-                              band: retailBand,
-                              quantity: lot.quantity,
-                            })}
-                          >
-                            ~{formatBand(retailBand.centre, retailBand.low, retailBand.high)} retail
-                          </span>
-                        ) : null}
-                        {retailBand !== null ? <span>·</span> : null}
-                        <span>acquired D{lot.acquiredDay}</span>
-                        {lot.locationId !== null ? (
-                          <>
-                            <span>·</span>
-                            <LocationRef
-                              dump={dump}
-                              id={lot.locationId}
-                              onSelect={onSelect}
-                              variant="chip"
-                              size={12}
-                            />
-                          </>
-                        ) : null}
-                      </>
-                    }
-                  />
-                );
-              })}
+              {sortedLots.map((lot) => (
+                <StockLine
+                  key={lot.id}
+                  fact={
+                    <>
+                      <span className="muted">has</span>{" "}
+                      <BeliefChip
+                        dump={dump}
+                        itemKindId={lot.itemKindId}
+                        qualityTier={lot.qualityTier}
+                        quantity={lot.quantity}
+                        observerActorId={null}
+                        onSelect={onSelect}
+                      />
+                    </>
+                  }
+                  meta={
+                    <>
+                      <span>cost £{lot.acquiredUnitPrice}/u</span>
+                      <span>·</span>
+                      <span>acquired D{lot.acquiredDay}</span>
+                      {lot.locationId !== null ? (
+                        <>
+                          <span>·</span>
+                          <LocationRef
+                            dump={dump}
+                            id={lot.locationId}
+                            onSelect={onSelect}
+                            variant="chip"
+                            size={12}
+                          />
+                        </>
+                      ) : null}
+                    </>
+                  }
+                />
+              ))}
             </ul>
           </section>
         );
       })}
     </div>
   );
-}
-
-function formatBand(centre: number, low: number, high: number): string {
-  const mid = Math.max(0, Math.round(centre));
-  const lo = Math.max(0, Math.round(low));
-  const hi = Math.max(0, Math.round(high));
-  if (lo === hi) return `£${mid}`;
-  return `£${mid} (£${lo}–£${hi})`;
 }

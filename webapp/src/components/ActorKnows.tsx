@@ -2,14 +2,9 @@ import { useMemo, useState } from "react";
 import type { RunDump, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
-import { ActorRef, ItemRef, LotRef } from "./Refs.js";
-import { StockLine, StockValue } from "./StockLine.js";
-import {
-  tieredAnchorFor,
-  priceBandFor,
-  tierTruth,
-  formatPriceArmMath,
-} from "../lib/perception.js";
+import { ActorRef, LotRef } from "./Refs.js";
+import { StockLine } from "./StockLine.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -485,6 +480,7 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
             <TimelineView
               rows={timelineRows}
               dump={dump}
+              receiverActorId={actorId}
               unlockedLeadIds={unlockedLeadIds}
               onSelect={onSelect}
             />
@@ -533,8 +529,6 @@ function LotKnowledgeLine({
   readonly onSelect: (s: Selection) => void;
 }) {
   if (lot === null) {
-    // Fallback: lot detail not in any snapshot (very old dumps,
-    // edge cases). Render the bare chip so we don't crash.
     return (
       <StockLine
         fact={
@@ -558,11 +552,15 @@ function LotKnowledgeLine({
           </span>{" "}
           <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />{" "}
           <span className="muted">·</span>{" "}
-          <StockValue>{lot.quantity}</StockValue>{" "}
-          <ItemRef dump={dump} id={lot.itemKindId} onSelect={onSelect} variant="chip" />{" "}
-          <span className="muted">({lot.qualityTier})</span>{" "}
-          <span className="muted">@ floor</span>{" "}
-          <StockValue>£{lot.floorPrice}</StockValue>
+          <BeliefChip
+            dump={dump}
+            itemKindId={lot.itemKindId}
+            qualityTier={lot.qualityTier}
+            quantity={lot.quantity}
+            observerActorId={null}
+            onSelect={onSelect}
+          />{" "}
+          <span className="muted">floor £{lot.floorPrice}</span>
         </>
       }
       meta={
@@ -600,11 +598,13 @@ function LotKnowledgeLine({
 function TimelineView({
   rows,
   dump,
+  receiverActorId,
   unlockedLeadIds,
   onSelect,
 }: {
   readonly rows: readonly LearnedRow[];
   readonly dump: RunDump;
+  readonly receiverActorId: number;
   readonly unlockedLeadIds: ReadonlySet<number>;
   readonly onSelect: (s: Selection) => void;
 }) {
@@ -640,9 +640,7 @@ function TimelineView({
               </span>
             </div>
             <div className="knows-fact">
-              {unlocked
-                ? formatLead(r.lead, dump, onSelect)
-                : formatHeadline(r.lead, dump, onSelect)}
+              {formatLead(r.lead, dump, receiverActorId, unlocked, onSelect)}
             </div>
           </li>
         );
@@ -680,8 +678,6 @@ function ByItemView({
   return (
     <ul className="knows-groups">
       {groups.map((g) => {
-        const item = dump.items.find((i) => i.id === g.itemId);
-        const itemName = item?.displayName ?? `kind ${g.itemId}`;
         const totalLeads = g.supply.length + g.demand.length;
         return (
           <li
@@ -689,17 +685,14 @@ function ByItemView({
             className="knows-group"
           >
             <div className="knows-group-header">
-              <button
-                type="button"
-                className="ref ref-inline ref-item knows-group-title"
-                onClick={() => onSelect({ kind: "item", id: g.itemId })}
-                title={itemName}
-              >
-                {itemName}
-              </button>
-              {g.tier !== null ? (
-                <span className={`tier tier-${g.tier}`}>{g.tier}</span>
-              ) : null}
+              <BeliefChip
+                dump={dump}
+                itemKindId={g.itemId}
+                qualityTier={g.tier}
+                quantity={null}
+                observerActorId={null}
+                onSelect={onSelect}
+              />
               <span className="knows-group-count muted">
                 {totalLeads} lead{totalLeads === 1 ? "" : "s"}
               </span>
@@ -828,8 +821,6 @@ function SubgroupRows({
   readonly unlockedLeadIds: ReadonlySet<number>;
   readonly onSelect: (s: Selection) => void;
 }) {
-  const receiver = dump.actors.find((a) => a.id === receiverActorId);
-  const receiverProfile = receiver?.bidderProfile;
   // Detect conflict by subject: rows about the same subject with
   // diverging qty or price are in disagreement. In By-Item view all
   // rows share item+tier, so subject equivalence is by counterparty.
@@ -876,33 +867,6 @@ function SubgroupRows({
           const unlocked = isLeadUnlocked(r.lead, unlockedLeadIds);
           const k = subjectKey(r.lead);
           const conflict = conflictMap.get(k);
-          // Retail estimate from the receiver's perspective, routed
-          // through the judgement engine's `priceBandFor` (centre =
-          // lerp(anchor, truth, expertise); spread = 1 - j). The
-          // claimed tier drives the truth basis: until the receiver
-          // inspects (auction-lot mechanic only, not modelled here),
-          // they trust the speaker's tier verbatim. Civilians with no
-          // bidder profile get no estimate. Locked rows skip this —
-          // there's no claimed tier to value yet.
-          const item = dump.items.find(
-            (it) => it.id === r.lead.subjectItemKindId,
-          );
-          const claimedTier = r.lead.subjectQualityTier ?? "fair";
-          const truth =
-            item !== undefined ? tierTruth(item, claimedTier, dump.economics) : null;
-          const retailBand =
-            unlocked && receiverProfile !== undefined && item !== undefined && truth !== null
-              ? priceBandFor(
-                  receiverProfile,
-                  item.category,
-                  truth,
-                  tieredAnchorFor(dump, item.category, claimedTier),
-                  receiver?.armJ?.price,
-                )
-              : null;
-          const retailLabel = retailBand !== null
-            ? formatBand(retailBand.centre, retailBand.low, retailBand.high)
-            : null;
           const counterpartyChip = r.lead.counterpartyActorId !== null ? (
             <ActorChip
               dump={dump}
@@ -917,7 +881,7 @@ function SubgroupRows({
             <StockLine
               key={i}
               fact={
-                unlocked ? (
+                unlocked && r.lead.subjectItemKindId !== null ? (
                   <>
                     {showCounterparty ? (
                       r.lead.counterpartyActorId !== null ? (
@@ -931,27 +895,17 @@ function SubgroupRows({
                     ) : (
                       <span className="muted">has</span>
                     )}{" "}
-                    <StockValue divergent={conflict?.qtyVaries}>
-                      {r.lead.estimatedQuantity}
-                    </StockValue>{" "}
-                    {showItem && r.lead.subjectItemKindId !== null ? (
-                      <ItemRef
-                        dump={dump}
-                        id={r.lead.subjectItemKindId}
-                        onSelect={onSelect}
-                        variant="chip"
-                        qualityTier={r.lead.subjectQualityTier ?? undefined}
-                      />
-                    ) : r.lead.subjectQualityTier !== null ? (
-                      <span className={`tier tier-${r.lead.subjectQualityTier}`}>
-                        {r.lead.subjectQualityTier}
-                      </span>
-                    ) : null}{" "}
-                    <span className="muted">@</span>{" "}
-                    <StockValue divergent={conflict?.priceVaries}>
-                      £{r.lead.estimatedUnitPrice}
-                    </StockValue>
-                    <span className="muted">/u</span>
+                    <BeliefChip
+                      dump={dump}
+                      itemKindId={r.lead.subjectItemKindId}
+                      qualityTier={r.lead.subjectQualityTier}
+                      quantity={r.lead.estimatedQuantity}
+                      observerActorId={receiverActorId}
+                      onSelect={onSelect}
+                    />
+                    {conflict?.qtyVaries || conflict?.priceVaries ? (
+                      <span className="muted" title="Sources disagree on qty/price for this subject."> ⚠</span>
+                    ) : null}
                   </>
                 ) : (
                   <>
@@ -966,11 +920,13 @@ function SubgroupRows({
                       {r.lead.side === "supply" ? "has" : "wants"}
                     </span>{" "}
                     {showItem && r.lead.subjectItemKindId !== null ? (
-                      <ItemRef
+                      <BeliefChip
                         dump={dump}
-                        id={r.lead.subjectItemKindId}
+                        itemKindId={r.lead.subjectItemKindId}
+                        qualityTier={r.lead.subjectQualityTier ?? null}
+                        quantity={null}
+                        observerActorId={null}
                         onSelect={onSelect}
-                        variant="chip"
                       />
                     ) : (
                       <span className="muted">(item)</span>
@@ -983,25 +939,6 @@ function SubgroupRows({
               }
               meta={
                 <>
-                  {retailLabel !== null && item !== undefined && retailBand !== null && truth !== null ? (
-                    <>
-                      <span
-                        title={formatPriceArmMath({
-                          observerName: receiver?.displayName ?? receiver?.code ?? "you",
-                          itemName: item.displayName,
-                          category: item.category,
-                          truthTier: r.lead.subjectQualityTier ?? "fair",
-                          truthUnit: truth,
-                          anchor: tieredAnchorFor(dump, item.category, claimedTier),
-                          band: retailBand,
-                          quantity: r.lead.estimatedQuantity,
-                        })}
-                      >
-                        ~{retailLabel} retail
-                      </span>
-                      <span>·</span>
-                    </>
-                  ) : null}
                   from{" "}
                   <ActorChip
                     dump={dump}
@@ -1028,36 +965,17 @@ function SubgroupRows({
   );
 }
 
-function formatHeadline(
-  l: ExchangedLead,
-  dump: RunDump,
-  onSelect: (s: Selection) => void,
-): JSX.Element {
-  const item = dump.items.find((i) => i.id === l.subjectItemKindId);
-  const itemLabel = item?.displayName ?? `kind ${l.subjectItemKindId}`;
-  const cp = l.counterpartyActorId;
-  const verb = l.side === "supply" ? "has" : "wants";
-  return (
-    <>
-      {cp !== null ? (
-        <ActorChip dump={dump} actorId={cp} onSelect={onSelect} size={14} />
-      ) : (
-        <span className="muted">someone</span>
-      )}{" "}
-      {verb} {itemLabel}
-      <span className="muted"> · headline — buy a drink to learn more</span>
-    </>
-  );
-}
-
 function formatLead(
   l: ExchangedLead,
   dump: RunDump,
+  receiverActorId: number,
+  unlocked: boolean,
   onSelect: (s: Selection) => void,
 ): JSX.Element {
-  const item = dump.items.find((i) => i.id === l.subjectItemKindId);
-  const itemLabel = item?.displayName ?? `kind ${l.subjectItemKindId}`;
-  const tier = l.subjectQualityTier ?? null;
+  if (l.subjectItemKindId === null) {
+    // Rep lead — no stock subject; rendered elsewhere (Reputation section).
+    return <span className="muted">[non-stock lead]</span>;
+  }
   const cp = l.counterpartyActorId;
   const verb = l.side === "supply" ? "has" : "wants";
   return (
@@ -1067,30 +985,30 @@ function formatLead(
       ) : (
         <span className="muted">someone</span>
       )}{" "}
-      {verb} {l.estimatedQuantity} {itemLabel}
-      {tier !== null ? <span className="muted"> ({tier})</span> : null} @ £
-      {l.estimatedUnitPrice}
-      <span className="muted">
-        {" · "}
-        {l.confidence}
-        {l.hopCount > 0 ? ` · hop ${l.hopCount}` : ""}
-      </span>
+      {verb}{" "}
+      <BeliefChip
+        dump={dump}
+        itemKindId={l.subjectItemKindId}
+        qualityTier={l.subjectQualityTier}
+        quantity={unlocked ? l.estimatedQuantity : null}
+        observerActorId={receiverActorId}
+        onSelect={onSelect}
+      />
+      {unlocked ? (
+        <span className="muted">
+          {" · "}
+          {l.confidence}
+          {l.hopCount > 0 ? ` · hop ${l.hopCount}` : ""}
+        </span>
+      ) : (
+        <span className="muted" title="Headline only — pay to unlock detail.">
+          {" "}· headline
+        </span>
+      )}
     </>
   );
 }
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n);
-}
-
-/** Render a price band as `£mid` when low === high (perfect judgement)
- *  or `£mid (£low–£high)` otherwise. Matches the legacy
- *  `formatRetailEstimate` shape so the row visual is stable across
- *  the retail-estimate migration. */
-function formatBand(centre: number, low: number, high: number): string {
-  const mid = Math.max(0, Math.round(centre));
-  const lo = Math.max(0, Math.round(low));
-  const hi = Math.max(0, Math.round(high));
-  if (lo === hi) return `£${mid}`;
-  return `£${mid} (£${lo}–£${hi})`;
 }
