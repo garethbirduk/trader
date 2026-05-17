@@ -145,10 +145,8 @@ export function makeBidders(
       // Judgement engine path (docs/judgement.md). Uninspected bidders
       // see the listing (kind id from the catalogue, qty, floor) but
       // not the tier — they substitute the assumed tier. Inspected
-      // bidders run the full Identity ∘ Condition ∘ Price composition
-      // against truth. Identity is overridden to the listing's kindId
-      // because the auction listing names the kind explicitly;
-      // confusion-on-identity is a sale-floor / pub-deal mechanic.
+      // bidders run the full Condition ∘ Price composition against
+      // truth.
       //
       // The in-memory BidderProfile is the auction's source of truth
       // for an actor's appraisal skill — the persisted skills table

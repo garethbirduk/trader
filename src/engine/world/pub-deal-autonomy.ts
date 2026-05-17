@@ -416,9 +416,6 @@ function runOneAttempt(args: {
   };
   // Buyer's RRP estimate at the proposed bag size. Same compositional
   // path as the auction call site, with pubdeal-specific overrides:
-  //   • identity is overridden to the actual kindId — the seller is
-  //     naming the goods in the pitch, the buyer isn't squinting at
-  //     a stall trying to tell a Rolex from a Rulex
   //   • condition is overridden to `perceivedTier` — the existing
   //     pubBuyerTierMode logic decides whether the buyer accepts the
   //     seller's tier claim or substitutes a pessimistic assumed tier

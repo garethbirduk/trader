@@ -225,20 +225,12 @@ function sampleFlaw(args: SampleAxisArgs): AxisSample {
 
 /**
  * Price consultation. The expert returns a unit-price band {low, high}
- * for the lot at its assumed (identity, condition). High skill → tight
- * band centred on the truth. Low skill → wide band, possibly shifted
- * off-truth.
+ * for the lot at its assumed condition. High skill → tight band centred
+ * on the truth. Low skill → wide band, possibly shifted off-truth.
  *
  * Truth here = baseValue × tierMultiplier[lot.qualityTier]. The
  * expert's perceived band is computed by jittering both centre and
  * width by (1 - skill).
- *
- * NOTE: This consultation assumes the expert is appraising the lot
- * at the asker's *believed* (identity, condition). The asker passes
- * the lot's actual record here; for Del-style "ask me about mint
- * Rulex prices specifically" the asker should consult against a
- * hypothetical-lot variant (future work — for v1 the lot's actual
- * record is the queryable subject).
  */
 function samplePrice(args: SampleAxisArgs): AxisSample {
   const skill = args.profile.priceAccuracy.get(args.item.category)
