@@ -19,6 +19,10 @@ import {
   type EconomicsConfig,
 } from "../economics/config.js";
 import { estimateLotValue } from "../perception/lot-value.js";
+import {
+  buildCompositePayloadFromLotValuation,
+  insertJudgement,
+} from "../perception/judgement-log-repo.js";
 import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 
 export interface BidderOptions {
@@ -170,7 +174,31 @@ export function makeBidders(
       const ceiling = Math.min(result.perceivedLotValue, a.cash);
 
       if (ceiling < lot.floorPrice) continue;
-      bidders.push({ actorId: a.id, ceiling });
+
+      // Audit trail (docs/judgement.md). One row per qualifying
+      // bidder so the SceneDeck auction event can pop the math for
+      // each ceiling. Lot id is the context ref — UI looks up by
+      // (actor_id, context_kind='auction-bid', context_ref_id=lot.id).
+      const payload = buildCompositePayloadFromLotValuation({
+        db,
+        lot,
+        item,
+        economics,
+        valuation: result,
+        ...(knowsFlaw && item.flawType !== null
+          ? { knownFlawType: item.flawType }
+          : {}),
+      });
+      const judgementId = insertJudgement(db, {
+        day: _day,
+        hour: lot.scheduledHour ?? 0,
+        actorId: a.id,
+        arm: "composite",
+        contextKind: "auction-bid",
+        contextRefId: lot.id,
+        payload,
+      });
+      bidders.push({ actorId: a.id, ceiling, judgementId });
     }
     // Cap off-map bidders per lot. Locals are unaffected; if more
     // off-map dealers qualify than `maxOffMap`, pick randomly.

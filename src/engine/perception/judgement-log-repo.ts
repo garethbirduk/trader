@@ -1,4 +1,11 @@
 import type { DB } from "../core/db.js";
+import type { AuctionLot } from "../auction/types.js";
+import type { FlawType, ItemKind } from "../stock/types.js";
+import type { EconomicsConfig } from "../economics/config.js";
+import type { LotValuation } from "./lot-value.js";
+import type { PriceBandResult } from "./estimate.js";
+import { getCategoryAnchor } from "./anchors-repo.js";
+import { getCategoryConditionAnchor } from "./condition-anchors-repo.js";
 
 /**
  * Judgement audit trail (docs/judgement.md — "Judgement audit trail
@@ -221,6 +228,108 @@ export function getJudgementByContextRef(
     )
     .get({ kind: contextKind, ref: contextRefId });
   return row ? rowTo(row) : null;
+}
+
+/**
+ * Build a `CompositePayload` from an `estimateLotValue` result + the
+ * inputs that fed it. Call sites pass the same `lot`/`item`/
+ * `economics`/`valuation` they already have plus the per-call extras
+ * (character-arm bonus, known-flaw flag, override flag) — the helper
+ * fetches the price-arm and condition-arm anchors that the engine
+ * computed internally so the persisted payload reconstructs the
+ * full formula. Keeps each call-site instrumentation to a handful
+ * of lines instead of hand-rolling 30 lines of JSON-shape glue.
+ */
+export function buildCompositePayloadFromLotValuation(args: {
+  readonly db: DB;
+  readonly lot: AuctionLot;
+  readonly item: ItemKind;
+  readonly economics: EconomicsConfig;
+  readonly valuation: LotValuation;
+  /** α × (buyer_social − seller_social) — set when the call site
+   *  passed it into `estimateLotValue`. 0 for non-pubdeal contexts. */
+  readonly flawDetectionBonus?: number;
+  /** The flaw type the actor knew up-front (short-circuited the
+   *  detection roll to 100%). */
+  readonly knownFlawType?: FlawType | null;
+}): CompositePayload {
+  const tierMult =
+    args.economics.tierMultipliers[args.valuation.perceivedTier] ??
+    args.economics.tierMultipliers.fair;
+  const priceAnchorBase = getCategoryAnchor(args.db, args.item.category);
+  const priceAnchor = priceAnchorBase * tierMult;
+  const conditionOverridden = args.valuation.condition === null;
+  const conditionDetails = !conditionOverridden && args.valuation.condition !== null
+    ? {
+        expertise: args.valuation.condition.expertise,
+        j: args.valuation.condition.j,
+        anchor: getCategoryConditionAnchor(args.db, args.item.category),
+      }
+    : null;
+  return {
+    itemKindId: args.item.id,
+    category: args.item.category,
+    quantity: args.lot.quantity,
+    truthTier: args.lot.qualityTier,
+    perceivedTier: args.valuation.perceivedTier,
+    conditionOverridden,
+    condition: conditionDetails,
+    price: {
+      truthUnit: args.item.baseValue * tierMult,
+      anchor: priceAnchor,
+      tierMultiplier: tierMult,
+      expertise: args.valuation.price.expertise,
+      j: args.valuation.price.j,
+      centre: args.valuation.price.centre,
+      low: args.valuation.price.low,
+      high: args.valuation.price.high,
+      sample: args.valuation.price.sample,
+    },
+    flaw: {
+      itemFlawType: args.item.flawType,
+      knownFlawType: args.knownFlawType ?? null,
+      detected: args.valuation.flawDetected,
+      multiplier: args.valuation.flawMultiplier,
+      detectionBonus: args.flawDetectionBonus ?? 0,
+    },
+    customerFitMultiplier: args.valuation.customerFitMultiplier,
+    perceivedUnitValue: args.valuation.perceivedUnitValue,
+    perceivedLotValue: args.valuation.perceivedLotValue,
+  };
+}
+
+/**
+ * Build a `PriceArmPayload` from an `estimatePriceBand` result + the
+ * inputs that fed it. The companion to
+ * `buildCompositePayloadFromLotValuation` for the simpler RNG-free
+ * price-arm call sites (market-sale sellerBelief, shop-sale
+ * sellerBelief, lead seeders).
+ */
+export function buildPriceArmPayload(args: {
+  readonly itemKindId: number;
+  readonly category: string;
+  readonly truthTier: string | null;
+  readonly truthUnit: number;
+  readonly anchor: number;
+  readonly tierMultiplier: number | null;
+  readonly band: PriceBandResult;
+  readonly quantity: number | null;
+}): PriceArmPayload {
+  return {
+    itemKindId: args.itemKindId,
+    category: args.category,
+    truthTier: args.truthTier,
+    truthUnit: args.truthUnit,
+    anchor: args.anchor,
+    tierMultiplier: args.tierMultiplier,
+    expertise: args.band.expertise,
+    j: args.band.j,
+    centre: args.band.centre,
+    low: args.band.low,
+    high: args.band.high,
+    sample: null,
+    quantity: args.quantity,
+  };
 }
 
 /** Drop rows older than `keepDays` days from the current day.

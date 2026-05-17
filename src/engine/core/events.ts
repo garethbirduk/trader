@@ -17,6 +17,12 @@ export interface NegotiationTurnSnapshot {
 export interface AuctionBidderSnapshot {
   readonly actorId: number;
   readonly ceiling: number;
+  /** judgement_log row id for the bidder's per-lot appraisal.
+   *  Lets a SceneDeck/Diary auction event open the math behind
+   *  this bidder's ceiling (docs/judgement.md — "Judgement audit
+   *  trail"). Optional for backward compatibility with older
+   *  dumps and tests that bypass the bidder factory. */
+  readonly judgementId?: number;
 }
 
 /** Value-shape of a single lead transferred during a gossip exchange.

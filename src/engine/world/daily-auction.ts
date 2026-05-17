@@ -296,6 +296,7 @@ function runOneLot(
   const biddersSnapshot = originalBidders.map((b) => ({
     actorId: b.actorId,
     ceiling: b.ceiling,
+    ...(b.judgementId !== undefined ? { judgementId: b.judgementId } : {}),
   }));
   // Attendees: everyone in the room except the bidders themselves. The
   // bidders are listed separately so the webapp can show "in the room"

@@ -80,6 +80,8 @@ export {
   listJudgementsByDay,
   listJudgementsByActorDay,
   pruneJudgementsOlderThan,
+  buildCompositePayloadFromLotValuation,
+  buildPriceArmPayload,
   type JudgementArm,
   type JudgementContextKind,
   type JudgementPayload,

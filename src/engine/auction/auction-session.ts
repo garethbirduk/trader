@@ -30,6 +30,11 @@ export interface AuctionBidder {
   readonly actorId: number;
   /** Maximum total price this bidder will pay for the whole lot. */
   readonly ceiling: number;
+  /** judgement_log row id for the appraisal that produced this
+   *  ceiling — written by the bidder factory when the audit trail
+   *  is wired in (docs/judgement.md). Omitted when the bidder
+   *  factory ran without persistence (legacy/test paths). */
+  readonly judgementId?: number;
 }
 
 export type AuctionSessionResult =
