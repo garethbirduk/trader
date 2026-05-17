@@ -2,7 +2,12 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
-import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import {
+  tieredAnchorFor,
+  priceBandFor,
+  tierTruth,
+  formatPriceArmMath,
+} from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -180,36 +185,61 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
               item !== undefined ? tierTruth(item, l.qualityTier, dump.economics) : null;
             const seller = dump.actors.find((a) => a.id === deal.sellerActorId);
             const buyer = dump.actors.find((a) => a.id === deal.buyerActorId);
-            const sellerCentre =
+            const sellerBand =
               seller?.bidderProfile !== undefined && item !== undefined && truth !== null
-                ? Math.max(
-                    0,
-                    Math.round(
-                      priceBandFor(
-                        seller.bidderProfile,
-                        item.category,
-                        truth,
-                        tieredAnchorFor(dump, item.category, l.qualityTier),
-                        seller.armJ?.price,
-                      ).centre,
-                    ),
+                ? priceBandFor(
+                    seller.bidderProfile,
+                    item.category,
+                    truth,
+                    tieredAnchorFor(dump, item.category, l.qualityTier),
+                    seller.armJ?.price,
                   )
                 : null;
-            const buyerCentre =
+            const buyerBand =
               buyer?.bidderProfile !== undefined && item !== undefined && truth !== null
-                ? Math.max(
-                    0,
-                    Math.round(
-                      priceBandFor(
-                        buyer.bidderProfile,
-                        item.category,
-                        truth,
-                        tieredAnchorFor(dump, item.category, l.qualityTier),
-                        buyer.armJ?.price,
-                      ).centre,
-                    ),
+                ? priceBandFor(
+                    buyer.bidderProfile,
+                    item.category,
+                    truth,
+                    tieredAnchorFor(dump, item.category, l.qualityTier),
+                    buyer.armJ?.price,
                   )
                 : null;
+            const sellerCentre =
+              sellerBand !== null ? Math.max(0, Math.round(sellerBand.centre)) : null;
+            const buyerCentre =
+              buyerBand !== null ? Math.max(0, Math.round(buyerBand.centre)) : null;
+            const beliefTitle =
+              item !== undefined && truth !== null
+                ? [
+                    sellerBand !== null
+                      ? formatPriceArmMath({
+                          observerName: `seller ${seller?.displayName ?? seller?.code ?? "?"}`,
+                          itemName: item.displayName,
+                          category: item.category,
+                          truthTier: l.qualityTier,
+                          truthUnit: truth,
+                          anchor: tieredAnchorFor(dump, item.category, l.qualityTier),
+                          band: sellerBand,
+                          quantity: l.quantity,
+                        })
+                      : null,
+                    buyerBand !== null
+                      ? formatPriceArmMath({
+                          observerName: `buyer ${buyer?.displayName ?? buyer?.code ?? "?"}`,
+                          itemName: item.displayName,
+                          category: item.category,
+                          truthTier: l.qualityTier,
+                          truthUnit: truth,
+                          anchor: tieredAnchorFor(dump, item.category, l.qualityTier),
+                          band: buyerBand,
+                          quantity: l.quantity,
+                        })
+                      : null,
+                  ]
+                    .filter((s): s is string => s !== null)
+                    .join("\n\n")
+                : "";
             return (
               <div key={i} className="loc-person-row">
                 <ItemRef
@@ -222,10 +252,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                 <span className="muted">×{l.quantity}</span>
                 <span className="muted">@ £{l.unitPrice}</span>
                 {sellerCentre !== null || buyerCentre !== null ? (
-                  <span
-                    className="muted"
-                    title="Per-line belief centres from each side's perception (judgement engine). The agreed price sits between (or outside) these — the gap is the asymmetric-knowledge surface."
-                  >
+                  <span className="muted" title={beliefTitle}>
                     {" · "}
                     {sellerCentre !== null ? <>seller £{sellerCentre}</> : null}
                     {sellerCentre !== null && buyerCentre !== null ? " / " : null}

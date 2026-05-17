@@ -4,7 +4,12 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, ItemRef, LotRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import {
+  tieredAnchorFor,
+  priceBandFor,
+  tierTruth,
+  formatPriceArmMath,
+} from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -978,10 +983,19 @@ function SubgroupRows({
               }
               meta={
                 <>
-                  {retailLabel !== null ? (
+                  {retailLabel !== null && item !== undefined && retailBand !== null && truth !== null ? (
                     <>
                       <span
-                        title={`Your belief at the claimed tier (${r.lead.subjectQualityTier ?? "fair"}), via the judgement engine's price band (centre lerps from category anchor toward truth by your expertise; spread tightens with your j).`}
+                        title={formatPriceArmMath({
+                          observerName: receiver?.displayName ?? receiver?.code ?? "you",
+                          itemName: item.displayName,
+                          category: item.category,
+                          truthTier: r.lead.subjectQualityTier ?? "fair",
+                          truthUnit: truth,
+                          anchor: tieredAnchorFor(dump, item.category, claimedTier),
+                          band: retailBand,
+                          quantity: r.lead.subjectQuantity ?? 1,
+                        })}
                       >
                         ~{retailLabel} retail
                       </span>

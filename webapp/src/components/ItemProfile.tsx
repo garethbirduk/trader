@@ -2,7 +2,12 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef } from "./Refs.js";
-import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import {
+  tieredAnchorFor,
+  priceBandFor,
+  tierTruth,
+  formatPriceArmMath,
+} from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -194,8 +199,18 @@ function RetailEstimateTable({
                 const high = Math.max(0, Math.round(band.high));
                 const label =
                   low === high ? `£${centre}` : `£${centre} (£${low}–£${high})`;
+                const titleStr = formatPriceArmMath({
+                  observerName: a.displayName ?? a.code,
+                  itemName: item.displayName,
+                  category: item.category,
+                  truthTier: t,
+                  truthUnit: truth,
+                  anchor,
+                  band,
+                  quantity: 1,
+                });
                 return (
-                  <td key={t} className="num muted">{label}</td>
+                  <td key={t} className="num muted" title={titleStr}>{label}</td>
                 );
               })}
             </tr>

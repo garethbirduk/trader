@@ -4,7 +4,12 @@ import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ItemRef, LocationRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import {
+  tieredAnchorFor,
+  priceBandFor,
+  tierTruth,
+  formatPriceArmMath,
+} from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -101,9 +106,18 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                   }
                   meta={
                     <>
-                      {retailBand !== null ? (
+                      {retailBand !== null && item !== undefined && truth !== null ? (
                         <span
-                          title={`${actor?.displayName ?? "owner"}'s belief about resale value — judgement engine centre + band (docs/judgement.md)`}
+                          title={formatPriceArmMath({
+                            observerName: actor?.displayName ?? actor?.code ?? "owner",
+                            itemName: item.displayName,
+                            category: item.category,
+                            truthTier: lot.qualityTier,
+                            truthUnit: truth,
+                            anchor: tieredAnchorFor(dump, item.category, lot.qualityTier),
+                            band: retailBand,
+                            quantity: lot.quantity,
+                          })}
                         >
                           ~{formatBand(retailBand.centre, retailBand.low, retailBand.high)} retail
                         </span>

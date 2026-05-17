@@ -3,7 +3,12 @@ import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, ItemRef, LocationRef } from "./Refs.js";
 import { StockLine, StockValue } from "./StockLine.js";
-import { tieredAnchorFor, priceBandFor, tierTruth } from "../lib/perception.js";
+import {
+  tieredAnchorFor,
+  priceBandFor,
+  tierTruth,
+  formatPriceArmMath,
+} from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -113,9 +118,18 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                     }
                     meta={
                       <>
-                        {retailBand !== null ? (
+                        {retailBand !== null && item !== undefined && truth !== null ? (
                           <span
-                            title={`${owner?.displayName ?? "owner"}'s belief about resale value — judgement engine centre + band (docs/judgement.md)`}
+                            title={formatPriceArmMath({
+                              observerName: owner?.displayName ?? owner?.code ?? "owner",
+                              itemName: item.displayName,
+                              category: item.category,
+                              truthTier: lot.qualityTier,
+                              truthUnit: truth,
+                              anchor: tieredAnchorFor(dump, item.category, lot.qualityTier),
+                              band: retailBand,
+                              quantity: lot.quantity,
+                            })}
                           >
                             ~{formatBand(retailBand.centre, retailBand.low, retailBand.high)} retail
                           </span>

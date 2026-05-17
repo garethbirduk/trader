@@ -150,3 +150,55 @@ function clamp01(x: number): number {
   if (x > 1) return 1;
   return x;
 }
+
+/**
+ * Format the price-arm derivation as a multi-line string for a
+ * browser-native `title` tooltip — the first slice of the judgement
+ * audit trail (docs/judgement.md). Walks the same `centre =
+ * lerp(anchor, truth, expertise)` and `spread = 1 - effectiveJ`
+ * formula `priceBandFor` uses, so what the player reads matches the
+ * computed centre exactly. Numbers stay raw (no localisation) to
+ * match the engine's pence arithmetic.
+ */
+export function formatPriceArmMath(args: {
+  readonly observerName: string;
+  readonly itemName: string;
+  readonly category: string;
+  /** Tier the price band was computed against — drives the truth
+   *  multiplier. Pass `null` for "no tier read" surfaces (the
+   *  tooltip omits the tier-mult line in that case). */
+  readonly truthTier: string | null;
+  readonly truthUnit: number;
+  readonly anchor: number;
+  readonly band: PriceBandResult;
+  readonly quantity: number;
+}): string {
+  const {
+    observerName,
+    itemName,
+    category,
+    truthTier,
+    truthUnit,
+    anchor,
+    band,
+    quantity,
+  } = args;
+  const ePct = (band.expertise * 100).toFixed(0);
+  const jStr = band.j.toFixed(2);
+  const centreR = Math.round(band.centre);
+  const lowR = Math.round(band.low);
+  const highR = Math.round(band.high);
+  const truthR = Math.round(truthUnit);
+  const anchorR = Math.round(anchor);
+  const totalR = centreR * quantity;
+  const tierLabel = truthTier ?? "—";
+  return [
+    `${observerName} · ${itemName} (${category}, ${tierLabel})`,
+    `Price arm:`,
+    `  truth   £${truthR}/u`,
+    `  anchor  £${anchorR}/u (category prior × tier mult)`,
+    `  centre = lerp(anchor, truth, expertise ${ePct}%) = £${centreR}/u`,
+    `  j=${jStr} → band [£${lowR}, £${highR}]/u`,
+    `  × ${quantity} = £${totalR} total`,
+  ].join("\n");
+}

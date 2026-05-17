@@ -31,6 +31,7 @@ import {
   tieredAnchorFor,
   priceBandFor,
   tierTruth,
+  formatPriceArmMath,
 } from "../lib/perception.js";
 
 /** Canonical tier order from worst to best, matching the engine's
@@ -95,8 +96,29 @@ export function BeliefChip({
 
   const j = perceiverJ ?? resolvePerceiverJ(dump);
 
+  // Hover-over math (docs/judgement.md — "Judgement audit trail").
+  // Renders the price-arm formula the chip's centre came from, so
+  // the player can interrogate why an actor's belief diverges from
+  // truth. Browser-native title for v1 — proper popover later.
+  const hoverMath =
+    band !== null && truth !== null && profile !== undefined
+      ? formatPriceArmMath({
+          observerName: observer?.displayName ?? observer?.code ?? `actor#${observerActorId}`,
+          itemName: item.displayName,
+          category: item.category,
+          truthTier,
+          truthUnit: truth,
+          anchor,
+          band,
+          quantity,
+        })
+      : undefined;
+
   return (
-    <span className="belief-chip">
+    <span
+      className="belief-chip"
+      {...(hoverMath !== undefined ? { title: hoverMath } : {})}
+    >
       <span className="belief-chip-qty">{quantity}</span>
       <span className="muted"> × </span>
       <ItemRef dump={dump} id={itemKindId} onSelect={onSelect} variant="chip" />
@@ -122,6 +144,7 @@ export function BeliefChip({
     </span>
   );
 }
+
 
 /**
  * Palette-coloured tier badge. Tier-as-ordinal mapped to [0,1] then
