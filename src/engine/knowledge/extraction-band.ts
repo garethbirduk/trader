@@ -13,7 +13,7 @@ import type { ActorBelief } from "./types.js";
  * The single working belief the seller (or buyer) reads when haggling
  * — "what's the max I can extract per unit?" Derived on the fly from
  * the actor's persisted beliefs about this lot, integrated across the
- * plausible (identity, condition, flaw) combinations.
+ * plausible (condition, flaw) combinations.
  *
  * `low` and `high` flank `mid`. `confidence` is a rough scalar across
  * axes — high when the actor has consulted on every axis and the
@@ -45,20 +45,16 @@ export interface ExtractionBand {
  * Per-axis distributions extracted from the actor's belief log. Each
  * map's values sum to 1.0 (probability mass). When no beliefs exist
  * for an axis, the distribution is the prior:
- *   id     → 1.0 on the lot's actual kind (the actor knows what they
- *            bought, in absence of contradicting consultations).
  *   cond   → uniform over QUALITY_TIERS (the genuine "I don't know")
  *   flaw   → 1.0 on null (assume clean unless told otherwise)
  */
 export interface BeliefDistributions {
-  readonly idByKind: ReadonlyMap<number, number>;
   readonly conditionByTier: ReadonlyMap<QualityTier, number>;
   readonly flawByType: ReadonlyMap<FlawType | "_clean", number>;
   /** Whether any belief existed at all (false → uses pure prior). */
   readonly anyBeliefs: boolean;
   /** Max confidence seen per axis — surfaced into the band confidence. */
   readonly axisConfidence: {
-    readonly id: number;
     readonly condition: number;
     readonly flaw: number;
     readonly price: number;
@@ -75,29 +71,17 @@ const CLEAN = "_clean" as const;
  */
 export function buildBeliefDistributions(
   beliefs: readonly ActorBelief[],
-  fallbackKindId: number,
 ): BeliefDistributions {
-  const idVotes = new Map<number, number>();
   const condVotes = new Map<QualityTier, number>();
   const flawVotes = new Map<FlawType | typeof CLEAN, number>();
-  let anyId = false;
   let anyCond = false;
   let anyFlaw = false;
-  let maxIdConf = 0;
   let maxCondConf = 0;
   let maxFlawConf = 0;
   let maxPriceConf = 0;
 
   for (const b of beliefs) {
     switch (b.value.axis) {
-      case "id":
-        idVotes.set(
-          b.value.kindId,
-          (idVotes.get(b.value.kindId) ?? 0) + b.confidence,
-        );
-        anyId = true;
-        if (b.confidence > maxIdConf) maxIdConf = b.confidence;
-        break;
       case "condition":
         condVotes.set(
           b.value.tier,
@@ -123,9 +107,6 @@ export function buildBeliefDistributions(
     }
   }
 
-  const idDist = normaliseMap(idVotes, () => {
-    return new Map([[fallbackKindId, 1]]);
-  });
   const condDist = normaliseMap(condVotes, () => {
     const out = new Map<QualityTier, number>();
     const w = 1 / QUALITY_TIERS.length;
@@ -137,12 +118,10 @@ export function buildBeliefDistributions(
   });
 
   return {
-    idByKind: idDist,
     conditionByTier: condDist,
     flawByType: flawDist,
-    anyBeliefs: anyId || anyCond || anyFlaw || maxPriceConf > 0,
+    anyBeliefs: anyCond || anyFlaw || maxPriceConf > 0,
     axisConfidence: {
-      id: maxIdConf,
       condition: maxCondConf,
       flaw: maxFlawConf,
       price: maxPriceConf,
@@ -178,7 +157,7 @@ function normaliseMap<K>(
  * Compute the actor's working extraction band for one lot. Reads the
  * belief log and integrates over plausible combinations:
  *
- *   For each (kind, tier, flaw) combo with non-zero joint probability:
+ *   For each (tier, flaw) combo with non-zero joint probability:
  *     - Find a matching price belief (priceBeliefs whose for* tags
  *       align with the combo, or untagged price beliefs).
  *     - If matched, the combo's per-unit band is the price belief's
@@ -201,13 +180,21 @@ export function computeExtractionBand(
   if (!lot) {
     throw new Error(`computeExtractionBand: stock_lot ${lotId} not found`);
   }
+  const kind = getItemKindById(db, lot.itemKindId);
   const beliefs = getBeliefsForLot(db, actorId, lotId);
-  const dist = buildBeliefDistributions(beliefs, lot.itemKindId);
+  const dist = buildBeliefDistributions(beliefs);
 
   // Pre-extract price beliefs for the matching pass.
   const priceBeliefs = beliefs.filter(
-    (b): b is ActorBelief & { value: { axis: "price"; low: number; high: number; forKindId?: number; forTier?: QualityTier; forFlaw?: FlawType | null } } =>
-      b.value.axis === "price",
+    (b): b is ActorBelief & {
+      value: {
+        axis: "price";
+        low: number;
+        high: number;
+        forTier?: QualityTier;
+        forFlaw?: FlawType | null;
+      };
+    } => b.value.axis === "price",
   );
 
   type ComboBand = {
@@ -220,53 +207,48 @@ export function computeExtractionBand(
 
   const minComboWeight = 0.02; // skip vanishingly improbable combos
 
-  // Iterate plausible (id × condition × flaw) combinations.
-  for (const [kindId, idP] of dist.idByKind) {
-    if (idP <= 0) continue;
-    const kind = getItemKindById(db, kindId);
-    if (!kind) continue;
-    for (const [tier, condP] of dist.conditionByTier) {
-      if (condP <= 0) continue;
-      for (const [flawKey, flawP] of dist.flawByType) {
-        if (flawP <= 0) continue;
-        const weight = idP * condP * flawP;
-        if (weight < minComboWeight) continue;
+  // Iterate plausible (condition × flaw) combinations.
+  for (const [tier, condP] of dist.conditionByTier) {
+    if (condP <= 0) continue;
+    for (const [flawKey, flawP] of dist.flawByType) {
+      if (flawP <= 0) continue;
+      const weight = condP * flawP;
+      if (weight < minComboWeight) continue;
 
-        const flawType = flawKey === CLEAN ? null : flawKey;
+      const flawType = flawKey === CLEAN ? null : flawKey;
 
-        // Match price beliefs to this combo.
-        const matchedPrice = matchPriceBeliefs(priceBeliefs, {
-          kindId,
-          tier,
-          flawType,
-        });
+      // Match price beliefs to this combo.
+      const matchedPrice = matchPriceBeliefs(priceBeliefs, {
+        tier,
+        flawType,
+      });
 
-        let low: number;
-        let high: number;
-        const matchedQuote = matchedPrice !== null;
-        if (matchedPrice !== null) {
-          low = matchedPrice.low;
-          high = matchedPrice.high;
-        } else {
-          const tierMult = economics.tierMultipliers[tier];
-          const flawDiscount = flawType
-            ? economics.flawDiscount[flawType]
-            : 1;
-          const mid = kind.baseValue * tierMult * flawDiscount;
-          // Spread the prior wider when we have no belief support —
-          // ±25% if we have nothing else to go on.
-          low = Math.max(0, Math.round(mid * 0.75));
-          high = Math.max(low + 1, Math.round(mid * 1.25));
-        }
-        combos.push({ weight, low, high, matchedQuote });
+      let low: number;
+      let high: number;
+      const matchedQuote = matchedPrice !== null;
+      if (matchedPrice !== null) {
+        low = matchedPrice.low;
+        high = matchedPrice.high;
+      } else if (kind) {
+        const tierMult = economics.tierMultipliers[tier];
+        const flawDiscount = flawType
+          ? economics.flawDiscount[flawType]
+          : 1;
+        const mid = kind.baseValue * tierMult * flawDiscount;
+        // Spread the prior wider when we have no belief support —
+        // ±25% if we have nothing else to go on.
+        low = Math.max(0, Math.round(mid * 0.75));
+        high = Math.max(low + 1, Math.round(mid * 1.25));
+      } else {
+        continue;
       }
+      combos.push({ weight, low, high, matchedQuote });
     }
   }
 
   if (combos.length === 0) {
     // Fallback: pure prior at the lot's actual tier.
-    const k = getItemKindById(db, lot.itemKindId);
-    const baseVal = k?.baseValue ?? 1;
+    const baseVal = kind?.baseValue ?? 1;
     const mid = baseVal * economics.tierMultipliers[lot.qualityTier];
     const low = Math.max(0, Math.round(mid * 0.5));
     const high = Math.max(1, Math.round(mid * 1.5));
@@ -327,7 +309,6 @@ interface PriceBeliefShape {
   readonly value: {
     readonly low: number;
     readonly high: number;
-    readonly forKindId?: number;
     readonly forTier?: QualityTier;
     readonly forFlaw?: FlawType | null;
   };
@@ -335,9 +316,9 @@ interface PriceBeliefShape {
 }
 
 /**
- * Match price beliefs to a (kindId, tier, flaw) combination. A price
- * belief MATCHES iff every `for*` field it sets is consistent with
- * the combo (and fields it doesn't set are wildcards).
+ * Match price beliefs to a (tier, flaw) combination. A price belief
+ * MATCHES iff every `for*` field it sets is consistent with the combo
+ * (and fields it doesn't set are wildcards).
  *
  * Returns the **union** of all matched beliefs (low = min low, high =
  * max high). If no beliefs match, returns null and the caller falls
@@ -345,14 +326,13 @@ interface PriceBeliefShape {
  */
 function matchPriceBeliefs(
   beliefs: readonly PriceBeliefShape[],
-  combo: { kindId: number; tier: QualityTier; flawType: FlawType | null },
+  combo: { tier: QualityTier; flawType: FlawType | null },
 ): { low: number; high: number } | null {
   let low = Infinity;
   let high = -Infinity;
   let matched = false;
   for (const b of beliefs) {
     const v = b.value;
-    if (v.forKindId !== undefined && v.forKindId !== combo.kindId) continue;
     if (v.forTier !== undefined && v.forTier !== combo.tier) continue;
     if (v.forFlaw !== undefined && v.forFlaw !== combo.flawType) continue;
     matched = true;
@@ -363,7 +343,6 @@ function matchPriceBeliefs(
 }
 
 function blendConfidence(axes: {
-  id: number;
   condition: number;
   flaw: number;
   price: number;
@@ -373,9 +352,8 @@ function blendConfidence(axes: {
   // dragged down, matching the "you don't know what you don't know"
   // intuition. To keep it well-defined we floor zero at 0.05.
   const floor = 0.05;
-  const a = Math.max(floor, axes.id);
-  const b = Math.max(floor, axes.condition);
-  const c = Math.max(floor, axes.flaw);
-  const d = Math.max(floor, axes.price);
-  return Math.pow(a * b * c * d, 0.25);
+  const a = Math.max(floor, axes.condition);
+  const b = Math.max(floor, axes.flaw);
+  const c = Math.max(floor, axes.price);
+  return Math.pow(a * b * c, 1 / 3);
 }

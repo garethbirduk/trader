@@ -27,8 +27,6 @@ interface BeliefRow {
 
 function encodeValue(value: BeliefValue): string {
   switch (value.axis) {
-    case "id":
-      return JSON.stringify({ kindId: value.kindId });
     case "condition":
       return JSON.stringify({ tier: value.tier });
     case "flaw":
@@ -38,7 +36,6 @@ function encodeValue(value: BeliefValue): string {
         low: value.low,
         high: value.high,
       };
-      if (value.forKindId !== undefined) payload.forKindId = value.forKindId;
       if (value.forTier !== undefined) payload.forTier = value.forTier;
       if (value.forFlaw !== undefined) payload.forFlaw = value.forFlaw;
       return JSON.stringify(payload);
@@ -51,13 +48,6 @@ function encodeValue(value: BeliefValue): string {
 function decodeValue(axis: KnowledgeAxis, json: string): BeliefValue {
   const obj = JSON.parse(json) as Record<string, unknown>;
   switch (axis) {
-    case "id": {
-      const kindId = obj.kindId;
-      if (typeof kindId !== "number") {
-        throw new Error(`belief id payload missing numeric kindId`);
-      }
-      return { axis: "id", kindId };
-    }
     case "condition": {
       const tier = obj.tier;
       if (!isQualityTier(tier)) {
@@ -84,9 +74,6 @@ function decodeValue(axis: KnowledgeAxis, json: string): BeliefValue {
         low: lo,
         high: hi,
       };
-      if (typeof obj.forKindId === "number") {
-        (out as { forKindId?: number }).forKindId = obj.forKindId;
-      }
       if (typeof obj.forTier === "string" && isQualityTier(obj.forTier)) {
         (out as { forTier?: QualityTier }).forTier = obj.forTier;
       }

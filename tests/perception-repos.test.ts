@@ -135,7 +135,7 @@ describe("actor-arm-j-repo", () => {
     expect(all.size).toBe(2);
     expect(all.get("price")).toBeCloseTo(0.7);
     expect(all.get("character")).toBeCloseTo(0.4);
-    expect(all.has("identity")).toBe(false);
+    expect(all.has("condition")).toBe(false);
   });
 
   it("seedActorArmJ writes the nested map for many actors", () => {

@@ -14,8 +14,6 @@ import type { Arm } from "./types.js";
  * per-axis accuracy maps:
  *   • arm = 'price'     → priceAccuracy[category] ?? defaultPriceAccuracy
  *   • arm = 'condition' → conditionAccuracy[category] ?? defaultConditionAccuracy
- *   • arm = 'identity'  → idAccuracy keyed by *pair code*, not category
- *                         (callers must pass the pair code as `key`)
  *   • arm = 'character' → no existing slot; falls back to
  *                         `CHARACTER_DEFAULT_EXPERTISE`. Wired up
  *                         properly when the character arm ships.
@@ -44,10 +42,9 @@ export interface ResolveDialsArgs {
   /**
    * Per-arm key:
    *   • price / condition → category string
-   *   • identity          → pair code "kind_a_code|kind_b_code"
    *   • character         → unused (passing it is fine; it's ignored)
    *
-   * Required for price/condition/identity. Optional for character.
+   * Required for price/condition. Optional for character.
    */
   readonly key?: string;
   /**
@@ -98,9 +95,6 @@ function resolveArmExpertise(
       return (
         profile.conditionAccuracy.get(key) ?? profile.defaultConditionAccuracy
       );
-    case "identity":
-      if (key === undefined) return profile.defaultIdAccuracy;
-      return profile.idAccuracy.get(key) ?? profile.defaultIdAccuracy;
     case "character":
       // No legacy slot — the character arm is the doc's only genuinely
       // new perception arm. Until the character-expertise migration

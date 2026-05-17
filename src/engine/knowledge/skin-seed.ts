@@ -4,26 +4,29 @@ import { persistKnowledgeProfile } from "./skills-repo.js";
 import { FALLBACK_KNOWLEDGE_PROFILE, type KnowledgeProfile } from "./types.js";
 
 /**
- * Derive a five-axis KnowledgeProfile from a legacy two-axis
- * BidderProfile. Used by skins that already publish bidderProfiles —
- * gives every actor a persisted five-axis grid in the new schema
- * without forcing the skin to re-declare its cast.
+ * Derive a KnowledgeProfile from a legacy two-axis BidderProfile.
+ * Used by skins that already publish bidderProfiles — gives every
+ * actor a persisted skill grid in the new schema without forcing the
+ * skin to re-declare its cast.
  *
  * Mapping rule (mirrors `legacy-bridge.toBidderProfile` in reverse):
  *   • appraisalAccuracy → both `conditionAccuracy` and `priceAccuracy`
  *     get the same value. (The legacy axis didn't separate them;
  *     splitting starts equal and skin tuning differentiates over time.)
  *   • flawTypeDetection → `flawDetection` 1:1.
- *   • defaultAppraisalAccuracy → both defaults.
+ *   • defaultAppraisalAccuracy → both defaults, plus `bandPlacement`
+ *     (an actor who can read prices in a category is implicitly a
+ *     reasonable band-placer there).
  *   • defaultFlawTypeDetection → flaw default.
  *   • customerTypes → preserved.
  *
- * `idAccuracy` and `customerFitAccuracy` have no legacy counterpart;
- * they default to FALLBACK values. Skins can override per actor by
- * setting persisted skills directly after this call.
+ * `bandPlacementAccuracy` and `customerFitAccuracy` have no per-category
+ * legacy slot; they're empty maps with the default scalar set above.
+ * Skins can override per actor by setting persisted skills directly
+ * after this call.
  */
 export function deriveKnowledgeProfile(p: BidderProfile): KnowledgeProfile {
-  const idAccuracy = new Map<string, number>();
+  const bandPlacementAccuracy = new Map<string, number>();
   const conditionAccuracy = new Map<string, number>();
   const priceAccuracy = new Map<string, number>();
   const customerFitAccuracy = new Map<string, number>();
@@ -33,8 +36,8 @@ export function deriveKnowledgeProfile(p: BidderProfile): KnowledgeProfile {
   }
   const flawDetection = new Map(p.flawTypeDetection);
   return {
-    idAccuracy,
-    defaultIdAccuracy: FALLBACK_KNOWLEDGE_PROFILE.defaultIdAccuracy,
+    bandPlacementAccuracy,
+    defaultBandPlacementAccuracy: p.defaultAppraisalAccuracy,
     conditionAccuracy,
     defaultConditionAccuracy: p.defaultAppraisalAccuracy,
     flawDetection,

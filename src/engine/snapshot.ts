@@ -194,7 +194,7 @@ export interface RunDump {
     /** Per-arm j overrides from the `actor_arm_j` table. Only the
      *  arms with a stored row appear; missing arms fall back to the
      *  actor's expertise for that arm (skin default). */
-    armJ?: Partial<Record<"identity" | "condition" | "price" | "character", number>>;
+    armJ?: Partial<Record<"condition" | "price" | "character", number>>;
   }[];
   readonly actorRoutines: readonly {
     actorId: number;
@@ -564,7 +564,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
       const armJ =
         armJMap.size > 0
           ? (Object.fromEntries(armJMap) as Partial<
-              Record<"identity" | "condition" | "price" | "character", number>
+              Record<"condition" | "price" | "character", number>
             >)
           : undefined;
       return {

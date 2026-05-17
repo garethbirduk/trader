@@ -136,13 +136,9 @@ export function computeV2ExtractionBand(
   // The actor's partition does cover the lot. Roll placement-skill:
   // on fail, slip to an adjacent band (one band off in band_idx).
   const placementSkillRaw =
-    profile.idAccuracy.get(category) ?? profile.defaultIdAccuracy;
-  const placementSkill = clamp01(
-    // Reuse the v1 `idAccuracy` map for v2's `band_placement` keyed
-    // by category — the upstream loader writes the new axis into
-    // the existing map shape so we don't need a parallel field.
-    placementSkillRaw,
-  );
+    profile.bandPlacementAccuracy.get(category) ??
+    profile.defaultBandPlacementAccuracy;
+  const placementSkill = clamp01(placementSkillRaw);
 
   let placedBand = containing;
   let placedCorrectly = true;

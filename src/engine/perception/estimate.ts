@@ -46,7 +46,6 @@ export interface EstimateArgs {
   /**
    * Per-arm key used by the expertise resolver:
    *   • price / condition → category string
-   *   • identity          → pair code "kind_a_code|kind_b_code"
    *   • character         → ignored (pass undefined)
    *
    * Also used for the anchor lookup — see `anchorCategory`.
@@ -55,9 +54,7 @@ export interface EstimateArgs {
   /**
    * Category for the generic-anchor lookup. Defaults to `key` for
    * price/condition (which are category-keyed) but can be overridden
-   * for arms where the lookup category differs from the per-arm key
-   * (e.g. identity uses pair code as `key` but should lerp against
-   * the item's category).
+   * for arms where the lookup category differs from the per-arm key.
    */
   readonly anchorCategory?: string;
   /** Truth — what `estimate()` returns at expertise=1 *and* j=1. */
@@ -77,10 +74,10 @@ export interface EstimateArgs {
 }
 
 export function estimate(args: EstimateArgs): EstimateResult {
-  // v1 PR exercises the price arm only. Identity / condition route
-  // through the same numeric shape in P5 (auction composition);
-  // character is a later phase. Failing loud here keeps misuse from
-  // silently producing nonsense.
+  // v1 PR exercises the price arm only. Condition routes through the
+  // same numeric shape in P5 (auction composition); character is a
+  // later phase. Failing loud here keeps misuse from silently
+  // producing nonsense.
   if (args.arm !== "price") {
     throw new Error(
       `perception.estimate: arm '${args.arm}' not wired yet in this phase. ` +

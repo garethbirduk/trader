@@ -10,17 +10,16 @@
  */
 
 /**
- * The four perception arms. Each runs the same two-knob machinery on
+ * The three perception arms. Each runs the same two-knob machinery on
  * its own expertise and j; different decisions consume different
  * subsets (see docs/judgement.md "Which arms apply where").
  *
  * v1 PR lands the math but only the `price` arm is exercised through
- * `estimate`. Identity / condition / character will route through the
- * same helper in later phases; their slots exist now so the type
- * surface doesn't shift when those arms ship.
+ * `estimate`. Condition / character route through the same helper in
+ * later phases; their slots exist now so the type surface doesn't
+ * shift when those arms ship.
  */
 export const PERCEPTION_ARMS = [
-  "identity",
   "condition",
   "price",
   "character",

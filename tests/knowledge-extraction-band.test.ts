@@ -56,97 +56,68 @@ describe("computeExtractionBand", () => {
     expect(band.unsupported).toBe(false);
   });
 
-  it("a tagged price belief only applies to matching (kind, tier) combos", () => {
+  it("a tagged price belief only applies to matching tier combos", () => {
     db = freshDB();
     const a = insertActor(db, { code: "a", displayName: "A" });
-    const rolex = insertItemKind(db, {
-      code: "rolex", displayName: "Rolex", category: "watches", baseValue: 8000,
+    const item = insertItemKind(db, {
+      code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
-    const rulex = insertItemKind(db, {
-      code: "rulex", displayName: "Rulex", category: "watches", baseValue: 100,
-    });
-    // Lot is actually a Rolex.
+    // Lot is good tier; owner has been told it's mint.
     const lot = insertStockLot(db, {
-      ownerActorId: a.id, itemKindId: rolex.id, qualityTier: "good",
+      ownerActorId: a.id, itemKindId: item.id, qualityTier: "good",
       quantity: 1, acquiredUnitPrice: 25, acquiredDay: 1,
-    });
-    // Owner has consulted: thinks it's a Rulex, mint condition.
-    recordBelief(db, {
-      actorId: a.id, lotId: lot.id,
-      value: { axis: "id", kindId: rulex.id }, confidence: 0.5,
-      sourcedFromActorId: null, acquiredDay: 1,
     });
     recordBelief(db, {
       actorId: a.id, lotId: lot.id,
       value: { axis: "condition", tier: "mint" }, confidence: 0.7,
       sourcedFromActorId: null, acquiredDay: 1,
     });
-    // Price belief tagged for "mint Rulex" — should apply.
+    // Price belief tagged for "mint watch" — should apply.
     recordBelief(db, {
       actorId: a.id, lotId: lot.id,
       value: {
-        axis: "price", low: 100, high: 110,
-        forKindId: rulex.id, forTier: "mint",
+        axis: "price", low: 12000, high: 13000,
+        forTier: "mint",
       },
       confidence: 0.95,
       sourcedFromActorId: null, acquiredDay: 1,
     });
     const band = computeExtractionBand(db, a.id, lot.id);
-    expect(band.low).toBe(100);
-    expect(band.high).toBe(110);
+    expect(band.low).toBe(12000);
+    expect(band.high).toBe(13000);
   });
 
-  it("when belief mass is split across combos, the band spans both", () => {
+  it("uncertain condition without price belief spans the tier-multiplier prior", () => {
     db = freshDB();
     const a = insertActor(db, { code: "a", displayName: "A" });
-    const rolex = insertItemKind(db, {
-      code: "rolex", displayName: "Rolex", category: "watches", baseValue: 8000,
+    const item = insertItemKind(db, {
+      code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
-    // Lot is a Rolex; owner is uncertain about condition (no belief
-    // → uniform prior). With only id pinned and no price belief, the
-    // band integrates kind.baseValue × tierMult across all tiers.
+    // No condition or price beliefs — the band integrates baseValue ×
+    // tierMult across all tiers as the uniform prior.
     const lot = insertStockLot(db, {
-      ownerActorId: a.id, itemKindId: rolex.id, qualityTier: "good",
+      ownerActorId: a.id, itemKindId: item.id, qualityTier: "good",
       quantity: 1, acquiredUnitPrice: 25, acquiredDay: 1,
-    });
-    recordBelief(db, {
-      actorId: a.id, lotId: lot.id,
-      value: { axis: "id", kindId: rolex.id }, confidence: 0.9,
-      sourcedFromActorId: null, acquiredDay: 1,
     });
     const band = computeExtractionBand(db, a.id, lot.id);
     // mint=12000 (high≈15000), broken=2000 (low≈1500).
     // Aggregated band should span roughly [1500, 15000].
     expect(band.low).toBeLessThan(2500);
     expect(band.high).toBeGreaterThan(13000);
-    expect(band.unsupported).toBe(false);
+    expect(band.unsupported).toBe(true);
   });
 
-  it("multiple price beliefs union — Del's hedge scenario", () => {
+  it("multiple price beliefs union — hedge across plausible conditions", () => {
     db = freshDB();
     const a = insertActor(db, { code: "a", displayName: "A" });
-    const rolex = insertItemKind(db, {
-      code: "rolex", displayName: "Rolex", category: "watches", baseValue: 8000,
-    });
-    const rulex = insertItemKind(db, {
-      code: "rulex", displayName: "Rulex", category: "watches", baseValue: 100,
+    const item = insertItemKind(db, {
+      code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
     const lot = insertStockLot(db, {
-      ownerActorId: a.id, itemKindId: rolex.id, qualityTier: "good",
+      ownerActorId: a.id, itemKindId: item.id, qualityTier: "good",
       quantity: 1, acquiredUnitPrice: 25, acquiredDay: 1,
     });
-    // Asker is uncertain about identity — gives both kinds weight.
-    recordBelief(db, {
-      actorId: a.id, lotId: lot.id,
-      value: { axis: "id", kindId: rulex.id }, confidence: 0.5,
-      sourcedFromActorId: null, acquiredDay: 1,
-    });
-    recordBelief(db, {
-      actorId: a.id, lotId: lot.id,
-      value: { axis: "id", kindId: rolex.id }, confidence: 0.5,
-      sourcedFromActorId: null, acquiredDay: 1,
-    });
-    // Asker has uncertain condition too.
+    // Asker is uncertain about condition — gives both tiers weight.
     recordBelief(db, {
       actorId: a.id, lotId: lot.id,
       value: { axis: "condition", tier: "mint" }, confidence: 0.5,
@@ -157,12 +128,12 @@ describe("computeExtractionBand", () => {
       value: { axis: "condition", tier: "shoddy" }, confidence: 0.5,
       sourcedFromActorId: null, acquiredDay: 1,
     });
-    // Hypothetical price quotes: "mint Rulex" and "shoddy Rolex".
+    // Hypothetical price quotes for both candidates.
     recordBelief(db, {
       actorId: a.id, lotId: lot.id,
       value: {
-        axis: "price", low: 100, high: 110,
-        forKindId: rulex.id, forTier: "mint",
+        axis: "price", low: 12000, high: 13000,
+        forTier: "mint",
       },
       confidence: 0.95,
       sourcedFromActorId: null, acquiredDay: 1,
@@ -171,16 +142,15 @@ describe("computeExtractionBand", () => {
       actorId: a.id, lotId: lot.id,
       value: {
         axis: "price", low: 3800, high: 3900,
-        forKindId: rolex.id, forTier: "shoddy",
+        forTier: "shoddy",
       },
       confidence: 0.95,
       sourcedFromActorId: null, acquiredDay: 1,
     });
     const band = computeExtractionBand(db, a.id, lot.id);
-    // Both endpoint combos plausible. The aggregator must span at
-    // least the £100..£3900 union, with priors filling in the other
-    // two combos (mint Rolex, shoddy Rulex).
-    expect(band.low).toBeLessThanOrEqual(110);
-    expect(band.high).toBeGreaterThanOrEqual(3900);
+    // Both endpoint combos plausible. The aggregator must span the
+    // £3800..£13000 union.
+    expect(band.low).toBeLessThanOrEqual(3900);
+    expect(band.high).toBeGreaterThanOrEqual(12000);
   });
 });

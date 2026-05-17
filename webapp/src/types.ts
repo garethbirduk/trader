@@ -42,7 +42,7 @@ export interface RunActor {
    *  actor's expertise for that arm (skin default). Optional for
    *  back-compat with dumps generated before the arm-j surface
    *  shipped through the dump. */
-  readonly armJ?: Partial<Record<"identity" | "condition" | "price" | "character", number>>;
+  readonly armJ?: Partial<Record<"condition" | "price" | "character", number>>;
 }
 
 export interface BidderProfileDump {

@@ -57,7 +57,7 @@ describe("v2 extraction band — four-skill model", () => {
       db, actorId: a.id, lotId: lot.id,
       rng: createRNG("expert"),
       profileOverride: profile({
-        defaultIdAccuracy: 1,
+        defaultBandPlacementAccuracy: 1,
         defaultPriceAccuracy: 1, // tightness → collapse to band midpoint
         defaultConditionAccuracy: 1,
       }),
@@ -95,7 +95,7 @@ describe("v2 extraction band — four-skill model", () => {
       db, actorId: a.id, lotId: lot.id,
       rng: createRNG("idiot"),
       profileOverride: profile({
-        defaultIdAccuracy: 1, // perfect placement... in a one-band partition
+        defaultBandPlacementAccuracy: 1, // perfect placement... in a one-band partition
         defaultPriceAccuracy: 0, // zero tightness → full band width
         defaultConditionAccuracy: 1,
       }),
@@ -133,7 +133,7 @@ describe("v2 extraction band — four-skill model", () => {
       db, actorId: a.id, lotId: lot.id,
       rng: createRNG("narrow-idiot"),
       profileOverride: profile({
-        defaultIdAccuracy: 1,
+        defaultBandPlacementAccuracy: 1,
         defaultPriceAccuracy: 1,
         defaultConditionAccuracy: 1,
       }),
@@ -170,7 +170,7 @@ describe("v2 extraction band — four-skill model", () => {
       db, actorId: a.id, lotId: lot.id,
       rng: createRNG("impact"),
       profileOverride: profile({
-        defaultIdAccuracy: 1,
+        defaultBandPlacementAccuracy: 1,
         defaultPriceAccuracy: 1, // collapse to midpoint
         defaultConditionAccuracy: 1, // sees broken correctly
       }),
@@ -200,7 +200,7 @@ describe("v2 extraction band — four-skill model", () => {
       db, actorId: a.id, lotId: lot.id,
       rng: createRNG("s"),
       profileOverride: profile({
-        defaultIdAccuracy: 0, // always slips
+        defaultBandPlacementAccuracy: 0, // always slips
         defaultPriceAccuracy: 1,
         defaultConditionAccuracy: 1,
       }),
@@ -251,7 +251,7 @@ describe("v2 extraction band — four-skill model", () => {
       db, actorId: a.id, lotId: lot.id,
       rng: createRNG("slip"),
       profileOverride: profile({
-        defaultIdAccuracy: 1,
+        defaultBandPlacementAccuracy: 1,
         defaultPriceAccuracy: 1,
         defaultConditionAccuracy: 0, // always slips
       }),
@@ -320,7 +320,7 @@ describe("v2 extraction band — canonical watch arc without brand identifiers",
       db, actorId: del.id, lotId: lot.id,
       rng: createRNG("del"),
       profileOverride: profile({
-        defaultIdAccuracy: 1, // pins to right band
+        defaultBandPlacementAccuracy: 1, // pins to right band
         defaultPriceAccuracy: 0, // no narrowing — full band width
         defaultConditionAccuracy: 1,
       }),
@@ -329,7 +329,7 @@ describe("v2 extraction band — canonical watch arc without brand identifiers",
       db, actorId: boyce.id, lotId: lot.id,
       rng: createRNG("boyce"),
       profileOverride: profile({
-        defaultIdAccuracy: 1,
+        defaultBandPlacementAccuracy: 1,
         defaultPriceAccuracy: 1, // tight quote
         defaultConditionAccuracy: 1,
       }),

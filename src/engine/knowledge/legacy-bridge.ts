@@ -15,10 +15,10 @@ import type { KnowledgeProfile } from "./types.js";
  *
  * The legacy `flawTypeDetection` and `customerTypes` map directly.
  *
- * `customerFitAccuracy` and `idAccuracy` have no legacy slot — they're
- * only consulted by the new code paths (consultation action, belief-
- * band aggregator). Skipping them here is correct; the legacy code
- * never asked.
+ * `customerFitAccuracy` and `bandPlacementAccuracy` have no legacy
+ * slot — they're only consulted by the new code paths (consultation
+ * action, belief-band aggregator, v2 extraction band). Skipping them
+ * here is correct; the legacy code never asked.
  */
 export function toBidderProfile(p: KnowledgeProfile): BidderProfile {
   const mergedCategory = new Map<string, number>();

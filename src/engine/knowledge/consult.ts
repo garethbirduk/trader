@@ -13,7 +13,6 @@ import {
   type EconomicsConfig,
 } from "../economics/config.js";
 import { recordBelief } from "./beliefs-repo.js";
-import { getConfusableNeighbours } from "./confusable-pairs-repo.js";
 import { loadKnowledgeProfile } from "./skills-repo.js";
 import type { ActorBelief, KnowledgeAxis, KnowledgeProfile } from "./types.js";
 
@@ -153,8 +152,6 @@ interface AxisSample {
 
 function sampleAxis(args: SampleAxisArgs): AxisSample {
   switch (args.axis) {
-    case "id":
-      return sampleId(args);
     case "condition":
       return sampleCondition(args);
     case "flaw":
@@ -170,41 +167,6 @@ function sampleAxis(args: SampleAxisArgs): AxisSample {
       // a v1 call site asked about a v2 axis.
       throw new Error(`consult: axis '${args.axis}' has no v1 sampler`);
   }
-}
-
-/**
- * Identity consultation. Look up the lot kind's confusable neighbours.
- * For each neighbour the expert has an id-skill — roll it. On a pass
- * the expert returns the truth. On a fail, they confidently name the
- * confusable. The harder the pair (higher `difficulty`) the harder
- * the roll: effective_pass = skill × (1 - difficulty).
- *
- * No neighbours = no confusion possible; the expert always names the
- * correct kind with full confidence.
- */
-function sampleId(args: SampleAxisArgs): AxisSample {
-  const neighbours = getConfusableNeighbours(args.db, args.item.id);
-  if (neighbours.length === 0) {
-    return {
-      value: { axis: "id", kindId: args.item.id },
-      confidence: 1,
-    };
-  }
-  // Pick the neighbour the expert would confuse the lot with — for
-  // multi-neighbour kinds, pick uniformly. The expert's effective
-  // pass-rate is the per-pair skill × (1 - difficulty).
-  const chosen = args.rng.pick(neighbours);
-  const skillForPair =
-    args.profile.idAccuracy.get(chosen.pairCode) ?? args.profile.defaultIdAccuracy;
-  const effective = clamp01(skillForPair) * (1 - chosen.difficulty);
-  const passed = args.rng.next() < effective;
-  return {
-    value: {
-      axis: "id",
-      kindId: passed ? args.item.id : chosen.kindId,
-    },
-    confidence: clamp01(skillForPair),
-  };
 }
 
 /**

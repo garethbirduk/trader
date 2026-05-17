@@ -97,7 +97,7 @@ export function loadKnowledgeProfile(
     defaultsByAxis.set(row.axis, row.accuracy);
   }
 
-  const idAccuracy = new Map<string, number>();
+  const bandPlacementAccuracy = new Map<string, number>();
   const conditionAccuracy = new Map<string, number>();
   const flawDetection = new Map<FlawType, number>();
   const priceAccuracy = new Map<string, number>();
@@ -108,8 +108,8 @@ export function loadKnowledgeProfile(
     .all({ actor: actorId })) {
     if (!isKnowledgeAxis(row.axis)) continue;
     switch (row.axis) {
-      case "id":
-        idAccuracy.set(row.key, row.accuracy);
+      case "band_placement":
+        bandPlacementAccuracy.set(row.key, row.accuracy);
         break;
       case "condition":
         conditionAccuracy.set(row.key, row.accuracy);
@@ -127,9 +127,10 @@ export function loadKnowledgeProfile(
   }
 
   return {
-    idAccuracy,
-    defaultIdAccuracy:
-      defaultsByAxis.get("id") ?? FALLBACK_KNOWLEDGE_PROFILE.defaultIdAccuracy,
+    bandPlacementAccuracy,
+    defaultBandPlacementAccuracy:
+      defaultsByAxis.get("band_placement") ??
+      FALLBACK_KNOWLEDGE_PROFILE.defaultBandPlacementAccuracy,
     conditionAccuracy,
     defaultConditionAccuracy:
       defaultsByAxis.get("condition") ??
@@ -163,8 +164,8 @@ export function persistKnowledgeProfile(
   db.transaction(() => {
     setActorSkillDefault(db, {
       actorId,
-      axis: "id",
-      accuracy: profile.defaultIdAccuracy,
+      axis: "band_placement",
+      accuracy: profile.defaultBandPlacementAccuracy,
     });
     setActorSkillDefault(db, {
       actorId,
@@ -186,8 +187,8 @@ export function persistKnowledgeProfile(
       axis: "customer_fit",
       accuracy: profile.defaultCustomerFitAccuracy,
     });
-    for (const [key, acc] of profile.idAccuracy) {
-      setActorSkill(db, { actorId, axis: "id", key, accuracy: acc });
+    for (const [key, acc] of profile.bandPlacementAccuracy) {
+      setActorSkill(db, { actorId, axis: "band_placement", key, accuracy: acc });
     }
     for (const [key, acc] of profile.conditionAccuracy) {
       setActorSkill(db, { actorId, axis: "condition", key, accuracy: acc });

@@ -348,18 +348,9 @@ describe("estimate (DB-backed)", () => {
       estimate({
         db,
         actorId: aid,
-        arm: "identity",
-        truth: 100,
-        rng: createRNG("rejects-1"),
-      }),
-    ).toThrow(/not wired yet/);
-    expect(() =>
-      estimate({
-        db,
-        actorId: aid,
         arm: "character",
         truth: 100,
-        rng: createRNG("rejects-2"),
+        rng: createRNG("rejects-1"),
       }),
     ).toThrow(/not wired yet/);
   });

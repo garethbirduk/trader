@@ -71,20 +71,6 @@ describe("resolvePerArmDialsPure", () => {
     expect(out.expertise).toBeCloseTo(0.7);
   });
 
-  it("identity arm reads idAccuracy[pairCode]", () => {
-    const profile = profileWith({
-      idAccuracy: new Map([["rolex|rulex", 0.85]]),
-      defaultIdAccuracy: 0.5,
-    });
-    const out = resolvePerArmDialsPure({
-      profile,
-      arm: "identity",
-      key: "rolex|rulex",
-      storedJ: null,
-    });
-    expect(out.expertise).toBeCloseTo(0.85);
-  });
-
   it("character arm returns CHARACTER_DEFAULT_EXPERTISE until the arm ships", () => {
     const profile = profileWith({});
     const out = resolvePerArmDialsPure({

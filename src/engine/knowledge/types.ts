@@ -1,38 +1,35 @@
 import type { FlawType, QualityTier } from "../stock/types.js";
 
 /**
- * The five independent knowledge axes — each a distinct cognitive
- * skill that an actor can be sharp or clueless on, and along which a
- * lot can be the subject of a separate belief.
+ * The independent knowledge axes — each a distinct cognitive skill
+ * that an actor can be sharp or clueless on, and along which a lot
+ * can be the subject of a separate belief.
  *
- *   id           — "what is this?" (Rolex vs Rulex). Per pair of
- *                  confusable kinds. Resolves to an item-kind claim.
  *   condition    — "what tier is it in?" (mint/good/fair/...). Per
  *                  category. Resolves to a QualityTier claim.
  *   flaw         — "is anything wrong with it?" (faulty/fake/...).
  *                  Per flaw type. Resolves to a FlawType-or-null
  *                  claim ("looks clean" = null).
- *   price        — "what's the going rate, given identity + condition?"
- *                  Per category. Resolves to a £ band {low, high}.
+ *   price        — "what's the going rate, given condition?" Per
+ *                  category. Resolves to a £ band {low, high}.
  *   customer_fit — "who would buy this?" Per category. Resolves to
  *                  a list of customer-type tags.
  *
  * The price axis is *conditional*: an honest answer presupposes a
- * known identity and condition. A separate consultation can be asked
- * about prices for arbitrary (identity, condition) hypotheticals,
- * which is how Del's price-oracle visit to Mickey works (todolist:73).
+ * known condition. A separate consultation can be asked about prices
+ * for arbitrary condition hypotheticals, which is how Del's
+ * price-oracle visit to Mickey works.
  */
 export const KNOWLEDGE_AXES = [
-  // v1 axes — id/condition/flaw/price/customer_fit. The flat scalars
+  // v1 axes — condition/flaw/price/customer_fit. The flat scalars
   // for each (per category or per flaw type) drove the v1 mixture
   // aggregator. Kept callable but superseded by v2 for new content.
-  "id",
   "condition",
   "flaw",
   "price",
   "customer_fit",
   // v2 axes — the four-skill price-axis decomposition plus condition
-  // sub-skills. See todolist:67-78.
+  // sub-skills.
   //   band_placement     — given my mental partition for this category,
   //                        accuracy of placing the lot in the right band.
   //   band_tightness     — within the placed band, how tightly I quote.
@@ -56,21 +53,22 @@ export function isKnowledgeAxis(value: unknown): value is KnowledgeAxis {
 }
 
 /**
- * A complete five-axis skill grid for one actor — the persistence-
- * shaped sibling of `BidderProfile`. Each axis has a default scalar
- * (used when no specific key matches) and a per-key map.
+ * The persisted skill grid for one actor — the persistence-shaped
+ * sibling of `BidderProfile`. Each axis has a default scalar (used
+ * when no specific key matches) and a per-key map.
  *
  * Key shape per axis:
- *   id           → pair code "kind_a_code|kind_b_code" (kind_a_code <
- *                  kind_b_code lexicographically). One score per pair.
- *   condition    → category string.
- *   flaw         → flaw_type string.
- *   price        → category string.
- *   customer_fit → category string.
+ *   bandPlacement → category string. Drives the v2 extraction band's
+ *                   "where on this category's price axis does the lot
+ *                   sit" decision.
+ *   condition     → category string.
+ *   flaw          → flaw_type string.
+ *   price         → category string.
+ *   customer_fit  → category string.
  */
 export interface KnowledgeProfile {
-  readonly idAccuracy: ReadonlyMap<string, number>;
-  readonly defaultIdAccuracy: number;
+  readonly bandPlacementAccuracy: ReadonlyMap<string, number>;
+  readonly defaultBandPlacementAccuracy: number;
   readonly conditionAccuracy: ReadonlyMap<string, number>;
   readonly defaultConditionAccuracy: number;
   readonly flawDetection: ReadonlyMap<FlawType, number>;
@@ -93,8 +91,8 @@ export interface KnowledgeProfile {
  * so the new system is observably backward-compatible.
  */
 export const FALLBACK_KNOWLEDGE_PROFILE: KnowledgeProfile = {
-  idAccuracy: new Map(),
-  defaultIdAccuracy: 0.6,
+  bandPlacementAccuracy: new Map(),
+  defaultBandPlacementAccuracy: 0.6,
   conditionAccuracy: new Map(),
   defaultConditionAccuracy: 0.7,
   flawDetection: new Map(),
@@ -106,25 +104,10 @@ export const FALLBACK_KNOWLEDGE_PROFILE: KnowledgeProfile = {
 };
 
 /**
- * Canonical pair code derived from two item-kind codes. Always returns
- * the lexicographically-sorted pair so a skill stored under one
- * direction matches a lookup from either side.
- */
-export function pairCode(kindCodeA: string, kindCodeB: string): string {
-  if (kindCodeA === kindCodeB) {
-    throw new Error(`pairCode: kinds must differ; got '${kindCodeA}' twice`);
-  }
-  return kindCodeA < kindCodeB
-    ? `${kindCodeA}|${kindCodeB}`
-    : `${kindCodeB}|${kindCodeA}`;
-}
-
-/**
  * Axis-specific belief value payloads. Stored as JSON in
  * actor_beliefs.value_json and parsed through `decodeBeliefValue`.
  */
 export type BeliefValue =
-  | { readonly axis: "id"; readonly kindId: number }
   | { readonly axis: "condition"; readonly tier: QualityTier }
   | { readonly axis: "flaw"; readonly flawType: FlawType | null }
   | {
@@ -132,17 +115,15 @@ export type BeliefValue =
       readonly low: number;
       readonly high: number;
       /**
-       * Optional hypothetical qualifiers — "this is what a scratched
-       * Rolex would go for", which can be recorded even when the
-       * actor doesn't think the lot IS a scratched Rolex. The
-       * aggregator only contributes the belief to the extraction
-       * band when the actor's id/condition/flaw distributions assign
-       * non-negligible mass to the matching combination. An
-       * unqualified price belief (all `for*` absent) is treated as
-       * an unconditional going-rate claim about the lot at its
-       * current believed identity.
+       * Optional condition qualifier — "this is what a scratched
+       * watch would go for", which can be recorded even when the
+       * actor doesn't think the lot IS scratched. The aggregator
+       * only contributes the belief to the extraction band when the
+       * actor's condition/flaw distributions assign non-negligible
+       * mass to the matching combination. An unqualified price
+       * belief (all `for*` absent) is treated as an unconditional
+       * going-rate claim about the lot.
        */
-      readonly forKindId?: number;
       readonly forTier?: QualityTier;
       readonly forFlaw?: FlawType | null;
     }

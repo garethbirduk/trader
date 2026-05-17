@@ -1,9 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { freshDB } from "./helpers/db-fixture.js";
-import { insertActor, getActorById } from "../src/engine/actors/actors-repo.js";
+import { insertActor } from "../src/engine/actors/actors-repo.js";
 import { insertItemKind } from "../src/engine/stock/items-repo.js";
 import { insertStockLot } from "../src/engine/stock/lots-repo.js";
-import { addConfusablePair } from "../src/engine/knowledge/confusable-pairs-repo.js";
 import { consultActor } from "../src/engine/knowledge/consult.js";
 import { getBeliefsForLot } from "../src/engine/knowledge/beliefs-repo.js";
 import {
@@ -16,117 +15,6 @@ import type { DB } from "../src/engine/core/db.js";
 function profileWith(over: Partial<KnowledgeProfile>): KnowledgeProfile {
   return { ...FALLBACK_KNOWLEDGE_PROFILE, ...over };
 }
-
-describe("consultActor — id axis", () => {
-  let db: DB | undefined;
-  afterEach(() => {
-    db?.close();
-    db = undefined;
-  });
-
-  it("a zero-skill expert always returns the confusable neighbour", () => {
-    db = freshDB();
-    const asker = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const albert = insertActor(db, { code: "albert", displayName: "Albert" });
-    const rolex = insertItemKind(db, {
-      code: "rolex", displayName: "Rolex", category: "watches", baseValue: 8000,
-    });
-    const rulex = insertItemKind(db, {
-      code: "rulex", displayName: "Rulex", category: "watches", baseValue: 100,
-    });
-    addConfusablePair(db, {
-      kindAId: rolex.id, kindBId: rulex.id, difficulty: 0,
-    });
-    const lot = insertStockLot(db, {
-      ownerActorId: asker.id, itemKindId: rolex.id, qualityTier: "good",
-      quantity: 1, acquiredUnitPrice: 25, acquiredDay: 1,
-    });
-
-    // Albert: zero id-skill on this pair (and zero default) → always
-    // returns the wrong kind.
-    const albertProfile = profileWith({
-      defaultIdAccuracy: 0,
-      idAccuracy: new Map([["rolex|rulex", 0]]),
-    });
-    const r = consultActor(db, {
-      askerActorId: asker.id,
-      expertActorId: albert.id,
-      lotId: lot.id,
-      axis: "id",
-      fee: 3,
-      atDay: 1,
-      rng: createRNG("albert-id"),
-      expertProfileOverride: albertProfile,
-    });
-    expect(r.type).toBe("consulted");
-    if (r.type !== "consulted") throw new Error("expected consulted");
-    if (r.belief.value.axis !== "id") throw new Error("expected id axis");
-    // Lot is a Rolex; zero-skill expert returns Rulex (the neighbour).
-    expect(r.belief.value.kindId).toBe(rulex.id);
-    // Asker paid the fee.
-    expect(getActorById(db, asker.id)?.cash).toBe(97);
-    expect(getActorById(db, albert.id)?.cash).toBe(3);
-  });
-
-  it("a perfect-skill expert reliably names the truth", () => {
-    db = freshDB();
-    const asker = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const boyce = insertActor(db, { code: "boyce", displayName: "Boyce" });
-    const rolex = insertItemKind(db, {
-      code: "rolex", displayName: "Rolex", category: "watches", baseValue: 8000,
-    });
-    const rulex = insertItemKind(db, {
-      code: "rulex", displayName: "Rulex", category: "watches", baseValue: 100,
-    });
-    addConfusablePair(db, {
-      kindAId: rolex.id, kindBId: rulex.id, difficulty: 0,
-    });
-    const lot = insertStockLot(db, {
-      ownerActorId: asker.id, itemKindId: rolex.id, qualityTier: "good",
-      quantity: 1, acquiredUnitPrice: 25, acquiredDay: 1,
-    });
-    const boyceProfile = profileWith({
-      defaultIdAccuracy: 1.0,
-      idAccuracy: new Map([["rolex|rulex", 1.0]]),
-    });
-    const r = consultActor(db, {
-      askerActorId: asker.id,
-      expertActorId: boyce.id,
-      lotId: lot.id,
-      axis: "id",
-      fee: 3,
-      atDay: 1,
-      rng: createRNG("boyce-id"),
-      expertProfileOverride: boyceProfile,
-    });
-    if (r.type !== "consulted") throw new Error("expected consulted");
-    if (r.belief.value.axis !== "id") throw new Error("expected id axis");
-    expect(r.belief.value.kindId).toBe(rolex.id);
-  });
-
-  it("a kind with no confusable neighbours always nails ID", () => {
-    db = freshDB();
-    const asker = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const expert = insertActor(db, { code: "e", displayName: "E" });
-    const widget = insertItemKind(db, {
-      code: "widget", displayName: "Widget", category: "tools", baseValue: 10,
-    });
-    const lot = insertStockLot(db, {
-      ownerActorId: asker.id, itemKindId: widget.id, qualityTier: "good",
-      quantity: 1, acquiredUnitPrice: 5, acquiredDay: 1,
-    });
-    // Even with zero id-skill — no neighbours, no confusion.
-    const r = consultActor(db, {
-      askerActorId: asker.id, expertActorId: expert.id, lotId: lot.id,
-      axis: "id", fee: 0, atDay: 1, rng: createRNG("s"),
-      expertProfileOverride: profileWith({ defaultIdAccuracy: 0 }),
-    });
-    if (r.type !== "consulted") throw new Error("expected consulted");
-    if (r.belief.value.axis !== "id") throw new Error("expected id axis");
-    expect(r.belief.value.kindId).toBe(widget.id);
-    expect(r.belief.confidence).toBe(1);
-  });
-});
 
 describe("consultActor — condition axis", () => {
   let db: DB | undefined;
