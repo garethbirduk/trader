@@ -11,33 +11,27 @@ import {
 } from "../economics/config.js";
 import {
   estimateCondition,
-  estimateIdentity,
   type ConditionArmResult,
-  type IdentityArmResult,
 } from "./arms.js";
 import { estimate } from "./estimate.js";
 import type { EstimateResult } from "./types.js";
 
 /**
- * Compositional auction-lot valuation — Identity ∘ Condition ∘ Price.
+ * Compositional auction-lot valuation — Condition ∘ Price.
  *
  * Authoritative buyer-valuation pipeline — an actor's ceiling for a
  * given lot, including flaw + customer-fit discounts. Routes the
- * three perception axes through the judgement engine
+ * two perception axes through the judgement engine
  * (docs/judgement.md §"Composition"):
  *
- *   1. Identity arm  → which kind does the actor think this is?
- *   2. Condition arm → which tier?
- *   3. Price arm     → £/unit for the perceived (kind, tier)
+ *   1. Condition arm → which tier?
+ *   2. Price arm     → £/unit for the perceived tier
  *
- * Compound uncertainty is the whole point: a novice on watches gets
- * id wrong (£50 Rulex), tier wrong (broken not mint), and price
- * lerp'd toward the anchor — ending at e.g. £30 on a £1000 lot.
+ * Compound uncertainty: a novice on watches gets tier wrong (broken
+ * not mint), and price lerp'd toward the anchor — ending well below
+ * true value on a £1000 lot.
  *
- * Overrides exist for the auction's "uninspected bidder" case:
- *   • `perceivedKindIdOverride` — listing names the kind; identity
- *     arm doesn't apply when the actor hasn't actually examined
- *     the goods. Pass `lot.itemKindId` here for uninspected.
+ * Override exists for the auction's "uninspected bidder" case:
  *   • `perceivedTierOverride` — listing hides the tier; the actor
  *     substitutes a pessimistic-realist guess (typically
  *     `economics.pubAssumedTier`).
@@ -49,7 +43,6 @@ import type { EstimateResult } from "./types.js";
  */
 
 export interface LotValuation {
-  readonly perceivedKindId: number;
   readonly perceivedTier: QualityTier;
   /** Per-unit perceived £, before flaw / customer-fit multipliers. */
   readonly perceivedUnitValue: number;
@@ -58,9 +51,8 @@ export interface LotValuation {
   readonly flawDetected: boolean;
   readonly flawMultiplier: number;
   readonly customerFitMultiplier: number;
-  /** Diagnostics — populated when the corresponding arm actually ran
+  /** Diagnostics — populated when the condition arm actually ran
    *  (null when the override path skipped it). */
-  readonly identity: IdentityArmResult | null;
   readonly condition: ConditionArmResult | null;
   readonly price: EstimateResult;
 }
@@ -73,8 +65,6 @@ export interface EstimateLotValueArgs {
   readonly economics?: EconomicsConfig;
   /** Cached profile — saves a DB roundtrip in hot loops. */
   readonly profileOverride?: KnowledgeProfile;
-  /** Skip identity arm; substitute this kindId as perceived. */
-  readonly perceivedKindIdOverride?: number;
   /** Skip condition arm; substitute this tier as perceived. */
   readonly perceivedTierOverride?: QualityTier;
   /**
@@ -103,32 +93,9 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
   const profile =
     args.profileOverride ?? loadKnowledgeProfile(args.db, args.actorId);
 
-  // ── 1. Identity arm ───────────────────────────────────────────
-  let identity: IdentityArmResult | null = null;
-  let perceivedKindId: number;
-  if (args.perceivedKindIdOverride !== undefined) {
-    perceivedKindId = args.perceivedKindIdOverride;
-  } else {
-    identity = estimateIdentity({
-      db: args.db,
-      actorId: args.actorId,
-      truthItemKindId: args.lot.itemKindId,
-      rng: args.rng,
-      profileOverride: profile,
-    });
-    perceivedKindId = identity.perceivedKindId;
-  }
-  const perceivedItem = requireItemKind(args.db, perceivedKindId);
-  // The *actual* item still drives flaw + customer-fit, which depend
-  // on the goods physically in the lot, not what the actor thinks
-  // they are. Identity confusion shows up as the actor PRICING the
-  // wrong item, not as failing to notice the actual item's flaw.
-  // (The flaw-detection roll is a separate axis the actor rolls
-  // against the real flaw — they might spot a faulty Rulex even if
-  // they thought it was a Rolex.)
-  const actualItem = requireItemKind(args.db, args.lot.itemKindId);
+  const item = requireItemKind(args.db, args.lot.itemKindId);
 
-  // ── 2. Condition arm ──────────────────────────────────────────
+  // ── 1. Condition arm ──────────────────────────────────────────
   let condition: ConditionArmResult | null = null;
   let perceivedTier: QualityTier;
   if (args.perceivedTierOverride !== undefined) {
@@ -138,23 +105,23 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
       db: args.db,
       actorId: args.actorId,
       truthTier: args.lot.qualityTier,
-      category: perceivedItem.category,
+      category: item.category,
       rng: args.rng,
       profileOverride: profile,
     });
     perceivedTier = condition.perceivedTier;
   }
 
-  // ── 3. Price arm ──────────────────────────────────────────────
+  // ── 2. Price arm ──────────────────────────────────────────────
   const tierMult =
     economics.tierMultipliers[perceivedTier] ??
     economics.tierMultipliers.fair;
-  const perceivedTruthUnit = perceivedItem.baseValue * tierMult;
+  const perceivedTruthUnit = item.baseValue * tierMult;
   const price = estimate({
     db: args.db,
     actorId: args.actorId,
     arm: "price",
-    key: perceivedItem.category,
+    key: item.category,
     truth: perceivedTruthUnit,
     tierMultiplier: tierMult,
     rng: args.rng,
@@ -162,36 +129,36 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
   });
   const perceivedUnitValue = Math.max(0, price.sample);
 
-  // ── 4. Flaw detection (legacy mechanic, preserved) ────────────
+  // ── 3. Flaw detection (legacy mechanic, preserved) ────────────
   // The character-arm hook adds a (possibly negative) bonus on top
   // of the base detection score. Already-known flaws stay forced
   // 100% — once you've been burned you always spot it, regardless
   // of who's pitching.
   let flawDetected = false;
   let flawMultiplier = 1;
-  if (actualItem.flawType !== null) {
-    if (args.knownFlawType === actualItem.flawType) {
+  if (item.flawType !== null) {
+    if (args.knownFlawType === item.flawType) {
       flawDetected = true;
-      flawMultiplier = economics.flawDiscount[actualItem.flawType];
+      flawMultiplier = economics.flawDiscount[item.flawType];
       // Still advance the RNG so seed-stability between knownFlaw
       // and unknown-flaw branches stays predictable.
       args.rng.next();
     } else {
       const base =
-        profile.flawDetection.get(actualItem.flawType) ??
+        profile.flawDetection.get(item.flawType) ??
         profile.defaultFlawDetection;
       const bonus = args.flawDetectionBonus ?? 0;
       const effective = clamp01(base + bonus);
       flawDetected = args.rng.next() < effective;
       if (flawDetected) {
-        flawMultiplier = economics.flawDiscount[actualItem.flawType];
+        flawMultiplier = economics.flawDiscount[item.flawType];
       }
     }
   }
 
-  // ── 5. Customer-fit (legacy mechanic, preserved) ──────────────
+  // ── 4. Customer-fit (legacy mechanic, preserved) ──────────────
   const customerFitMultiplier = computeCustomerFit(
-    actualItem.targetCustomers ?? [],
+    item.targetCustomers ?? [],
     profile.customerTypes ?? [],
     economics.customerMismatchMultiplier,
   );
@@ -207,14 +174,12 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
   );
 
   return {
-    perceivedKindId,
     perceivedTier,
     perceivedUnitValue,
     perceivedLotValue,
     flawDetected,
     flawMultiplier,
     customerFitMultiplier,
-    identity,
     condition,
     price,
   };

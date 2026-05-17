@@ -92,7 +92,6 @@ describe("estimateLotValue — composition", () => {
         actorId: aid,
         lot,
         rng: createRNG(`expert-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
       });
       totals.push(r.perceivedLotValue);
@@ -119,7 +118,6 @@ describe("estimateLotValue — composition", () => {
         actorId: aid,
         lot,
         rng: createRNG(`clueless-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
       });
       totals.push(r.perceivedLotValue);
@@ -148,7 +146,6 @@ describe("estimateLotValue — composition", () => {
         actorId: aid,
         lot,
         rng: createRNG(`haphazard-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
       });
       totals.push(r.perceivedLotValue);
@@ -179,7 +176,6 @@ describe("estimateLotValue — composition", () => {
       actorId: one.aid,
       lot: one.lot,
       rng: createRNG("scale-1"),
-      perceivedKindIdOverride: one.lot.itemKindId,
       perceivedTierOverride: one.lot.qualityTier,
     });
     const r10 = estimateLotValue({
@@ -187,7 +183,6 @@ describe("estimateLotValue — composition", () => {
       actorId: ten.aid,
       lot: ten.lot,
       rng: createRNG("scale-10"),
-      perceivedKindIdOverride: ten.lot.itemKindId,
       perceivedTierOverride: ten.lot.qualityTier,
     });
     expect(r10.perceivedLotValue).toBeCloseTo(r1.perceivedLotValue * 10, -1);
@@ -240,7 +235,6 @@ describe("estimateLotValue — composition", () => {
       actorId: aid,
       lot,
       rng: createRNG("flaw-detect"),
-      perceivedKindIdOverride: lot.itemKindId,
       perceivedTierOverride: lot.qualityTier,
     });
     expect(r.flawDetected).toBe(true);
@@ -298,7 +292,6 @@ describe("estimateLotValue — composition", () => {
       lot,
       rng: createRNG("cust-fit"),
       profileOverride,
-      perceivedKindIdOverride: lot.itemKindId,
       perceivedTierOverride: lot.qualityTier,
     });
     expect(r.customerFitMultiplier).toBeCloseTo(
@@ -358,7 +351,6 @@ describe("estimateLotValue — composition", () => {
         actorId: aid,
         lot,
         rng: createRNG(`known-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         knownFlawType: "fake",
       });

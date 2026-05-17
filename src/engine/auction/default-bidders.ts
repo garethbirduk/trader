@@ -164,7 +164,6 @@ export function makeBidders(
         rng,
         economics,
         profileOverride: knowledgeProfile,
-        perceivedKindIdOverride: lot.itemKindId,
         ...(inspected ? {} : { perceivedTierOverride: assumedTier }),
         ...(knowsFlaw && item.flawType !== null
           ? { knownFlawType: item.flawType }

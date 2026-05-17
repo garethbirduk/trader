@@ -1,6 +1,5 @@
 import type { DB } from "../core/db.js";
 import type { SeededRNG } from "../core/rng.js";
-import { getConfusableNeighbours } from "../knowledge/confusable-pairs-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import type { ItemKind } from "../stock/types.js";
 import type { QualityTier } from "../stock/types.js";
@@ -13,50 +12,20 @@ import {
 } from "./condition-anchors-repo.js";
 
 /**
- * Categorical / ordinal arms — identity and condition.
+ * Ordinal arm — condition.
  *
- * The doc's "two-knob machinery" is fully specified for *numeric*
- * arms (price, character) where expertise drives the centre and j
- * drives the band's spread + sampling kernel. For *non-numeric* arms
- * the equivalent shape is less obvious: an identity claim is binary
- * (Rolex or Rulex), a condition claim picks one of five tiers.
+ * Quality is mapped to [0, 1] (broken=0.1 … mint=0.9 at tier midpoints)
+ * and the same lerp + j-spread machinery as the price arm runs:
+ *   centre = condAnchor + (truthQuality - condAnchor) × expertise;
+ *   spreadFactor = 1 - effectiveJ; band straddles centre additively
+ *   on the [0,1] quality scale; sample drawn from a mixture
+ *   (tight kernel with prob j, uniform across band with prob 1-j);
+ *   sample is snapped back to the nearest of the five tiers.
  *
- *   • Identity — pass/fail roll. Pass rate =
- *       expertise × (1 - pair_difficulty). On pass: truth kind. On
- *       fail: the confusable neighbour. Multiple neighbours: pick
- *       uniformly. (Same shape as `consult.ts:sampleId`.) j is still
- *       a no-op here — a v2 identity arm would model "decisive call
- *       vs hedge between two kinds" but it's not built yet.
- *
- *   • Condition (v2) — band-over-categorical. Quality is mapped to
- *       [0, 1] (broken=0.1 … mint=0.9 at tier midpoints) and the
- *       same lerp + j-spread machinery as the price arm runs:
- *       centre = condAnchor + (truthQuality - condAnchor) × expertise;
- *       spreadFactor = 1 - effectiveJ; band straddles centre additively
- *       on the [0,1] quality scale; sample drawn from a mixture
- *       (tight kernel with prob j, uniform across band with prob 1-j);
- *       sample is snapped back to the nearest of the five tiers.
- *
- *       The result is the doc's "perceived tier as a distribution
- *       rather than a point pick" — a clueless low-j actor can see
- *       mint when truth is broken, not just adjacent.
- *       (Was: a pass/fail roll with j no-op'd and fails always
- *       sliding to an adjacent tier. v1 lived in commit 0ef3cff;
- *       this rewrite is the doc-anticipated v2.)
+ * The result is the doc's "perceived tier as a distribution rather
+ * than a point pick" — a clueless low-j actor can see mint when
+ * truth is broken, not just adjacent.
  */
-
-export interface IdentityArmResult {
-  /** The kindId the actor thinks the lot is. */
-  readonly perceivedKindId: number;
-  /** Effective expertise on the chosen confusable pair (already
-   *  multiplied by `1 - pair difficulty`). 1.0 if no neighbours. */
-  readonly effectivePassRate: number;
-  /** True iff the actor identified the lot correctly. */
-  readonly passed: boolean;
-  /** The neighbour kind the actor risked confusing with (or null
-   *  when no confusable pair exists). */
-  readonly confusedWithKindId: number | null;
-}
 
 export interface ConditionArmResult {
   readonly perceivedTier: QualityTier;
@@ -70,14 +39,6 @@ export interface ConditionArmResult {
   readonly passed: boolean;
 }
 
-export interface IdentityArgs {
-  readonly db: DB;
-  readonly actorId: number;
-  readonly truthItemKindId: number;
-  readonly rng: SeededRNG;
-  readonly profileOverride?: KnowledgeProfile;
-}
-
 export interface ConditionArgs {
   readonly db: DB;
   readonly actorId: number;
@@ -85,36 +46,6 @@ export interface ConditionArgs {
   readonly category: string;
   readonly rng: SeededRNG;
   readonly profileOverride?: KnowledgeProfile;
-}
-
-export function estimateIdentity(args: IdentityArgs): IdentityArmResult {
-  const neighbours = getConfusableNeighbours(args.db, args.truthItemKindId);
-  if (neighbours.length === 0) {
-    return {
-      perceivedKindId: args.truthItemKindId,
-      effectivePassRate: 1,
-      passed: true,
-      confusedWithKindId: null,
-    };
-  }
-  const chosen = args.rng.pick(neighbours);
-  const dials = resolvePerArmDials({
-    db: args.db,
-    actorId: args.actorId,
-    arm: "identity",
-    key: chosen.pairCode,
-    ...(args.profileOverride !== undefined
-      ? { profileOverride: args.profileOverride }
-      : {}),
-  });
-  const effective = dials.expertise * (1 - chosen.difficulty);
-  const passed = args.rng.next() < effective;
-  return {
-    perceivedKindId: passed ? args.truthItemKindId : chosen.kindId,
-    effectivePassRate: effective,
-    passed,
-    confusedWithKindId: chosen.kindId,
-  };
 }
 
 export function estimateCondition(args: ConditionArgs): ConditionArmResult {
@@ -134,46 +65,6 @@ export function estimateCondition(args: ConditionArgs): ConditionArmResult {
     anchor: getCategoryConditionAnchor(args.db, args.category),
     rng: args.rng,
   });
-}
-
-/**
- * Pure variant — no DB. Tests pass an in-memory profile + an
- * explicit list of confusable neighbours.
- */
-export function estimateIdentityPure(args: {
-  readonly profile: KnowledgeProfile;
-  readonly truthItemKindId: number;
-  readonly neighbours: readonly {
-    readonly kindId: number;
-    readonly pairCode: string;
-    readonly difficulty: number;
-  }[];
-  readonly rng: SeededRNG;
-  readonly storedJ?: number | null;
-}): IdentityArmResult {
-  if (args.neighbours.length === 0) {
-    return {
-      perceivedKindId: args.truthItemKindId,
-      effectivePassRate: 1,
-      passed: true,
-      confusedWithKindId: null,
-    };
-  }
-  const chosen = args.rng.pick(args.neighbours);
-  const dials = resolvePerArmDialsPure({
-    profile: args.profile,
-    arm: "identity",
-    key: chosen.pairCode,
-    storedJ: args.storedJ ?? null,
-  });
-  const effective = dials.expertise * (1 - chosen.difficulty);
-  const passed = args.rng.next() < effective;
-  return {
-    perceivedKindId: passed ? args.truthItemKindId : chosen.kindId,
-    effectivePassRate: effective,
-    passed,
-    confusedWithKindId: chosen.kindId,
-  };
 }
 
 export function estimateConditionPure(args: {
@@ -201,17 +92,6 @@ export function estimateConditionPure(args: {
     rng: args.rng,
   });
 }
-
-/**
- * Default condition anchor — used when no per-category override is
- * supplied. Re-exported from `condition-anchors-repo.ts` (0.5) so
- * callers can fall back without depending on the repo directly.
- *
- * The actual anchor used by `estimateCondition` is read per-category
- * from the `category_condition_anchors` table (skin-seeded; rows
- * missing → fall back to this default). Pure variants accept an
- * explicit `anchor` parameter.
- */
 
 /** Tier midpoints on the [0, 1] quality scale — five tiers, five
  *  equal bands, midpoints at 0.1, 0.3, 0.5, 0.7, 0.9. Indexed by

@@ -2,8 +2,8 @@
  * Judgement engine — public surface (docs/judgement.md). Every
  * perception call site in the engine routes through this module:
  *
- *   • `estimateLotValue` — Identity ∘ Condition ∘ Price composition
- *     for auction-lot and pubdeal-buyer appraisal. Returns a £
+ *   • `estimateLotValue` — Condition ∘ Price composition for
+ *     auction-lot and pubdeal-buyer appraisal. Returns a £
  *     valuation, the per-arm breakdown, and flaw / customer-fit
  *     multipliers.
  *   • `estimatePriceBand` — RNG-free centre + band for "what does
@@ -12,9 +12,9 @@
  *   • `estimate` — single-decision sample from the price arm
  *     directly. Used by the scenario snapshot to pin the four-case
  *     distributional shape.
- *   • `estimateIdentity` / `estimateCondition` — categorical and
- *     ordinal arms. Used by `estimateLotValue` internally; surfaced
- *     for any future call site that wants the per-arm result.
+ *   • `estimateCondition` — ordinal arm. Used by `estimateLotValue`
+ *     internally; surfaced for any future call site that wants the
+ *     per-arm result.
  *   • `colourFor(value, perceiverJ)` — band-collapsed palette index
  *     for the UI; resolution gated by the player-actor's j.
  *
@@ -59,15 +59,11 @@ export {
 } from "./expertise.js";
 
 export {
-  estimateIdentity,
   estimateCondition,
-  estimateIdentityPure,
   estimateConditionPure,
   perceivedTierCentre,
   computePerceivedTierCentre,
-  type IdentityArmResult,
   type ConditionArmResult,
-  type IdentityArgs,
   type ConditionArgs,
 } from "./arms.js";
 

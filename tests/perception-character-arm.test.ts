@@ -75,7 +75,6 @@ describe("character arm — flawDetectionBonus", () => {
         actorId: aid,
         lot,
         rng: createRNG(`zero-bonus-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         flawDetectionBonus: 0,
       });
@@ -95,7 +94,6 @@ describe("character arm — flawDetectionBonus", () => {
         actorId: aid,
         lot,
         rng: createRNG(`pos-bonus-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         flawDetectionBonus: 0.4,
       });
@@ -115,7 +113,6 @@ describe("character arm — flawDetectionBonus", () => {
         actorId: aid,
         lot,
         rng: createRNG(`neg-bonus-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         flawDetectionBonus: -0.4,
       });
@@ -135,7 +132,6 @@ describe("character arm — flawDetectionBonus", () => {
         actorId: aid,
         lot,
         rng: createRNG(`saturate-up-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         flawDetectionBonus: 5,
       });
@@ -154,7 +150,6 @@ describe("character arm — flawDetectionBonus", () => {
         actorId: aid,
         lot,
         rng: createRNG(`saturate-down-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         flawDetectionBonus: -5,
       });
@@ -171,7 +166,6 @@ describe("character arm — flawDetectionBonus", () => {
         actorId: aid,
         lot,
         rng: createRNG(`known-vs-neg-${i}`),
-        perceivedKindIdOverride: lot.itemKindId,
         perceivedTierOverride: lot.qualityTier,
         flawDetectionBonus: -2,
         knownFlawType: "scam_bait",

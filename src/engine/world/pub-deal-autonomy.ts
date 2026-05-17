@@ -448,7 +448,6 @@ function runOneAttempt(args: {
     rng: world.rng,
     economics,
     profileOverride: knowledgeProfile,
-    perceivedKindIdOverride: item.id,
     perceivedTierOverride: perceivedTier,
     flawDetectionBonus,
     ...(knownBuyerFlaw && item.flawType !== null
