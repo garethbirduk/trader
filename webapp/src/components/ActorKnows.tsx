@@ -994,7 +994,7 @@ function SubgroupRows({
                           truthUnit: truth,
                           anchor: tieredAnchorFor(dump, item.category, claimedTier),
                           band: retailBand,
-                          quantity: r.lead.subjectQuantity ?? 1,
+                          quantity: r.lead.estimatedQuantity,
                         })}
                       >
                         ~{retailLabel} retail

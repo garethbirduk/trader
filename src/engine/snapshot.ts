@@ -256,6 +256,30 @@ export interface RunDump {
    *  want to display "what tier would this actor expect by default
    *  here?" without round-tripping through a tier sample. */
   readonly categoryConditionAnchors: Record<string, number>;
+  /** Judgement audit trail (docs/judgement.md — "Judgement audit
+   *  trail"). Every judgement-engine call that drove a player-
+   *  visible action: auction bid ceilings, pubdeal appraisals,
+   *  market/shop sellerBeliefs, lead-seeder propagated bands.
+   *  Indexed client-side by (actorId, contextKind, contextRefId)
+   *  so SceneDeck and per-actor surfaces can pop "show me the
+   *  math" from the persisted record. Payload shape matches
+   *  `JudgementPayload` (price | composite variants). */
+  readonly judgements: readonly RunJudgement[];
+}
+
+/** Mirror of the engine's JudgementRecord — kept on the dump so the
+ *  webapp doesn't need to import engine types. The payload is the
+ *  same JSON shape `judgement-log-repo.ts` produces; types stay
+ *  loose here so dump-loading doesn't have to cross-validate. */
+export interface RunJudgement {
+  readonly id: number;
+  readonly day: number;
+  readonly hour: number;
+  readonly actorId: number;
+  readonly arm: "price" | "condition" | "composite";
+  readonly contextKind: string;
+  readonly contextRefId: number | null;
+  readonly payload: unknown;
 }
 
 export function captureSnapshot(db: DB, day: number): DaySnapshot {
@@ -640,5 +664,39 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
     categoryConditionAnchors: Object.fromEntries(
       getAllCategoryConditionAnchors(db),
     ),
+    judgements: readAllJudgements(db),
   };
+}
+
+/** Read every judgement_log row in id order — keeps the dump
+ *  ordering stable across runs and lets the webapp index by
+ *  (actorId, contextKind, contextRefId) without a sort. */
+function readAllJudgements(db: DB): RunJudgement[] {
+  const rows = db
+    .prepare<{
+      id: number;
+      day: number;
+      hour: number;
+      actor_id: number;
+      arm: string;
+      context_kind: string;
+      context_ref_id: number | null;
+      payload: string;
+    }>(`SELECT * FROM judgement_log ORDER BY id ASC`)
+    .all();
+  return rows.map((r): RunJudgement => {
+    if (r.arm !== "price" && r.arm !== "condition" && r.arm !== "composite") {
+      throw new Error(`dump: judgement_log arm '${r.arm}' is not valid`);
+    }
+    return {
+      id: r.id,
+      day: r.day,
+      hour: r.hour,
+      actorId: r.actor_id,
+      arm: r.arm,
+      contextKind: r.context_kind,
+      contextRefId: r.context_ref_id,
+      payload: JSON.parse(r.payload),
+    };
+  });
 }

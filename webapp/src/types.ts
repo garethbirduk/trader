@@ -15,6 +15,79 @@ export interface RunEvent {
   readonly [key: string]: unknown;
 }
 
+/** Mirrors the engine's `JudgementRecord` (src/engine/perception/
+ *  judgement-log-repo.ts). Carried on the dump so the UI can look
+ *  up "the math behind this decision" by (actorId, contextKind,
+ *  contextRefId) without re-deriving from primitives. Payload shape
+ *  matches `JudgementPayload` — `price` (PriceArmPayload) or
+ *  `composite` (CompositePayload) discriminated by `arm`. Kept
+ *  loose here so type drift between engine and webapp can't break
+ *  dump-loading. */
+export interface RunJudgement {
+  readonly id: number;
+  readonly day: number;
+  readonly hour: number;
+  readonly actorId: number;
+  readonly arm: "price" | "condition" | "composite";
+  readonly contextKind: string;
+  readonly contextRefId: number | null;
+  readonly payload: unknown;
+}
+
+/** Price-arm payload — what `estimate` / `estimatePriceBand`
+ *  produced plus the inputs needed to reconstruct the formula. */
+export interface PriceArmPayload {
+  readonly itemKindId: number;
+  readonly category: string;
+  readonly truthTier: string | null;
+  readonly truthUnit: number;
+  readonly anchor: number;
+  readonly tierMultiplier: number | null;
+  readonly expertise: number;
+  readonly j: number;
+  readonly centre: number;
+  readonly low: number;
+  readonly high: number;
+  readonly sample: number | null;
+  readonly quantity: number | null;
+}
+
+/** Composite payload — `estimateLotValue` decomposed. */
+export interface CompositePayload {
+  readonly itemKindId: number;
+  readonly category: string;
+  readonly quantity: number;
+  readonly truthTier: string;
+  readonly perceivedTier: string;
+  readonly conditionOverridden: boolean;
+  readonly condition: {
+    readonly expertise: number;
+    readonly j: number;
+    readonly anchor: number;
+  } | null;
+  readonly price: {
+    readonly truthUnit: number;
+    readonly anchor: number;
+    readonly tierMultiplier: number;
+    readonly expertise: number;
+    readonly j: number;
+    readonly centre: number;
+    readonly low: number;
+    readonly high: number;
+    readonly sample: number;
+  };
+  readonly flaw: {
+    readonly itemFlawType: string | null;
+    readonly knownFlawType: string | null;
+    readonly detected: boolean;
+    readonly multiplier: number;
+    readonly detectionBonus: number;
+  };
+  readonly customerFitMultiplier: number;
+  readonly perceivedUnitValue: number;
+  readonly perceivedLotValue: number;
+}
+
 export interface RunActor {
   readonly id: number;
   readonly code: string;
@@ -266,6 +339,14 @@ export interface RunDump {
    *  read it via `conditionAnchorFor(dump, category)`. Optional for
    *  older dumps. */
   readonly categoryConditionAnchors?: Readonly<Record<string, number>>;
+  /** Judgement audit trail (docs/judgement.md — "Judgement audit
+   *  trail"). One row per judgement-engine call that drove a
+   *  player-visible action: auction bid ceiling, pubdeal appraisal,
+   *  market/shop sellerBelief, lead-seeder propagated band. The
+   *  webapp indexes by (actorId, contextKind, contextRefId) via
+   *  `lib/judgement-log.ts` to find "the math behind this event"
+   *  without a DB roundtrip. Optional for older dumps. */
+  readonly judgements?: readonly RunJudgement[];
   /** Legacy single-hour auction; replaced by start/end. Older dumps
    *  populate this; newer dumps populate the window pair instead. */
   readonly auctionHour?: number;
