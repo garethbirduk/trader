@@ -3,7 +3,6 @@ import type { RunDump, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { ActorRef, LotRef } from "./Refs.js";
-import { StockLine } from "./StockLine.js";
 import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
@@ -528,70 +527,76 @@ function LotKnowledgeLine({
   readonly dump: RunDump;
   readonly onSelect: (s: Selection) => void;
 }) {
+  const inspected = row.via === "inspected";
   if (lot === null) {
     return (
-      <StockLine
-        fact={
-          <>
-            <span className="knows-stamp">
-              D{pad(row.day)} {pad(row.hour)}:00
-            </span>{" "}
-            <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />
-          </>
-        }
-        meta={<>via {row.via}</>}
-      />
+      <li className="chip-stack">
+        <div className="chip-stack-row">
+          <span className="knows-stamp">
+            D{pad(row.day)} {pad(row.hour)}:00
+          </span>
+          <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />
+          <span className="muted">via {row.via}</span>
+        </div>
+      </li>
     );
   }
   return (
-    <StockLine
-      fact={
-        <>
-          <span className="knows-stamp">
-            D{pad(row.day)} {pad(row.hour)}:00
-          </span>{" "}
-          <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />{" "}
-          <span className="muted">·</span>{" "}
+    <li className="chip-stack">
+      <div className="chip-stack-row">
+        <span className="knows-stamp">
+          D{pad(row.day)} {pad(row.hour)}:00
+        </span>
+        <LotRef dump={dump} id={row.lotId} onSelect={onSelect} variant="chip" />
+        <span className="muted">via {row.via}</span>
+        {row.fromActorId !== null ? (
+          <>
+            <span className="muted">from</span>
+            <ActorRef
+              dump={dump}
+              id={row.fromActorId}
+              onSelect={onSelect}
+              variant="chip"
+              size={12}
+            />
+          </>
+        ) : null}
+        <span className="muted">floor £{lot.floorPrice}</span>
+        {lot.scheduledHour !== undefined && lot.scheduledHour !== null ? (
+          <span className="muted">· scheduled {pad(lot.scheduledHour)}:00</span>
+        ) : null}
+        {lot.clearedDay !== null ? (
+          <span className="muted">
+            · cleared D{pad(lot.clearedDay)}
+            {lot.clearedPrice !== null ? ` @ £${lot.clearedPrice}` : ""}
+          </span>
+        ) : null}
+      </div>
+      <div className="chip-stack-row">
+        <span className="chip-stack-label muted">RRP</span>
+        <BeliefChip
+          dump={dump}
+          itemKindId={lot.itemKindId}
+          qualityTier={lot.qualityTier}
+          quantity={lot.quantity}
+          observerActorId={null}
+          onSelect={onSelect}
+        />
+      </div>
+      {inspected ? (
+        <div className="chip-stack-row">
+          <span className="muted">inspected — POV:</span>
           <BeliefChip
             dump={dump}
             itemKindId={lot.itemKindId}
             qualityTier={lot.qualityTier}
             quantity={lot.quantity}
-            observerActorId={null}
+            observerActorId={null /* TODO: thread inspector actorId */}
             onSelect={onSelect}
-          />{" "}
-          <span className="muted">floor £{lot.floorPrice}</span>
-        </>
-      }
-      meta={
-        <>
-          via {row.via}
-          {row.fromActorId !== null ? (
-            <>
-              {" "}
-              <span>from</span>{" "}
-              <ActorRef
-                dump={dump}
-                id={row.fromActorId}
-                onSelect={onSelect}
-                variant="chip"
-                size={12}
-              />
-            </>
-          ) : null}
-          {lot.scheduledHour !== undefined && lot.scheduledHour !== null ? (
-            <> · scheduled {pad(lot.scheduledHour)}:00</>
-          ) : null}
-          {lot.clearedDay !== null ? (
-            <>
-              {" "}
-              · cleared D{pad(lot.clearedDay)}
-              {lot.clearedPrice !== null ? <> @ £{lot.clearedPrice}</> : null}
-            </>
-          ) : null}
-        </>
-      }
-    />
+          />
+        </div>
+      ) : null}
+    </li>
   );
 }
 
@@ -878,86 +883,60 @@ function SubgroupRows({
             <span className="muted">someone</span>
           );
           return (
-            <StockLine
-              key={i}
-              fact={
-                unlocked && r.lead.subjectItemKindId !== null ? (
-                  <>
-                    {showCounterparty ? (
-                      r.lead.counterpartyActorId !== null ? (
-                        <>
-                          {counterpartyChip}{" "}
-                          <span className="muted">has</span>{" "}
-                        </>
-                      ) : (
-                        <span className="muted">someone has</span>
-                      )
-                    ) : (
-                      <span className="muted">has</span>
-                    )}{" "}
-                    <BeliefChip
-                      dump={dump}
-                      itemKindId={r.lead.subjectItemKindId}
-                      qualityTier={r.lead.subjectQualityTier}
-                      quantity={r.lead.estimatedQuantity}
-                      observerActorId={receiverActorId}
-                      onSelect={onSelect}
-                    />
-                    {conflict?.qtyVaries || conflict?.priceVaries ? (
-                      <span className="muted" title="Sources disagree on qty/price for this subject."> ⚠</span>
-                    ) : null}
-                  </>
-                ) : (
-                  <>
-                    {showCounterparty ? (
-                      r.lead.counterpartyActorId !== null ? (
-                        <>{counterpartyChip}{" "}</>
-                      ) : (
-                        <span className="muted">someone </span>
-                      )
-                    ) : null}
-                    <span className="muted">
-                      {r.lead.side === "supply" ? "has" : "wants"}
-                    </span>{" "}
-                    {showItem && r.lead.subjectItemKindId !== null ? (
-                      <BeliefChip
-                        dump={dump}
-                        itemKindId={r.lead.subjectItemKindId}
-                        qualityTier={r.lead.subjectQualityTier ?? null}
-                        quantity={null}
-                        observerActorId={null}
-                        onSelect={onSelect}
-                      />
-                    ) : (
-                      <span className="muted">(item)</span>
-                    )}{" "}
-                    <span className="muted" title="Headline only — pay to unlock detail.">
-                      · headline
-                    </span>
-                  </>
-                )
-              }
-              meta={
-                <>
-                  from{" "}
+            <li key={i} className="chip-stack">
+              <div className="chip-stack-row">
+                {showCounterparty ? (
+                  r.lead.counterpartyActorId !== null ? (
+                    counterpartyChip
+                  ) : (
+                    <span className="muted">someone</span>
+                  )
+                ) : null}
+                <span className="muted">
+                  {r.lead.side === "supply" ? "has" : "wants"}
+                </span>
+                <span className="muted">·</span>
+                <span className="muted">from</span>
+                <ActorChip
+                  dump={dump}
+                  actorId={r.fromActorId}
+                  onSelect={onSelect}
+                  size={12}
+                />
+                <span className="muted">
+                  · {unlocked ? r.lead.confidence : "headline"}
+                  {r.lead.hopCount > 0 ? ` · hop ${r.lead.hopCount}` : ""}
+                  {" · "}D{pad(r.day)} {pad(r.hour)}:00
+                </span>
+                {conflict?.qtyVaries || conflict?.priceVaries ? (
+                  <span className="muted" title="Sources disagree on qty/price for this subject."> ⚠</span>
+                ) : null}
+              </div>
+              {r.lead.subjectItemKindId !== null ? (
+                <div className="chip-stack-row">
                   <ActorChip
                     dump={dump}
-                    actorId={r.fromActorId}
+                    actorId={receiverActorId}
                     onSelect={onSelect}
                     size={12}
-                  />{" "}
-                  {unlocked ? (
-                    <>
-                      · {r.lead.confidence}
-                      {r.lead.hopCount > 0 ? ` · hop ${r.lead.hopCount}` : ""} ·{" "}
-                    </>
-                  ) : (
-                    <>· </>
-                  )}
-                  D{pad(r.day)} {pad(r.hour)}:00
-                </>
-              }
-            />
+                  />
+                  <span className="muted">{unlocked ? "POV:" : "knows of:"}</span>
+                  <BeliefChip
+                    dump={dump}
+                    itemKindId={r.lead.subjectItemKindId}
+                    qualityTier={unlocked ? r.lead.subjectQualityTier : null}
+                    quantity={unlocked ? r.lead.estimatedQuantity : null}
+                    observerActorId={receiverActorId}
+                    onSelect={onSelect}
+                  />
+                  {!unlocked ? (
+                    <span className="muted" title="Headline only — pay to unlock detail.">
+                      · unlock to evaluate
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+            </li>
           );
         })}
       </ul>
@@ -989,7 +968,7 @@ function formatLead(
       <BeliefChip
         dump={dump}
         itemKindId={l.subjectItemKindId}
-        qualityTier={l.subjectQualityTier}
+        qualityTier={unlocked ? l.subjectQualityTier : null}
         quantity={unlocked ? l.estimatedQuantity : null}
         observerActorId={receiverActorId}
         onSelect={onSelect}

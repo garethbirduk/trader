@@ -3,8 +3,8 @@ import type { DaySnapshot, RunDump, SnapshotDeal, SnapshotStockLot } from "../ty
 import type { Selection } from "../App.js";
 import { ActorChip, LocationLink } from "./Links.js";
 import { LocationRef } from "./Refs.js";
-import { StockLine } from "./StockLine.js";
 import { BeliefChip } from "./BeliefChip.js";
+import { perceivedTierFor } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -63,30 +63,53 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
           {lots
             .slice()
             .sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)))
-            .map((lot) => (
-              <StockLine
-                key={lot.id}
-                fact={
-                  <>
-                    <span className="muted">has</span>{" "}
+            .map((lot) => {
+              const item = dump.items.find((i) => i.id === lot.itemKindId);
+              const owner = dump.actors.find((a) => a.id === actorId);
+              const perceivedTier =
+                item !== undefined
+                  ? perceivedTierFor(
+                      dump,
+                      owner?.bidderProfile,
+                      item.category,
+                      lot.qualityTier,
+                    )
+                  : lot.qualityTier;
+              return (
+                <li key={lot.id} className="chip-stack">
+                  <div className="chip-stack-row">
+                    <span className="chip-stack-label muted">RRP</span>
                     <BeliefChip
                       dump={dump}
                       itemKindId={lot.itemKindId}
                       qualityTier={lot.qualityTier}
                       quantity={lot.quantity}
+                      observerActorId={null}
+                      onSelect={onSelect}
+                    />
+                  </div>
+                  <div className="chip-stack-row">
+                    <ActorChip
+                      dump={dump}
+                      actorId={actorId}
+                      onSelect={onSelect}
+                      size={14}
+                    />
+                    <span className="muted">POV:</span>
+                    <BeliefChip
+                      dump={dump}
+                      itemKindId={lot.itemKindId}
+                      qualityTier={perceivedTier}
+                      quantity={lot.quantity}
                       observerActorId={actorId}
                       onSelect={onSelect}
                     />
-                  </>
-                }
-                meta={
-                  <>
-                    <span>cost £{lot.acquiredUnitPrice}/u</span>
-                    <span>·</span>
-                    <span>acquired D{lot.acquiredDay}</span>
+                  </div>
+                  <div className="chip-stack-row">
+                    <span className="muted">acquired D{lot.acquiredDay}</span>
                     {lot.locationId !== null ? (
                       <>
-                        <span>·</span>
+                        <span className="muted">@</span>
                         <LocationRef
                           dump={dump}
                           id={lot.locationId}
@@ -96,10 +119,19 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                         />
                       </>
                     ) : null}
-                  </>
-                }
-              />
-            ))}
+                    <BeliefChip
+                      dump={dump}
+                      itemKindId={lot.itemKindId}
+                      qualityTier={perceivedTier}
+                      quantity={lot.quantity}
+                      observerActorId={actorId}
+                      unitPriceOverride={lot.acquiredUnitPrice}
+                      onSelect={onSelect}
+                    />
+                  </div>
+                </li>
+              );
+            })}
         </ul>
       )}
 

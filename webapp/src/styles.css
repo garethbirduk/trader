@@ -1788,6 +1788,29 @@ button.actor-row.actor-row-selected {
   flex-direction: column;
   gap: 0;
 }
+.inv-lot,
+.chip-stack {
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--border);
+  font-size: 12px;
+}
+.inv-lot:last-child,
+.chip-stack:last-child { border-bottom: none; }
+.inv-lot-row,
+.chip-stack-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  flex-wrap: wrap;
+}
+.inv-lot-label,
+.chip-stack-label {
+  min-width: 64px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .deal-lines {
   font-size: 12px;
   list-style: none;

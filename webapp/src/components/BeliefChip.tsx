@@ -36,9 +36,20 @@ const TIER_ORDER: readonly string[] = ["broken", "shoddy", "fair", "good", "mint
 interface Props {
   readonly dump: RunDump;
   readonly itemKindId: number;
-  /** The tier the row is about. `null` = unknown condition — tier badge
-   *  is omitted and the chip uses the category's "good"-tier truth as
-   *  the fallback basis for any displayed unit value. */
+  /** The tier the chip should display.
+   *
+   *  • RRP / truth chip (`observerActorId = null`): pass the lot's
+   *    actual quality tier — the admin overview always shows the
+   *    real condition.
+   *  • POV chip: pass the actor's *perceived* tier when they have
+   *    knowledge of condition (inspected the lot, or received
+   *    detailed gossip about its state — headlines don't carry
+   *    condition). Pass `null` when they don't, so the badge is
+   *    omitted.
+   *
+   *  Note inspection can yield the wrong tier when the inspector
+   *  lacks expertise in the category; "perceived" ≠ "true". The
+   *  chip just renders what the caller passes. */
   readonly qualityTier: string | null;
   /** Units of stock in this reference. `null` = unknown (e.g. gossip
    *  headline pre-detail-unlock) — the chip renders just the item

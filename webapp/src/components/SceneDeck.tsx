@@ -1490,56 +1490,81 @@ function GossipScene({
                     const lead = x.lead;
                     const verb = lead.side === "supply" ? "has" : "wants";
                     return (
-                      <li key={j}>
-                        <ActorChip
-                          dump={dump}
-                          actorId={x.fromActorId}
-                          onSelect={onSelect}
-                          size={14}
-                        />
-                        <span className="muted"> →</span>{" "}
-                        {lead.counterpartyActorId !== null ? (
+                      <li key={j} className="chip-stack">
+                        <div className="chip-stack-row">
                           <ActorChip
                             dump={dump}
-                            actorId={lead.counterpartyActorId}
+                            actorId={x.fromActorId}
                             onSelect={onSelect}
                             size={14}
                           />
-                        ) : (
-                          <span className="muted">someone</span>
-                        )}{" "}
-                        <span className="muted">{verb}</span>{" "}
+                          <span className="muted">→</span>
+                          {lead.counterpartyActorId !== null ? (
+                            <ActorChip
+                              dump={dump}
+                              actorId={lead.counterpartyActorId}
+                              onSelect={onSelect}
+                              size={14}
+                            />
+                          ) : (
+                            <span className="muted">someone</span>
+                          )}
+                          <span className="muted">{verb}</span>
+                          <span className="muted">· {lead.confidence}</span>
+                        </div>
                         {lead.subjectItemKindId !== null ? (
                           <>
-                            <BeliefChip
-                              dump={dump}
-                              itemKindId={lead.subjectItemKindId}
-                              qualityTier={lead.subjectQualityTier ?? null}
-                              quantity={lead.estimatedQuantity ?? null}
-                              observerActorId={null}
-                              onSelect={onSelect}
-                            />
-                            <BeliefChip
-                              dump={dump}
-                              itemKindId={lead.subjectItemKindId}
-                              qualityTier={lead.subjectQualityTier ?? null}
-                              quantity={lead.estimatedQuantity ?? null}
-                              observerActorId={x.fromActorId ?? null}
-                              onSelect={onSelect}
-                            />
-                            <BeliefChip
-                              dump={dump}
-                              itemKindId={lead.subjectItemKindId}
-                              qualityTier={lead.subjectQualityTier ?? null}
-                              quantity={lead.estimatedQuantity ?? null}
-                              observerActorId={x.toActorId ?? null}
-                              onSelect={onSelect}
-                            />
+                            <div className="chip-stack-row">
+                              <span className="chip-stack-label muted">RRP</span>
+                              <BeliefChip
+                                dump={dump}
+                                itemKindId={lead.subjectItemKindId}
+                                qualityTier={lead.subjectQualityTier ?? null}
+                                quantity={lead.estimatedQuantity ?? null}
+                                observerActorId={null}
+                                onSelect={onSelect}
+                              />
+                            </div>
+                            <div className="chip-stack-row">
+                              <ActorChip
+                                dump={dump}
+                                actorId={x.fromActorId}
+                                onSelect={onSelect}
+                                size={14}
+                              />
+                              <span className="muted">claims:</span>
+                              <BeliefChip
+                                dump={dump}
+                                itemKindId={lead.subjectItemKindId}
+                                qualityTier={lead.subjectQualityTier ?? null}
+                                quantity={lead.estimatedQuantity ?? null}
+                                observerActorId={x.fromActorId ?? null}
+                                onSelect={onSelect}
+                              />
+                            </div>
+                            <div className="chip-stack-row">
+                              <ActorChip
+                                dump={dump}
+                                actorId={x.toActorId}
+                                onSelect={onSelect}
+                                size={14}
+                              />
+                              <span className="muted">hears as:</span>
+                              <BeliefChip
+                                dump={dump}
+                                itemKindId={lead.subjectItemKindId}
+                                qualityTier={lead.subjectQualityTier ?? null}
+                                quantity={lead.estimatedQuantity ?? null}
+                                observerActorId={x.toActorId ?? null}
+                                onSelect={onSelect}
+                              />
+                            </div>
                           </>
                         ) : (
-                          <span className="muted">[rep lead]</span>
-                        )}{" "}
-                        <span className="muted">· {lead.confidence}</span>
+                          <div className="chip-stack-row">
+                            <span className="muted">[rep lead]</span>
+                          </div>
+                        )}
                       </li>
                     );
                   })}
@@ -1632,37 +1657,51 @@ function InspectionScene({
           const lotId = e.auctionLotId as number;
           const lot = lotById.get(lotId) ?? null;
           return (
-            <li key={i} className="inspection-row">
-              <span className="muted">🔨</span>
-              <ActorChip
-                dump={dump}
-                actorId={actorId}
-                onSelect={onSelect}
-                size={14}
-              />{" "}
-              <span className="muted">inspected</span>{" "}
-              <LotRef dump={dump} id={lotId} onSelect={onSelect} variant="chip" />
+            <li key={i} className="chip-stack">
+              <div className="chip-stack-row">
+                <span className="muted">🔨</span>
+                <ActorChip
+                  dump={dump}
+                  actorId={actorId}
+                  onSelect={onSelect}
+                  size={14}
+                />
+                <span className="muted">inspected</span>
+                <LotRef dump={dump} id={lotId} onSelect={onSelect} variant="chip" />
+                {lot !== null ? (
+                  <span className="muted">floor £{lot.floorPrice}</span>
+                ) : null}
+              </div>
               {lot !== null ? (
                 <>
-                  {" "}
-                  <span className="muted">·</span>{" "}
-                  <BeliefChip
-                    dump={dump}
-                    itemKindId={lot.itemKindId}
-                    qualityTier={lot.qualityTier}
-                    quantity={lot.quantity}
-                    observerActorId={null}
-                    onSelect={onSelect}
-                  />
-                  <BeliefChip
-                    dump={dump}
-                    itemKindId={lot.itemKindId}
-                    qualityTier={lot.qualityTier}
-                    quantity={lot.quantity}
-                    observerActorId={actorId}
-                    onSelect={onSelect}
-                  />{" "}
-                  <span className="muted">floor £{lot.floorPrice}</span>
+                  <div className="chip-stack-row">
+                    <span className="chip-stack-label muted">RRP</span>
+                    <BeliefChip
+                      dump={dump}
+                      itemKindId={lot.itemKindId}
+                      qualityTier={lot.qualityTier}
+                      quantity={lot.quantity}
+                      observerActorId={null}
+                      onSelect={onSelect}
+                    />
+                  </div>
+                  <div className="chip-stack-row">
+                    <ActorChip
+                      dump={dump}
+                      actorId={actorId}
+                      onSelect={onSelect}
+                      size={14}
+                    />
+                    <span className="muted">POV:</span>
+                    <BeliefChip
+                      dump={dump}
+                      itemKindId={lot.itemKindId}
+                      qualityTier={lot.qualityTier}
+                      quantity={lot.quantity}
+                      observerActorId={actorId}
+                      onSelect={onSelect}
+                    />
+                  </div>
                 </>
               ) : null}
             </li>

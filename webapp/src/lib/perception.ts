@@ -105,6 +105,68 @@ export function conditionAnchorFor(dump: RunDump, category: string): number {
   return dump.categoryConditionAnchors?.[category] ?? 0.5;
 }
 
+/** Tier midpoints on the [0, 1] quality scale — five tiers, midpoints
+ *  at 0.1, 0.3, 0.5, 0.7, 0.9. Matches the engine's `TIER_QUALITY`
+ *  ordering in `src/engine/perception/arms.ts`. */
+const TIER_QUALITY_BY_NAME: Readonly<Record<string, number>> = {
+  broken: 0.1,
+  shoddy: 0.3,
+  fair: 0.5,
+  good: 0.7,
+  mint: 0.9,
+};
+const TIER_NAMES_ORDERED: readonly { readonly name: string; readonly q: number }[] = [
+  { name: "broken", q: 0.1 },
+  { name: "shoddy", q: 0.3 },
+  { name: "fair", q: 0.5 },
+  { name: "good", q: 0.7 },
+  { name: "mint", q: 0.9 },
+];
+
+/**
+ * Client-side mirror of the engine's `perceivedTierCentre` — the
+ * actor's *centre* belief about an item's quality tier, given their
+ * expertise. RNG-free (no sample, just the deterministic centre).
+ *
+ *   truthQ      ← tier midpoint on the [0, 1] quality scale
+ *   anchor      ← per-category condition anchor (uninformed prior)
+ *   centre      ← anchor + (truthQ − anchor) × expertise
+ *   perceived   ← snap centre to nearest tier midpoint
+ *
+ * Use this whenever the chip wants to show what an actor *thinks* the
+ * tier is, rather than the engine-recorded truth. A clueless actor's
+ * centre always sits near the category anchor (≈ fair); an expert
+ * lands on truth. Returns `null` when the truthTier is null or the
+ * actor has no bidder profile (civilians / virtual actors fall back
+ * to truth — they don't have a perception arm).
+ */
+export function perceivedTierFor(
+  dump: RunDump,
+  observerProfile: BidderProfileDump | undefined,
+  category: string,
+  truthTier: string | null,
+): string | null {
+  if (truthTier === null) return null;
+  if (observerProfile === undefined) return truthTier;
+  const truthQ = TIER_QUALITY_BY_NAME[truthTier] ?? 0.5;
+  const anchor = conditionAnchorFor(dump, category);
+  const expertise = clamp01(
+    observerProfile.appraisalAccuracy[category] ??
+      observerProfile.defaultAppraisalAccuracy,
+  );
+  const centre = anchor + (truthQ - anchor) * expertise;
+  let best = TIER_NAMES_ORDERED[0]!;
+  let bestDist = Math.abs(centre - best.q);
+  for (const t of TIER_NAMES_ORDERED) {
+    const d = Math.abs(centre - t.q);
+    if (d < bestDist) {
+      best = t;
+      bestDist = d;
+    }
+  }
+  return best.name;
+}
+
 /**
  * Tier-adjusted anchor — `anchor × tierMult[tier]`. Use when the
  * truth value passed to `priceBandFor` is itself tier-adjusted

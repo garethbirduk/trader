@@ -2,10 +2,8 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChip } from "./Links.js";
-import { ItemRef } from "./Refs.js";
-import { StockLine, StockValue } from "./StockLine.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
-import { BeliefChip, TierTag } from "./BeliefChip.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -330,48 +328,62 @@ function SellRow({
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
-    <StockLine
-      fact={
-        row.unlocked && row.theirQty !== null ? (
-          <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
-            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
-            <span className="muted">wants</span>{" "}
-            <BeliefChip
-              dump={dump}
-              itemKindId={row.itemKindId}
-              qualityTier={row.itemTier}
-              quantity={row.theirQty}
-              observerActorId={row.counterpartyActorId}
-              perceiverJ={perceiverJ}
-              onSelect={onSelect}
-            />
-          </>
-        ) : (
-          <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
-            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
-            <span className="muted">wants</span>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
-            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
-            <span className="muted" title="Headline only — pay to unlock detail.">
-              · unlock to evaluate
-            </span>
-          </>
-        )
-      }
-      meta={
-        <>
-          I have <StockValue>{row.myQty}</StockValue> @ £{row.myUnitCost}/u cost
-          {row.score !== null ? (
-            <>
-              {" · "}
-              <strong className={row.score > 0 ? "" : "warn"}>gross £{row.score}</strong>
-            </>
-          ) : null}
-        </>
-      }
-    />
+    <li className="chip-stack">
+      <div className="chip-stack-row">
+        <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+        <CounterpartyDot row={row} perceiverJ={perceiverJ} />
+        <span className="muted">wants</span>
+        {row.score !== null ? (
+          <strong className={row.score > 0 ? "" : "warn"}>· gross £{row.score}</strong>
+        ) : null}
+      </div>
+      <div className="chip-stack-row">
+        <span className="chip-stack-label muted">RRP</span>
+        <BeliefChip
+          dump={dump}
+          itemKindId={row.itemKindId}
+          qualityTier={row.itemTier}
+          quantity={row.theirQty}
+          observerActorId={null}
+          onSelect={onSelect}
+        />
+      </div>
+      {row.unlocked && row.theirQty !== null ? (
+        <div className="chip-stack-row">
+          <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+          <span className="muted">POV:</span>
+          <BeliefChip
+            dump={dump}
+            itemKindId={row.itemKindId}
+            qualityTier={row.itemTier}
+            quantity={row.theirQty}
+            observerActorId={row.counterpartyActorId}
+            perceiverJ={perceiverJ}
+            onSelect={onSelect}
+          />
+        </div>
+      ) : (
+        <div className="chip-stack-row">
+          <span className="muted" title="Headline only — pay to unlock detail.">
+            · unlock to evaluate
+          </span>
+        </div>
+      )}
+      {row.myQty !== null && row.myUnitCost !== null ? (
+        <div className="chip-stack-row">
+          <span className="muted">I have</span>
+          <BeliefChip
+            dump={dump}
+            itemKindId={row.itemKindId}
+            qualityTier={row.itemTier}
+            quantity={row.myQty}
+            observerActorId={null}
+            unitPriceOverride={row.myUnitCost}
+            onSelect={onSelect}
+          />
+        </div>
+      ) : null}
+    </li>
   );
 }
 
@@ -387,54 +399,63 @@ function BuyRow({
   readonly onSelect: (s: Selection) => void;
 }) {
   return (
-    <StockLine
-      fact={
-        row.unlocked && row.theirQty !== null ? (
-          <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
-            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
-            <span className="muted">has</span>{" "}
-            <BeliefChip
-              dump={dump}
-              itemKindId={row.itemKindId}
-              qualityTier={row.itemTier}
-              quantity={row.theirQty}
-              observerActorId={row.counterpartyActorId}
-              perceiverJ={perceiverJ}
-              onSelect={onSelect}
-            />
-          </>
-        ) : (
-          <>
-            <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
-            <CounterpartyDot row={row} perceiverJ={perceiverJ} />{" "}
-            <span className="muted">has</span>{" "}
-            <ItemRef dump={dump} id={row.itemKindId} onSelect={onSelect} variant="chip" />
-            {row.itemTier !== null ? <> <TierTag tier={row.itemTier} perceiverJ={perceiverJ} /></> : null}{" "}
-            <span className="muted" title="Headline only — pay to unlock detail.">
-              · unlock to evaluate
-            </span>
-          </>
-        )
-      }
-      meta={
-        row.onwardBuyerActorId !== null ? (
-          <>
-            onward to{" "}
-            <ActorChip dump={dump} actorId={row.onwardBuyerActorId} onSelect={onSelect} size={12} />
-            {row.onwardUnitPrice !== null ? <> @ £{row.onwardUnitPrice}/u</> : null}
-            {row.score !== null ? (
-              <>
-                {" · "}
-                <strong className={row.score > 0 ? "" : "warn"}>gross £{row.score}</strong>
-              </>
-            ) : null}
-          </>
-        ) : (
-          <span className="muted">no onward buyer yet</span>
-        )
-      }
-    />
+    <li className="chip-stack">
+      <div className="chip-stack-row">
+        <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+        <CounterpartyDot row={row} perceiverJ={perceiverJ} />
+        <span className="muted">has</span>
+        {row.score !== null ? (
+          <strong className={row.score > 0 ? "" : "warn"}>· gross £{row.score}</strong>
+        ) : null}
+      </div>
+      <div className="chip-stack-row">
+        <span className="chip-stack-label muted">RRP</span>
+        <BeliefChip
+          dump={dump}
+          itemKindId={row.itemKindId}
+          qualityTier={row.itemTier}
+          quantity={row.theirQty}
+          observerActorId={null}
+          onSelect={onSelect}
+        />
+      </div>
+      {row.unlocked && row.theirQty !== null ? (
+        <div className="chip-stack-row">
+          <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+          <span className="muted">POV:</span>
+          <BeliefChip
+            dump={dump}
+            itemKindId={row.itemKindId}
+            qualityTier={row.itemTier}
+            quantity={row.theirQty}
+            observerActorId={row.counterpartyActorId}
+            perceiverJ={perceiverJ}
+            onSelect={onSelect}
+          />
+        </div>
+      ) : (
+        <div className="chip-stack-row">
+          <span className="muted" title="Headline only — pay to unlock detail.">
+            · unlock to evaluate
+          </span>
+        </div>
+      )}
+      {row.onwardBuyerActorId !== null && row.onwardUnitPrice !== null && row.theirQty !== null ? (
+        <div className="chip-stack-row">
+          <span className="muted">onward to</span>
+          <ActorChip dump={dump} actorId={row.onwardBuyerActorId} onSelect={onSelect} size={12} />
+          <BeliefChip
+            dump={dump}
+            itemKindId={row.itemKindId}
+            qualityTier={row.itemTier}
+            quantity={row.theirQty}
+            observerActorId={row.onwardBuyerActorId}
+            unitPriceOverride={row.onwardUnitPrice}
+            onSelect={onSelect}
+          />
+        </div>
+      ) : null}
+    </li>
   );
 }
 

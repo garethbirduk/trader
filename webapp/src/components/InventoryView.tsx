@@ -2,8 +2,9 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorRef, LocationRef } from "./Refs.js";
-import { StockLine } from "./StockLine.js";
+import { ActorChip } from "./Links.js";
 import { BeliefChip } from "./BeliefChip.js";
+import { perceivedTierFor } from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -76,12 +77,22 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
               </span>
             </header>
             <ul className="inv-lots">
-              {sortedLots.map((lot) => (
-                <StockLine
-                  key={lot.id}
-                  fact={
-                    <>
-                      <span className="muted">has</span>{" "}
+              {sortedLots.map((lot) => {
+                const item = dump.items.find((i) => i.id === lot.itemKindId);
+                const owner = dump.actors.find((a) => a.id === ownerId);
+                const perceivedTier =
+                  item !== undefined
+                    ? perceivedTierFor(
+                        dump,
+                        owner?.bidderProfile,
+                        item.category,
+                        lot.qualityTier,
+                      )
+                    : lot.qualityTier;
+                return (
+                  <li key={lot.id} className="inv-lot">
+                    <div className="inv-lot-row">
+                      <span className="inv-lot-label muted">RRP</span>
                       <BeliefChip
                         dump={dump}
                         itemKindId={lot.itemKindId}
@@ -90,16 +101,29 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                         observerActorId={null}
                         onSelect={onSelect}
                       />
-                    </>
-                  }
-                  meta={
-                    <>
-                      <span>cost £{lot.acquiredUnitPrice}/u</span>
-                      <span>·</span>
-                      <span>acquired D{lot.acquiredDay}</span>
+                    </div>
+                    <div className="inv-lot-row">
+                      <ActorChip
+                        dump={dump}
+                        actorId={ownerId}
+                        onSelect={onSelect}
+                        size={14}
+                      />
+                      <span className="muted">POV:</span>
+                      <BeliefChip
+                        dump={dump}
+                        itemKindId={lot.itemKindId}
+                        qualityTier={perceivedTier}
+                        quantity={lot.quantity}
+                        observerActorId={ownerId}
+                        onSelect={onSelect}
+                      />
+                    </div>
+                    <div className="inv-lot-row">
+                      <span className="muted">acquired D{lot.acquiredDay}</span>
                       {lot.locationId !== null ? (
                         <>
-                          <span>·</span>
+                          <span className="muted">@</span>
                           <LocationRef
                             dump={dump}
                             id={lot.locationId}
@@ -109,10 +133,19 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                           />
                         </>
                       ) : null}
-                    </>
-                  }
-                />
-              ))}
+                      <BeliefChip
+                        dump={dump}
+                        itemKindId={lot.itemKindId}
+                        qualityTier={perceivedTier}
+                        quantity={lot.quantity}
+                        observerActorId={ownerId}
+                        unitPriceOverride={lot.acquiredUnitPrice}
+                        onSelect={onSelect}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         );
