@@ -486,8 +486,16 @@ const DEFAULT_REACHABLE_CODES: readonly string[] = [];
  * Keys must match an actor `code` in ACTORS above. New code → empty
  * roles unless added here.
  */
-// Actor roles — data moved to JSON (TBD).
-const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {};
+// Actor roles — sourced from each actor's `roles` field in actors.json.
+const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = (() => {
+  const out: Record<string, readonly string[]> = {};
+  for (const spec of ACTORS) {
+    if (spec.roles !== undefined && spec.roles.length > 0) {
+      out[spec.code] = spec.roles;
+    }
+  }
+  return out;
+})();
 
 export interface SkinSeedOptions {
   readonly runLengthDays?: number;

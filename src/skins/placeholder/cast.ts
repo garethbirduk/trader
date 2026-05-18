@@ -34,6 +34,10 @@ export interface ActorSpec {
    *  Used in chips and any compact surface; lists and the POV dropdown
    *  use the composed full name (`firstName` + ` ` + `lastName`). */
   readonly shortName: string;
+  /** Fiction-side role tags (e.g. ["dealer"], ["fence"]). Drives the
+   *  dealer-fraternity rule in pov-knowledge and the market-seller /
+   *  starter-stock filters in the skin seeder. Empty / unset = civilian. */
+  readonly roles?: readonly string[];
   readonly cash: number;
   readonly schedule: ReadonlyMap<number, string>;
   readonly flexibleHours: ReadonlySet<number>;
@@ -161,6 +165,7 @@ interface ActorJson {
   readonly firstName: string;
   readonly lastName?: string;
   readonly shortName: string;
+  readonly roles?: readonly string[];
   readonly cash: number;
   readonly socialScore?: number;
   readonly homeLocation: string;
@@ -195,6 +200,7 @@ function actorJsonToSpec(j: ActorJson): ActorSpec {
     firstName: j.firstName,
     ...(j.lastName !== undefined ? { lastName: j.lastName } : {}),
     shortName: j.shortName,
+    ...(j.roles !== undefined ? { roles: j.roles } : {}),
     cash: j.cash,
     schedule: routine.schedule,
     flexibleHours: routine.flexibleHours,

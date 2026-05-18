@@ -15,6 +15,22 @@
     "type": "home"
   },
   {
+    "code": "denzil-house",
+    "displayName": "Denzil's",
+    "type": "home"
+  },
+  {
+    "code": "mickey-jevon-flat",
+    "displayName": "Mickey & Jevon's",
+    "type": "home"
+  },
+  {
+    "code": "transworld-depot",
+    "displayName": "Transworld Depot",
+    "type": "business",
+    "openHours": { "start": 6, "end": 18 }
+  },
+  {
     "code": "lockup",
     "displayName": "The Lock-up",
     "type": "business",
