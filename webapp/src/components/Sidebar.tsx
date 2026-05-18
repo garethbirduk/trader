@@ -20,7 +20,7 @@ const ROLE_LABEL: Record<string, string> = {
   fence: "Fences",
   supplier: "Suppliers",
   pub: "Pub",
-  family: "Family",
+  household: "Household",
   civilian: "Civvies",
   police: "Police",
   villain: "Villains",

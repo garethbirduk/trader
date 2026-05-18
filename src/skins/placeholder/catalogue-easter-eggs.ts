@@ -75,7 +75,7 @@ export const EASTER_EGG_ITEMS: readonly InsertItemKindInput[] = [
     risk: 3,
     targetCustomers: ["market-punters"],
     isEasterEgg: true,
-    flavourText: "A bath tub of vile yellow liquid decanted into branded bottles in the lounge. Grandad stamps the boxes.",
+    flavourText: "A bath tub of vile yellow liquid decanted into branded bottles in the lounge. Uncle Albert stamps the boxes.",
     spawnWeight: 1,
   },
   // S2E5 The Yellow Peril

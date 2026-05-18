@@ -957,7 +957,7 @@ const ACTORS: readonly ActorSpec[] = [
   {
     code: "denzil",
     socialScore: 0.55,
-    displayName: "Denzil",
+    displayName: "Denzil Tulser",
     cash: 1500,
     ...makeRoutineFromSpans("denzil-house", [
       { from: 5, to: 6, location: "denzil-house" },
@@ -1083,18 +1083,6 @@ const ACTORS: readonly ActorSpec[] = [
     transportCapacity: "pocket",
     awakeHours: { start: 8, end: 23 },
   },
-  {
-    code: "grandad",
-    displayName: "Grandad",
-    cash: 50,
-    ...makeRoutineFromSpans("peckham-flat", [
-      { from: 9, to: 23, location: "peckham-flat" },
-    ]),
-    defaultLocation: "peckham-flat",
-    homeLocation: "peckham-flat",
-    transportCapacity: "none",
-    awakeHours: { start: 9, end: 22 },
-  },
 
   // ─── Boyce family ────────────────────────────────────────────────────
   {
@@ -1111,6 +1099,25 @@ const ACTORS: readonly ActorSpec[] = [
     ]),
     defaultLocation: "boycie-house",
     homeLocation: "boycie-house",
+    transportCapacity: "boot",
+    awakeHours: { start: 8, end: 23 },
+  },
+
+  // ─── Denzil's household ──────────────────────────────────────────────
+  {
+    code: "corrine",
+    displayName: "Corrine Tulser",
+    cash: 250,
+    ...makeRoutineFromSpans("denzil-house", [
+      { from: 8, to: 10, location: "denzil-house" },
+      { from: 10, to: 12, location: "peckham-market" },
+      { from: 12, to: 14, location: "nags" },
+      { from: 14, to: 18, location: "denzil-house" },
+      { from: 20, to: 23, location: "nags" },
+      { from: 23, to: 8, location: "denzil-house" },
+    ]),
+    defaultLocation: "denzil-house",
+    homeLocation: "denzil-house",
     transportCapacity: "boot",
     awakeHours: { start: 8, end: 23 },
   },
@@ -1588,8 +1595,8 @@ const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
   "auction-house": ["official"],
   rodney: ["dealer"],
   albert: ["household"],
-  grandad: ["household"],
   marlene: ["household"],
+  corrine: ["household"],
   "mickey-pearce": ["dealer"],
   jevon: ["dealer"],
   raquel: ["household"],

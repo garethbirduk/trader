@@ -102,6 +102,24 @@ function computeKnownIds(
     }
   }
 
+  // Household transitive closure: if you know anyone who lives at
+  // home X, you know everyone who lives at home X. (Trigger knows
+  // Del → Trigger knows Del's housemates Rodney and Uncle Albert;
+  // Boyce knows Denzil → Boyce knows Corrine.) Applied after the
+  // dealer fraternity so dealer homes are all walked.
+  const knownHomes = new Set<number>();
+  for (const id of actors) {
+    const a = dump.actors.find((x) => x.id === id);
+    if (a !== undefined && a.homeLocationId !== null && a.homeLocationId !== undefined) {
+      knownHomes.add(a.homeLocationId);
+    }
+  }
+  for (const a of dump.actors) {
+    if (a.homeLocationId !== null && a.homeLocationId !== undefined && knownHomes.has(a.homeLocationId)) {
+      actors.add(a.id);
+    }
+  }
+
   // Event stream as of the end of `day` (inclusive). Earlier days are
   // included in full.
   const events = dump.events;
