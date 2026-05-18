@@ -178,16 +178,6 @@ export function Sidebar(props: Props) {
             </button>
           </nav>
           <div className="side-list">
-            {known !== null && pov.kind === "actor" ? (
-              <div className="pov-knowledge-note" title="Filtered to entities this actor has met, traded with, or heard about in gossip.">
-                Filtered to {known.actors.size} known actor{known.actors.size === 1 ? "" : "s"} · {known.itemKinds.size} item-kind{known.itemKinds.size === 1 ? "" : "s"} (POV:{" "}
-                {(() => {
-                  const a = dump.actors.find((x) => x.id === pov.actorId);
-                  return a !== undefined ? <ActorChip actor={a} dump={dump} size={14} /> : null;
-                })()}
-                )
-              </div>
-            ) : null}
             {topTab === "actors" && (
               <ActorList dump={dump} snapshot={snapshot} day={day} roleFilter={roleFilter} known={known} />
             )}

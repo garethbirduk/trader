@@ -2519,18 +2519,6 @@ svg.graph-map:active { cursor: grabbing; }
    Sub-check pill row (docs/ui.md §5) — under each LHS row, lets the
    user opt in to related entities (home, stock, proprietor, lots).
    ───────────────────────────────────────────────────────────────── */
-.pov-knowledge-note {
-  font-size: 10px;
-  color: var(--muted);
-  padding: 4px 6px;
-  border: 1px dashed var(--border);
-  border-radius: 3px;
-  margin-bottom: 6px;
-  background: rgba(255, 184, 77, 0.04);
-  line-height: 1.4;
-  cursor: help;
-}
-
 .row-and-checks {
   display: flex;
   flex-direction: column;
