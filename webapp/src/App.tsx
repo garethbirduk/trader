@@ -11,8 +11,11 @@ import { MapGraph } from "./components/MapGraph.js";
 import { MapEditor } from "./components/MapEditor.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
 import { SceneDeck } from "./components/SceneDeck.js";
-import { useSelectionHistory } from "./lib/selection-history.js";
 import { CurrentTimeProvider } from "./lib/current-time.js";
+import { PovProvider, usePov } from "./lib/pov.js";
+import { PovSwitcher } from "./components/PovSwitcher.js";
+import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
+import { SelectionChips } from "./components/SelectionChips.js";
 
 const DEV = import.meta.env.DEV;
 
@@ -65,7 +68,6 @@ export function App() {
   const [tab, setTab] = useState<TabId>("events");
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
   const [lowerTab, setLowerTab] = useState<SidebarLowerTab>("profile");
-  const selectionApi = useSelectionHistory(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -116,25 +118,23 @@ export function App() {
   }
 
   return (
-    <Loaded
-      dump={state.dump}
-      day={day}
-      hour={hour}
-      setDay={setDay}
-      setHour={setHour}
-      tab={tab}
-      setTab={setTab}
-      topTab={topTab}
-      setTopTab={setTopTab}
-      lowerTab={lowerTab}
-      setLowerTab={setLowerTab}
-      selection={selectionApi.selection}
-      setSelection={selectionApi.setSelection}
-      goBack={selectionApi.goBack}
-      goForward={selectionApi.goForward}
-      canGoBack={selectionApi.canGoBack}
-      canGoForward={selectionApi.canGoForward}
-    />
+    <PovProvider dump={state.dump}>
+      <SelectionSetProvider>
+        <Loaded
+          dump={state.dump}
+          day={day}
+          hour={hour}
+          setDay={setDay}
+          setHour={setHour}
+          tab={tab}
+          setTab={setTab}
+          topTab={topTab}
+          setTopTab={setTopTab}
+          lowerTab={lowerTab}
+          setLowerTab={setLowerTab}
+        />
+      </SelectionSetProvider>
+    </PovProvider>
   );
 }
 
@@ -150,12 +150,6 @@ interface LoadedProps {
   readonly setTopTab: (t: SidebarTopTab) => void;
   readonly lowerTab: SidebarLowerTab;
   readonly setLowerTab: (t: SidebarLowerTab) => void;
-  readonly selection: Selection | null;
-  readonly setSelection: (s: Selection | null) => void;
-  readonly goBack: () => void;
-  readonly goForward: () => void;
-  readonly canGoBack: boolean;
-  readonly canGoForward: boolean;
 }
 
 const RIGHT_PANEL_KEY = "trader-right-panel-px";
@@ -187,6 +181,10 @@ function readPersistedPx(key: string, min: number, fallback: number): number {
 
 function Loaded(props: LoadedProps) {
   const { dump, day, hour, setDay, setHour } = props;
+  const { pov } = usePov();
+  const set = useSelectionSet();
+  const selection = set.primary;
+  const setSelection = set.setSelection;
   const appRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const [rightPx, setRightPx] = useState<number>(() =>
@@ -325,6 +323,7 @@ function Loaded(props: LoadedProps) {
     <div
       className="app"
       ref={appRef}
+      data-pov={pov.kind}
       style={{
         ["--left-panel-w" as string]: `${leftPx}px`,
         ["--right-panel-w" as string]: `${rightPx}px`,
@@ -333,12 +332,13 @@ function Loaded(props: LoadedProps) {
       <header className="header">
         <h1>TRADER · sim viewer</h1>
         <div className="header-controls">
+          <PovSwitcher dump={dump} />
           <div className="history-nav" role="toolbar" aria-label="Selection history">
             <button
               type="button"
               className="history-nav-btn"
-              onClick={props.goBack}
-              disabled={!props.canGoBack}
+              onClick={set.goBack}
+              disabled={!set.canGoBack}
               title="Back (previous selection)"
               aria-label="Back"
             >
@@ -347,8 +347,8 @@ function Loaded(props: LoadedProps) {
             <button
               type="button"
               className="history-nav-btn"
-              onClick={props.goForward}
-              disabled={!props.canGoForward}
+              onClick={set.goForward}
+              disabled={!set.canGoForward}
               title="Forward (next selection)"
               aria-label="Forward"
             >
@@ -388,8 +388,8 @@ function Loaded(props: LoadedProps) {
         setTopTab={props.setTopTab}
         lowerTab={props.lowerTab}
         setLowerTab={props.setLowerTab}
-        selection={props.selection}
-        setSelection={props.setSelection}
+        selection={selection}
+        setSelection={setSelection}
         onChangeDay={setDay}
       />
       <div
@@ -403,6 +403,7 @@ function Loaded(props: LoadedProps) {
       </div>
       <main className="main-panel" ref={mainRef}>
         <div className="main-upper panel">
+          <SelectionChips dump={dump} />
           <nav className="tabs">
             {TABS.map((t) => (
               <button
@@ -419,7 +420,7 @@ function Loaded(props: LoadedProps) {
               <EventList
                 events={eventsAsOf}
                 dump={dump}
-                onSelect={props.setSelection}
+                onSelect={setSelection}
               />
             )}
             {props.tab === "inventory" && (
@@ -427,7 +428,7 @@ function Loaded(props: LoadedProps) {
                 dump={dump}
                 day={day}
                 snapshot={snapshot}
-                onSelect={props.setSelection}
+                onSelect={setSelection}
               />
             )}
             {props.tab === "deals" && (
@@ -435,7 +436,7 @@ function Loaded(props: LoadedProps) {
                 dump={dump}
                 day={day}
                 snapshot={snapshot}
-                onSelect={props.setSelection}
+                onSelect={setSelection}
               />
             )}
             {props.tab === "pools" && (
@@ -443,7 +444,7 @@ function Loaded(props: LoadedProps) {
                 dump={dump}
                 day={day}
                 snapshot={snapshot}
-                onSelect={props.setSelection}
+                onSelect={setSelection}
               />
             )}
             {props.tab === "map" && (
@@ -452,8 +453,8 @@ function Loaded(props: LoadedProps) {
                 day={day}
                 hour={hour}
                 snapshot={snapshot}
-                selection={props.selection}
-                onSelect={props.setSelection}
+                selection={selection}
+                onSelect={setSelection}
               />
             )}
             {DEV && props.tab === "editor" && <MapEditor dump={dump} />}
@@ -477,7 +478,7 @@ function Loaded(props: LoadedProps) {
             day={day}
             hour={hour}
             snapshot={snapshot}
-            onSelect={props.setSelection}
+            onSelect={setSelection}
           />
         </div>
       </main>
@@ -494,7 +495,7 @@ function Loaded(props: LoadedProps) {
         dump={dump}
         day={day}
         snapshot={snapshot}
-        onSelect={props.setSelection}
+        onSelect={setSelection}
       />
     </div>
     </CurrentTimeProvider>

@@ -2337,3 +2337,151 @@ svg.graph-map:active { cursor: grabbing; }
   margin: 0 2px 0 8px;
 }
 .map-actor-player-swatch { background: var(--accent); }
+
+/* ─────────────────────────────────────────────────────────────────
+   POV switcher (docs/ui.md §4) — header control + body signposting.
+   Admin POV uses neutral chrome; player POV tints chrome with the
+   actor's colour so the active lens is never in doubt.
+   ───────────────────────────────────────────────────────────────── */
+.app[data-pov="actor"] .header {
+  box-shadow: inset 0 -2px 0 var(--pov-accent, var(--accent));
+}
+.app[data-pov="admin"] .header {
+  box-shadow: inset 0 -2px 0 var(--border);
+}
+
+.pov-switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel-2);
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  line-height: 1;
+}
+.pov-switcher:hover { border-color: var(--accent); }
+.pov-switcher.pov-actor {
+  border-color: var(--pov-accent, var(--accent));
+  box-shadow: 0 0 0 1px var(--pov-accent, var(--accent)) inset;
+}
+.pov-switcher-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.pov-switcher-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.pov-switcher-name {
+  font-weight: 600;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pov-admin-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px dashed var(--muted);
+  color: var(--muted);
+  font-size: 13px;
+}
+.pov-switcher-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Selection chips row (docs/ui.md §6.1) — top of the RHS, one chip
+   per entity in the active selection set. Removable via ×.
+   ───────────────────────────────────────────────────────────────── */
+.selection-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-2);
+  min-height: 32px;
+}
+.selection-chips-empty {
+  min-height: 32px;
+}
+.selection-chips-hint {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+}
+.selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  font-size: 12px;
+  line-height: 1.2;
+  max-width: 220px;
+}
+.selection-chip-actor    { border-color: #4a5a78; }
+.selection-chip-location { border-color: #4a6a4a; }
+.selection-chip-item     { border-color: #6a5a4a; }
+.selection-chip-deal     { border-color: #6a4a6a; }
+.selection-chip-lot      { border-color: #4a6a6a; }
+.selection-chip-pool     { border-color: #6a6a4a; }
+.selection-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+.selection-chip-remove {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 0 4px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 50%;
+}
+.selection-chip-remove:hover {
+  background: var(--warn);
+  color: #0d0d12;
+}
+.selection-chips-clear {
+  margin-left: auto;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.selection-chips-clear:hover {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
