@@ -182,6 +182,12 @@ export interface SkinSeedResult {
    * webapp's filter rail to slice the cast. Keyed by actor id.
    */
   readonly rolesByActorId: ReadonlyMap<number, readonly string[]>;
+  /**
+   * Optional short / nickname per actor. Used by the webapp for chip-
+   * sized UI surfaces (selection chips, mini actor rows, owner labels).
+   * Falls back to displayName when an actor isn't listed.
+   */
+  readonly shortNameByActorId: ReadonlyMap<number, string>;
 }
 
 /**
@@ -226,6 +232,11 @@ export interface ActorRoutineInfo {
 interface ActorSpec {
   readonly code: string;
   readonly displayName: string;
+  /** Optional short / nickname form used in chip-sized UI surfaces
+   *  (selection chips, mini actor rows, owner labels). Falls back to
+   *  displayName when unset. Use this for characters whose displayName
+   *  is "First Last" but who go by just "First" in conversation. */
+  readonly shortName?: string;
   readonly cash: number;
   /** Weekday schedule (Mon-Fri). */
   readonly schedule: ReadonlyMap<number, string>;
@@ -958,6 +969,7 @@ const ACTORS: readonly ActorSpec[] = [
     code: "denzil",
     socialScore: 0.55,
     displayName: "Denzil Tulser",
+    shortName: "Denzil",
     cash: 1500,
     ...makeRoutineFromSpans("denzil-house", [
       { from: 5, to: 6, location: "denzil-house" },
@@ -1107,6 +1119,7 @@ const ACTORS: readonly ActorSpec[] = [
   {
     code: "corrine",
     displayName: "Corrine Tulser",
+    shortName: "Corrine",
     cash: 250,
     ...makeRoutineFromSpans("denzil-house", [
       { from: 8, to: 10, location: "denzil-house" },
@@ -1813,6 +1826,13 @@ export function seedPlaceholderSkin(
     const id = actorByCode.get(code);
     if (id !== undefined && roles.length > 0) rolesByActorId.set(id, roles);
   }
+  // Short / nickname forms — actor ids → short label for chip UI.
+  const shortNameByActorId = new Map<number, string>();
+  for (const spec of ACTORS) {
+    if (spec.shortName === undefined) continue;
+    const id = actorByCode.get(spec.code);
+    if (id !== undefined) shortNameByActorId.set(id, spec.shortName);
+  }
   if (playerId === undefined || auctionHouseId === undefined) {
     throw new Error("placeholder skin must seed player and auction-house actors");
   }
@@ -2185,6 +2205,7 @@ export function seedPlaceholderSkin(
     economics,
     actorRoutines,
     rolesByActorId,
+    shortNameByActorId,
   };
 }
 

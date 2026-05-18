@@ -92,6 +92,10 @@ export interface RunActor {
   readonly id: number;
   readonly code: string;
   readonly displayName: string;
+  /** Optional short / nickname form used in chip-sized UI surfaces
+   *  (selection chips, mini actor rows, owner labels). Falls back to
+   *  displayName when absent. */
+  readonly shortName?: string;
   readonly cash: number;
   readonly currentLocationId: number | null;
   readonly homeLocationId: number | null;

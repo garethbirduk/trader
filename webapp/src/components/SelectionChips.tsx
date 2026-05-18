@@ -5,6 +5,7 @@ import { useSelectionSet } from "../lib/selection-set.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { usePov } from "../lib/pov.js";
+import { chipName } from "../lib/actor-names.js";
 
 /**
  * Selection chips row — always present at the top of the RHS
@@ -94,7 +95,7 @@ function resolveChipMeta(item: SelectionItem, dump: RunDump): ChipMeta {
       const a = dump.actors.find((x) => x.id === item.id);
       if (a === undefined) return fallback(item, "actor");
       return {
-        label: a.displayName,
+        label: chipName(a),
         title: `Actor · ${a.displayName}`,
         avatar: (
           <Avatar

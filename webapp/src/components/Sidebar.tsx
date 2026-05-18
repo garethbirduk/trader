@@ -5,6 +5,7 @@ import { useSelectionSet, type SelectionItem } from "../lib/selection-set.js";
 import { usePov } from "../lib/pov.js";
 import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
 import { useActorPositionsAt } from "../lib/positions.js";
+import { chipName } from "../lib/actor-names.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { BeliefChip } from "./BeliefChip.js";
@@ -648,7 +649,7 @@ function MiniActorRow({ actor, dump }: { actor: RunActor; dump: RunDump }) {
         isPlayer={actor.id === dump.playerActorId}
         size={16}
       />
-      <span className="mini-actor-name">{actor.displayName}</span>
+      <span className="mini-actor-name">{chipName(actor)}</span>
     </button>
   );
 }
@@ -812,7 +813,7 @@ function OwnerBulkChip({
         isPlayer={owner.id === dump.playerActorId}
         size={14}
       />
-      <span className="owner-bulk-name">{owner.displayName}</span>
+      <span className="owner-bulk-name">{chipName(owner)}</span>
     </button>
   );
 }
@@ -952,7 +953,7 @@ function StockRow({
   if (owner !== undefined) {
     checks.push({
       kind: "single",
-      label: owner.displayName,
+      label: chipName(owner),
       item: { kind: "actor", id: owner.id },
       title: `Add ${owner.displayName} (owner) to selection`,
     });
