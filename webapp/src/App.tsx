@@ -45,7 +45,7 @@ const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
     : []),
 ];
 
-export type SidebarTopTab = "actors" | "locations";
+export type SidebarTopTab = "actors" | "locations" | "stock";
 export type SidebarLowerTab = "profile" | "diary" | "knows" | "notebook" | "inventory" | "relations";
 
 export type SelectionKind =
@@ -388,8 +388,6 @@ function Loaded(props: LoadedProps) {
         setTopTab={props.setTopTab}
         lowerTab={props.lowerTab}
         setLowerTab={props.setLowerTab}
-        selection={selection}
-        setSelection={setSelection}
         onChangeDay={setDay}
       />
       <div

@@ -2485,3 +2485,181 @@ svg.graph-map:active { cursor: grabbing; }
   border-color: var(--warn);
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Sub-check pill row (docs/ui.md §5) — under each LHS row, lets the
+   user opt in to related entities (home, stock, proprietor, lots).
+   ───────────────────────────────────────────────────────────────── */
+.row-and-checks {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px;
+}
+.row-and-checks.row-in-set {
+  background: rgba(255, 184, 77, 0.04);
+}
+.row-and-checks.row-in-set > button.actor-row,
+.row-and-checks.row-in-set > button.loc-row,
+.row-and-checks.row-in-set > button.stock-row-sidebar {
+  border-left: 3px solid var(--accent);
+  padding-left: 5px;
+}
+
+.sub-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 2px 6px 4px 36px;  /* indent under the avatar */
+}
+.sub-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.3;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sub-check:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.sub-check-on {
+  background: rgba(255, 184, 77, 0.18);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.sub-check-some {
+  background: rgba(255, 184, 77, 0.08);
+  border-color: var(--accent);
+  color: var(--muted);
+  border-style: dashed;
+}
+.sub-check-tick {
+  font-weight: 700;
+  width: 9px;
+  text-align: center;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.sub-check-label {
+  white-space: nowrap;
+}
+.sub-check-count {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Stock — sidebar row + nested-under-location strip + Stock-tab
+   grouping toggle.
+   ───────────────────────────────────────────────────────────────── */
+.loc-stock-nest {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 4px 24px;
+  padding-left: 6px;
+  border-left: 1px dotted var(--border);
+}
+.stock-row-wrap {
+  margin-bottom: 0;
+}
+.stock-row-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 6px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  font-size: 11px;
+}
+.stock-row-sidebar:hover {
+  background: var(--panel-2);
+  border-color: var(--border);
+}
+.stock-row-cat {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--muted);
+}
+.stock-row-cat-electrical { background: #6db3d3; }
+.stock-row-cat-vehicles   { background: #5a8fd6; }
+.stock-row-cat-furniture  { background: #b89668; }
+.stock-row-cat-clothing   { background: #d36db3; }
+.stock-row-cat-jewellery  { background: #d3c46d; }
+.stock-row-cat-books      { background: #9aa6e8; }
+.stock-row-cat-tools      { background: #88aaaa; }
+.stock-row-cat-toys       { background: #d39a6d; }
+.stock-row-cat-luggage    { background: #8aa57e; }
+.stock-row-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stock-row-meta {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.stock-grouping {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 2px;
+  background: var(--panel-2);
+  border-radius: 4px;
+}
+.stock-grouping-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.stock-grouping-btn:hover { color: var(--text); }
+.stock-grouping-btn.active {
+  background: var(--panel);
+  color: var(--accent);
+  border-color: var(--border);
+}
+
+.stock-group {
+  margin-bottom: 8px;
+}
+.stock-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--accent);
+  padding: 2px 4px;
+  border-bottom: 1px dotted var(--border);
+  margin-bottom: 2px;
+}
+.stock-group-count {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
