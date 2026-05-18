@@ -5,10 +5,10 @@ import { useSelectionSet, type SelectionItem } from "../lib/selection-set.js";
 import { usePov } from "../lib/pov.js";
 import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
 import { useActorPositionsAt } from "../lib/positions.js";
-import { chipName } from "../lib/actor-names.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { BeliefChip } from "./BeliefChip.js";
+import { ActorChip } from "./ActorChip.js";
 import { SubChecks, type SubCheck } from "./SubChecks.js";
 
 const ACTOR_ROLE_FILTER_KEY = "trader-sidebar-role-filter";
@@ -178,9 +178,14 @@ export function Sidebar(props: Props) {
             </button>
           </nav>
           <div className="side-list">
-            {known !== null ? (
+            {known !== null && pov.kind === "actor" ? (
               <div className="pov-knowledge-note" title="Filtered to entities this actor has met, traded with, or heard about in gossip.">
-                Filtered to {known.actors.size} known actor{known.actors.size === 1 ? "" : "s"} · {known.itemKinds.size} item-kind{known.itemKinds.size === 1 ? "" : "s"} (POV: {pov.kind === "actor" ? dump.actors.find((a) => a.id === pov.actorId)?.displayName ?? "actor" : ""})
+                Filtered to {known.actors.size} known actor{known.actors.size === 1 ? "" : "s"} · {known.itemKinds.size} item-kind{known.itemKinds.size === 1 ? "" : "s"} (POV:{" "}
+                {(() => {
+                  const a = dump.actors.find((x) => x.id === pov.actorId);
+                  return a !== undefined ? <ActorChip actor={a} dump={dump} size={14} /> : null;
+                })()}
+                )
               </div>
             ) : null}
             {topTab === "actors" && (
@@ -631,26 +636,20 @@ function BulkSection({
   );
 }
 
-/** Actor sub-row inside a location block — small avatar + name + toggle. */
+/** Actor reference inside a location block. Wraps the canonical
+ *  ActorChip so any actor reference in the LHS looks the same. */
 function MiniActorRow({ actor, dump }: { actor: RunActor; dump: RunDump }) {
   const set = useSelectionSet();
   const item: SelectionItem = { kind: "actor", id: actor.id };
   const inSet = set.has(item);
   return (
-    <button
-      type="button"
-      className={`mini-actor-row ${inSet ? "mini-actor-row-on" : ""}`}
+    <ActorChip
+      actor={actor}
+      dump={dump}
       onClick={() => set.toggle(item)}
+      state={inSet ? "on" : "off"}
       title={inSet ? "Click to remove from selection" : "Click to add to selection"}
-    >
-      <Avatar
-        name={actor.displayName}
-        code={actor.code}
-        isPlayer={actor.id === dump.playerActorId}
-        size={16}
-      />
-      <span className="mini-actor-name">{chipName(actor)}</span>
-    </button>
+    />
   );
 }
 
@@ -792,7 +791,7 @@ function OwnerBulkChip({
   const presence = items.map((i) => set.has(i));
   const all = presence.length > 0 && presence.every((p) => p);
   const some = !all && presence.some((p) => p);
-  const klass = all ? "owner-bulk-on" : some ? "owner-bulk-some" : "";
+  const state: "on" | "some" | "off" = all ? "on" : some ? "some" : "off";
   const toggle = () => {
     if (all) {
       for (const i of items) set.remove(i);
@@ -801,20 +800,15 @@ function OwnerBulkChip({
     }
   };
   return (
-    <button
-      type="button"
-      className={`owner-bulk-chip ${klass}`}
+    <ActorChip
+      actor={owner}
+      dump={dump}
+      size={14}
       onClick={toggle}
+      state={state}
       title={`Bulk-select all ${items.length} of ${owner.displayName}'s item-kinds at ${loc.displayName}`}
-    >
-      <Avatar
-        name={owner.displayName}
-        code={owner.code}
-        isPlayer={owner.id === dump.playerActorId}
-        size={14}
-      />
-      <span className="owner-bulk-name">{chipName(owner)}</span>
-    </button>
+      className="actor-chip-owner-bulk"
+    />
   );
 }
 
@@ -899,16 +893,21 @@ function StockList({
       </div>
       {sortedKeys.map((key) => {
         const arr = grouped.get(key) ?? [];
-        const headerLabel =
-          grouping === "owner"
-            ? dump.actors.find((a) => a.id === key)?.displayName ?? `actor ${key}`
-            : key === -1
-            ? "(no location)"
-            : dump.locations.find((l) => l.id === key)?.displayName ?? `loc ${key}`;
+        const ownerActor = grouping === "owner" ? dump.actors.find((a) => a.id === key) : undefined;
+        const headerNode =
+          grouping === "owner" && ownerActor !== undefined ? (
+            <ActorChip actor={ownerActor} dump={dump} size={14} />
+          ) : (
+            <span className="stock-group-title">
+              {key === -1
+                ? "(no location)"
+                : dump.locations.find((l) => l.id === key)?.displayName ?? `loc ${key}`}
+            </span>
+          );
         return (
           <div key={key} className="stock-group">
             <div className="stock-group-header">
-              <span className="stock-group-title">{headerLabel}</span>
+              {headerNode}
               <span className="stock-group-count">{arr.length} lot{arr.length === 1 ? "" : "s"}</span>
             </div>
             {arr.map((lot) => (
@@ -949,15 +948,10 @@ function StockRow({
   // components) is where redaction lands.
   const observerActorId = pov.kind === "actor" ? pov.actorId : null;
 
+  // Location sub-check stays in SubChecks (no canonical location chip
+  // yet). The owner reference is an ActorChip — same rendering as
+  // every other actor reference in the app.
   const checks: SubCheck[] = [];
-  if (owner !== undefined) {
-    checks.push({
-      kind: "single",
-      label: chipName(owner),
-      item: { kind: "actor", id: owner.id },
-      title: `Add ${owner.displayName} (owner) to selection`,
-    });
-  }
   if (loc !== undefined && contextLocation === undefined) {
     checks.push({
       kind: "single",
@@ -977,6 +971,18 @@ function StockRow({
         observerActorId={observerActorId}
         onSelect={() => set.toggle(itemKind)}
       />
+      {owner !== undefined ? (
+        <span className="owned-by">
+          <span className="owned-by-label">owned by</span>
+          <ActorChip
+            actor={owner}
+            dump={dump}
+            size={14}
+            onClick={() => set.toggle({ kind: "actor", id: owner.id })}
+            state={set.has({ kind: "actor", id: owner.id }) ? "on" : "off"}
+          />
+        </span>
+      ) : null}
       <SubChecks checks={checks} />
     </div>
   );

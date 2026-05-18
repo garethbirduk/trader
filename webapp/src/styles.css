@@ -2697,40 +2697,68 @@ svg.graph-map:active { cursor: grabbing; }
   margin-top: 1px;
 }
 
-/* Mini-actor row inside a location block. */
-.mini-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin: 1px 0;
-}
-.mini-actor-row {
+/* Canonical actor chip — used wherever an actor needs to be
+   referenced (selection chips, mini-rows under locations, owner
+   pills, stock-tab group headers, knowledge banner POV). The LHS
+   Actors list and the POV dropdown are the only "full name" surfaces;
+   everything else routes through this. */
+.actor-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 11px;
+  padding: 2px 7px 2px 3px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
   color: var(--text);
+  font-size: 11px;
+  font-family: inherit;
+  line-height: 1.3;
+  white-space: nowrap;
+  max-width: 100%;
   text-align: left;
 }
-.mini-actor-row:hover {
-  background: var(--panel-2);
-  border-color: var(--border);
+.actor-chip-interactive {
+  cursor: pointer;
 }
-.mini-actor-row.mini-actor-row-on {
-  background: rgba(255, 184, 77, 0.10);
+.actor-chip-interactive:hover {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.actor-chip-on {
+  background: rgba(255, 184, 77, 0.18);
   border-color: var(--accent);
 }
-.mini-actor-name {
+.actor-chip-some {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+.actor-chip-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 180px;
+  min-width: 0;
+}
+
+/* Context-specific tweaks — keep the chip identical except for
+   subtle layout adjustments where the surrounding container needs it. */
+.actor-chip-selection {
+  /* Selection chips at the top of the RHS pack more tightly with the
+     × remove button as a suffix. */
+  padding-right: 2px;
+}
+.actor-chip-owner-bulk {
+  /* Owner-bulk pills sit beside a BeliefChip — slightly tighter. */
+  padding: 1px 6px 1px 3px;
+  font-size: 10px;
+}
+
+.mini-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 1px 0;
+  align-items: flex-start;
 }
 
 /* Stock row with owner — BeliefChip + "owned by [Owner bulk]". */
@@ -2773,37 +2801,9 @@ svg.graph-map:active { cursor: grabbing; }
   color: var(--muted);
 }
 .owned-by-label { font-style: italic; }
-.owner-bulk-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 5px 1px 3px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 10px;
-  cursor: pointer;
-  font-family: inherit;
-}
-.owner-bulk-chip:hover {
-  border-color: var(--accent);
-  background: var(--panel-2);
-}
-.owner-bulk-chip.owner-bulk-on {
-  border-color: var(--accent);
-  background: rgba(255, 184, 77, 0.18);
-}
-.owner-bulk-chip.owner-bulk-some {
-  border-color: var(--accent);
-  border-style: dashed;
-}
-.owner-bulk-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 120px;
-}
+/* Owner-bulk now uses ActorChip with .actor-chip-owner-bulk. The
+   prior .owner-bulk-chip styles are gone — kept only the .owned-by
+   wrapper styles above for the label and layout context. */
 .stock-row-wrap {
   margin-bottom: 2px;
   padding: 2px 4px;
