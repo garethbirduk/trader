@@ -5,7 +5,6 @@ import { useSelectionSet, type SelectionItem } from "../lib/selection-set.js";
 import { usePov } from "../lib/pov.js";
 import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
 import { useActorPositionsAt } from "../lib/positions.js";
-import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { ActorChip } from "./ActorChip.js";
@@ -56,16 +55,16 @@ function writeFilterSet(key: string, set: ReadonlySet<string>): void {
   }
 }
 
-type StockGrouping = "owner" | "location";
+type StockGrouping = "item" | "owner" | "location";
 
 function readStockGrouping(): StockGrouping {
   try {
     const raw = localStorage.getItem(STOCK_GROUPING_KEY);
-    if (raw === "owner" || raw === "location") return raw;
+    if (raw === "item" || raw === "owner" || raw === "location") return raw;
   } catch {
     /* ignore */
   }
-  return "owner";
+  return "item";
 }
 
 interface Props {
@@ -272,7 +271,6 @@ function ActorList({
         const cash = cashByActor.get(a.id) ?? a.cash;
         const heat = heatByActor.get(a.id) ?? 0;
         const loc = locByActor.has(a.id) ? locByActor.get(a.id) ?? null : a.currentLocationId;
-        const isPlayer = a.id === dump.playerActorId;
         const item: SelectionItem = { kind: "actor", id: a.id };
         const inSet = set.has(item);
 
@@ -304,33 +302,30 @@ function ActorList({
         }
 
         return (
-          <div key={a.id} className={`row-and-checks ${inSet ? "row-in-set" : ""}`}>
-            <button
-              type="button"
-              className={`actor-row ${inSet ? "actor-row-selected" : ""}`}
+          <div key={a.id} className={`row-and-checks lhs-actor-row ${inSet ? "row-in-set" : ""}`}>
+            <ActorChip
+              actor={a}
+              dump={dump}
+              detail="full"
+              size={24}
               onClick={() => set.toggle(item)}
+              state={inSet ? "on" : "off"}
+              className="lhs-actor-chip"
               title={inSet ? "Click to remove from selection" : "Click to add to selection"}
-            >
-              <Avatar name={a.displayName} code={a.code} isPlayer={isPlayer} size={28} />
-              <div className="actor-name">
-                <span>
-                  {a.displayName}
+            />
+            <div className="lhs-actor-meta">
+              {a.isVirtual === true ? (
+                <span className="muted">virtual producer</span>
+              ) : (
+                <>
+                  <span className="lhs-actor-loc">{locName(dump, loc)} · {a.transportCapacity}</span>
                   {heat > 0 ? (
-                    <span className="actor-heat" title={`heat ${heat}`}>
-                      {" "}· 🔥{heat}
-                    </span>
+                    <span className="actor-heat" title={`heat ${heat}`}>🔥{heat}</span>
                   ) : null}
-                </span>
-                <span className="actor-loc">
-                  {a.isVirtual === true
-                    ? <span className="muted">virtual producer</span>
-                    : <>{locName(dump, loc)} · {a.transportCapacity}</>}
-                </span>
-              </div>
-              <span className={`actor-cash ${cash === 0 ? "zero" : ""}`}>
-                {a.isVirtual === true ? "—" : `£${cash}`}
-              </span>
-            </button>
+                  <span className={`actor-cash ${cash === 0 ? "zero" : ""}`}>£{cash}</span>
+                </>
+              )}
+            </div>
             <SubChecks checks={checks} />
           </div>
         );
@@ -833,21 +828,38 @@ function StockList({
   const grouped = useMemo(() => {
     const m = new Map<number, SnapshotStockLot[]>();
     for (const lot of lots) {
-      const key = grouping === "owner" ? lot.ownerActorId : (lot.locationId ?? -1);
+      const key =
+        grouping === "item"
+          ? lot.itemKindId
+          : grouping === "owner"
+          ? lot.ownerActorId
+          : lot.locationId ?? -1;
       const list = m.get(key) ?? [];
       list.push(lot);
       m.set(key, list);
     }
+    const ownerName = (id: number) => dump.actors.find((a) => a.id === id)?.shortName ?? `actor ${id}`;
     const itemName = (id: number) => dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
     for (const arr of m.values()) {
-      arr.sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)));
+      // When grouped by item the item is already the header; sort each
+      // group by owner so lots from the same trader cluster together.
+      // For owner / location grouping, sort by item name (existing).
+      if (grouping === "item") {
+        arr.sort((a, b) => ownerName(a.ownerActorId).localeCompare(ownerName(b.ownerActorId)));
+      } else {
+        arr.sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)));
+      }
     }
     return m;
-  }, [lots, grouping, dump.items]);
+  }, [lots, grouping, dump.items, dump.actors]);
 
   const sortedKeys = useMemo(() => {
     const keys = [...grouped.keys()];
     const labelFor = (k: number): string => {
+      if (grouping === "item") {
+        const it = dump.items.find((x) => x.id === k);
+        return it?.displayName ?? `item ${k}`;
+      }
       if (grouping === "owner") {
         const a = dump.actors.find((x) => x.id === k);
         return a?.displayName ?? `actor ${k}`;
@@ -868,6 +880,13 @@ function StockList({
       <div className="stock-grouping" role="tablist" aria-label="Stock grouping">
         <button
           type="button"
+          className={`stock-grouping-btn ${grouping === "item" ? "active" : ""}`}
+          onClick={() => onChangeGrouping("item")}
+        >
+          by item
+        </button>
+        <button
+          type="button"
           className={`stock-grouping-btn ${grouping === "owner" ? "active" : ""}`}
           onClick={() => onChangeGrouping("owner")}
         >
@@ -884,9 +903,17 @@ function StockList({
       {sortedKeys.map((key) => {
         const arr = grouped.get(key) ?? [];
         const ownerActor = grouping === "owner" ? dump.actors.find((a) => a.id === key) : undefined;
+        const itemKind = grouping === "item" ? dump.items.find((i) => i.id === key) : undefined;
         const headerNode =
           grouping === "owner" && ownerActor !== undefined ? (
             <ActorChip actor={ownerActor} dump={dump} size={14} />
+          ) : grouping === "item" && itemKind !== undefined ? (
+            <span className="stock-group-title">
+              {itemKind.displayName}
+              <span className={`category-pill stock-chip-cat-${itemKind.category}`}>
+                {prettyCategory(itemKind.category)}
+              </span>
+            </span>
           ) : (
             <span className="stock-group-title">
               {key === -1
@@ -901,7 +928,7 @@ function StockList({
               <span className="stock-group-count">{arr.length} lot{arr.length === 1 ? "" : "s"}</span>
             </div>
             {arr.map((lot) => (
-              <StockRow key={lot.id} lot={lot} dump={dump} />
+              <StockRow key={lot.id} lot={lot} dump={dump} grouping={grouping} />
             ))}
           </div>
         );
@@ -918,10 +945,12 @@ function StockRow({
   lot,
   dump,
   contextLocation,
+  grouping,
 }: {
   lot: SnapshotStockLot;
   dump: RunDump;
   contextLocation?: RunLocation;
+  grouping?: StockGrouping;
 }) {
   const set = useSelectionSet();
   const { pov } = usePov();
@@ -938,9 +967,65 @@ function StockRow({
   // components) is where redaction lands.
   const observerActorId = pov.kind === "actor" ? pov.actorId : null;
 
-  // Location sub-check stays in SubChecks (no canonical location chip
-  // yet). The owner reference is an ActorChip — same rendering as
-  // every other actor reference in the app.
+  // By-item rows: one line per lot — stock chip, "+ owned by" subcheck,
+  // owner actor chip, "+ at" subcheck, location chip. The + buttons are
+  // the affordance for adding owner/location to the filter; the chips
+  // next to them are the identification of who/where.
+  if (grouping === "item") {
+    return (
+      <div className={`stock-row-by-item ${inSet ? "row-in-set" : ""}`}>
+        <BeliefChip
+          dump={dump}
+          itemKindId={lot.itemKindId}
+          qualityTier={lot.qualityTier}
+          quantity={lot.quantity}
+          observerActorId={observerActorId}
+          onSelect={() => set.toggle(itemKind)}
+        />
+        {owner !== undefined ? (
+          <>
+            <SubChecks
+              checks={[
+                {
+                  kind: "single",
+                  label: "owned by",
+                  item: { kind: "actor", id: owner.id },
+                  title: `Add ${owner.shortName ?? owner.firstName} to selection`,
+                },
+              ]}
+            />
+            <ActorChip actor={owner} dump={dump} size={14} />
+          </>
+        ) : null}
+        {loc !== undefined && contextLocation === undefined ? (
+          <>
+            <SubChecks
+              checks={[
+                {
+                  kind: "single",
+                  label: "at",
+                  item: { kind: "location", id: loc.id },
+                  title: `Add ${loc.displayName} to selection`,
+                },
+              ]}
+            />
+            <span className="loc-inline-chip">
+              <LocationAvatar
+                displayName={loc.displayName}
+                code={loc.code}
+                type={loc.type}
+                size={14}
+              />
+              <span className="loc-inline-name">{loc.displayName}</span>
+            </span>
+          </>
+        ) : null}
+      </div>
+    );
+  }
+
+  // Default (owner / location groupings): stacked layout — stock chip on
+  // top, sub-checks (incl. owner pill and location reference) underneath.
   const checks: SubCheck[] = [];
   if (loc !== undefined && contextLocation === undefined) {
     checks.push({

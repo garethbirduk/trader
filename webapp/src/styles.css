@@ -2804,6 +2804,43 @@ svg.graph-map:active { cursor: grabbing; }
   font-size: 10px;
 }
 
+/* LHS Actors list — the canonical chip is the row's primary toggle
+   (docs/ui-rules.md Components Rule 3). The contextual meta (location,
+   transport, heat, cash) lives in a sibling line below the chip, not
+   inside it; sub-checks stack beneath that. */
+.lhs-actor-row {
+  padding: 4px 4px 2px;
+  border-bottom: 1px dotted var(--border);
+}
+.lhs-actor-row:last-child {
+  border-bottom: none;
+}
+.lhs-actor-chip {
+  display: flex;
+  width: 100%;
+  padding: 4px 8px 4px 4px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.lhs-actor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 2px 6px 0 36px; /* indent under the avatar */
+}
+.lhs-actor-meta .lhs-actor-loc {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lhs-actor-meta .actor-cash { color: var(--accent); }
+.lhs-actor-meta .actor-cash.zero { color: var(--muted); }
+
 .mini-rows {
   display: flex;
   flex-direction: column;
@@ -2908,5 +2945,59 @@ svg.graph-map:active { cursor: grabbing; }
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.stock-group-title {
+  font-weight: 600;
+}
+.stock-group-subtitle {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+/* Category pill — reuses the same `--chip-cat` palette as BeliefChip
+   so the header pill and each lot's chip border share a hue. */
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 6px;
+  height: 14px;
+  border: 1px solid var(--chip-cat);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--chip-cat);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+/* By-item row: a single horizontal strip per lot. Stock chip, then
+   "+ owned by" subcheck → owner actor chip, then "+ at" subcheck →
+   location chip. Wraps gracefully on narrow sidebars. */
+.stock-row-by-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+}
+.stock-row-by-item.row-in-set {
+  background: rgba(255, 184, 77, 0.06);
+}
+/* Inside this row, sub-checks should sit inline next to the chip they
+   label — not on a separate indented strip like the default. */
+.stock-row-by-item .sub-checks {
+  padding: 0;
+  flex-wrap: nowrap;
+}
+.loc-inline-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.loc-inline-name {
+  color: var(--text);
 }
 
