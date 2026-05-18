@@ -1,23 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump } from "./types.js";
 import { TimeStepper } from "./components/TimeStepper.js";
-import { EventList } from "./components/EventList.js";
 import { Sidebar } from "./components/Sidebar.js";
-import { Summary } from "./components/Summary.js";
-import { InventoryView } from "./components/InventoryView.js";
-import { DealBook } from "./components/DealBook.js";
-import { PoolBoard } from "./components/PoolBoard.js";
-import { MapGraph } from "./components/MapGraph.js";
-import { MapEditor } from "./components/MapEditor.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
-import { SceneDeck } from "./components/SceneDeck.js";
 import { CurrentTimeProvider } from "./lib/current-time.js";
 import { PovProvider, usePov } from "./lib/pov.js";
 import { PovSwitcher } from "./components/PovSwitcher.js";
 import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
 import { SelectionChips } from "./components/SelectionChips.js";
-
-const DEV = import.meta.env.DEV;
 
 interface LoadState {
   readonly status: "loading" | "loaded" | "error";
@@ -26,27 +16,7 @@ interface LoadState {
   readonly progress?: string;
 }
 
-type TabId =
-  | "events"
-  | "inventory"
-  | "deals"
-  | "pools"
-  | "map"
-  | "editor";
-
-const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
-  { id: "events", label: "Events" },
-  { id: "inventory", label: "Inventory" },
-  { id: "deals", label: "Deals" },
-  { id: "pools", label: "Pools" },
-  { id: "map", label: "Map" },
-  ...(DEV
-    ? ([{ id: "editor" as const, label: "Editor" }] as const)
-    : []),
-];
-
 export type SidebarTopTab = "actors" | "locations" | "stock";
-export type SidebarLowerTab = "profile" | "diary" | "knows" | "notebook" | "inventory" | "relations";
 
 export type SelectionKind =
   | "actor"
@@ -65,9 +35,7 @@ export function App() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [day, setDay] = useState(1);
   const [hour, setHour] = useState(0);
-  const [tab, setTab] = useState<TabId>("events");
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
-  const [lowerTab, setLowerTab] = useState<SidebarLowerTab>("profile");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -126,12 +94,8 @@ export function App() {
           hour={hour}
           setDay={setDay}
           setHour={setHour}
-          tab={tab}
-          setTab={setTab}
           topTab={topTab}
           setTopTab={setTopTab}
-          lowerTab={lowerTab}
-          setLowerTab={setLowerTab}
         />
       </SelectionSetProvider>
     </PovProvider>
@@ -144,27 +108,14 @@ interface LoadedProps {
   readonly hour: number;
   readonly setDay: (d: number) => void;
   readonly setHour: (h: number) => void;
-  readonly tab: TabId;
-  readonly setTab: (t: TabId) => void;
   readonly topTab: SidebarTopTab;
   readonly setTopTab: (t: SidebarTopTab) => void;
-  readonly lowerTab: SidebarLowerTab;
-  readonly setLowerTab: (t: SidebarLowerTab) => void;
 }
 
-const RIGHT_PANEL_KEY = "trader-right-panel-px";
-const DEFAULT_RIGHT_PX = 320;
-const MIN_RIGHT_PX = 200;
-const MIN_MAIN_PX = 360;
-
 const LEFT_PANEL_KEY = "trader-left-panel-px";
-const DEFAULT_LEFT_PX = 280;
+const DEFAULT_LEFT_PX = 320;
 const MIN_LEFT_PX = 220;
-
-const MAIN_LOWER_KEY = "trader-main-lower-px";
-const DEFAULT_MAIN_LOWER_PX = 240;
-const MIN_MAIN_LOWER_PX = 80;
-const MIN_MAIN_UPPER_PX = 200;
+const MIN_RIGHT_PX = 200;
 
 function readPersistedPx(key: string, min: number, fallback: number): number {
   try {
@@ -183,26 +134,10 @@ function Loaded(props: LoadedProps) {
   const { dump, day, hour, setDay, setHour } = props;
   const { pov } = usePov();
   const set = useSelectionSet();
-  const selection = set.primary;
-  const setSelection = set.setSelection;
   const appRef = useRef<HTMLDivElement>(null);
-  const mainRef = useRef<HTMLElement>(null);
-  const [rightPx, setRightPx] = useState<number>(() =>
-    readPersistedPx(RIGHT_PANEL_KEY, MIN_RIGHT_PX, DEFAULT_RIGHT_PX),
-  );
   const [leftPx, setLeftPx] = useState<number>(() =>
     readPersistedPx(LEFT_PANEL_KEY, MIN_LEFT_PX, DEFAULT_LEFT_PX),
   );
-  const [mainLowerPx, setMainLowerPx] = useState<number>(() =>
-    readPersistedPx(MAIN_LOWER_KEY, MIN_MAIN_LOWER_PX, DEFAULT_MAIN_LOWER_PX),
-  );
-  useEffect(() => {
-    try {
-      localStorage.setItem(RIGHT_PANEL_KEY, String(Math.round(rightPx)));
-    } catch {
-      /* quota / disabled */
-    }
-  }, [rightPx]);
   useEffect(() => {
     try {
       localStorage.setItem(LEFT_PANEL_KEY, String(Math.round(leftPx)));
@@ -210,64 +145,6 @@ function Loaded(props: LoadedProps) {
       /* quota / disabled */
     }
   }, [leftPx]);
-  useEffect(() => {
-    try {
-      localStorage.setItem(MAIN_LOWER_KEY, String(Math.round(mainLowerPx)));
-    } catch {
-      /* quota / disabled */
-    }
-  }, [mainLowerPx]);
-
-  const onMainResizeDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const main = mainRef.current;
-    if (main === null) return;
-    const startY = e.clientY;
-    const startLower = mainLowerPx;
-    const totalH = main.getBoundingClientRect().height;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    const onMove = (ev: PointerEvent) => {
-      const delta = startY - ev.clientY;
-      const next = startLower + delta;
-      const maxLower = Math.max(MIN_MAIN_LOWER_PX, totalH - MIN_MAIN_UPPER_PX);
-      setMainLowerPx(Math.min(maxLower, Math.max(MIN_MAIN_LOWER_PX, next)));
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-  };
-
-  const onRightResizeDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const app = appRef.current;
-    if (app === null) return;
-    const startX = e.clientX;
-    const startRight = rightPx;
-    const totalW = app.getBoundingClientRect().width;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-
-    const onMove = (ev: PointerEvent) => {
-      // Drag left → right panel grows, main shrinks.
-      const delta = startX - ev.clientX;
-      const next = startRight + delta;
-      // Reserve left + main min + two 6px dividers; the rest is free.
-      const maxRight = Math.max(MIN_RIGHT_PX, totalW - leftPx - MIN_MAIN_PX - 12);
-      setRightPx(Math.min(maxRight, Math.max(MIN_RIGHT_PX, next)));
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-  };
 
   const onLeftResizeDown = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -277,12 +154,10 @@ function Loaded(props: LoadedProps) {
     const startLeft = leftPx;
     const totalW = app.getBoundingClientRect().width;
     (e.target as Element).setPointerCapture?.(e.pointerId);
-
     const onMove = (ev: PointerEvent) => {
-      // Drag right → left panel grows, main shrinks.
       const delta = ev.clientX - startX;
       const next = startLeft + delta;
-      const maxLeft = Math.max(MIN_LEFT_PX, totalW - rightPx - MIN_MAIN_PX - 12);
+      const maxLeft = Math.max(MIN_LEFT_PX, totalW - MIN_RIGHT_PX - 6);
       setLeftPx(Math.min(maxLeft, Math.max(MIN_LEFT_PX, next)));
     };
     const onUp = () => {
@@ -300,212 +175,100 @@ function Loaded(props: LoadedProps) {
     if (day < 1) setDay(1);
   }, [day, dump.runLengthDays, setDay]);
 
-  const eventsByDay = useMemo(() => groupEventsByDay(dump), [dump]);
-  const todaysEvents = eventsByDay.get(day) ?? [];
-
-  // Events visible "as of" current {day, hour} — same day events filtered
-  // by hour. Earlier days included in full.
-  const eventsAsOf = useMemo(() => {
-    return todaysEvents.filter((e) => e.at.hour <= hour);
-  }, [todaysEvents, hour]);
-
-  // Snapshot is end-of-day state. We pass the previous day's snapshot
-  // when mid-day so that "current" state can be reconstructed from
-  // events; pass current day's snapshot only at end-of-day. For
-  // simplicity we always pass the current day's snapshot — most views
-  // (Inventory, Deals, Pools) show end-of-day for that day.
-  const snapshot: DaySnapshot | null = useMemo(() => {
-    return dump.snapshots?.find((s) => s.day === day) ?? null;
-  }, [dump, day]);
+  // Sidebar still wants the day's snapshot (lots-by-owner, etc.).
+  const snapshot: DaySnapshot | null = useMemo(
+    () => dump.snapshots?.find((s) => s.day === day) ?? null,
+    [dump, day],
+  );
 
   return (
     <CurrentTimeProvider value={{ day, hour }}>
-    <div
-      className="app"
-      ref={appRef}
-      data-pov={pov.kind}
-      style={{
-        ["--left-panel-w" as string]: `${leftPx}px`,
-        ["--right-panel-w" as string]: `${rightPx}px`,
-      }}
-    >
-      <header className="header">
-        <h1>TRADER · sim viewer</h1>
-        <div className="header-controls">
-          <PovSwitcher dump={dump} />
-          <div className="history-nav" role="toolbar" aria-label="Selection history">
-            <button
-              type="button"
-              className="history-nav-btn"
-              onClick={set.goBack}
-              disabled={!set.canGoBack}
-              title="Back (previous selection)"
-              aria-label="Back"
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              className="history-nav-btn"
-              onClick={set.goForward}
-              disabled={!set.canGoForward}
-              title="Forward (next selection)"
-              aria-label="Forward"
-            >
-              →
-            </button>
-          </div>
-          <TimeStepper
-            day={day}
-            hour={hour}
-            maxDay={dump.runLengthDays}
-            onChange={(d, h) => {
-              setDay(d);
-              setHour(h);
-            }}
-          />
-          <PlaybackControls
-            day={day}
-            hour={hour}
-            maxDay={dump.runLengthDays}
-            dump={dump}
-            onChange={(d, h) => {
-              setDay(d);
-              setHour(h);
-            }}
-          />
-        </div>
-        <div className="meta">
-          seed=<strong>{dump.seed}</strong> · {dump.events.length} events
-        </div>
-      </header>
-      <Sidebar
-        dump={dump}
-        day={day}
-        hour={hour}
-        snapshot={snapshot}
-        topTab={props.topTab}
-        setTopTab={props.setTopTab}
-        lowerTab={props.lowerTab}
-        setLowerTab={props.setLowerTab}
-        onChangeDay={setDay}
-      />
       <div
-        className="left-resizer"
-        role="separator"
-        aria-orientation="vertical"
-        title="Drag to resize"
-        onPointerDown={onLeftResizeDown}
+        className="app"
+        ref={appRef}
+        data-pov={pov.kind}
+        style={{
+          ["--left-panel-w" as string]: `${leftPx}px`,
+        }}
       >
-        <span className="left-resizer-grip" />
-      </div>
-      <main className="main-panel" ref={mainRef}>
-        <div className="main-upper panel">
-          <SelectionChips dump={dump} />
-          <nav className="tabs">
-            {TABS.map((t) => (
+        <header className="header">
+          <h1>TRADER · sim viewer</h1>
+          <div className="header-controls">
+            <PovSwitcher dump={dump} />
+            <div className="history-nav" role="toolbar" aria-label="Selection history">
               <button
-                key={t.id}
-                className={`tab ${props.tab === t.id ? "tab-active" : ""}`}
-                onClick={() => props.setTab(t.id)}
+                type="button"
+                className="history-nav-btn"
+                onClick={set.goBack}
+                disabled={!set.canGoBack}
+                title="Back (previous selection set)"
+                aria-label="Back"
               >
-                {t.label}
+                ←
               </button>
-            ))}
-          </nav>
-          <div className="tab-body">
-            {props.tab === "events" && (
-              <EventList
-                events={eventsAsOf}
-                dump={dump}
-                onSelect={setSelection}
-              />
-            )}
-            {props.tab === "inventory" && (
-              <InventoryView
-                dump={dump}
-                day={day}
-                snapshot={snapshot}
-                onSelect={setSelection}
-              />
-            )}
-            {props.tab === "deals" && (
-              <DealBook
-                dump={dump}
-                day={day}
-                snapshot={snapshot}
-                onSelect={setSelection}
-              />
-            )}
-            {props.tab === "pools" && (
-              <PoolBoard
-                dump={dump}
-                day={day}
-                snapshot={snapshot}
-                onSelect={setSelection}
-              />
-            )}
-            {props.tab === "map" && (
-              <MapGraph
-                dump={dump}
-                day={day}
-                hour={hour}
-                snapshot={snapshot}
-                selection={selection}
-                onSelect={setSelection}
-              />
-            )}
-            {DEV && props.tab === "editor" && <MapEditor dump={dump} />}
+              <button
+                type="button"
+                className="history-nav-btn"
+                onClick={set.goForward}
+                disabled={!set.canGoForward}
+                title="Forward (next selection set)"
+                aria-label="Forward"
+              >
+                →
+              </button>
+            </div>
+            <TimeStepper
+              day={day}
+              hour={hour}
+              maxDay={dump.runLengthDays}
+              onChange={(d, h) => {
+                setDay(d);
+                setHour(h);
+              }}
+            />
+            <PlaybackControls
+              day={day}
+              hour={hour}
+              maxDay={dump.runLengthDays}
+              dump={dump}
+              onChange={(d, h) => {
+                setDay(d);
+                setHour(h);
+              }}
+            />
           </div>
-        </div>
+          <div className="meta">
+            seed=<strong>{dump.seed}</strong> · {dump.events.length} events
+          </div>
+        </header>
+        <Sidebar
+          dump={dump}
+          day={day}
+          snapshot={snapshot}
+          topTab={props.topTab}
+          setTopTab={props.setTopTab}
+        />
         <div
-          className="side-divider"
+          className="left-resizer"
           role="separator"
-          aria-orientation="horizontal"
+          aria-orientation="vertical"
           title="Drag to resize"
-          onPointerDown={onMainResizeDown}
+          onPointerDown={onLeftResizeDown}
         >
-          <span className="side-divider-grip" />
+          <span className="left-resizer-grip" />
         </div>
-        <div
-          className="main-lower"
-          style={{ height: `${mainLowerPx}px` }}
-        >
-          <SceneDeck
-            dump={dump}
-            day={day}
-            hour={hour}
-            snapshot={snapshot}
-            onSelect={setSelection}
-          />
-        </div>
-      </main>
-      <div
-        className="right-resizer"
-        role="separator"
-        aria-orientation="vertical"
-        title="Drag to resize"
-        onPointerDown={onRightResizeDown}
-      >
-        <span className="right-resizer-grip" />
+        <main className="rhs-placeholder">
+          <SelectionChips dump={dump} />
+          <div className="rhs-stub">
+            <p>RHS not built yet.</p>
+            <p className="muted">
+              Tabs (Map · Inventory · Gossip · Deals · Diary · …) and the
+              upper/lower scene split land in Phase 4. Until then the
+              selection chips above are the only RHS content.
+            </p>
+          </div>
+        </main>
       </div>
-      <Summary
-        dump={dump}
-        day={day}
-        snapshot={snapshot}
-        onSelect={setSelection}
-      />
-    </div>
     </CurrentTimeProvider>
   );
-}
-
-function groupEventsByDay(dump: RunDump): Map<number, typeof dump.events> {
-  const m = new Map<number, typeof dump.events[number][]>();
-  for (const e of dump.events) {
-    const list = m.get(e.at.day) ?? [];
-    list.push(e);
-    m.set(e.at.day, list);
-  }
-  return m as Map<number, typeof dump.events>;
 }

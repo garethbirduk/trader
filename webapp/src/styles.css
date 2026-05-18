@@ -42,12 +42,42 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .app {
   display: grid;
-  grid-template-columns:
-    var(--left-panel-w, 280px) 6px 1fr 6px var(--right-panel-w, 320px);
+  grid-template-columns: var(--left-panel-w, 320px) 6px 1fr;
   grid-template-rows: auto 1fr;
   height: 100vh;
   gap: 1px;
   background: var(--border);
+}
+
+/* RHS placeholder — empty area to the right of the LHS while we build
+   the rest of the UI in later phases. Currently holds only the
+   selection chips strip plus a stub message. */
+.rhs-placeholder {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  min-width: 0;
+}
+.rhs-stub {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.rhs-stub p { margin: 0; }
+.rhs-stub p.muted {
+  font-size: 11px;
+  opacity: 0.7;
+  line-height: 1.5;
 }
 .left-resizer,
 .right-resizer {
@@ -2498,10 +2528,14 @@ svg.graph-map:active { cursor: grabbing; }
   background: rgba(255, 184, 77, 0.04);
 }
 .row-and-checks.row-in-set > button.actor-row,
-.row-and-checks.row-in-set > button.loc-row,
-.row-and-checks.row-in-set > button.stock-row-sidebar {
+.row-and-checks.row-in-set > button.loc-row {
   border-left: 3px solid var(--accent);
   padding-left: 5px;
+}
+.row-and-checks.row-in-set > button.stock-chip {
+  /* Stock chip rows use the chip's own border; in-set state is
+     signalled by a slightly heavier accent ring. */
+  box-shadow: 0 0 0 2px var(--accent) inset;
 }
 
 .sub-checks {
@@ -2566,53 +2600,14 @@ svg.graph-map:active { cursor: grabbing; }
   border-left: 1px dotted var(--border);
 }
 .stock-row-wrap {
-  margin-bottom: 0;
+  margin-bottom: 2px;
+  padding: 2px 4px;
 }
-.stock-row-sidebar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.stock-row-wrap .stock-chip {
+  /* Make the chip behave like a full-width row in the sidebar — it's
+     still the canonical chip, just stretched to fill its container. */
   width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  padding: 3px 6px;
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--text);
-  font-size: 11px;
-}
-.stock-row-sidebar:hover {
-  background: var(--panel-2);
-  border-color: var(--border);
-}
-.stock-row-cat {
-  flex: 0 0 6px;
-  width: 6px;
-  height: 12px;
-  border-radius: 1px;
-  background: var(--muted);
-}
-.stock-row-cat-electrical { background: #6db3d3; }
-.stock-row-cat-vehicles   { background: #5a8fd6; }
-.stock-row-cat-furniture  { background: #b89668; }
-.stock-row-cat-clothing   { background: #d36db3; }
-.stock-row-cat-jewellery  { background: #d3c46d; }
-.stock-row-cat-books      { background: #9aa6e8; }
-.stock-row-cat-tools      { background: #88aaaa; }
-.stock-row-cat-toys       { background: #d39a6d; }
-.stock-row-cat-luggage    { background: #8aa57e; }
-.stock-row-name {
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.stock-row-meta {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 10px;
+  justify-content: flex-start;
 }
 
 .stock-grouping {

@@ -1,27 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DaySnapshot, RunActor, RunDump, RunItem, RunLocation, SnapshotStockLot } from "../types.js";
-import type { SidebarLowerTab, SidebarTopTab } from "../App.js";
+import type { DaySnapshot, RunActor, RunDump, RunLocation, SnapshotStockLot } from "../types.js";
+import type { SidebarTopTab } from "../App.js";
 import { useSelectionSet, type SelectionItem } from "../lib/selection-set.js";
+import { usePov } from "../lib/pov.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
+import { BeliefChip } from "./BeliefChip.js";
 import { SubChecks, type SubCheck } from "./SubChecks.js";
-import { ActorProfile } from "./ActorProfile.js";
-import { ActorDiary } from "./ActorDiary.js";
-import { ActorKnows } from "./ActorKnows.js";
-import { ActorNotebook } from "./ActorNotebook.js";
-import { ActorInventory } from "./ActorInventory.js";
-import { ActorRelations } from "./ActorRelations.js";
-import { LocationProfile } from "./LocationProfile.js";
-import { LocationDiary } from "./LocationDiary.js";
-import { ItemProfile } from "./ItemProfile.js";
-import { DealProfile } from "./DealProfile.js";
-import { LotProfile } from "./LotProfile.js";
-import { PoolProfile } from "./PoolProfile.js";
-
-const LOWER_HEIGHT_KEY = "trader-sidebar-lower-px";
-const DEFAULT_LOWER_PX = 320;
-const MIN_LOWER_PX = 120;
-const MIN_UPPER_PX = 140;
 
 const ACTOR_ROLE_FILTER_KEY = "trader-sidebar-role-filter";
 const LOC_TYPE_FILTER_KEY = "trader-sidebar-loctype-filter";
@@ -83,22 +68,13 @@ function readStockGrouping(): StockGrouping {
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
-  readonly hour: number;
   readonly snapshot: DaySnapshot | null;
   readonly topTab: SidebarTopTab;
   readonly setTopTab: (t: SidebarTopTab) => void;
-  readonly lowerTab: SidebarLowerTab;
-  readonly setLowerTab: (t: SidebarLowerTab) => void;
-  readonly onChangeDay: (d: number) => void;
 }
 
 export function Sidebar(props: Props) {
-  const { dump, day, hour, snapshot, topTab, setTopTab, lowerTab, setLowerTab, onChangeDay } = props;
-
-  const set = useSelectionSet();
-  const selection = set.primary;
-  const setSelection = set.setSelection;
-
+  const { dump, day, snapshot, topTab, setTopTab } = props;
   const asideRef = useRef<HTMLElement>(null);
 
   const [roleFilter, setRoleFilter] = useState<ReadonlySet<string>>(() => readFilterSet(ACTOR_ROLE_FILTER_KEY));
@@ -110,23 +86,6 @@ export function Sidebar(props: Props) {
   useEffect(() => {
     try { localStorage.setItem(STOCK_GROUPING_KEY, stockGrouping); } catch { /* ignore */ }
   }, [stockGrouping]);
-
-  // Snap lower tab back to Profile if a non-applicable selection gets focused
-  // while one of the actor-only tabs is active.
-  useEffect(() => {
-    if (selection === null) return;
-    const isActor = selection.kind === "actor";
-    const isLocation = selection.kind === "location";
-    if (
-      (lowerTab === "knows" || lowerTab === "notebook" || lowerTab === "inventory" || lowerTab === "relations") &&
-      !isActor
-    ) {
-      setLowerTab("profile");
-    }
-    if (lowerTab === "diary" && !isActor && !isLocation) {
-      setLowerTab("profile");
-    }
-  }, [lowerTab, selection, setLowerTab]);
 
   const availableRoles = useMemo(() => {
     const seen = new Set<string>();
@@ -145,46 +104,6 @@ export function Sidebar(props: Props) {
     return Object.keys(LOC_TYPE_LABEL).filter((t) => seen.has(t));
   }, [dump.locations]);
 
-  const [lowerPx, setLowerPx] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem(LOWER_HEIGHT_KEY);
-      if (raw !== null) {
-        const n = Number(raw);
-        if (Number.isFinite(n) && n >= MIN_LOWER_PX) return n;
-      }
-    } catch { /* ignore */ }
-    return DEFAULT_LOWER_PX;
-  });
-  useEffect(() => {
-    try { localStorage.setItem(LOWER_HEIGHT_KEY, String(Math.round(lowerPx))); } catch { /* ignore */ }
-  }, [lowerPx]);
-
-  const onDividerPointerDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const aside = asideRef.current;
-    if (aside === null) return;
-    const startY = e.clientY;
-    const startLower = lowerPx;
-    const totalH = aside.getBoundingClientRect().height;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    const onMove = (ev: PointerEvent) => {
-      const delta = startY - ev.clientY;
-      const next = startLower + delta;
-      const maxLower = Math.max(MIN_LOWER_PX, totalH - MIN_UPPER_PX);
-      setLowerPx(Math.min(maxLower, Math.max(MIN_LOWER_PX, next)));
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-  };
-
-  // Filter rail config — actors get role tags, locations get type tags,
-  // stock has no filter rail (for v1).
   const railConfig =
     topTab === "actors"
       ? { filter: roleFilter, setFilter: setRoleFilter, options: availableRoles, labels: ROLE_LABEL }
@@ -265,137 +184,6 @@ export function Sidebar(props: Props) {
           </div>
         </div>
       </div>
-      <div
-        className="side-divider"
-        role="separator"
-        aria-orientation="horizontal"
-        title="Drag to resize"
-        onPointerDown={onDividerPointerDown}
-      >
-        <span className="side-divider-grip" />
-      </div>
-      <div className="side-lower" style={{ height: `${lowerPx}px` }}>
-        <nav className="side-tabs side-lower-tabs">
-          <button
-            className={`side-tab ${lowerTab === "profile" ? "side-tab-active" : ""}`}
-            onClick={() => setLowerTab("profile")}
-            disabled={selection === null}
-          >
-            Profile
-          </button>
-          <button
-            className={`side-tab ${lowerTab === "diary" ? "side-tab-active" : ""}`}
-            onClick={() => setLowerTab("diary")}
-            disabled={selection === null || (selection.kind !== "actor" && selection.kind !== "location")}
-            title={
-              selection !== null && selection.kind !== "actor" && selection.kind !== "location"
-                ? "Diary only applies to actors and locations"
-                : "Per-day events"
-            }
-          >
-            Diary
-          </button>
-          <button
-            className={`side-tab ${lowerTab === "knows" ? "side-tab-active" : ""}`}
-            onClick={() => setLowerTab("knows")}
-            disabled={selection === null || selection.kind !== "actor"}
-            title={
-              selection?.kind === "location"
-                ? "Locations don't know things"
-                : "Gossip & info this actor has picked up"
-            }
-          >
-            Knows
-          </button>
-          <button
-            className={`side-tab ${lowerTab === "notebook" ? "side-tab-active" : ""}`}
-            onClick={() => setLowerTab("notebook")}
-            disabled={selection === null || selection.kind !== "actor"}
-            title={
-              selection?.kind === "location"
-                ? "Locations don't have notebooks"
-                : "Actionable trade rows derived from stock + leads"
-            }
-          >
-            Notebook
-          </button>
-          <button
-            className={`side-tab ${lowerTab === "inventory" ? "side-tab-active" : ""}`}
-            onClick={() => setLowerTab("inventory")}
-            disabled={selection === null || selection.kind !== "actor"}
-            title={
-              selection?.kind === "location"
-                ? "Locations don't carry inventory"
-                : "Stock on hand and open delivery promises"
-            }
-          >
-            Inventory
-          </button>
-          <button
-            className={`side-tab ${lowerTab === "relations" ? "side-tab-active" : ""}`}
-            onClick={() => setLowerTab("relations")}
-            disabled={selection === null || selection.kind !== "actor"}
-            title={
-              selection?.kind === "location"
-                ? "Locations don't have relationships"
-                : "Per-counterparty trust scores + change history"
-            }
-          >
-            Relations
-          </button>
-          {selection !== null ? (
-            <button className="side-close" onClick={() => setSelection(null)} title="close">
-              ×
-            </button>
-          ) : null}
-        </nav>
-        <div className="side-lower-body">
-          {selection === null ? (
-            <div className="side-lower-empty muted">
-              Select an actor, location, item, deal, lot, or pool to view details.
-            </div>
-          ) : (
-            <>
-              {selection.kind === "actor" && lowerTab === "profile" && (
-                <ActorProfile dump={dump} day={day} hour={hour} snapshot={snapshot} actorId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "actor" && lowerTab === "diary" && (
-                <ActorDiary dump={dump} day={day} hour={hour} actorId={selection.id} onChangeDay={onChangeDay} onSelect={setSelection} />
-              )}
-              {selection.kind === "actor" && lowerTab === "knows" && (
-                <ActorKnows dump={dump} day={day} hour={hour} actorId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "actor" && lowerTab === "notebook" && (
-                <ActorNotebook dump={dump} day={day} hour={hour} snapshot={snapshot} actorId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "actor" && lowerTab === "inventory" && (
-                <ActorInventory dump={dump} day={day} snapshot={snapshot} actorId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "actor" && lowerTab === "relations" && (
-                <ActorRelations dump={dump} day={day} hour={hour} snapshot={snapshot} actorId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "location" && lowerTab === "profile" && (
-                <LocationProfile dump={dump} day={day} snapshot={snapshot} locationId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "location" && lowerTab === "diary" && (
-                <LocationDiary dump={dump} day={day} hour={hour} locationId={selection.id} onChangeDay={onChangeDay} onSelect={setSelection} />
-              )}
-              {selection.kind === "item" && lowerTab === "profile" && (
-                <ItemProfile dump={dump} day={day} snapshot={snapshot} itemId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "deal" && lowerTab === "profile" && (
-                <DealProfile dump={dump} day={day} snapshot={snapshot} dealId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "lot" && lowerTab === "profile" && (
-                <LotProfile dump={dump} day={day} snapshot={snapshot} lotId={selection.id} onSelect={setSelection} />
-              )}
-              {selection.kind === "pool" && lowerTab === "profile" && (
-                <PoolProfile dump={dump} day={day} snapshot={snapshot} poolId={selection.id} onSelect={setSelection} />
-              )}
-            </>
-          )}
-        </div>
-      </div>
     </aside>
   );
 }
@@ -470,7 +258,6 @@ function ActorList({
         const item: SelectionItem = { kind: "actor", id: a.id };
         const inSet = set.has(item);
 
-        // Sub-checks: include home, current location (if different), stock.
         const checks: SubCheck[] = [];
         if (a.homeLocationId !== null && a.homeLocationId !== undefined) {
           checks.push({
@@ -572,10 +359,6 @@ function LocationList({
     return m;
   }, [snapshot]);
 
-  // Find proprietor — actor whose homeLocationId or currentLocationId
-  // matches and who isn't the player / virtual. Heuristic: prefer
-  // actor whose displayName matches venue code. Fallback to any actor
-  // currently at the venue with shopkeeper/pub/dealer role.
   const proprietorByLoc = useMemo(() => {
     const m = new Map<number, RunActor>();
     for (const a of dump.actors) {
@@ -703,9 +486,6 @@ function StockList({
   onChangeGrouping: (g: StockGrouping) => void;
 }) {
   const lots = snapshot?.stockLots ?? [];
-  if (lots.length === 0) {
-    return <div className="side-lower-empty muted">No stock at the current day.</div>;
-  }
 
   const grouped = useMemo(() => {
     const m = new Map<number, SnapshotStockLot[]>();
@@ -715,7 +495,6 @@ function StockList({
       list.push(lot);
       m.set(key, list);
     }
-    // Sort each bucket by item-name for readability.
     const itemName = (id: number) => dump.items.find((i) => i.id === id)?.displayName ?? `item ${id}`;
     for (const arr of m.values()) {
       arr.sort((a, b) => itemName(a.itemKindId).localeCompare(itemName(b.itemKindId)));
@@ -736,6 +515,10 @@ function StockList({
     };
     return keys.sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
   }, [grouped, grouping, dump]);
+
+  if (lots.length === 0) {
+    return <div className="side-lower-empty muted">No stock at the current day.</div>;
+  }
 
   return (
     <>
@@ -780,8 +563,7 @@ function StockList({
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Shared stock row — used by both the Stock tab and the nested-stock
-// strip under each location in the Locations tab.
+// Shared stock row
 // ────────────────────────────────────────────────────────────────────
 
 function StockRow({
@@ -794,12 +576,19 @@ function StockRow({
   contextLocation?: RunLocation;
 }) {
   const set = useSelectionSet();
+  const { pov } = usePov();
   const itemKind: SelectionItem = { kind: "item", id: lot.itemKindId };
-  const item = dump.items.find((i) => i.id === lot.itemKindId);
   const inSet = set.has(itemKind);
   const owner = dump.actors.find((a) => a.id === lot.ownerActorId);
   const loc = lot.locationId !== null ? dump.locations.find((l) => l.id === lot.locationId) : undefined;
-  const total = lot.acquiredUnitPrice * lot.quantity;
+
+  // Per-row chip POV: actor POV → that actor's belief (single POV chip,
+  // per feedback_chip_layering_pattern). Admin POV → truth chip (no
+  // avatar, unit = tierTruth). Tier passes through: the actor's true
+  // tier knowledge isn't modelled in the snapshot today, so we render
+  // the lot's true tier in both modes — Phase 5 (POV semantics across
+  // components) is where redaction lands.
+  const observerActorId = pov.kind === "actor" ? pov.actorId : null;
 
   const checks: SubCheck[] = [];
   if (owner !== undefined) {
@@ -821,33 +610,21 @@ function StockRow({
 
   return (
     <div className={`row-and-checks stock-row-wrap ${inSet ? "row-in-set" : ""}`}>
-      <button
-        type="button"
-        className={`stock-row-sidebar ${inSet ? "actor-row-selected" : ""}`}
-        onClick={() => set.toggle(itemKind)}
-        title={inSet ? "Click to remove item-kind from selection" : "Click to add item-kind to selection"}
-      >
-        <span className={`stock-row-cat stock-row-cat-${item?.category ?? "default"}`} />
-        <span className="stock-row-name">{item?.displayName ?? `item ${lot.itemKindId}`}</span>
-        <span className="stock-row-meta">
-          {lot.quantity}× £{lot.acquiredUnitPrice} = £{total} {lot.qualityTier}
-        </span>
-      </button>
+      <BeliefChip
+        dump={dump}
+        itemKindId={lot.itemKindId}
+        qualityTier={lot.qualityTier}
+        quantity={lot.quantity}
+        observerActorId={observerActorId}
+        onSelect={() => set.toggle(itemKind)}
+      />
       <SubChecks checks={checks} />
     </div>
   );
 }
-
-// ────────────────────────────────────────────────────────────────────
-// helpers
-// ────────────────────────────────────────────────────────────────────
 
 function locName(dump: RunDump, id: number | null | undefined): string {
   return typeof id === "number"
     ? dump.locations.find((l) => l.id === id)?.displayName ?? `loc ${id}`
     : "—";
 }
-
-// Suppress "unused export" warning until SubChecks consumers in other
-// surfaces start importing the item type directly from here.
-export type { RunItem };
