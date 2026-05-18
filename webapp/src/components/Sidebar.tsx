@@ -3,6 +3,7 @@ import type { DaySnapshot, RunActor, RunDump, RunLocation, SnapshotStockLot } fr
 import type { SidebarTopTab } from "../App.js";
 import { useSelectionSet, type SelectionItem } from "../lib/selection-set.js";
 import { usePov } from "../lib/pov.js";
+import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { BeliefChip } from "./BeliefChip.js";
@@ -75,6 +76,13 @@ interface Props {
 
 export function Sidebar(props: Props) {
   const { dump, day, snapshot, topTab, setTopTab } = props;
+  const { pov } = usePov();
+  // Knowledge filter: in player POV, restrict lists to what this actor
+  // knows (gossip-mentioned, transacted, witnessed). Admin POV bypasses
+  // (we pass `-1` as the actor id and discard the result via `known`).
+  const povActorId = pov.kind === "actor" ? pov.actorId : null;
+  const knownRaw = useKnownIds(dump, povActorId ?? -1, day);
+  const known: KnownIds | null = povActorId === null ? null : knownRaw;
   const asideRef = useRef<HTMLElement>(null);
 
   const [roleFilter, setRoleFilter] = useState<ReadonlySet<string>>(() => readFilterSet(ACTOR_ROLE_FILTER_KEY));
@@ -167,11 +175,16 @@ export function Sidebar(props: Props) {
             </button>
           </nav>
           <div className="side-list">
+            {known !== null ? (
+              <div className="pov-knowledge-note" title="Filtered to entities this actor has met, traded with, or heard about in gossip.">
+                Filtered to {known.actors.size} known actor{known.actors.size === 1 ? "" : "s"} · {known.itemKinds.size} item-kind{known.itemKinds.size === 1 ? "" : "s"} (POV: {pov.kind === "actor" ? dump.actors.find((a) => a.id === pov.actorId)?.displayName ?? "actor" : ""})
+              </div>
+            ) : null}
             {topTab === "actors" && (
-              <ActorList dump={dump} snapshot={snapshot} day={day} roleFilter={roleFilter} />
+              <ActorList dump={dump} snapshot={snapshot} day={day} roleFilter={roleFilter} known={known} />
             )}
             {topTab === "locations" && (
-              <LocationList dump={dump} snapshot={snapshot} typeFilter={locTypeFilter} />
+              <LocationList dump={dump} snapshot={snapshot} typeFilter={locTypeFilter} known={known} />
             )}
             {topTab === "stock" && (
               <StockList
@@ -179,6 +192,7 @@ export function Sidebar(props: Props) {
                 snapshot={snapshot}
                 grouping={stockGrouping}
                 onChangeGrouping={setStockGrouping}
+                known={known}
               />
             )}
           </div>
@@ -197,11 +211,13 @@ function ActorList({
   snapshot,
   day,
   roleFilter,
+  known,
 }: {
   dump: RunDump;
   snapshot: DaySnapshot | null;
   day: number;
   roleFilter: ReadonlySet<string>;
+  known: KnownIds | null;
 }) {
   const set = useSelectionSet();
   const cashByActor = useMemo(() => {
@@ -232,10 +248,14 @@ function ActorList({
   }, [snapshot]);
 
   const sorted = useMemo(() => {
+    let pool = [...dump.actors];
+    if (known !== null) {
+      pool = pool.filter((a) => known.actors.has(a.id));
+    }
     const filtered =
       roleFilter.size === 0
-        ? [...dump.actors]
-        : dump.actors.filter((a) => {
+        ? pool
+        : pool.filter((a) => {
             const roles = a.roles ?? [];
             for (const r of roles) if (roleFilter.has(r)) return true;
             return false;
@@ -245,7 +265,7 @@ function ActorList({
       if (b.id === dump.playerActorId) return 1;
       return a.displayName.localeCompare(b.displayName);
     });
-  }, [dump, roleFilter]);
+  }, [dump, roleFilter, known]);
 
   return (
     <>
@@ -329,10 +349,12 @@ function LocationList({
   dump,
   snapshot,
   typeFilter,
+  known,
 }: {
   dump: RunDump;
   snapshot: DaySnapshot | null;
   typeFilter: ReadonlySet<string>;
+  known: KnownIds | null;
 }) {
   const set = useSelectionSet();
   const popByLoc = useMemo(() => {
@@ -346,18 +368,23 @@ function LocationList({
     return m;
   }, [snapshot]);
 
+  // Stock-by-location, but only stock kinds the POV actor knows about.
+  // Locations themselves are always visible per docs/ui.md §5.2 —
+  // "discovery layer added later" — so the location rows themselves
+  // aren't filtered; only the nested stock and the "stock here" bulk.
   const stockByLoc = useMemo(() => {
     const m = new Map<number, SnapshotStockLot[]>();
     if (snapshot !== null) {
       for (const lot of snapshot.stockLots) {
         if (lot.locationId === null) continue;
+        if (known !== null && !known.itemKinds.has(lot.itemKindId)) continue;
         const list = m.get(lot.locationId) ?? [];
         list.push(lot);
         m.set(lot.locationId, list);
       }
     }
     return m;
-  }, [snapshot]);
+  }, [snapshot, known]);
 
   const proprietorByLoc = useMemo(() => {
     const m = new Map<number, RunActor>();
@@ -479,13 +506,19 @@ function StockList({
   snapshot,
   grouping,
   onChangeGrouping,
+  known,
 }: {
   dump: RunDump;
   snapshot: DaySnapshot | null;
   grouping: StockGrouping;
   onChangeGrouping: (g: StockGrouping) => void;
+  known: KnownIds | null;
 }) {
-  const lots = snapshot?.stockLots ?? [];
+  const allLots = snapshot?.stockLots ?? [];
+  const lots = useMemo(
+    () => (known === null ? allLots : allLots.filter((l) => known.itemKinds.has(l.itemKindId))),
+    [allLots, known],
+  );
 
   const grouped = useMemo(() => {
     const m = new Map<number, SnapshotStockLot[]>();
