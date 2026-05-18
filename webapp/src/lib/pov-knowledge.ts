@@ -91,6 +91,17 @@ function computeKnownIds(
     }
   }
 
+  // Dealer fraternity: every dealer knows every other dealer (and
+  // by extension where they live — locations are unfiltered, so the
+  // dealer's home venue just shows them in its "Lives here" list).
+  // Mirrors the real-world scene where the trading network is a
+  // small known club, not something each dealer has to discover.
+  if (povActor !== undefined && povActor.roles?.includes("dealer")) {
+    for (const a of dump.actors) {
+      if (a.roles?.includes("dealer")) actors.add(a.id);
+    }
+  }
+
   // Event stream as of the end of `day` (inclusive). Earlier days are
   // included in full.
   const events = dump.events;

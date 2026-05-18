@@ -61,13 +61,10 @@ export function PovSwitcher({ dump }: { readonly dump: RunDump }) {
       >
         <option value="admin">Admin (omniscient)</option>
         {orderedActors.map((a) => {
-          const isPlayer = a.id === dump.playerActorId;
           const virtTag = a.isVirtual === true ? " (virtual)" : "";
-          const playerTag = isPlayer ? " — player" : "";
           return (
             <option key={a.id} value={`actor:${a.id}`}>
               {a.displayName}
-              {playerTag}
               {virtTag}
             </option>
           );
