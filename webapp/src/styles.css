@@ -2603,13 +2603,206 @@ svg.graph-map:active { cursor: grabbing; }
    Stock — sidebar row + nested-under-location strip + Stock-tab
    grouping toggle.
    ───────────────────────────────────────────────────────────────── */
-.loc-stock-nest {
+/* ─────────────────────────────────────────────────────────────────
+   Nested location blocks (docs/ui.md §5.2) — each venue expands into
+   Actors and Stock subgroups, with bulk-select group headers.
+   ───────────────────────────────────────────────────────────────── */
+.loc-block {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  background: var(--panel);
+}
+.loc-block.row-in-set {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.loc-block-header {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-2);
+  font-weight: 600;
+}
+.loc-block-body {
+  padding: 4px 4px 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.loc-block-empty {
+  font-size: 10px;
+  padding: 4px;
+  font-style: italic;
+}
+
+/* Bulk section — group header + indented children. */
+.bulk-section {
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 2px 0;
+}
+.bulk-section-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  font-family: inherit;
+}
+.bulk-section-header:hover {
+  color: var(--text);
+  background: var(--panel-2);
+  border-color: var(--border);
+}
+.bulk-section-header.bulk-on {
+  color: var(--accent);
+  background: rgba(255, 184, 77, 0.10);
+  border-color: var(--accent);
+}
+.bulk-section-header.bulk-some {
+  color: var(--text);
+  border-color: var(--accent);
+  border-style: dashed;
+}
+.bulk-section-label {
+  flex: 1;
+  text-align: left;
+}
+.bulk-section-count {
+  color: var(--muted);
+  font-size: 9px;
+}
+.bulk-tick {
+  width: 10px;
+  text-align: center;
+  font-weight: 700;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.bulk-section-body {
+  margin-left: 12px;
+  padding-left: 6px;
+  border-left: 1px dotted var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 1px;
+}
+
+/* Mini-actor row inside a location block. */
+.mini-rows {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  margin: 2px 0 4px 24px;
-  padding-left: 6px;
-  border-left: 1px dotted var(--border);
+  margin: 1px 0;
+}
+.mini-actor-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text);
+  text-align: left;
+}
+.mini-actor-row:hover {
+  background: var(--panel-2);
+  border-color: var(--border);
+}
+.mini-actor-row.mini-actor-row-on {
+  background: rgba(255, 184, 77, 0.10);
+  border-color: var(--accent);
+}
+.mini-actor-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+/* Stock row with owner — BeliefChip + "owned by [Owner bulk]". */
+.stock-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 2px 0;
+}
+.stock-row-with-owner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  /* Belief chips are flex pills with their natural width. In the
+     narrow sidebar column, allow the chip itself to wrap its name
+     across two lines rather than overflow the column. */
+  min-width: 0;
+}
+.stock-row-with-owner .stock-chip {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+/* Tighten the bulk-section indent inside loc-block bodies so 3-4
+   levels of nesting still leave breathing room for chips. */
+.loc-block .bulk-section-body {
+  margin-left: 8px;
+  padding-left: 5px;
+}
+.stock-row-with-owner.row-in-set {
+  background: rgba(255, 184, 77, 0.06);
+}
+.owned-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.owned-by-label { font-style: italic; }
+.owner-bulk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px 1px 3px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.owner-bulk-chip:hover {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.owner-bulk-chip.owner-bulk-on {
+  border-color: var(--accent);
+  background: rgba(255, 184, 77, 0.18);
+}
+.owner-bulk-chip.owner-bulk-some {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+.owner-bulk-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
 }
 .stock-row-wrap {
   margin-bottom: 2px;

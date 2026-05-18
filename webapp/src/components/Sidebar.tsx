@@ -342,7 +342,10 @@ function ActorList({
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Location list — rows + nested stock + sub-checks (proprietor / stock here / lots)
+// Location list — each venue expands into Actors (Works/Lives/Visiting)
+// and Stock (per-category) nested subgroups. Every group header doubles
+// as a bulk-select operator. POV knowledge filter applies inside each
+// venue: actors / items the POV doesn't know about are hidden.
 // ────────────────────────────────────────────────────────────────────
 
 function LocationList({
@@ -356,63 +359,6 @@ function LocationList({
   typeFilter: ReadonlySet<string>;
   known: KnownIds | null;
 }) {
-  const set = useSelectionSet();
-  const popByLoc = useMemo(() => {
-    const m = new Map<number, number>();
-    if (snapshot !== null) {
-      for (const a of snapshot.actors) {
-        if (a.currentLocationId === null) continue;
-        m.set(a.currentLocationId, (m.get(a.currentLocationId) ?? 0) + 1);
-      }
-    }
-    return m;
-  }, [snapshot]);
-
-  // Stock-by-location, but only stock kinds the POV actor knows about.
-  // Locations themselves are always visible per docs/ui.md §5.2 —
-  // "discovery layer added later" — so the location rows themselves
-  // aren't filtered; only the nested stock and the "stock here" bulk.
-  const stockByLoc = useMemo(() => {
-    const m = new Map<number, SnapshotStockLot[]>();
-    if (snapshot !== null) {
-      for (const lot of snapshot.stockLots) {
-        if (lot.locationId === null) continue;
-        if (known !== null && !known.itemKinds.has(lot.itemKindId)) continue;
-        const list = m.get(lot.locationId) ?? [];
-        list.push(lot);
-        m.set(lot.locationId, list);
-      }
-    }
-    return m;
-  }, [snapshot, known]);
-
-  const proprietorByLoc = useMemo(() => {
-    const m = new Map<number, RunActor>();
-    for (const a of dump.actors) {
-      if (a.isVirtual === true) continue;
-      const hid = a.homeLocationId;
-      if (hid === null || hid === undefined) continue;
-      const existing = m.get(hid);
-      if (existing === undefined) m.set(hid, a);
-    }
-    return m;
-  }, [dump.actors]);
-
-  const lotsByLoc = useMemo(() => {
-    const m = new Map<number, number[]>();
-    if (snapshot !== null) {
-      for (const lot of snapshot.auctionLots) {
-        const auctionLocId = dump.auctionLocationId;
-        if (auctionLocId === undefined) continue;
-        if (lot.clearedDay !== null) continue;
-        const list = m.get(auctionLocId) ?? [];
-        list.push(lot.id);
-        m.set(auctionLocId, list);
-      }
-    }
-    return m;
-  }, [snapshot, dump.auctionLocationId]);
-
   const sorted = useMemo(() => {
     const filtered =
       typeFilter.size === 0
@@ -426,75 +372,403 @@ function LocationList({
 
   return (
     <>
-      {sorted.map((l) => {
-        const item: SelectionItem = { kind: "location", id: l.id };
-        const inSet = set.has(item);
-        const pop = popByLoc.get(l.id) ?? 0;
-        const stock = stockByLoc.get(l.id) ?? [];
-        const proprietor = proprietorByLoc.get(l.id);
-        const lots = lotsByLoc.get(l.id) ?? [];
-
-        const checks: SubCheck[] = [];
-        if (proprietor !== undefined) {
-          checks.push({
-            kind: "single",
-            label: `proprietor (${proprietor.displayName})`,
-            item: { kind: "actor", id: proprietor.id },
-            title: "Add proprietor to selection",
-          });
-        }
-        if (stock.length > 0) {
-          checks.push({
-            kind: "bulk",
-            label: "stock here",
-            items: stock.map<SelectionItem>((s) => ({ kind: "item", id: s.itemKindId })),
-            title: `${stock.length} stock kind${stock.length === 1 ? "" : "s"} held at this venue`,
-          });
-        }
-        if (lots.length > 0) {
-          checks.push({
-            kind: "bulk",
-            label: "all lots",
-            items: lots.map<SelectionItem>((id) => ({ kind: "lot", id })),
-            title: `${lots.length} open lot${lots.length === 1 ? "" : "s"} at this venue`,
-          });
-        }
-
-        return (
-          <div key={l.id} className={`row-and-checks ${inSet ? "row-in-set" : ""}`}>
-            <button
-              type="button"
-              className={`loc-row ${inSet ? "actor-row-selected" : ""}`}
-              onClick={() => set.toggle(item)}
-              title={inSet ? "Click to remove from selection" : "Click to add to selection"}
-            >
-              <LocationAvatar
-                displayName={l.displayName}
-                code={l.code}
-                type={l.type}
-                size={24}
-              />
-              <div className="loc-name">
-                <span>{l.displayName}</span>
-                <span className="actor-loc">{l.code}</span>
-              </div>
-              <span className={`loc-pop ${pop === 0 ? "zero" : ""}`}>
-                {pop === 0 ? "—" : `${pop} here`}
-              </span>
-            </button>
-            <SubChecks checks={checks} />
-            {stock.length > 0 ? (
-              <div className="loc-stock-nest">
-                {stock.map((s) => (
-                  <StockRow key={s.id} lot={s} dump={dump} contextLocation={l} />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
+      {sorted.map((l) => (
+        <LocationBlock key={l.id} loc={l} dump={dump} snapshot={snapshot} known={known} />
+      ))}
     </>
   );
+}
+
+/** Single location block — header + Actors subgroups + Stock subgroups. */
+function LocationBlock({
+  loc,
+  dump,
+  snapshot,
+  known,
+}: {
+  loc: RunLocation;
+  dump: RunDump;
+  snapshot: DaySnapshot | null;
+  known: KnownIds | null;
+}) {
+  const set = useSelectionSet();
+  const locItem: SelectionItem = { kind: "location", id: loc.id };
+  const inSet = set.has(locItem);
+
+  const knownActor = (id: number) => known === null || known.actors.has(id);
+  const knownItem = (id: number) => known === null || known.itemKinds.has(id);
+
+  // Lives here = home is this loc. Always filtered by POV knowledge.
+  const lives = useMemo(
+    () =>
+      dump.actors
+        .filter((a) => a.homeLocationId === loc.id)
+        .filter((a) => knownActor(a.id))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    [dump.actors, loc.id, known],
+  );
+
+  // Works here = routine includes loc, but home is somewhere else. (A
+  // shopkeeper whose home == the shop falls in "lives" instead — that
+  // matches Mike Fisher above the Nag's.)
+  const works = useMemo(() => {
+    const routines = dump.actorRoutines ?? [];
+    const set = new Set<number>();
+    for (const r of routines) {
+      if (r.schedule.some((s) => s.locationId === loc.id)) set.add(r.actorId);
+    }
+    return dump.actors
+      .filter((a) => set.has(a.id) && a.homeLocationId !== loc.id)
+      .filter((a) => knownActor(a.id))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }, [dump.actorRoutines, dump.actors, loc.id, known]);
+
+  // Visiting here = currently at this loc per the day's snapshot, and
+  // doesn't live or work here. Snapshot is daily — Phase 4 "scene this
+  // hour" will get hourly precision.
+  const visiting = useMemo(() => {
+    if (snapshot === null) return [];
+    const livesSet = new Set(lives.map((a) => a.id));
+    const worksSet = new Set(works.map((a) => a.id));
+    const here = new Set<number>();
+    for (const a of snapshot.actors) {
+      if (a.currentLocationId === loc.id) here.add(a.id);
+    }
+    return dump.actors
+      .filter((a) => here.has(a.id) && !livesSet.has(a.id) && !worksSet.has(a.id))
+      .filter((a) => knownActor(a.id))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }, [snapshot, dump.actors, loc.id, lives, works, known]);
+
+  // Stock at this venue, grouped by category. POV-filtered.
+  const stockByCategory = useMemo(() => {
+    if (snapshot === null) return [] as { category: string; lots: SnapshotStockLot[] }[];
+    const m = new Map<string, SnapshotStockLot[]>();
+    for (const lot of snapshot.stockLots) {
+      if (lot.locationId !== loc.id) continue;
+      if (!knownItem(lot.itemKindId)) continue;
+      const item = dump.items.find((i) => i.id === lot.itemKindId);
+      const cat = item?.category ?? "other";
+      const list = m.get(cat) ?? [];
+      list.push(lot);
+      m.set(cat, list);
+    }
+    return [...m.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([category, lots]) => ({
+        category,
+        lots: lots
+          .slice()
+          .sort((a, b) => {
+            const an = dump.items.find((i) => i.id === a.itemKindId)?.displayName ?? "";
+            const bn = dump.items.find((i) => i.id === b.itemKindId)?.displayName ?? "";
+            return an.localeCompare(bn);
+          }),
+      }));
+  }, [snapshot, dump.items, loc.id, known]);
+
+  const allActors = useMemo(
+    () => [...lives, ...works, ...visiting].map<SelectionItem>((a) => ({ kind: "actor", id: a.id })),
+    [lives, works, visiting],
+  );
+
+  const allItemKinds = useMemo<SelectionItem[]>(() => {
+    const seen = new Set<number>();
+    const out: SelectionItem[] = [];
+    for (const grp of stockByCategory) {
+      for (const lot of grp.lots) {
+        if (seen.has(lot.itemKindId)) continue;
+        seen.add(lot.itemKindId);
+        out.push({ kind: "item", id: lot.itemKindId });
+      }
+    }
+    return out;
+  }, [stockByCategory]);
+
+  const hasAnyActors = lives.length > 0 || works.length > 0 || visiting.length > 0;
+  const hasAnyStock = allItemKinds.length > 0;
+
+  return (
+    <div className={`loc-block ${inSet ? "row-in-set" : ""}`}>
+      <button
+        type="button"
+        className={`loc-row loc-block-header ${inSet ? "actor-row-selected" : ""}`}
+        onClick={() => set.toggle(locItem)}
+        title={inSet ? "Click to remove from selection" : "Click to add to selection"}
+      >
+        <LocationAvatar displayName={loc.displayName} code={loc.code} type={loc.type} size={22} />
+        <div className="loc-name">
+          <span>{loc.displayName}</span>
+          <span className="actor-loc">{loc.code}</span>
+        </div>
+      </button>
+
+      <div className="loc-block-body">
+        {hasAnyActors ? (
+          <BulkSection
+            label="Actors"
+            count={allActors.length}
+            items={allActors}
+            title="All actors at this venue (POV-filtered)"
+          >
+            <ActorSubgroup label="Works here" actors={works} dump={dump} />
+            <ActorSubgroup label="Lives here" actors={lives} dump={dump} />
+            <ActorSubgroup label="Visiting here" actors={visiting} dump={dump} />
+          </BulkSection>
+        ) : null}
+
+        {hasAnyStock ? (
+          <BulkSection
+            label="Stock"
+            count={allItemKinds.length}
+            items={allItemKinds}
+            title="All stock kinds held at this venue (POV-filtered)"
+          >
+            {stockByCategory.map(({ category, lots }) => (
+              <CategorySubgroup
+                key={category}
+                category={category}
+                lots={lots}
+                dump={dump}
+                loc={loc}
+              />
+            ))}
+          </BulkSection>
+        ) : null}
+
+        {!hasAnyActors && !hasAnyStock ? (
+          <div className="loc-block-empty muted">— nothing known here —</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Group header that doubles as a bulk-select operator for the items it
+ * scopes. Tick reflects current set membership: "✓" all-on, "·" some-on,
+ * "+" none-on. Children render indented below.
+ */
+function BulkSection({
+  label,
+  count,
+  items,
+  title,
+  children,
+}: {
+  label: string;
+  count: number;
+  items: readonly SelectionItem[];
+  title: string;
+  children: React.ReactNode;
+}) {
+  const set = useSelectionSet();
+  const presence = items.map((i) => set.has(i));
+  const all = presence.length > 0 && presence.every((p) => p);
+  const some = !all && presence.some((p) => p);
+  const tick = all ? "✓" : some ? "·" : "+";
+  const klass = all ? "bulk-on" : some ? "bulk-some" : "";
+  const toggle = () => {
+    if (all) {
+      for (const i of items) set.remove(i);
+    } else {
+      for (const i of items) set.add(i);
+    }
+  };
+  return (
+    <div className="bulk-section">
+      <button type="button" className={`bulk-section-header ${klass}`} onClick={toggle} title={title}>
+        <span className="bulk-tick">{tick}</span>
+        <span className="bulk-section-label">{label}</span>
+        <span className="bulk-section-count">{count}</span>
+      </button>
+      <div className="bulk-section-body">{children}</div>
+    </div>
+  );
+}
+
+/** Actor sub-row inside a location block — small avatar + name + toggle. */
+function MiniActorRow({ actor, dump }: { actor: RunActor; dump: RunDump }) {
+  const set = useSelectionSet();
+  const item: SelectionItem = { kind: "actor", id: actor.id };
+  const inSet = set.has(item);
+  return (
+    <button
+      type="button"
+      className={`mini-actor-row ${inSet ? "mini-actor-row-on" : ""}`}
+      onClick={() => set.toggle(item)}
+      title={inSet ? "Click to remove from selection" : "Click to add to selection"}
+    >
+      <Avatar
+        name={actor.displayName}
+        code={actor.code}
+        isPlayer={actor.id === dump.playerActorId}
+        size={16}
+      />
+      <span className="mini-actor-name">{actor.displayName}</span>
+    </button>
+  );
+}
+
+function ActorSubgroup({
+  label,
+  actors,
+  dump,
+}: {
+  label: string;
+  actors: readonly RunActor[];
+  dump: RunDump;
+}) {
+  if (actors.length === 0) return null;
+  return (
+    <BulkSection
+      label={label}
+      count={actors.length}
+      items={actors.map<SelectionItem>((a) => ({ kind: "actor", id: a.id }))}
+      title={`${label} — ${actors.length} actor${actors.length === 1 ? "" : "s"} (POV-filtered)`}
+    >
+      <div className="mini-rows">
+        {actors.map((a) => (
+          <MiniActorRow key={a.id} actor={a} dump={dump} />
+        ))}
+      </div>
+    </BulkSection>
+  );
+}
+
+function CategorySubgroup({
+  category,
+  lots,
+  dump,
+  loc,
+}: {
+  category: string;
+  lots: readonly SnapshotStockLot[];
+  dump: RunDump;
+  loc: RunLocation;
+}) {
+  const items: SelectionItem[] = useMemo(() => {
+    const seen = new Set<number>();
+    const out: SelectionItem[] = [];
+    for (const l of lots) {
+      if (seen.has(l.itemKindId)) continue;
+      seen.add(l.itemKindId);
+      out.push({ kind: "item", id: l.itemKindId });
+    }
+    return out;
+  }, [lots]);
+  return (
+    <BulkSection
+      label={prettyCategory(category)}
+      count={items.length}
+      items={items}
+      title={`${prettyCategory(category)} at ${loc.displayName} — ${items.length} item-kind${items.length === 1 ? "" : "s"}`}
+    >
+      <div className="stock-rows">
+        {lots.map((lot) => (
+          <StockRowWithOwner key={lot.id} lot={lot} dump={dump} loc={loc} />
+        ))}
+      </div>
+    </BulkSection>
+  );
+}
+
+/** Stock row inside a location block — BeliefChip + "owned by [Owner]"
+ *  where the owner is a bulk operator that selects every item-kind at
+ *  this venue owned by them. */
+function StockRowWithOwner({
+  lot,
+  dump,
+  loc,
+}: {
+  lot: SnapshotStockLot;
+  dump: RunDump;
+  loc: RunLocation;
+}) {
+  const set = useSelectionSet();
+  const { pov } = usePov();
+  const observerActorId = pov.kind === "actor" ? pov.actorId : null;
+  const itemKind: SelectionItem = { kind: "item", id: lot.itemKindId };
+  const inSet = set.has(itemKind);
+  const owner = dump.actors.find((a) => a.id === lot.ownerActorId);
+
+  return (
+    <div className={`stock-row-with-owner ${inSet ? "row-in-set" : ""}`}>
+      <BeliefChip
+        dump={dump}
+        itemKindId={lot.itemKindId}
+        qualityTier={lot.qualityTier}
+        quantity={lot.quantity}
+        observerActorId={observerActorId}
+        onSelect={() => set.toggle(itemKind)}
+      />
+      {owner !== undefined ? (
+        <span className="owned-by">
+          <span className="owned-by-label">owned by</span>
+          <OwnerBulkChip owner={owner} loc={loc} dump={dump} />
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/** Owner avatar+name beside a stock chip — bulk-selects every
+ *  item-kind at the parent location owned by this actor. */
+function OwnerBulkChip({ owner, loc, dump }: { owner: RunActor; loc: RunLocation; dump: RunDump }) {
+  const set = useSelectionSet();
+  // All item-kinds at this venue owned by this actor.
+  const items = useMemo<SelectionItem[]>(() => {
+    const seen = new Set<number>();
+    const out: SelectionItem[] = [];
+    // Find the snapshot stock-lots via dump — we don't have direct
+    // access to snapshot here, so go via the events dump's most-recent
+    // snapshot. The parent LocationBlock has already filtered by
+    // knowledge, but the bulk operator runs from the dump; for the
+    // bulk we re-derive from snapshots. (Cheap.)
+    const lastSnap = dump.snapshots[dump.snapshots.length - 1];
+    if (lastSnap === undefined) return out;
+    for (const lot of lastSnap.stockLots) {
+      if (lot.locationId !== loc.id) continue;
+      if (lot.ownerActorId !== owner.id) continue;
+      if (seen.has(lot.itemKindId)) continue;
+      seen.add(lot.itemKindId);
+      out.push({ kind: "item", id: lot.itemKindId });
+    }
+    return out;
+  }, [dump, owner.id, loc.id]);
+
+  const presence = items.map((i) => set.has(i));
+  const all = presence.length > 0 && presence.every((p) => p);
+  const some = !all && presence.some((p) => p);
+  const klass = all ? "owner-bulk-on" : some ? "owner-bulk-some" : "";
+  const toggle = () => {
+    if (all) {
+      for (const i of items) set.remove(i);
+    } else {
+      for (const i of items) set.add(i);
+    }
+  };
+  return (
+    <button
+      type="button"
+      className={`owner-bulk-chip ${klass}`}
+      onClick={toggle}
+      title={`Bulk-select all ${items.length} of ${owner.displayName}'s item-kinds at ${loc.displayName}`}
+    >
+      <Avatar
+        name={owner.displayName}
+        code={owner.code}
+        isPlayer={owner.id === dump.playerActorId}
+        size={14}
+      />
+      <span className="owner-bulk-name">{owner.displayName}</span>
+    </button>
+  );
+}
+
+function prettyCategory(c: string): string {
+  if (c.length === 0) return c;
+  return c.charAt(0).toUpperCase() + c.slice(1);
 }
 
 // ────────────────────────────────────────────────────────────────────
