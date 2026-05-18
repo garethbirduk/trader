@@ -244,6 +244,7 @@ function Loaded(props: LoadedProps) {
         <Sidebar
           dump={dump}
           day={day}
+          hour={hour}
           snapshot={snapshot}
           topTab={props.topTab}
           setTopTab={props.setTopTab}

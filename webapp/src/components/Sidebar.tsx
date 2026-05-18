@@ -4,6 +4,7 @@ import type { SidebarTopTab } from "../App.js";
 import { useSelectionSet, type SelectionItem } from "../lib/selection-set.js";
 import { usePov } from "../lib/pov.js";
 import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
+import { useActorPositionsAt } from "../lib/positions.js";
 import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { BeliefChip } from "./BeliefChip.js";
@@ -69,13 +70,14 @@ function readStockGrouping(): StockGrouping {
 interface Props {
   readonly dump: RunDump;
   readonly day: number;
+  readonly hour: number;
   readonly snapshot: DaySnapshot | null;
   readonly topTab: SidebarTopTab;
   readonly setTopTab: (t: SidebarTopTab) => void;
 }
 
 export function Sidebar(props: Props) {
-  const { dump, day, snapshot, topTab, setTopTab } = props;
+  const { dump, day, hour, snapshot, topTab, setTopTab } = props;
   const { pov } = usePov();
   // Knowledge filter: in player POV, restrict lists to what this actor
   // knows (gossip-mentioned, transacted, witnessed). Admin POV bypasses
@@ -184,7 +186,7 @@ export function Sidebar(props: Props) {
               <ActorList dump={dump} snapshot={snapshot} day={day} roleFilter={roleFilter} known={known} />
             )}
             {topTab === "locations" && (
-              <LocationList dump={dump} snapshot={snapshot} typeFilter={locTypeFilter} known={known} />
+              <LocationList dump={dump} day={day} hour={hour} snapshot={snapshot} typeFilter={locTypeFilter} known={known} />
             )}
             {topTab === "stock" && (
               <StockList
@@ -350,15 +352,24 @@ function ActorList({
 
 function LocationList({
   dump,
+  day,
+  hour,
   snapshot,
   typeFilter,
   known,
 }: {
   dump: RunDump;
+  day: number;
+  hour: number;
   snapshot: DaySnapshot | null;
   typeFilter: ReadonlySet<string>;
   known: KnownIds | null;
 }) {
+  // Hour-precise positions for the "Visiting here" computation —
+  // snapshot.currentLocationId is daily, so it doesn't reflect who's
+  // actually at the pub at 17:00 vs 02:00.
+  const positions = useActorPositionsAt(dump, day, hour);
+
   const sorted = useMemo(() => {
     const filtered =
       typeFilter.size === 0
@@ -373,7 +384,14 @@ function LocationList({
   return (
     <>
       {sorted.map((l) => (
-        <LocationBlock key={l.id} loc={l} dump={dump} snapshot={snapshot} known={known} />
+        <LocationBlock
+          key={l.id}
+          loc={l}
+          dump={dump}
+          snapshot={snapshot}
+          positions={positions}
+          known={known}
+        />
       ))}
     </>
   );
@@ -384,11 +402,13 @@ function LocationBlock({
   loc,
   dump,
   snapshot,
+  positions,
   known,
 }: {
   loc: RunLocation;
   dump: RunDump;
   snapshot: DaySnapshot | null;
+  positions: ReadonlyMap<number, number>;
   known: KnownIds | null;
 }) {
   const set = useSelectionSet();
@@ -398,49 +418,71 @@ function LocationBlock({
   const knownActor = (id: number) => known === null || known.actors.has(id);
   const knownItem = (id: number) => known === null || known.itemKinds.has(id);
 
-  // Lives here = home is this loc. Always filtered by POV knowledge.
+  const isResidential = loc.type === "home";
+
+  // Lives here = home is this loc AND the venue is residential. A
+  // publican whose only "home" record is the pub itself lives over
+  // the bar but is meaningfully a worker — they fall in "Works here"
+  // instead (the proprietor branch below).
   const lives = useMemo(
     () =>
       dump.actors
-        .filter((a) => a.homeLocationId === loc.id)
+        .filter((a) => a.homeLocationId === loc.id && isResidential)
         .filter((a) => knownActor(a.id))
         .sort((a, b) => a.displayName.localeCompare(b.displayName)),
-    [dump.actors, loc.id, known],
+    [dump.actors, loc.id, isResidential, known],
   );
 
-  // Works here = routine includes loc, but home is somewhere else. (A
-  // shopkeeper whose home == the shop falls in "lives" instead — that
-  // matches Mike Fisher above the Nag's.)
+  // Works here = either (a) the live-above-shop proprietor (home is
+  // this loc AND this loc is non-residential — Mike at the Nag's,
+  // Sid at Sid's Café), OR (b) for non-pub workplaces only, someone
+  // whose routine puts them here a meaningful chunk of the day
+  // without their home being here (Trigger at Council Yard, Boyce at
+  // Boyce Autos). Pubs are excluded from the routine path because
+  // they're social venues — every regular's routine includes their
+  // local, but they're visitors, not workers. Without an explicit
+  // employment surface in the engine, this heuristic is the best we
+  // can do; expect false negatives for actual pub staff.
   const works = useMemo(() => {
+    const isPub = loc.type === "pub";
     const routines = dump.actorRoutines ?? [];
-    const set = new Set<number>();
+    const hoursAtLocByActor = new Map<number, number>();
     for (const r of routines) {
-      if (r.schedule.some((s) => s.locationId === loc.id)) set.add(r.actorId);
+      const n = r.schedule.filter((s) => s.locationId === loc.id).length;
+      if (n > 0) hoursAtLocByActor.set(r.actorId, n);
     }
     return dump.actors
-      .filter((a) => set.has(a.id) && a.homeLocationId !== loc.id)
-      .filter((a) => knownActor(a.id))
+      .filter((a) => {
+        if (!knownActor(a.id)) return false;
+        // (a) proprietor — home is this venue and it's not residential
+        if (a.homeLocationId === loc.id && !isResidential) return true;
+        // (b) routine path — non-pub only, substantial presence, not resident
+        if (isPub) return false;
+        if (a.homeLocationId === loc.id) return false;
+        const hrs = hoursAtLocByActor.get(a.id) ?? 0;
+        return hrs >= 3;
+      })
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
-  }, [dump.actorRoutines, dump.actors, loc.id, known]);
+  }, [dump.actorRoutines, dump.actors, loc.id, loc.type, isResidential, known]);
 
-  // Visiting here = currently at this loc per the day's snapshot, and
-  // doesn't live or work here. Snapshot is daily — Phase 4 "scene this
-  // hour" will get hourly precision.
+  // Visiting here = at this loc AT THIS HOUR (via the replayed
+  // positions map) and not Lives/Works. Dynamic with the time
+  // slider — scrub to 17:00 and the pub fills up; scrub to 03:00
+  // and it empties.
   const visiting = useMemo(() => {
-    if (snapshot === null) return [];
     const livesSet = new Set(lives.map((a) => a.id));
     const worksSet = new Set(works.map((a) => a.id));
-    const here = new Set<number>();
-    for (const a of snapshot.actors) {
-      if (a.currentLocationId === loc.id) here.add(a.id);
-    }
     return dump.actors
-      .filter((a) => here.has(a.id) && !livesSet.has(a.id) && !worksSet.has(a.id))
-      .filter((a) => knownActor(a.id))
+      .filter((a) => {
+        if (positions.get(a.id) !== loc.id) return false;
+        if (livesSet.has(a.id) || worksSet.has(a.id)) return false;
+        return knownActor(a.id);
+      })
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
-  }, [snapshot, dump.actors, loc.id, lives, works, known]);
+  }, [positions, dump.actors, loc.id, lives, works, known]);
 
-  // Stock at this venue, grouped by category. POV-filtered.
+  // Stock at this venue, grouped by category. POV-filtered. Stock
+  // moves on day boundaries — the day's snapshot is the right slice.
   const stockByCategory = useMemo(() => {
     if (snapshot === null) return [] as { category: string; lots: SnapshotStockLot[] }[];
     const m = new Map<string, SnapshotStockLot[]>();
@@ -531,6 +573,7 @@ function LocationBlock({
                 lots={lots}
                 dump={dump}
                 loc={loc}
+                snapshot={snapshot}
               />
             ))}
           </BulkSection>
@@ -641,11 +684,13 @@ function CategorySubgroup({
   lots,
   dump,
   loc,
+  snapshot,
 }: {
   category: string;
   lots: readonly SnapshotStockLot[];
   dump: RunDump;
   loc: RunLocation;
+  snapshot: DaySnapshot | null;
 }) {
   const items: SelectionItem[] = useMemo(() => {
     const seen = new Set<number>();
@@ -666,7 +711,7 @@ function CategorySubgroup({
     >
       <div className="stock-rows">
         {lots.map((lot) => (
-          <StockRowWithOwner key={lot.id} lot={lot} dump={dump} loc={loc} />
+          <StockRowWithOwner key={lot.id} lot={lot} dump={dump} loc={loc} snapshot={snapshot} />
         ))}
       </div>
     </BulkSection>
@@ -680,10 +725,12 @@ function StockRowWithOwner({
   lot,
   dump,
   loc,
+  snapshot,
 }: {
   lot: SnapshotStockLot;
   dump: RunDump;
   loc: RunLocation;
+  snapshot: DaySnapshot | null;
 }) {
   const set = useSelectionSet();
   const { pov } = usePov();
@@ -705,7 +752,7 @@ function StockRowWithOwner({
       {owner !== undefined ? (
         <span className="owned-by">
           <span className="owned-by-label">owned by</span>
-          <OwnerBulkChip owner={owner} loc={loc} dump={dump} />
+          <OwnerBulkChip owner={owner} loc={loc} dump={dump} snapshot={snapshot} />
         </span>
       ) : null}
     </div>
@@ -714,20 +761,24 @@ function StockRowWithOwner({
 
 /** Owner avatar+name beside a stock chip — bulk-selects every
  *  item-kind at the parent location owned by this actor. */
-function OwnerBulkChip({ owner, loc, dump }: { owner: RunActor; loc: RunLocation; dump: RunDump }) {
+function OwnerBulkChip({
+  owner,
+  loc,
+  dump,
+  snapshot,
+}: {
+  owner: RunActor;
+  loc: RunLocation;
+  dump: RunDump;
+  snapshot: DaySnapshot | null;
+}) {
   const set = useSelectionSet();
-  // All item-kinds at this venue owned by this actor.
+  // All item-kinds at this venue owned by this actor (current day).
   const items = useMemo<SelectionItem[]>(() => {
     const seen = new Set<number>();
     const out: SelectionItem[] = [];
-    // Find the snapshot stock-lots via dump — we don't have direct
-    // access to snapshot here, so go via the events dump's most-recent
-    // snapshot. The parent LocationBlock has already filtered by
-    // knowledge, but the bulk operator runs from the dump; for the
-    // bulk we re-derive from snapshots. (Cheap.)
-    const lastSnap = dump.snapshots[dump.snapshots.length - 1];
-    if (lastSnap === undefined) return out;
-    for (const lot of lastSnap.stockLots) {
+    if (snapshot === null) return out;
+    for (const lot of snapshot.stockLots) {
       if (lot.locationId !== loc.id) continue;
       if (lot.ownerActorId !== owner.id) continue;
       if (seen.has(lot.itemKindId)) continue;
@@ -735,7 +786,7 @@ function OwnerBulkChip({ owner, loc, dump }: { owner: RunActor; loc: RunLocation
       out.push({ kind: "item", id: lot.itemKindId });
     }
     return out;
-  }, [dump, owner.id, loc.id]);
+  }, [snapshot, owner.id, loc.id]);
 
   const presence = items.map((i) => set.has(i));
   const all = presence.length > 0 && presence.every((p) => p);
