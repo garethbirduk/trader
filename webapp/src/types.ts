@@ -91,11 +91,19 @@ export interface CompositePayload {
 export interface RunActor {
   readonly id: number;
   readonly code: string;
-  readonly displayName: string;
-  /** Optional short / nickname form used in chip-sized UI surfaces
-   *  (selection chips, mini actor rows, owner labels). Falls back to
-   *  displayName when absent. */
+  /** Given name. Required in new dumps; absent in legacy events.json
+   *  files generated before the rename. UI helpers fall back via
+   *  `displayName` when missing. */
+  readonly firstName?: string;
+  /** Family name. Null for institutions / one-name characters; absent
+   *  in legacy dumps. */
+  readonly lastName?: string | null;
+  /** Chip-friendly nickname or short label. Required in new dumps;
+   *  optional here so older events.json files still load. */
   readonly shortName?: string;
+  /** Composed full display name. Kept for back-compat — UI helpers
+   *  fall back to this when the structured fields are absent. */
+  readonly displayName: string;
   readonly cash: number;
   readonly currentLocationId: number | null;
   readonly homeLocationId: number | null;

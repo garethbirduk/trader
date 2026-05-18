@@ -172,10 +172,16 @@ export interface RunDump {
   readonly actors: readonly {
     id: number;
     code: string;
+    /** Given name. Required. Use `fullName` (UI helper) to compose. */
+    firstName: string;
+    /** Family name. Null for institutions / one-name characters. */
+    lastName: string | null;
+    /** Chip-friendly nickname or short label. Required. */
+    shortName: string;
+    /** Composed `firstName + " " + lastName` (or just firstName) —
+     *  kept for back-compat. New consumers should compose from the
+     *  structured fields. */
     displayName: string;
-    /** Optional short / nickname form for chip-sized UI surfaces.
-     *  Falls back to displayName on the consumer side when absent. */
-    shortName?: string;
     cash: number;
     currentLocationId: number | null;
     homeLocationId: number | null;
@@ -594,12 +600,13 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
               Record<"condition" | "price" | "character", number>
             >)
           : undefined;
-      const shortName = skin.shortNameByActorId.get(a.id);
       return {
         id: a.id,
         code: a.code,
+        firstName: a.firstName,
+        lastName: a.lastName,
+        shortName: a.shortName,
         displayName: a.displayName,
-        ...(shortName !== undefined ? { shortName } : {}),
         cash: a.cash,
         currentLocationId: a.currentLocationId,
         homeLocationId: a.homeLocationId,

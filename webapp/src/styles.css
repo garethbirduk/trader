@@ -49,6 +49,29 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   background: var(--border);
 }
 
+/* REBUILD modifier — single-column grid while the LHS / resizer / RHS
+   are commented out in App.tsx. Remove this class (and the
+   .rebuild-stub block below) once the Sidebar comes back. */
+.app--rebuild {
+  grid-template-columns: 1fr;
+}
+.rebuild-stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 32px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+.rebuild-stub code {
+  color: var(--accent);
+  background: var(--panel);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
 /* RHS placeholder — empty area to the right of the LHS while we build
    the rest of the UI in later phases. Currently holds only the
    selection chips strip plus a stub message. */
@@ -2380,64 +2403,104 @@ svg.graph-map:active { cursor: grabbing; }
   box-shadow: inset 0 -2px 0 var(--border);
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   POV switcher (docs/ui-rules.md POV/lens Rule 1). Two parts: an
+   Admin toggle on the left, and an actor picker on the right whose
+   selection persists across Admin toggles.
+   ───────────────────────────────────────────────────────────────── */
 .pov-switcher {
-  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px 4px 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--panel-2);
-  cursor: pointer;
-  user-select: none;
   font-size: 12px;
   line-height: 1;
 }
-.pov-switcher:hover { border-color: var(--accent); }
-.pov-switcher.pov-actor {
-  border-color: var(--pov-accent, var(--accent));
-  box-shadow: 0 0 0 1px var(--pov-accent, var(--accent)) inset;
-}
-.pov-switcher-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-.pov-switcher-current {
+
+.pov-admin-toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  pointer-events: none;
-}
-.pov-switcher-name {
-  font-weight: 600;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pov-admin-glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--panel);
-  border: 1px dashed var(--muted);
-  color: var(--muted);
-  font-size: 13px;
-}
-.pov-switcher-select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel-2);
+  color: var(--text);
   cursor: pointer;
-  font: inherit;
+  user-select: none;
+  font-size: 11px;
+  line-height: 1;
+}
+.pov-admin-toggle:hover { border-color: var(--accent); }
+.pov-admin-toggle.is-on {
+  background: var(--accent);
+  color: #1a1a22;
+  border-color: var(--accent);
+}
+.pov-admin-toggle-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.pov-admin-toggle-state {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.pov-admin-toggle.is-on .pov-admin-toggle-state {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pov-actor-picker {
+  position: relative;
+  display: inline-flex;
+}
+.pov-actor-picker.is-overridden .pov-actor-trigger {
+  opacity: 0.55;
+}
+.pov-actor-trigger-chevron {
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.pov-actor-trigger--empty {
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.pov-listbox {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 220px;
+  max-height: 360px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pov-listbox-item {
+  display: flex;
+}
+.pov-listbox-item .actor-chip {
+  width: 100%;
+  justify-content: flex-start;
+}
+.pov-listbox-item.is-selected .actor-chip {
+  background: var(--panel-2);
+  border-color: var(--accent);
 }
 
 /* ─────────────────────────────────────────────────────────────────

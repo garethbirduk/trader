@@ -1,75 +1,194 @@
-import { useMemo } from "react";
-import { Avatar } from "./Avatar.js";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePov } from "../lib/pov.js";
 import type { RunDump } from "../types.js";
+import { ActorChip } from "./ActorChip.js";
+import { fullName } from "../lib/actor-names.js";
 
 /**
- * Header POV control (docs/ui.md §4). Lists every actor plus Admin.
- * Shows the active POV's avatar + label. One click to switch; no
- * confirmation. The active POV is the most-prominent thing in the
- * header so the user never has to wonder "which lens am I wearing".
+ * Header POV control (docs/ui.md §4, docs/ui-rules.md POV/lens Rule 1).
+ *
+ * Two parts:
+ *   • Admin toggle — a single button outside the actor list. When ON,
+ *     the active POV is Admin regardless of what the actor picker has
+ *     selected.
+ *   • Actor picker — a custom listbox of `ActorChip detail="full"`
+ *     rows. The currently-selected actor persists while the Admin
+ *     toggle is ON, and is the lens we return to when Admin flips OFF.
+ *
+ * The "Admin in the dropdown" pattern is forbidden — see POV/lens
+ * Rule 1. All actor presentation routes through `ActorChip` per
+ * Components Rule 1.
  */
-export function PovSwitcher({ dump }: { readonly dump: RunDump }) {
-  const { pov, setPov, actor, label } = usePov();
+const SELECTED_ACTOR_KEY = "trader-pov-selected-actor";
 
-  // Sort actors: player first, then by displayName. Virtual / ledger
-  // actors (Sotheby's, off-map producers) are deprioritised but kept
-  // available for admin debugging.
+function readPersistedSelectedActorId(): number | null {
+  try {
+    const raw = localStorage.getItem(SELECTED_ACTOR_KEY);
+    if (raw === null) return null;
+    const n = Number.parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePersistedSelectedActorId(id: number): void {
+  try {
+    localStorage.setItem(SELECTED_ACTOR_KEY, String(id));
+  } catch {
+    /* quota / disabled */
+  }
+}
+
+export function PovSwitcher({ dump }: { readonly dump: RunDump }) {
+  const { pov, setPov } = usePov();
+  const [open, setOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Remember the last picked actor across Admin toggles. Seed from
+  // current pov when it's an actor, otherwise from persisted state,
+  // otherwise default to the player.
+  const initialSelectedId = useMemo<number>(() => {
+    if (pov.kind === "actor") return pov.actorId;
+    const stored = readPersistedSelectedActorId();
+    if (stored !== null && dump.actors.some((a) => a.id === stored)) {
+      return stored;
+    }
+    return dump.playerActorId;
+  }, [pov, dump.actors, dump.playerActorId]);
+
+  const [selectedActorId, setSelectedActorId] = useState<number>(initialSelectedId);
+
+  const isAdmin = pov.kind === "admin";
+
+  // Sort: player first, then real actors by full name. Virtual actors
+  // (Sotheby's, off-map market, virtual producers) are institutions /
+  // ledger sinks tied to locations, not real characters — they have no
+  // viewpoint to inhabit, so they're excluded from the picker.
   const orderedActors = useMemo(() => {
-    return [...dump.actors].sort((a, b) => {
-      const aPlayer = a.id === dump.playerActorId ? 0 : 1;
-      const bPlayer = b.id === dump.playerActorId ? 0 : 1;
-      if (aPlayer !== bPlayer) return aPlayer - bPlayer;
-      const aVirtual = a.isVirtual === true ? 1 : 0;
-      const bVirtual = b.isVirtual === true ? 1 : 0;
-      if (aVirtual !== bVirtual) return aVirtual - bVirtual;
-      return a.displayName.localeCompare(b.displayName);
-    });
+    return dump.actors
+      .filter((a) => a.isVirtual !== true)
+      .sort((a, b) => {
+        const aPlayer = a.id === dump.playerActorId ? 0 : 1;
+        const bPlayer = b.id === dump.playerActorId ? 0 : 1;
+        if (aPlayer !== bPlayer) return aPlayer - bPlayer;
+        return fullName(a).localeCompare(fullName(b));
+      });
   }, [dump.actors, dump.playerActorId]);
 
+  const selectedActor = useMemo(
+    () => dump.actors.find((a) => a.id === selectedActorId) ?? null,
+    [dump.actors, selectedActorId],
+  );
+
+  // Click-outside / Escape to close the popover.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDocPointer = (e: PointerEvent) => {
+      const el = popoverRef.current;
+      if (el === null) return;
+      if (!el.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDocPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDocPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const toggleAdmin = () => {
+    if (isAdmin) {
+      setPov({ kind: "actor", actorId: selectedActorId });
+    } else {
+      setPov({ kind: "admin" });
+    }
+  };
+
+  const pickActor = (id: number) => {
+    setSelectedActorId(id);
+    writePersistedSelectedActorId(id);
+    if (!isAdmin) setPov({ kind: "actor", actorId: id });
+    setOpen(false);
+  };
+
   return (
-    <label className={`pov-switcher pov-${pov.kind}`} title="POV — whose eyes are you looking through?">
-      <span className="pov-switcher-label">POV</span>
-      <span className="pov-switcher-current">
-        {actor !== null ? (
-          <Avatar
-            name={actor.displayName}
-            code={actor.code}
-            isPlayer={actor.id === dump.playerActorId}
-            size={20}
+    <div className="pov-switcher">
+      <button
+        type="button"
+        className={`pov-admin-toggle ${isAdmin ? "is-on" : "is-off"}`}
+        onClick={toggleAdmin}
+        title={
+          isAdmin
+            ? "Admin lens ON — omniscient view. Click to return to actor lens."
+            : "Admin lens OFF — viewing as the selected actor. Click to switch to omniscient view."
+        }
+        aria-pressed={isAdmin}
+      >
+        <span className="pov-admin-toggle-label">Admin</span>
+        <span className="pov-admin-toggle-state">{isAdmin ? "ON" : "OFF"}</span>
+      </button>
+
+      <div
+        className={`pov-actor-picker ${isAdmin ? "is-overridden" : ""}`}
+        ref={popoverRef}
+      >
+        {selectedActor !== null ? (
+          <ActorChip
+            actor={selectedActor}
+            dump={dump}
+            detail="full"
+            onClick={() => setOpen((v) => !v)}
+            className="pov-actor-trigger"
+            suffix={
+              <span className="pov-actor-trigger-chevron" aria-hidden="true">
+                ▾
+              </span>
+            }
+            title={
+              isAdmin
+                ? `Actor lens disabled while Admin is ON. Selected actor: ${fullName(selectedActor)}.`
+                : `POV: ${fullName(selectedActor)}. Click to change.`
+            }
           />
         ) : (
-          <span className="pov-admin-glyph" aria-hidden="true">
-            *
-          </span>
+          <button
+            type="button"
+            className="pov-actor-trigger pov-actor-trigger--empty"
+            onClick={() => setOpen((v) => !v)}
+          >
+            Choose actor ▾
+          </button>
         )}
-        <span className="pov-switcher-name">{label}</span>
-      </span>
-      <select
-        className="pov-switcher-select"
-        value={pov.kind === "admin" ? "admin" : `actor:${pov.actorId}`}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v === "admin") {
-            setPov({ kind: "admin" });
-          } else if (v.startsWith("actor:")) {
-            const id = Number.parseInt(v.slice("actor:".length), 10);
-            if (Number.isFinite(id)) setPov({ kind: "actor", actorId: id });
-          }
-        }}
-        aria-label="Select POV"
-      >
-        <option value="admin">Admin (omniscient)</option>
-        {orderedActors.map((a) => {
-          const virtTag = a.isVirtual === true ? " (virtual)" : "";
-          return (
-            <option key={a.id} value={`actor:${a.id}`}>
-              {a.displayName}
-              {virtTag}
-            </option>
-          );
-        })}
-      </select>
-    </label>
+
+        {open && (
+          <ul
+            className="pov-listbox"
+            role="listbox"
+            aria-label="Choose POV actor"
+          >
+            {orderedActors.map((a) => (
+              <li
+                key={a.id}
+                role="option"
+                aria-selected={a.id === selectedActorId}
+                className={`pov-listbox-item ${a.id === selectedActorId ? "is-selected" : ""}`}
+              >
+                <ActorChip
+                  actor={a}
+                  dump={dump}
+                  detail="full"
+                  onClick={() => pickActor(a.id)}
+                  size={20}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }

@@ -57,6 +57,17 @@ export const TRANSIT_DAYS_BY_TIER: Readonly<Record<TransportCapacity, number>> =
 export interface Actor {
   readonly id: number;
   readonly code: string;
+  /** Given name. Required. */
+  readonly firstName: string;
+  /** Family name. Null for institutions / one-name characters. */
+  readonly lastName: string | null;
+  /** Chip-friendly nickname or short label. Required; defaults to
+   *  `firstName` when the skin doesn't supply one. */
+  readonly shortName: string;
+  /** Legacy composed display name (`firstName + " " + lastName`).
+   *  Retained for back-compat with the snapshot and consumers that
+   *  predate the structured-name fields. New consumers should compose
+   *  from `firstName` / `lastName` / `shortName` instead. */
   readonly displayName: string;
   readonly cash: number;
   readonly currentLocationId: number | null;

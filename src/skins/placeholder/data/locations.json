@@ -1,0 +1,63 @@
+[
+  {
+    "code": "peckham-flat",
+    "displayName": "Del's Flat",
+    "type": "home"
+  },
+  {
+    "code": "boycie-house",
+    "displayName": "Boyce's",
+    "type": "home"
+  },
+  {
+    "code": "trigger-flat",
+    "displayName": "Trigger's",
+    "type": "home"
+  },
+  {
+    "code": "lockup",
+    "displayName": "The Lock-up",
+    "type": "business",
+    "openHours": { "start": 8, "end": 20 }
+  },
+  {
+    "code": "boyce-auto-sales",
+    "displayName": "Boyce Autos",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "code": "sids-cafe",
+    "displayName": "Sid's Café",
+    "type": "business",
+    "openHours": { "start": 6, "end": 16 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "code": "nags",
+    "displayName": "The Nag's Head",
+    "type": "pub",
+    "openHours": { "start": 11, "end": 23 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6, 7]
+  },
+  {
+    "code": "auction-house",
+    "displayName": "Sotheby's",
+    "type": "auction",
+    "openHours": { "start": 8, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "peckham-market",
+    "displayName": "Peckham Market",
+    "type": "business",
+    "openHours": { "start": 8, "end": 16 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "code": "off-map",
+    "displayName": "Off-map",
+    "type": "abstract"
+  }
+]

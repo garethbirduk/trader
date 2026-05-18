@@ -4,7 +4,12 @@ import { isTransportCapacity } from "./types.js";
 
 export interface InsertActorInput {
   readonly code: string;
-  readonly displayName: string;
+  /** Given name. Required. */
+  readonly firstName: string;
+  /** Family name. Omit / null for institutions and one-name characters. */
+  readonly lastName?: string | null;
+  /** Chip-friendly nickname or short label. Required. */
+  readonly shortName: string;
   readonly cash?: number;
   readonly transportCapacity?: TransportCapacity;
   readonly homeLocationId?: number | null;
@@ -24,6 +29,9 @@ interface ActorRow {
   id: number;
   code: string;
   display_name: string;
+  first_name: string;
+  last_name: string | null;
+  short_name: string;
   cash: number;
   current_location_id: number | null;
   home_location_id: number | null;
@@ -34,13 +42,28 @@ interface ActorRow {
   social_score: number;
 }
 
+function composeDisplayName(firstName: string, lastName: string | null): string {
+  if (lastName !== null && lastName.length > 0) {
+    return `${firstName} ${lastName}`;
+  }
+  return firstName;
+}
+
 function rowToActor(r: ActorRow): Actor {
   if (!isTransportCapacity(r.transport_capacity)) {
     throw new Error(`invalid transport_capacity in DB: ${r.transport_capacity}`);
   }
+  // first_name/short_name default to '' in the schema; if a legacy row
+  // doesn't have them, fall back to display_name so reads still work.
+  const firstName = r.first_name.length > 0 ? r.first_name : r.display_name;
+  const lastName = r.last_name ?? null;
+  const shortName = r.short_name.length > 0 ? r.short_name : firstName;
   return {
     id: r.id,
     code: r.code,
+    firstName,
+    lastName,
+    shortName,
     displayName: r.display_name,
     cash: r.cash,
     currentLocationId: r.current_location_id,
@@ -61,18 +84,27 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
   const isVirtual = input.isVirtual === true;
   const bribable = input.bribable === true;
   const socialScore = clamp01(input.socialScore ?? 0.5);
+  const firstName = input.firstName;
+  const lastName = input.lastName ?? null;
+  const shortName = input.shortName;
+  const displayName = composeDisplayName(firstName, lastName);
   const result = db
     .prepare(
-      `INSERT INTO actors (code, display_name, cash, transport_capacity,
+      `INSERT INTO actors (code, display_name, first_name, last_name, short_name,
+                           cash, transport_capacity,
                            home_location_id, lockup_location_id, is_virtual,
                            bribable, social_score)
-       VALUES (@code, @display_name, @cash, @transport_capacity,
+       VALUES (@code, @display_name, @first_name, @last_name, @short_name,
+               @cash, @transport_capacity,
                @home_location_id, @lockup_location_id, @is_virtual,
                @bribable, @social_score)`,
     )
     .run({
       code: input.code,
-      display_name: input.displayName,
+      display_name: displayName,
+      first_name: firstName,
+      last_name: lastName,
+      short_name: shortName,
       cash,
       transport_capacity: transportCapacity,
       home_location_id: homeLocationId,
@@ -84,7 +116,10 @@ export function insertActor(db: DB, input: InsertActorInput): Actor {
   return {
     id: result.lastInsertRowid,
     code: input.code,
-    displayName: input.displayName,
+    firstName,
+    lastName,
+    shortName,
+    displayName,
     cash,
     currentLocationId: null,
     homeLocationId,

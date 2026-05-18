@@ -29,6 +29,7 @@ import {
   HIGH_STREET_SHOPS,
   OFF_MAP_DEALER_CODES,
   OFF_MAP_MARKET_CODE,
+  loadSkinJson,
 } from "./cast.js";
 import {
   resolveEconomicsConfig,
@@ -285,19 +286,8 @@ export interface OpenSession {
  * different (e.g. a yuppie's "average electronics" anchor) can split
  * per-archetype later; v1 is one number per category.
  */
-const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map([
-  ["electrical", 50],
-  ["furniture", 70],
-  ["tools", 30],
-  ["decor", 20],
-  ["clothing", 40],
-  ["toys", 20],
-  ["luggage", 45],
-  ["food", 10],
-  ["safety", 50],
-  ["vehicles", 100],
-  ["novelty", 25],
-]);
+// Per-category "uninformed prior" anchors — data moved to JSON (TBD).
+const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map();
 
 /**
  * Per-category condition anchor in [0, 1] — the v2 condition arm's
@@ -318,98 +308,64 @@ const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map([
  * slightly below — knock-off and second-hand outflow is the dominant
  * channel.
  */
-const CATEGORY_CONDITION_ANCHORS: ReadonlyMap<string, number> = new Map([
-  ["electrical", 0.55],
-  ["furniture", 0.45],
-  ["tools", 0.35],
-  ["decor", 0.5],
-  ["clothing", 0.5],
-  ["toys", 0.4],
-  ["luggage", 0.4],
-  ["food", 0.3],
-  ["safety", 0.6],
-  ["vehicles", 0.3],
-  ["novelty", 0.4],
-]);
+// Per-category condition anchor — data moved to JSON (TBD).
+const CATEGORY_CONDITION_ANCHORS: ReadonlyMap<string, number> = new Map();
 
 const DAYS_MON_SUN: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
 const DAYS_THU_SUN: readonly number[] = [4, 5, 6, 7];
 const DAYS_SUN_THU: readonly number[] = [7, 1, 2, 3, 4];
 const DAYS_FRI_SAT: readonly number[] = [5, 6];
 
-const LOCATIONS: readonly LocationSpec[] = [
-  // Original cast's spaces.
-  { code: "peckham-flat", displayName: "Del's Flat", type: "home" },
-  { code: "lockup", displayName: "The Lock-up", type: "business", openHours: { start: 8, end: 20 } },
-  { code: "nags", displayName: "The Nag's Head", type: "pub", openHours: { start: 11, end: 23 }, openDaysOfWeek: DAYS_MON_SUN },
-  { code: "auction-house", displayName: "Sotheby's", type: "auction", openHours: { start: 8, end: 17 } },
-  { code: "boyce-auto-sales", displayName: "Boyce Autos", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "transworld-depot", displayName: "Transworld Depot", type: "business", openHours: { start: 6, end: 18 } },
-  { code: "lambeth-council-yard", displayName: "Council Yard", type: "civic", openHours: { start: 6, end: 17 } },
-  // Added from the wider canon.
-  { code: "peckham-market", displayName: "Peckham Market", type: "business", openHours: { start: 8, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "sids-cafe", displayName: "Sid's Café", type: "business", openHours: { start: 6, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "boycie-house", displayName: "Boyce's", type: "home" },
-  { code: "denzil-house", displayName: "Denzil's", type: "home" },
+/**
+ * Institutional accounting actors. Sotheby's and the off-map market
+ * are locations in the fiction; they live in `data/locations.json`.
+ * The engine still needs an actor id to route auction proceeds and
+ * off-map cash through, so each location gets a synthetic virtual
+ * actor seeded at run-setup time. `code` here must match the lookups
+ * downstream (`actorByCode.get("auction-house")` etc).
+ */
+interface AccountingActorSpec {
+  readonly code: string;
+  readonly firstName: string;
+  readonly shortName: string;
+  readonly locationCode: string;
+}
+const ACCOUNTING_ACTORS: readonly AccountingActorSpec[] = [
   {
-    code: "one-eleven-club",
-    displayName: "The 111 Club",
-    type: "pub",
-    // Engine envelope: 19→02 covers the late nights; planner sees a
-    // single span. Truth is the openSessions below.
-    openHours: { start: 19, end: 26 },
-    openSessions: [
-      { daysOfWeek: DAYS_SUN_THU, start: 19, end: 23 },
-      { daysOfWeek: DAYS_FRI_SAT, start: 19, end: 26 },
-    ],
+    code: "auction-house",
+    firstName: "Sotheby's",
+    shortName: "Sotheby's",
+    locationCode: "auction-house",
   },
-  { code: "starlight-rooms", displayName: "Starlight Rooms", type: "pub", openHours: { start: 20, end: 26 } },
-  { code: "police-station", displayName: "The Nick", type: "civic" },
-  { code: "post-office", displayName: "Post Office", type: "civic", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "betting-shop", displayName: "The Bookies", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "shamrock-club", displayName: "Shamrock Club", type: "pub", openHours: { start: 19, end: 26 } },
   {
-    code: "riverside-club",
-    displayName: "Down By The Riverside Club",
-    type: "pub",
-    // Envelope covers the wider Fri/Sat session (18→02); planner sees
-    // a single window. openSessions below is the truth — closed Sun/Mon.
-    openHours: { start: 18, end: 26 },
-    openSessions: [
-      { daysOfWeek: [2, 3, 4], start: 20, end: 24 },     // Tue–Thu 20:00–00:00
-      { daysOfWeek: DAYS_FRI_SAT, start: 18, end: 26 },  // Fri–Sat 18:00–02:00
-    ],
+    code: OFF_MAP_MARKET_CODE,
+    firstName: "Off-map Market",
+    shortName: "Off-map Market",
+    locationCode: "off-map",
   },
-  { code: "dirty-barrys", displayName: "Dirty Barry's", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "raquel-flat", displayName: "Raquel's", type: "home" },
-  { code: "cassandra-bank", displayName: "The Bank", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "parry-printers", displayName: "Parry Print", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "trigger-flat", displayName: "Trigger's", type: "home" },
-  { code: "albert-legion", displayName: "The Legion", type: "pub", openHours: { start: 12, end: 21 }, openDaysOfWeek: DAYS_THU_SUN },
-  { code: "mickey-jevon-flat", displayName: "Mickey & Jevon's", type: "home" },
-  { code: "cassandra-flat", displayName: "Cassandra's", type: "home" },
-  { code: "parry-house", displayName: "Parry's", type: "home" },
-  { code: "slater-flat", displayName: "Slater's", type: "home" },
-  { code: "off-map", displayName: "Off-map", type: "abstract" },
-  // ─── high-street shops (sell-direct destinations for dealers) ──────
-  // Two of each type to foster choice and competition. Each runs 9-17;
-  // their shopkeeper lives off-map and is at the shop during these hours.
-  { code: "goldfingers", displayName: "Goldfingers", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "ratners-peckham", displayName: "Ratners of Peckham", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "patels", displayName: "Patel's Newsagent", type: "business", openHours: { start: 7, end: 18 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "corner-shop", displayName: "The Corner Shop", type: "business", openHours: { start: 7, end: 18 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "wooden-soldier", displayName: "Wooden Soldier", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "toyland", displayName: "Toyland", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "sparks-electrical", displayName: "Sparks Electrical", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "hi-tech-hut", displayName: "Hi-Tech Hut", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "comfy-corner", displayName: "Comfy Corner", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  { code: "throne-co", displayName: "Throne & Co", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
-  // Vehicle-parts garages — proprietors are vehicle/tools specialists.
-  // Different shift patterns: Spanner runs a full-trade week (Mon-Sat
-  // early-start parts shop); Camshaft trades to a smarter Mon-Fri rhythm.
-  { code: "spanner-motors", displayName: "Spanner Motors", type: "business", openHours: { start: 8, end: 16 }, openDaysOfWeek: DAYS_MON_SAT },
-  { code: "camshaft-autos", displayName: "Camshaft Autos", type: "business", openHours: { start: 9, end: 17 }, openDaysOfWeek: DAYS_MON_FRI },
 ];
+
+// Location specs — loaded from ./data/locations.json at module load.
+interface LocationJson {
+  readonly code: string;
+  readonly displayName: string;
+  readonly type: LocationType;
+  readonly openHours?: { readonly start: number; readonly end: number };
+  readonly openDaysOfWeek?: readonly number[];
+  readonly openSessions?: readonly OpenSession[];
+}
+const LOCATIONS: readonly LocationSpec[] = loadSkinJson<readonly LocationJson[]>(
+  "data/locations.json",
+).map(
+  (j): LocationSpec => ({
+    code: j.code,
+    displayName: j.displayName,
+    type: j.type,
+    ...(j.openHours !== undefined ? { openHours: j.openHours } : {}),
+    ...(j.openDaysOfWeek !== undefined ? { openDaysOfWeek: j.openDaysOfWeek } : {}),
+    ...(j.openSessions !== undefined ? { openSessions: j.openSessions } : {}),
+  }),
+);
 
 /**
  * The item categories each shop "deals in" — drives the planner's
@@ -419,20 +375,8 @@ const LOCATIONS: readonly LocationSpec[] = [
  * Generalist shops (Patel's, Corner Shop) get a wide net so any stock
  * matches a little.
  */
-const SHOP_SPECIALTIES_BY_CODE: Readonly<Record<string, readonly string[]>> = {
-  goldfingers: ["decor", "novelty"],
-  "ratners-peckham": ["decor", "novelty"],
-  patels: ["food", "novelty", "clothing"],
-  "corner-shop": ["food", "novelty", "clothing", "tools", "safety"],
-  "wooden-soldier": ["toys", "novelty"],
-  toyland: ["toys", "novelty"],
-  "sparks-electrical": ["electrical", "tools"],
-  "hi-tech-hut": ["electrical", "tools"],
-  "comfy-corner": ["furniture", "decor"],
-  "throne-co": ["furniture", "decor"],
-  "spanner-motors": ["vehicles", "tools"],
-  "camshaft-autos": ["vehicles", "tools"],
-};
+// Shop specialties — data moved to JSON (TBD).
+const SHOP_SPECIALTIES_BY_CODE: Readonly<Record<string, readonly string[]>> = {};
 
 /**
  * Per-shop hourly footfall curves (todolist #2). Replaces the
@@ -443,23 +387,8 @@ const SHOP_SPECIALTIES_BY_CODE: Readonly<Record<string, readonly string[]>> = {
  * Hours not listed default to 0 (shop quiet that hour). All shops
  * close before 18:00.
  */
-const SHOP_FOOTFALL_BY_CODE: Readonly<Record<string, Readonly<Record<number, number>>>> = {
-  // Jewellers — lunchtime crowd, light browsing, gift hunters.
-  goldfingers: { 11: 1, 12: 3, 13: 4, 14: 3, 15: 2, 16: 2, 17: 1 },
-  "ratners-peckham": { 11: 1, 12: 3, 13: 4, 14: 3, 15: 2, 16: 2, 17: 1 },
-  // Corner shops — school run + lunch + after-work errands.
-  patels: { 7: 3, 8: 5, 9: 3, 12: 3, 13: 3, 15: 2, 16: 4, 17: 3 },
-  "corner-shop": { 7: 3, 8: 5, 9: 3, 12: 3, 13: 3, 15: 2, 16: 4, 17: 3 },
-  // Toy shops — after-school surge, mid-morning trickle.
-  "wooden-soldier": { 9: 1, 10: 2, 11: 2, 12: 2, 13: 2, 15: 4, 16: 5, 17: 3 },
-  toyland: { 9: 1, 10: 2, 11: 2, 12: 2, 13: 2, 15: 4, 16: 5, 17: 3 },
-  // Electrical / tools — tradesmen morning runs + after-work DIY.
-  "sparks-electrical": { 9: 3, 10: 3, 11: 2, 12: 2, 13: 2, 14: 2, 16: 3, 17: 4 },
-  "hi-tech-hut": { 9: 3, 10: 3, 11: 2, 12: 2, 13: 2, 14: 2, 16: 3, 17: 4 },
-  // Furniture — a long flat afternoon, couples browsing.
-  "comfy-corner": { 10: 1, 11: 2, 12: 3, 13: 3, 14: 3, 15: 3, 16: 2, 17: 2 },
-  "throne-co": { 10: 1, 11: 2, 12: 3, 13: 3, 14: 3, 15: 3, 16: 2, 17: 2 },
-};
+// Shop hourly footfall — data moved to JSON (TBD).
+const SHOP_FOOTFALL_BY_CODE: Readonly<Record<string, Readonly<Record<number, number>>>> = {};
 
 /**
  * Per-shop persona-weight multipliers (todolist #1). Biases the
@@ -469,31 +398,10 @@ const SHOP_FOOTFALL_BY_CODE: Readonly<Record<string, Readonly<Record<number, num
  *
  * Personas in the default bank: old-dears, students, mums, dads.
  */
+// Shop persona multipliers — data moved to JSON (TBD).
 const SHOP_PERSONA_MULTIPLIERS_BY_CODE: Readonly<
   Record<string, Readonly<Record<string, number>>>
-> = {
-  // Jewellers — old-dears (gift shoppers, aspirational) and mums
-  // dominate; students rarely buy jewellery; dads window-shop only.
-  goldfingers: { "old-dears": 1.8, mums: 1.3, students: 0.1, dads: 0.4 },
-  "ratners-peckham": { "old-dears": 1.8, mums: 1.3, students: 0.1, dads: 0.4 },
-  // Corner shops — mums and old-dears do the daily household runs;
-  // dads and students chip in but at a lower rate.
-  patels: { mums: 1.6, "old-dears": 1.4, students: 0.8, dads: 0.7 },
-  "corner-shop": { mums: 1.6, "old-dears": 1.4, students: 0.8, dads: 0.7 },
-  // Toy shops — mums and dads buying for kids, old-dears for
-  // grandkids, students barely register.
-  "wooden-soldier": { mums: 2.0, dads: 1.4, "old-dears": 0.9, students: 0.2 },
-  toyland: { mums: 2.0, dads: 1.4, "old-dears": 0.9, students: 0.2 },
-  // Electrical / tools — dads and tradesmen lean. Mums shop here
-  // for kettles and irons; old-dears rarely; students for fans and
-  // alarm clocks.
-  "sparks-electrical": { dads: 2.2, mums: 0.9, students: 1.1, "old-dears": 0.3 },
-  "hi-tech-hut": { dads: 2.2, mums: 0.9, students: 1.1, "old-dears": 0.3 },
-  // Furniture — mums and dads decide together; old-dears refresh
-  // a chair occasionally; students don't.
-  "comfy-corner": { mums: 1.4, dads: 1.3, "old-dears": 0.8, students: 0.2 },
-  "throne-co": { mums: 1.4, dads: 1.3, "old-dears": 0.8, students: 0.2 },
-};
+> = {};
 
 /**
  * Daily auction window. The engine picks up to (END-START+1) lots
@@ -517,218 +425,16 @@ interface ProfileSpec {
   readonly customerTypes?: readonly string[];
 }
 
-const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {
-  player: {
-    defaultAccuracy: 0.7,
-    defaultFlawDetection: 0.5,
-    perFlawDetection: { scam_bait: 0.2 },
-    customerTypes: ["market-punters", "families"],
-  },
-  boyce: {
-    defaultAccuracy: 0.7,
-    perCategory: { vehicles: 1.0, furniture: 0.8, luggage: 0.85, electrical: 0.4 },
-    defaultFlawDetection: 0.7,
-    perFlawDetection: { scam_bait: 0.4 },
-    customerTypes: ["yuppies", "businesses"],
-  },
-  denzil: {
-    defaultAccuracy: 0.6,
-    perCategory: { electrical: 0.9, luggage: 0.85, tools: 0.8 },
-    defaultFlawDetection: 0.5,
-    perFlawDetection: { dangerous: 0.85, fake: 0.4 },
-    customerTypes: ["tradesmen", "specialists"],
-  },
-  "monkey-harris": {
-    defaultAccuracy: 0.55,
-    perCategory: { decor: 0.85, toys: 0.8, novelty: 0.85 },
-    defaultFlawDetection: 0.5,
-    customerTypes: ["families", "market-punters"],
-  },
-  trigger: {
-    defaultAccuracy: 0.2,
-    defaultFlawDetection: 0.2,
-    perFlawDetection: {
-      faulty: 0.05,
-      fake: 0.05,
-      scam_bait: 0.05,
-      wrong_market: 0.05,
-    },
-    customerTypes: ["old-dears", "market-punters"],
-  },
-  mike: {
-    defaultAccuracy: 0.5,
-    perCategory: { food: 0.7 },
-    defaultFlawDetection: 0.4,
-    perFlawDetection: { faulty: 0.3, scam_bait: 0.3 },
-    customerTypes: ["market-punters"],
-  },
-  // Mickey Pearce — the confident schemer. Mediocre across the board
-  // with a slight knack for "wheeler-dealer" categories (clothing,
-  // novelty). His distinctive trait is set via `actor_arm_j` below:
-  // a HIGH price-j paired with LOW price-expertise produces the
-  // "decisive but wrong" archetype the doc anticipated. He commits
-  // tightly to centred-on-the-anchor beliefs, sounding confident
-  // while drifting toward generic category numbers regardless of the
-  // actual goods. The first actor in the cast to deliberately decouple
-  // j from expertise.
-  "mickey-pearce": {
-    defaultAccuracy: 0.35,
-    perCategory: { clothing: 0.5, novelty: 0.55 },
-    defaultFlawDetection: 0.3,
-    perFlawDetection: { scam_bait: 0.45 },
-    customerTypes: ["market-punters", "yuppies"],
-  },
-  "auction-house": {
-    defaultAccuracy: 0.5,
-    defaultFlawDetection: 0.5,
-  },
-  // ─── shopkeeper profiles ────────────────────────────────────────────
-  // Specialists are sharp inside their lane and noisy outside it. The
-  // wider buyer-ceiling fraction (75%, set per-call in run-sim.ts) plus
-  // accurate appraisals on their category means dealers can offload
-  // matched stock at near-RRP. General-store keepers are generalists
-  // with moderate accuracy across the board.
-  "cyril-diamond": {
-    defaultAccuracy: 0.3,
-    perCategory: { decor: 0.95, novelty: 0.85, clothing: 0.5 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["yuppies"],
-  },
-  "margaret-bracelet": {
-    defaultAccuracy: 0.3,
-    perCategory: { decor: 0.95, novelty: 0.85, clothing: 0.5 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["yuppies", "old-dears"],
-  },
-  "ranjit-patel": {
-    defaultAccuracy: 0.65,
-    defaultFlawDetection: 0.5,
-    customerTypes: ["market-punters", "families"],
-  },
-  "doreen-wicks": {
-    defaultAccuracy: 0.65,
-    defaultFlawDetection: 0.5,
-    customerTypes: ["market-punters", "old-dears"],
-  },
-  "albert-pickering": {
-    defaultAccuracy: 0.3,
-    perCategory: { toys: 0.95, novelty: 0.8 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["families"],
-  },
-  "linda-beasley": {
-    defaultAccuracy: 0.3,
-    perCategory: { toys: 0.95, novelty: 0.8 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["families"],
-  },
-  "eric-sparks": {
-    defaultAccuracy: 0.3,
-    perCategory: { electrical: 0.95, tools: 0.7 },
-    defaultFlawDetection: 0.8,
-    perFlawDetection: { dangerous: 0.9, faulty: 0.8 },
-    customerTypes: ["tradesmen", "businesses"],
-  },
-  "brian-yardley": {
-    defaultAccuracy: 0.3,
-    perCategory: { electrical: 0.95, tools: 0.7 },
-    defaultFlawDetection: 0.8,
-    perFlawDetection: { dangerous: 0.9, faulty: 0.8 },
-    customerTypes: ["yuppies", "tradesmen"],
-  },
-  "doris-whittle": {
-    defaultAccuracy: 0.3,
-    perCategory: { furniture: 0.95, decor: 0.7 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["families", "old-dears"],
-  },
-  "reg-throne": {
-    defaultAccuracy: 0.3,
-    perCategory: { furniture: 0.95, decor: 0.7 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["yuppies", "businesses"],
-  },
-  "eddie-spanner": {
-    defaultAccuracy: 0.3,
-    perCategory: { vehicles: 0.95, tools: 0.75 },
-    defaultFlawDetection: 0.8,
-    perFlawDetection: { dangerous: 0.9, faulty: 0.85 },
-    customerTypes: ["tradesmen", "dads"],
-  },
-  "vince-camshaft": {
-    defaultAccuracy: 0.3,
-    perCategory: { vehicles: 0.95, tools: 0.75 },
-    defaultFlawDetection: 0.8,
-    perFlawDetection: { dangerous: 0.9, faulty: 0.85 },
-    customerTypes: ["tradesmen", "dads"],
-  },
-  // ─── off-map dealers (the wider trade scene) ─────────────────────────
-  // Sharp inside their lane, generalist-noisy outside it. Each appears
-  // at Sotheby's during gallery+auction hours on weekdays, bids on
-  // categories they specialise in, and resells whatever they buy
-  // overnight (off-map resale handler) so they're back tomorrow with
-  // replenished cash.
-  "slough-stan": {
-    defaultAccuracy: 0.3,
-    perCategory: { electrical: 0.95, tools: 0.85 },
-    defaultFlawDetection: 0.65,
-    customerTypes: ["tradesmen"],
-  },
-  "croydon-carl": {
-    defaultAccuracy: 0.3,
-    perCategory: { vehicles: 0.95, furniture: 0.85 },
-    defaultFlawDetection: 0.6,
-    customerTypes: ["yuppies"],
-  },
-  "maidstone-maureen": {
-    defaultAccuracy: 0.3,
-    perCategory: { decor: 0.95, novelty: 0.85 },
-    defaultFlawDetection: 0.7,
-    customerTypes: ["yuppies", "old-dears"],
-  },
-  "wandsworth-wally": {
-    defaultAccuracy: 0.3,
-    perCategory: { clothing: 0.95, food: 0.85 },
-    defaultFlawDetection: 0.5,
-    customerTypes: ["market-punters"],
-  },
-  "brighton-bernie": {
-    defaultAccuracy: 0.3,
-    perCategory: { toys: 0.95, novelty: 0.85 },
-    defaultFlawDetection: 0.6,
-    customerTypes: ["families"],
-  },
-  "watford-wendy": {
-    defaultAccuracy: 0.3,
-    perCategory: { electrical: 0.85, decor: 0.85 },
-    defaultFlawDetection: 0.65,
-    customerTypes: ["yuppies"],
-  },
-  "romford-reg": {
-    defaultAccuracy: 0.3,
-    perCategory: { furniture: 0.95, tools: 0.85 },
-    defaultFlawDetection: 0.6,
-    customerTypes: ["tradesmen", "families"],
-  },
-  "kingston-kev": {
-    defaultAccuracy: 0.3,
-    perCategory: { decor: 0.85, toys: 0.85 },
-    defaultFlawDetection: 0.55,
-    customerTypes: ["families"],
-  },
-};
+// ACTOR_PROFILES — data moved to JSON (TBD).
+const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {};
 
 
 // Which actor codes participate in pub-deal / pool-claim autonomy. The
 // wider cast follows routines but stays out of the trading loop —
 // civilians don't claim pools, and Mike doesn't run pubdeals from
 // behind the bar.
-const TRADING_CODES: readonly string[] = [
-  "boyce",
-  "denzil",
-  "monkey-harris",
-  "trigger",
-];
+// Trading actor codes — data moved to JSON (TBD).
+const TRADING_CODES: readonly string[] = [];
 
 /**
  * Information-trader actors. They aren't necessarily traders of stock —
@@ -740,12 +446,8 @@ const TRADING_CODES: readonly string[] = [
  * Albert (Legion) — outsized lead capacity per encounter and a
  * location-flavoured gossip slant."
  */
-const INFO_TRADER_CODES: readonly string[] = [
-  "denzil",
-  "mike",
-  "sid",
-  "albert",
-];
+// Information-trader codes — data moved to JSON (TBD).
+const INFO_TRADER_CODES: readonly string[] = [];
 
 /**
  * Stage 6 — named external producers. Each has a category roster (the
@@ -768,72 +470,13 @@ interface VirtualProducerSpec {
   readonly provenancePhrases: readonly string[];
 }
 
-const VIRTUAL_PRODUCERS: readonly VirtualProducerSpec[] = [
-  {
-    code: "trader-bob",
-    displayName: "Trader Bob",
-    categories: ["electrical", "novelty", "tools"],
-    brokerCodes: ["denzil", "monkey-harris"],
-    provenancePhrases: [
-      "off a lorry on the A2",
-      "direct from a depot in Croydon",
-      "warehouse closure in Sidcup",
-      "no questions asked, mate",
-    ],
-  },
-  {
-    code: "wholesaler-cyril",
-    displayName: "Wholesaler Cyril",
-    categories: ["clothing", "luggage"],
-    brokerCodes: ["boyce", "mustapha"],
-    provenancePhrases: [
-      "bankrupt warehouse sale",
-      "catalogue returns",
-      "end-of-line stock from a chain shop",
-      "container straight off the Port of Tilbury",
-    ],
-  },
-  {
-    code: "reggies-estate",
-    displayName: "Reggie's Estate",
-    categories: ["furniture", "decor", "toys"],
-    brokerCodes: ["boyce", "monkey-harris"],
-    provenancePhrases: [
-      "estate clearance in Bromley",
-      "probate sale, deceased gentleman",
-      "house contents from a divorce in Eltham",
-      "garage clearout — owner emigrating",
-    ],
-  },
-  {
-    code: "salvage-sid",
-    displayName: "Salvage Sid",
-    categories: ["vehicles", "safety", "food"],
-    brokerCodes: ["denzil", "trigger"],
-    provenancePhrases: [
-      "site clearance in New Cross",
-      "bailiff's auction overflow",
-      "excess stock from a contract job",
-      "damaged but functional, guv",
-    ],
-  },
-];
+// Virtual producers — data moved to JSON (TBD).
+const VIRTUAL_PRODUCERS: readonly VirtualProducerSpec[] = [];
 
-const REACHABLE_BY_CATEGORY: Readonly<Record<string, readonly string[]>> = {
-  electrical: ["denzil", "monkey-harris", "ronnie-nelson"],
-  furniture: ["boyce", "monkey-harris"],
-  luggage: ["denzil"],
-  decor: ["monkey-harris"],
-  toys: ["monkey-harris"],
-  food: ["denzil"],
-  novelty: ["monkey-harris", "mustapha"],
-  tools: ["denzil"],
-  clothing: ["boyce", "monkey-harris", "mustapha"],
-  safety: ["denzil"],
-  vehicles: ["boyce"],
-};
+// Reachability by category — data moved to JSON (TBD).
+const REACHABLE_BY_CATEGORY: Readonly<Record<string, readonly string[]>> = {};
 
-const DEFAULT_REACHABLE_CODES: readonly string[] = ["denzil", "monkey-harris", "boyce"];
+const DEFAULT_REACHABLE_CODES: readonly string[] = [];
 
 /**
  * Free-form descriptive tags per character. Used by the webapp filter
@@ -843,60 +486,8 @@ const DEFAULT_REACHABLE_CODES: readonly string[] = ["denzil", "monkey-harris", "
  * Keys must match an actor `code` in ACTORS above. New code → empty
  * roles unless added here.
  */
-const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {
-  player: ["dealer"],
-  boyce: ["dealer"],
-  denzil: ["dealer"],
-  "monkey-harris": ["dealer"],
-  trigger: ["dealer"],
-  mike: ["pub"],
-  "auction-house": ["official"],
-  rodney: ["dealer"],
-  albert: ["household"],
-  marlene: ["household"],
-  corrine: ["household"],
-  "mickey-pearce": ["dealer"],
-  jevon: ["dealer"],
-  raquel: ["household"],
-  cassandra: ["household"],
-  "alan-parry": ["household"],
-  sid: ["pub"],
-  "alfie-flowers": ["supplier"],
-  "ronnie-nelson": ["supplier"],
-  mustapha: ["supplier"],
-  arnie: ["supplier"],
-  towser: ["supplier"],
-  "paddy-the-greek": ["supplier"],
-  slater: ["police"],
-  "pc-hoskins": ["police"],
-  "dirty-barry": ["fence"],
-  "eugene-mccarthy": ["villain"],
-  "driscoll-brothers": ["villain"],
-  // High-street shopkeepers — buyers in shop-deal autonomy.
-  "cyril-diamond": ["shopkeeper"],
-  "margaret-bracelet": ["shopkeeper"],
-  "ranjit-patel": ["shopkeeper"],
-  "doreen-wicks": ["shopkeeper"],
-  "albert-pickering": ["shopkeeper"],
-  "linda-beasley": ["shopkeeper"],
-  "eric-sparks": ["shopkeeper"],
-  "brian-yardley": ["shopkeeper"],
-  "doris-whittle": ["shopkeeper"],
-  "reg-throne": ["shopkeeper"],
-  "eddie-spanner": ["shopkeeper"],
-  "vince-camshaft": ["shopkeeper"],
-  // Off-map dealers — wider trade scene tag for the filter rail.
-  "slough-stan": ["off-map-dealer"],
-  "croydon-carl": ["off-map-dealer"],
-  "maidstone-maureen": ["off-map-dealer"],
-  "wandsworth-wally": ["off-map-dealer"],
-  "brighton-bernie": ["off-map-dealer"],
-  "watford-wendy": ["off-map-dealer"],
-  "romford-reg": ["off-map-dealer"],
-  "kingston-kev": ["off-map-dealer"],
-  // External-economy account — invisible, used by the resale handler.
-  "off-map-market": ["off-map-market"],
-};
+// Actor roles — data moved to JSON (TBD).
+const ACTOR_ROLES: Readonly<Record<string, readonly string[]>> = {};
 
 export interface SkinSeedOptions {
   readonly runLengthDays?: number;
@@ -985,7 +576,9 @@ export function seedPlaceholderSkin(
     }
     const a = insertActor(db, {
       code: spec.code,
-      displayName: spec.displayName,
+      firstName: spec.firstName,
+      ...(spec.lastName !== undefined ? { lastName: spec.lastName } : {}),
+      shortName: spec.shortName,
       cash: spec.cash,
       transportCapacity: spec.transportCapacity,
       homeLocationId: homeId,
@@ -1063,6 +656,32 @@ export function seedPlaceholderSkin(
     }
   }
 
+  // Institutional accounting actors. Sotheby's and the Off-map Market
+  // are locations in the fiction, not characters — but the engine
+  // needs an actor id to route auction proceeds and off-map cash
+  // through. Seeded as virtual actors so the cast UI keeps them out
+  // of the main roster.
+  for (const acc of ACCOUNTING_ACTORS) {
+    const locId = locByCode.get(acc.locationCode);
+    if (locId === undefined) {
+      throw new Error(
+        `accounting actor ${acc.code} references unknown location ${acc.locationCode}`,
+      );
+    }
+    const a = insertActor(db, {
+      code: acc.code,
+      firstName: acc.firstName,
+      shortName: acc.shortName,
+      cash: 0,
+      transportCapacity: "none",
+      homeLocationId: locId,
+      lockupLocationId: locId,
+      isVirtual: true,
+    });
+    actorByCode.set(acc.code, a.id);
+    setActorLocation(db, a.id, locId);
+  }
+
   const playerId = actorByCode.get("player");
   const auctionHouseId = actorByCode.get("auction-house");
   // Resolve role tags: skin-defined codes → live actor ids.
@@ -1077,6 +696,10 @@ export function seedPlaceholderSkin(
     if (spec.shortName === undefined) continue;
     const id = actorByCode.get(spec.code);
     if (id !== undefined) shortNameByActorId.set(id, spec.shortName);
+  }
+  for (const acc of ACCOUNTING_ACTORS) {
+    const id = actorByCode.get(acc.code);
+    if (id !== undefined) shortNameByActorId.set(id, acc.shortName);
   }
   if (playerId === undefined || auctionHouseId === undefined) {
     throw new Error("placeholder skin must seed player and auction-house actors");
@@ -1339,7 +962,8 @@ export function seedPlaceholderSkin(
     if (brokerActorIds.length === 0) continue;
     const a = insertActor(db, {
       code: spec.code,
-      displayName: spec.displayName,
+      firstName: spec.displayName,
+      shortName: spec.displayName,
       cash: 0,
       transportCapacity: "none",
       isVirtual: true,
@@ -1392,52 +1016,8 @@ export function seedPlaceholderSkin(
     ...(actorByCode.get("slater") !== undefined
       ? { patrolOfficerActorId: actorByCode.get("slater")! }
       : {}),
-    patrolOfficers: (() => {
-      const officers: PatrolOfficerSpec[] = [];
-      const buildBeat = (
-        actorCode: string,
-        weights: readonly [string, number][],
-        activeHours: ReadonlySet<number>,
-      ): void => {
-        const officerActorId = actorByCode.get(actorCode);
-        if (officerActorId === undefined) return;
-        const candidates: { locationId: number; weight: number }[] = [];
-        for (const [code, weight] of weights) {
-          const id = locByCode.get(code);
-          if (id !== undefined) candidates.push({ locationId: id, weight });
-        }
-        if (candidates.length === 0) return;
-        officers.push({ officerActorId, candidates, activeHours });
-      };
-      // Slater — station-heavy beat across his 08-17 shift. The
-      // venues where dealing happens (Nag's, Peckham Market, Sid's
-      // caff) get smaller weights so he turns up there occasionally.
-      buildBeat(
-        "slater",
-        [
-          ["police-station", 40],
-          ["peckham-market", 25],
-          ["nags", 15],
-          ["sids-cafe", 10],
-          ["hard-knock-cafe", 10],
-        ],
-        new Set([8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
-      );
-      // Hoskins — lighter presence, 09-15 with a small 3-venue
-      // beat. Supporting cast: rarely the limiting factor, but
-      // adds occasional risk when he overlaps with Slater on the
-      // same venue.
-      buildBeat(
-        "pc-hoskins",
-        [
-          ["police-station", 50],
-          ["peckham-market", 30],
-          ["nags", 20],
-        ],
-        new Set([9, 10, 11, 12, 13, 14, 15]),
-      );
-      return officers;
-    })(),
+    // Patrol officers — data moved to JSON (TBD).
+    patrolOfficers: [] as PatrolOfficerSpec[],
     flexibleDailyModeActorIds,
     locationByCode: locByCode,
     openSessionsByCode,

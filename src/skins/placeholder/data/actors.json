@@ -1,0 +1,97 @@
+[
+  {
+    "code": "player",
+    "firstName": "Derek",
+    "lastName": "Trotter",
+    "shortName": "Del Boy",
+    "cash": 2000,
+    "socialScore": 0.75,
+    "homeLocation": "peckham-flat",
+    "defaultLocation": "peckham-flat",
+    "lockupLocation": "lockup",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 6, "end": 23 },
+    "flexibleDailyMode": true,
+    "schedule": [
+      { "from": 6, "to": 8, "location": "peckham-flat" },
+      { "from": 8, "to": 9, "location": "lockup" },
+      { "from": 9, "to": 17, "location": "FLEXIBLE" },
+      { "from": 17, "to": 19, "location": "peckham-flat" },
+      { "from": 19, "to": 23, "location": "nags" },
+      { "from": 23, "to": 6, "location": "peckham-flat" }
+    ]
+  },
+  {
+    "code": "rodney",
+    "firstName": "Rodney",
+    "lastName": "Trotter",
+    "shortName": "Rodney",
+    "cash": 200,
+    "socialScore": 0.45,
+    "homeLocation": "peckham-flat",
+    "defaultLocation": "peckham-flat",
+    "transportCapacity": "van",
+    "awakeHours": { "start": 8, "end": 22 },
+    "flexibleDailyMode": true,
+    "schedule": [
+      { "from": 8, "to": 9, "location": "peckham-flat" },
+      { "from": 9, "to": 17, "location": "FLEXIBLE" },
+      { "from": 19, "to": 22, "location": "nags" },
+      { "from": 22, "to": 8, "location": "peckham-flat" }
+    ]
+  },
+  {
+    "code": "boyce",
+    "firstName": "Terrence",
+    "lastName": "Boyce",
+    "shortName": "Boycie",
+    "cash": 5000,
+    "socialScore": 0.7,
+    "homeLocation": "boycie-house",
+    "defaultLocation": "boyce-auto-sales",
+    "lockupLocation": "boyce-auto-sales",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 23 },
+    "flexibleDailyMode": true,
+    "schedule": [
+      { "from": 8, "to": 9, "location": "boycie-house" },
+      { "from": 9, "to": 19, "location": "FLEXIBLE" },
+      { "from": 19, "to": 22, "location": "nags" },
+      { "from": 22, "to": 8, "location": "boycie-house" }
+    ]
+  },
+  {
+    "code": "mike",
+    "firstName": "Mike",
+    "lastName": "Fisher",
+    "shortName": "Mike",
+    "cash": 600,
+    "socialScore": 0.85,
+    "homeLocation": "nags",
+    "defaultLocation": "nags",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 7, "end": 23 },
+    "schedule": [
+      { "from": 0, "to": 24, "location": "nags" }
+    ]
+  },
+  {
+    "code": "trigger",
+    "firstName": "Colin",
+    "lastName": "Ball",
+    "shortName": "Trigger",
+    "cash": 200,
+    "socialScore": 0.2,
+    "homeLocation": "trigger-flat",
+    "defaultLocation": "peckham-flat",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 6, "end": 23 },
+    "schedule": [
+      { "from": 8, "to": 12, "location": "FLEXIBLE" },
+      { "from": 12, "to": 13, "location": "sids-cafe" },
+      { "from": 13, "to": 17, "location": "FLEXIBLE" },
+      { "from": 17, "to": 23, "location": "nags" },
+      { "from": 23, "to": 8, "location": "trigger-flat" }
+    ]
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "code": "kettles",
+    "displayName": "Kettles",
+    "category": "electrical",
+    "baseValue": 24,
+    "spawnWeight": 14,
+    "size": "small",
+    "targetCustomers": ["families"]
+  },
+  {
+    "code": "microwaves",
+    "displayName": "Microwaves",
+    "category": "electrical",
+    "baseValue": 100,
+    "spawnWeight": 12,
+    "size": "mid",
+    "targetCustomers": ["families", "businesses"]
+  },
+  {
+    "code": "tables",
+    "displayName": "Tables",
+    "category": "furniture",
+    "baseValue": 40,
+    "spawnWeight": 12,
+    "size": "large",
+    "targetCustomers": ["families", "businesses"]
+  },
+  {
+    "code": "lego-sets",
+    "displayName": "Lego sets",
+    "category": "toys",
+    "baseValue": 30,
+    "spawnWeight": 10,
+    "size": "small",
+    "targetCustomers": ["families"]
+  },
+  {
+    "code": "vases",
+    "displayName": "Ceramic vases",
+    "category": "decor",
+    "baseValue": 28,
+    "spawnWeight": 9,
+    "size": "small",
+    "targetCustomers": ["old-dears", "families"]
+  }
+]
