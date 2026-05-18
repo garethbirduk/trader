@@ -171,7 +171,7 @@ export function BeliefChip({
               {total !== null ? (
                 <>
                   <span className="stock-chip-sep">=</span>
-                  <span className="stock-chip-total">{total}</span>
+                  <span className="stock-chip-total">£{total}</span>
                 </>
               ) : null}
             </>
