@@ -13,8 +13,8 @@
       "y": 330
     },
     "auction-house": {
-      "x": 920,
-      "y": -90
+      "x": 860,
+      "y": 100
     },
     "one-eleven-club": {
       "x": 990,
@@ -25,8 +25,8 @@
       "y": 150
     },
     "off-map": {
-      "x": 1700,
-      "y": 90
+      "x": 1670,
+      "y": 140
     },
     "raquel-flat": {
       "x": 320,
@@ -113,8 +113,8 @@
       "y": 310
     },
     "riverside-club": {
-      "x": 1170,
-      "y": -100
+      "x": 1080,
+      "y": 80
     },
     "goldfingers": {
       "x": 230,
@@ -365,6 +365,10 @@
     "wp_23": {
       "x": 430,
       "y": 370
+    },
+    "wp_2": {
+      "x": 970,
+      "y": 110
     }
   },
   "edges": [
@@ -471,10 +475,6 @@
     [
       "wp_18",
       "one-eleven-club"
-    ],
-    [
-      "one-eleven-club",
-      "auction-house"
     ],
     [
       "auction-house",
@@ -803,6 +803,22 @@
     [
       "driscoll-brothers-home",
       "wp_17"
+    ],
+    [
+      "riverside-club",
+      "starlight-rooms"
+    ],
+    [
+      "auction-house",
+      "wp_2"
+    ],
+    [
+      "wp_2",
+      "one-eleven-club"
+    ],
+    [
+      "wp_2",
+      "riverside-club"
     ]
   ],
   "offMap": {
