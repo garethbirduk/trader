@@ -3206,6 +3206,48 @@ svg.graph-map:active { cursor: grabbing; }
 }
 
 /* ────────────────────────────────────────────────────────────────
+ * Editor pane — DEV + admin-only RHS tab with its own sub-tab strip
+ * (Cast / Map). Cast hosts CharacterEditor; Map hosts MapEditor.
+ * ──────────────────────────────────────────────────────────────── */
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.editor-subtabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 0 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.editor-subtab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--muted);
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px 3px 0 0;
+}
+.editor-subtab:hover { color: var(--text); }
+.editor-subtab-active {
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+.editor-subbody {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* ────────────────────────────────────────────────────────────────
  * Character editor (DEV + admin-only)
  * ──────────────────────────────────────────────────────────────── */
 .char-editor {

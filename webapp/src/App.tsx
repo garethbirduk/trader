@@ -11,8 +11,10 @@ import { SelectionChips } from "./components/SelectionChips.js";
 import { CalendarView } from "./components/CalendarView.js";
 import { MapGraph } from "./components/MapGraph.js";
 import { CharacterEditor } from "./components/CharacterEditor.js";
+import { MapEditor } from "./components/MapEditor.js";
 
 export type RhsTab = "calendar" | "map" | "editor";
+export type EditorSubTab = "cast" | "map";
 
 const DEV = import.meta.env.DEV;
 
@@ -44,6 +46,7 @@ export function App() {
   const [hour, setHour] = useState(0);
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
   const [rhsTab, setRhsTab] = useState<RhsTab>("calendar");
+  const [editorSubTab, setEditorSubTab] = useState<EditorSubTab>("cast");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -106,6 +109,8 @@ export function App() {
           setTopTab={setTopTab}
           rhsTab={rhsTab}
           setRhsTab={setRhsTab}
+          editorSubTab={editorSubTab}
+          setEditorSubTab={setEditorSubTab}
         />
       </SelectionSetProvider>
     </PovProvider>
@@ -122,6 +127,8 @@ interface LoadedProps {
   readonly setTopTab: (t: SidebarTopTab) => void;
   readonly rhsTab: RhsTab;
   readonly setRhsTab: (t: RhsTab) => void;
+  readonly editorSubTab: EditorSubTab;
+  readonly setEditorSubTab: (t: EditorSubTab) => void;
 }
 
 const LEFT_PANEL_KEY = "trader-left-panel-px";
@@ -298,9 +305,9 @@ function Loaded(props: LoadedProps) {
                 className={`rhs-tab ${props.rhsTab === "editor" ? "rhs-tab-active" : ""}`}
                 aria-selected={props.rhsTab === "editor"}
                 onClick={() => props.setRhsTab("editor")}
-                title="Edit cast & relationships (dev / admin only)"
+                title="Cast & map editors (dev / admin only)"
               >
-                Cast
+                Editor
               </button>
             ) : null}
           </div>
@@ -315,7 +322,35 @@ function Loaded(props: LoadedProps) {
                 onSelect={(s) => set.replace(s)}
               />
             ) : props.rhsTab === "editor" && DEV && pov.kind === "admin" ? (
-              <CharacterEditor />
+              <div className="editor-pane">
+                <div className="editor-subtabs" role="tablist" aria-label="Editor section">
+                  <button
+                    type="button"
+                    role="tab"
+                    className={`editor-subtab ${props.editorSubTab === "cast" ? "editor-subtab-active" : ""}`}
+                    aria-selected={props.editorSubTab === "cast"}
+                    onClick={() => props.setEditorSubTab("cast")}
+                  >
+                    Cast
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    className={`editor-subtab ${props.editorSubTab === "map" ? "editor-subtab-active" : ""}`}
+                    aria-selected={props.editorSubTab === "map"}
+                    onClick={() => props.setEditorSubTab("map")}
+                  >
+                    Map
+                  </button>
+                </div>
+                <div className="editor-subbody">
+                  {props.editorSubTab === "cast" ? (
+                    <CharacterEditor />
+                  ) : (
+                    <MapEditor dump={dump} />
+                  )}
+                </div>
+              </div>
             ) : (
               <MapGraph
                 dump={dump}
