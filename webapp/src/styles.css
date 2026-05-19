@@ -3394,6 +3394,153 @@ svg.graph-map:active { cursor: grabbing; }
   border-color: var(--accent);
 }
 
+/* ────────────────────────────────────────────────────────────────
+ * Business hours editor — table view, 7 day columns each with
+ * (open, close) sub-columns. One row per venue.
+ * ──────────────────────────────────────────────────────────────── */
+.biz-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.biz-editor-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 8px 12px 16px;
+}
+.biz-table {
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.biz-table th,
+.biz-table td {
+  text-align: center;
+  padding: 2px 4px;
+  border-bottom: 1px dashed var(--panel-2);
+}
+.biz-th-venue,
+.biz-td-venue {
+  text-align: left;
+  white-space: nowrap;
+  min-width: 180px;
+  padding-right: 12px;
+}
+.biz-th-day {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-top: 6px;
+}
+.biz-th-subrow th {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: normal;
+  padding-bottom: 4px;
+}
+.biz-group-row td.biz-group-label {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 10px 4px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.biz-row-dirty {
+  background: rgba(255, 184, 77, 0.06);
+}
+.biz-td-hour {
+  padding: 1px 2px;
+}
+.biz-td-closed .biz-hour-input {
+  background: transparent;
+  color: var(--muted);
+}
+.biz-hour-input {
+  width: 38px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: 11px;
+  border-radius: 2px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.biz-hour-input::-webkit-outer-spin-button,
+.biz-hour-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.biz-hour-input:focus {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+/* Quick-apply preset cell on the right of each row. Two mutually-
+   exclusive button groups (days + hours) plus an Apply button that
+   overwrites the whole row when both are selected. */
+.biz-th-preset {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding-left: 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.biz-td-preset {
+  padding-left: 14px;
+  text-align: left;
+}
+.biz-preset {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.biz-preset-group {
+  display: inline-flex;
+  gap: 2px;
+}
+.biz-preset-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: inherit;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.biz-preset-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.biz-preset-btn-on {
+  background: rgba(255, 184, 77, 0.18);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.biz-preset-apply {
+  background: var(--accent);
+  color: #1a1108;
+  border: 1px solid var(--accent);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.biz-preset-apply:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* Chip-styled location picker (closed state + popover) — replaces
    the native <select> so options can be rendered as chips. */
 .loc-picker {

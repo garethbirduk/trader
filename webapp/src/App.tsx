@@ -12,9 +12,10 @@ import { CalendarView } from "./components/CalendarView.js";
 import { MapGraph } from "./components/MapGraph.js";
 import { CharacterEditor } from "./components/CharacterEditor.js";
 import { MapEditor } from "./components/MapEditor.js";
+import { BusinessHoursEditor } from "./components/BusinessHoursEditor.js";
 
 export type RhsTab = "calendar" | "map" | "editor";
-export type EditorSubTab = "cast" | "map";
+export type EditorSubTab = "cast" | "businesses" | "map";
 
 const DEV = import.meta.env.DEV;
 
@@ -336,6 +337,15 @@ function Loaded(props: LoadedProps) {
                   <button
                     type="button"
                     role="tab"
+                    className={`editor-subtab ${props.editorSubTab === "businesses" ? "editor-subtab-active" : ""}`}
+                    aria-selected={props.editorSubTab === "businesses"}
+                    onClick={() => props.setEditorSubTab("businesses")}
+                  >
+                    Businesses
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
                     className={`editor-subtab ${props.editorSubTab === "map" ? "editor-subtab-active" : ""}`}
                     aria-selected={props.editorSubTab === "map"}
                     onClick={() => props.setEditorSubTab("map")}
@@ -346,6 +356,8 @@ function Loaded(props: LoadedProps) {
                 <div className="editor-subbody">
                   {props.editorSubTab === "cast" ? (
                     <CharacterEditor />
+                  ) : props.editorSubTab === "businesses" ? (
+                    <BusinessHoursEditor />
                   ) : (
                     <MapEditor dump={dump} />
                   )}
