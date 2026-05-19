@@ -13,6 +13,7 @@ import { MapGraph } from "./components/MapGraph.js";
 import { CharacterEditor } from "./components/CharacterEditor.js";
 import { MapEditor } from "./components/MapEditor.js";
 import { BusinessHoursEditor } from "./components/BusinessHoursEditor.js";
+import { SceneDeck } from "./components/SceneDeck.js";
 
 export type RhsTab = "calendar" | "map" | "editor";
 export type EditorSubTab = "residences" | "actors" | "businesses" | "map";
@@ -137,6 +138,11 @@ const DEFAULT_LEFT_PX = 320;
 const MIN_LEFT_PX = 220;
 const MIN_RIGHT_PX = 200;
 
+const LOWER_PANEL_KEY = "trader-lower-panel-px";
+const DEFAULT_LOWER_PX = 340;
+const MIN_LOWER_PX = 120;
+const MIN_UPPER_PX = 200;
+
 function readPersistedPx(key: string, min: number, fallback: number): number {
   try {
     const raw = localStorage.getItem(key);
@@ -155,8 +161,12 @@ function Loaded(props: LoadedProps) {
   const { pov } = usePov();
   const set = useSelectionSet();
   const appRef = useRef<HTMLDivElement>(null);
+  const rhsRef = useRef<HTMLDivElement>(null);
   const [leftPx, setLeftPx] = useState<number>(() =>
     readPersistedPx(LEFT_PANEL_KEY, MIN_LEFT_PX, DEFAULT_LEFT_PX),
+  );
+  const [lowerPx, setLowerPx] = useState<number>(() =>
+    readPersistedPx(LOWER_PANEL_KEY, MIN_LOWER_PX, DEFAULT_LOWER_PX),
   );
   useEffect(() => {
     try {
@@ -165,6 +175,13 @@ function Loaded(props: LoadedProps) {
       /* quota / disabled */
     }
   }, [leftPx]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOWER_PANEL_KEY, String(Math.round(lowerPx)));
+    } catch {
+      /* quota / disabled */
+    }
+  }, [lowerPx]);
 
   const onLeftResizeDown = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -179,6 +196,31 @@ function Loaded(props: LoadedProps) {
       const next = startLeft + delta;
       const maxLeft = Math.max(MIN_LEFT_PX, totalW - MIN_RIGHT_PX - 6);
       setLeftPx(Math.min(maxLeft, Math.max(MIN_LEFT_PX, next)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
+  const onLowerResizeDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const rhs = rhsRef.current;
+    if (rhs === null) return;
+    const startY = e.clientY;
+    const startLower = lowerPx;
+    const totalH = rhs.getBoundingClientRect().height;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    const onMove = (ev: PointerEvent) => {
+      // Dragging UP = lower pane grows (delta negative → next bigger).
+      const delta = startY - ev.clientY;
+      const next = startLower + delta;
+      const maxLower = Math.max(MIN_LOWER_PX, totalH - MIN_UPPER_PX - 6);
+      setLowerPx(Math.min(maxLower, Math.max(MIN_LOWER_PX, next)));
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
@@ -209,6 +251,7 @@ function Loaded(props: LoadedProps) {
         data-pov={pov.kind}
         style={{
           ["--left-panel-w" as string]: `${leftPx}px`,
+          ["--lower-panel-h" as string]: `${lowerPx}px`,
         }}
       >
         <header className="header">
@@ -278,8 +321,9 @@ function Loaded(props: LoadedProps) {
         >
           <span className="left-resizer-grip" />
         </div>
-        <main className="rhs">
+        <main className="rhs" ref={rhsRef}>
           <SelectionChips dump={dump} />
+          <div className="main-upper">
           <div className="rhs-tabs" role="tablist" aria-label="RHS view">
             <button
               type="button"
@@ -384,6 +428,26 @@ function Loaded(props: LoadedProps) {
                 onSelect={(s) => set.replace(s)}
               />
             )}
+          </div>
+          </div>
+          <div
+            className="lower-resizer"
+            role="separator"
+            aria-orientation="horizontal"
+            title="Drag to resize"
+            onPointerDown={onLowerResizeDown}
+          >
+            <span className="lower-resizer-grip" />
+          </div>
+          <div className="main-lower">
+            <SceneDeck
+              dump={dump}
+              day={day}
+              hour={hour}
+              snapshot={snapshot}
+              onSelect={(s) => set.replace(s)}
+              povActorId={pov.kind === "actor" ? pov.actorId : null}
+            />
           </div>
         </main>
       </div>

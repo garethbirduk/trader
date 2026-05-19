@@ -20,6 +20,9 @@ interface Props {
   readonly hour: number;
   readonly snapshot: DaySnapshot | null;
   readonly onSelect: (s: Selection) => void;
+  /** Player POV filter: when non-null, only events the actor participated
+   *  in survive. Admin (null) sees the full fan-out. */
+  readonly povActorId: number | null;
 }
 
 interface Scene {
@@ -28,16 +31,55 @@ interface Scene {
   readonly render: () => JSX.Element;
 }
 
+/** Strict participation — does this event involve the given actor? */
+function eventTouchesActor(e: RunEvent, actorId: number): boolean {
+  switch (e.type) {
+    case "auction.cleared":
+    case "auction.unsold":
+    case "auction.written_off": {
+      const attendees = (e.attendees as readonly number[] | undefined) ?? [];
+      return attendees.includes(actorId);
+    }
+    case "auction.lot-inspected":
+      return e.actorId === actorId;
+    case "pubdeal.agreed":
+    case "pubdeal.walked":
+    case "pubdeal.attempted":
+      return e.sellerActorId === actorId || e.buyerActorId === actorId;
+    case "market.hour-summary":
+      return e.sellerActorId === actorId;
+    case "gossip.exchanged": {
+      const participants =
+        (e.participantActorIds as readonly number[] | undefined) ?? [];
+      return participants.includes(actorId);
+    }
+    case "authority.raid":
+      return e.actorId === actorId;
+    case "clearance.booked":
+      return e.bookerActorId === actorId;
+    case "clearance.resolved": {
+      if (e.winnerActorId === actorId) return true;
+      const losers = (e.loserActorIds as readonly number[] | undefined) ?? [];
+      return losers.includes(actorId);
+    }
+    default:
+      return false;
+  }
+}
+
 /**
  * Live "what's happening right now" deck for the current cursor hour.
  * Each in-progress activity (auction, pub deal, gossip) becomes its own
  * tab; once the cursor moves past the hour, the scene disappears.
  */
-export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
-  const eventsThisHour = useMemo(
-    () => dump.events.filter((e) => e.at.day === day && e.at.hour === hour),
-    [dump.events, day, hour],
-  );
+export function SceneDeck({ dump, day, hour, snapshot, onSelect, povActorId }: Props) {
+  const eventsThisHour = useMemo(() => {
+    const all = dump.events.filter(
+      (e) => e.at.day === day && e.at.hour === hour,
+    );
+    if (povActorId === null) return all;
+    return all.filter((e) => eventTouchesActor(e, povActorId));
+  }, [dump.events, day, hour, povActorId]);
 
   const scenes = useMemo<readonly Scene[]>(() => {
     const list: Scene[] = [];
@@ -64,7 +106,12 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
     // Legacy single-hour mode falls back to listed-but-not-cleared.
     const docketMode =
       dump.auctionStartHour !== undefined && dump.auctionEndHour !== undefined;
-    const onViewLots = isAuctionHour
+    // Player POV: only surface "on view" lots when the player is
+    // actually at the auction this hour (i.e. has an attendance event
+    // in the filtered set). Admin always sees on-view.
+    const playerAtAuction =
+      povActorId === null || auctionEvents.length > 0;
+    const onViewLots = isAuctionHour && playerAtAuction
       ? (snapshot?.auctionLots ?? []).filter((l) => {
           if (eventLotIds.has(l.id)) return false;
           if (docketMode) {
@@ -215,7 +262,7 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect }: Props) {
     }
 
     return list;
-  }, [eventsThisHour, snapshot, dump, day, onSelect]);
+  }, [eventsThisHour, snapshot, dump, day, onSelect, povActorId]);
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
   useEffect(() => {
