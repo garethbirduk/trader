@@ -78,7 +78,7 @@ function runFullSim(seed: string, days: number) {
   registerPubDealAutonomy(world, {
     pubLocationIds: skin.pubLocationIds,
     npcActorIds: [...skin.policies.keys()],
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
   });
 
   world.runToCompletion();

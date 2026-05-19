@@ -75,11 +75,11 @@ describe("placeholder skin", () => {
     const triggerProfile = result.bidderProfiles.get(trigger!.id);
 
     // Denzil's "good at electricals" shows up in his per-category map.
-    expect(denzilProfile?.appraisalAccuracy.get("electrical")).toBeGreaterThan(0.8);
-    expect(denzilProfile?.defaultAppraisalAccuracy).toBeLessThan(0.8);
+    expect(denzilProfile?.priceAccuracy.get("electrical")).toBeGreaterThan(0.8);
+    expect(denzilProfile?.defaultPriceAccuracy).toBeLessThan(0.8);
 
     // Trigger has a low default and no per-category specialisations.
-    expect(triggerProfile?.defaultAppraisalAccuracy).toBeLessThan(0.5);
-    expect(triggerProfile?.appraisalAccuracy.size).toBe(0);
+    expect(triggerProfile?.defaultPriceAccuracy).toBeLessThan(0.5);
+    expect(triggerProfile?.priceAccuracy.size).toBe(0);
   });
 });

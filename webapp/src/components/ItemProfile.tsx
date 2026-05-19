@@ -160,7 +160,7 @@ function RetailEstimateTable({
   // of the dealer-ish roles — civilians' "estimates" aren't meaningful.
   const traders = dump.actors.filter(
     (a) =>
-      a.bidderProfile !== undefined &&
+      a.knowledgeProfile !== undefined &&
       (a.roles ?? []).some((r) =>
         ["dealer", "fence", "player"].includes(r),
       ),
@@ -200,7 +200,7 @@ function RetailEstimateTable({
                   );
                 }
                 const anchor = tieredAnchorFor(dump, item.category, t);
-                const band = priceBandFor(a.bidderProfile!, item.category, truth, anchor, a.armJ?.price);
+                const band = priceBandFor(a.knowledgeProfile!, item.category, truth, anchor, a.armJ?.price);
                 const centre = Math.max(0, Math.round(band.centre));
                 const low = Math.max(0, Math.round(band.low));
                 const high = Math.max(0, Math.round(band.high));

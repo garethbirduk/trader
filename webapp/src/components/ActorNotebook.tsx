@@ -136,9 +136,9 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
 
   // Bidder profile lookup.
   const profileByActor = useMemo(() => {
-    const out = new Map<number, NonNullable<RunDump["actors"][number]["bidderProfile"]>>();
+    const out = new Map<number, NonNullable<RunDump["actors"][number]["knowledgeProfile"]>>();
     for (const a of dump.actors) {
-      if (a.bidderProfile !== undefined) out.set(a.id, a.bidderProfile);
+      if (a.knowledgeProfile !== undefined) out.set(a.id, a.knowledgeProfile);
     }
     return out;
   }, [dump.actors]);
@@ -150,7 +150,7 @@ export function ActorNotebook({ dump, day, hour, snapshot, actorId, onSelect }: 
     const p = profileByActor.get(cpId);
     if (p === undefined) return null;
     const category = categoryByItem.get(itemKindId) ?? "_";
-    return p.appraisalAccuracy[category] ?? p.defaultAppraisalAccuracy;
+    return p.priceAccuracy[category] ?? p.defaultPriceAccuracy;
   }
 
   // Stock aggregated by item kind.

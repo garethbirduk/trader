@@ -120,7 +120,7 @@ export interface RunActor {
    *  with dumps generated before the character arm shipped. */
   readonly socialScore?: number;
   /** Bidder profile snapshot — used to compute retail estimates. */
-  readonly bidderProfile?: BidderProfileDump;
+  readonly knowledgeProfile?: KnowledgeProfileDump;
   /** Per-arm j overrides from the engine's `actor_arm_j` table —
    *  surfaces "stored j != expertise" cases (decisive-but-wrong or
    *  hesitant-but-right characters). Missing arms fall back to the
@@ -130,11 +130,17 @@ export interface RunActor {
   readonly armJ?: Partial<Record<"condition" | "price" | "character", number>>;
 }
 
-export interface BidderProfileDump {
-  readonly appraisalAccuracy: Readonly<Record<string, number>>;
-  readonly defaultAppraisalAccuracy: number;
-  readonly flawTypeDetection: Readonly<Record<string, number>>;
-  readonly defaultFlawTypeDetection: number;
+export interface KnowledgeProfileDump {
+  readonly bandPlacementAccuracy: Readonly<Record<string, number>>;
+  readonly defaultBandPlacementAccuracy: number;
+  readonly conditionAccuracy: Readonly<Record<string, number>>;
+  readonly defaultConditionAccuracy: number;
+  readonly flawDetection: Readonly<Record<string, number>>;
+  readonly defaultFlawDetection: number;
+  readonly priceAccuracy: Readonly<Record<string, number>>;
+  readonly defaultPriceAccuracy: number;
+  readonly customerFitAccuracy: Readonly<Record<string, number>>;
+  readonly defaultCustomerFitAccuracy: number;
   readonly customerTypes: readonly string[];
 }
 

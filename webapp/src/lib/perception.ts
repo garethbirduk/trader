@@ -17,7 +17,7 @@
  * here — kept aligned for parity if a future call site samples.
  */
 
-import type { BidderProfileDump, EconomicsDump, RunDump, RunItem } from "../types.js";
+import type { KnowledgeProfileDump, EconomicsDump, RunDump, RunItem } from "../types.js";
 
 export interface PriceBandResult {
   readonly centre: number;
@@ -41,8 +41,8 @@ function steppedJ(j: number): number {
 /**
  * Compute an actor's belief band for a (category, truth) pair.
  *
- *   • `expertise` is sourced from the actor's `appraisalAccuracy[category]`
- *     (falling back to `defaultAppraisalAccuracy`).
+ *   • `expertise` is sourced from the actor's `priceAccuracy[category]`
+ *     (falling back to `defaultPriceAccuracy`).
  *   • `j` reads from the actor's stored `armJ.price` override when
  *     present; otherwise falls back to expertise (matching the
  *     engine's `getActorArmJ ?? expertise` resolution in
@@ -52,7 +52,7 @@ function steppedJ(j: number): number {
  *     `tieredAnchorFor` helper).
  */
 export function priceBandFor(
-  profile: BidderProfileDump,
+  profile: KnowledgeProfileDump,
   category: string,
   truth: number,
   anchor: number,
@@ -61,7 +61,7 @@ export function priceBandFor(
   storedJ?: number,
 ): PriceBandResult {
   const expertise = clamp01(
-    profile.appraisalAccuracy[category] ?? profile.defaultAppraisalAccuracy,
+    profile.priceAccuracy[category] ?? profile.defaultPriceAccuracy,
   );
   const j = storedJ !== undefined ? clamp01(storedJ) : expertise;
   return computePriceBand({ truth, anchor, expertise, j });
@@ -142,7 +142,7 @@ const TIER_NAMES_ORDERED: readonly { readonly name: string; readonly q: number }
  */
 export function perceivedTierFor(
   dump: RunDump,
-  observerProfile: BidderProfileDump | undefined,
+  observerProfile: KnowledgeProfileDump | undefined,
   category: string,
   truthTier: string | null,
 ): string | null {
@@ -151,8 +151,8 @@ export function perceivedTierFor(
   const truthQ = TIER_QUALITY_BY_NAME[truthTier] ?? 0.5;
   const anchor = conditionAnchorFor(dump, category);
   const expertise = clamp01(
-    observerProfile.appraisalAccuracy[category] ??
-      observerProfile.defaultAppraisalAccuracy,
+    observerProfile.priceAccuracy[category] ??
+      observerProfile.defaultPriceAccuracy,
   );
   const centre = anchor + (truthQ - anchor) * expertise;
   let best = TIER_NAMES_ORDERED[0]!;

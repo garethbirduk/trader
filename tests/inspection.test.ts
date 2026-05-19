@@ -11,16 +11,22 @@ import {
 } from "../src/engine/inspection/inspection-repo.js";
 import { inspectItem } from "../src/engine/inspection/inspect-item.js";
 import { createRNG } from "../src/engine/core/rng.js";
-import type { BidderProfile } from "../src/engine/auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../src/engine/knowledge/types.js";
 import type { FlawType } from "../src/engine/stock/types.js";
 import type { DB } from "../src/engine/core/db.js";
 
-function profile(over: Partial<BidderProfile> = {}): BidderProfile {
+function profile(over: Partial<KnowledgeProfile> = {}): KnowledgeProfile {
   return {
-    appraisalAccuracy: new Map(),
-    defaultAppraisalAccuracy: 1,
-    flawTypeDetection: new Map(),
-    defaultFlawTypeDetection: 0.5,
+    bandPlacementAccuracy: new Map(),
+    defaultBandPlacementAccuracy: 1,
+    conditionAccuracy: new Map(),
+    defaultConditionAccuracy: 1,
+    priceAccuracy: new Map(),
+    defaultPriceAccuracy: 1,
+    flawDetection: new Map(),
+    defaultFlawDetection: 0.5,
+    customerFitAccuracy: new Map(),
+    defaultCustomerFitAccuracy: 0.7,
     ...over,
   };
 }
@@ -103,8 +109,8 @@ describe("inspectItem", () => {
       buyerActorId: buyer.id,
       expertActorId: boyce.id,
       expertProfile: profile({
-        flawTypeDetection: new Map<FlawType, number>([["faulty", 1.0]]),
-        defaultFlawTypeDetection: 0,
+        flawDetection: new Map<FlawType, number>([["faulty", 1.0]]),
+        defaultFlawDetection: 0,
       }),
       itemKindId: item.id,
       atDay: 5,
@@ -131,8 +137,8 @@ describe("inspectItem", () => {
       buyerActorId: buyer.id,
       expertActorId: trigger.id,
       expertProfile: profile({
-        flawTypeDetection: new Map<FlawType, number>([["fake", 0.05]]),
-        defaultFlawTypeDetection: 0,
+        flawDetection: new Map<FlawType, number>([["fake", 0.05]]),
+        defaultFlawDetection: 0,
       }),
       itemKindId: item.id,
       atDay: 5,
@@ -183,7 +189,7 @@ describe("inspectItem", () => {
     const r = inspectItem(db, {
       buyerActorId: buyer.id,
       expertActorId: expert.id,
-      expertProfile: profile({ defaultFlawTypeDetection: 1 }),
+      expertProfile: profile({ defaultFlawDetection: 1 }),
       itemKindId: item.id,
       atDay: 1,
       fee: 10,
@@ -226,17 +232,17 @@ describe("known flaws affect bidder ceilings", () => {
       [
         del.id,
         profile({
-          appraisalAccuracy: new Map([["tools", 1]]),
-          flawTypeDetection: new Map<FlawType, number>([["faulty", 0]]),
-          defaultFlawTypeDetection: 0,
+          priceAccuracy: new Map([["tools", 1]]),
+          flawDetection: new Map<FlawType, number>([["faulty", 0]]),
+          defaultFlawDetection: 0,
         }),
       ],
       [
         ignorant.id,
         profile({
-          appraisalAccuracy: new Map([["tools", 1]]),
-          flawTypeDetection: new Map<FlawType, number>([["faulty", 0]]),
-          defaultFlawTypeDetection: 0,
+          priceAccuracy: new Map([["tools", 1]]),
+          flawDetection: new Map<FlawType, number>([["faulty", 0]]),
+          defaultFlawDetection: 0,
         }),
       ],
     ]);

@@ -105,7 +105,7 @@ export function BeliefChip({
       unitValue = Math.max(0, Math.round(truth));
     } else {
       const observer = dump.actors.find((a) => a.id === observerActorId);
-      const profile = observer?.bidderProfile;
+      const profile = observer?.knowledgeProfile;
       if (profile !== undefined) {
         const anchor = tieredAnchorFor(dump, item.category, truthTier);
         const band = priceBandFor(

@@ -5,17 +5,13 @@ import {
   getStockLotsByOwner,
 } from "../stock/lots-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
-import {
-  FALLBACK_BIDDER_PROFILE,
-  type BidderProfile,
-} from "../auction/bidder-profile.js";
+import { FALLBACK_KNOWLEDGE_PROFILE, type KnowledgeProfile } from "../knowledge/types.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import {
   buildPriceArmPayload,
   insertJudgement,
 } from "../perception/judgement-log-repo.js";
 import { getCategoryAnchor } from "../perception/anchors-repo.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -58,7 +54,7 @@ export interface ShopSaleOptions {
   readonly shops: readonly ShopSpec[];
   /** Bidder profiles per actor — used to compute the keeper's pricing
    *  model (their retail estimate × shopSale.pricePerUnitFraction). */
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles: ReadonlyMap<number, KnowledgeProfile>;
   readonly economics?: EconomicsConfig;
 }
 
@@ -165,7 +161,7 @@ export function registerShopSale(
       if (!item) continue;
 
       const profile =
-        opts.bidderProfiles.get(shop.keeperActorId) ?? FALLBACK_BIDDER_PROFILE;
+        opts.knowledgeProfiles.get(shop.keeperActorId) ?? FALLBACK_KNOWLEDGE_PROFILE;
       // Keeper's belief band — surfaced on the event for the UI, not
       // used to gate sales (customer drives the realised price).
       const tierMult =
@@ -177,7 +173,7 @@ export function registerShopSale(
         category: item.category,
         truth: truthUnit,
         tierMultiplier: tierMult,
-        profileOverride: deriveKnowledgeProfile(profile),
+        profileOverride: profile,
       });
 
       // Audit trail (docs/judgement.md). Persist the keeper's

@@ -125,7 +125,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                   // (civilians / virtual actors).
                   const item = dump.items.find((it) => it.id === l.itemKindId);
                   const buyer = dump.actors.find((a) => a.id === d.buyerActorId);
-                  const buyerProfile = buyer?.bidderProfile;
+                  const buyerProfile = buyer?.knowledgeProfile;
                   const truth = item !== undefined
                     ? tierTruth(item, l.qualityTier, dump.economics)
                     : null;

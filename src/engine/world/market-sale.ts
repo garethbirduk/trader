@@ -2,17 +2,13 @@ import type { World, Unsubscribe } from "../core/world.js";
 import { adjustActorCash, listActors } from "../actors/actors-repo.js";
 import { getStockLotsByOwner, decrementLotQuantity } from "../stock/lots-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
-import {
-  FALLBACK_BIDDER_PROFILE,
-  type BidderProfile,
-} from "../auction/bidder-profile.js";
+import { FALLBACK_KNOWLEDGE_PROFILE, type KnowledgeProfile } from "../knowledge/types.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import {
   buildPriceArmPayload,
   insertJudgement,
 } from "../perception/judgement-log-repo.js";
 import { getCategoryAnchor } from "../perception/anchors-repo.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -31,7 +27,7 @@ export interface MarketSaleOptions {
   readonly sellerActorIds: ReadonlySet<number>;
   /** Bidder profiles per actor — used to compute the seller's pricing
    *  model (their estimate-mid × market fraction). */
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles: ReadonlyMap<number, KnowledgeProfile>;
   /** Economic tuning. Reads `marketSale` knobs and tier multipliers. */
   readonly economics?: EconomicsConfig;
 }
@@ -79,7 +75,7 @@ export function registerMarketSale(
 
       // Sellers without a bespoke profile use the fallback — they're
       // passable generalists with default category accuracy.
-      const profile = opts.bidderProfiles.get(seller.id) ?? FALLBACK_BIDDER_PROFILE;
+      const profile = opts.knowledgeProfiles.get(seller.id) ?? FALLBACK_KNOWLEDGE_PROFILE;
 
       // Seller's belief band — what the seller thinks the lot is worth.
       // Kept on the event for the deal/profile UI to render the
@@ -93,7 +89,7 @@ export function registerMarketSale(
         category: item.category,
         truth: truthUnit,
         tierMultiplier: tierMult,
-        profileOverride: deriveKnowledgeProfile(profile),
+        profileOverride: profile,
       });
 
       // True retail per unit — what the engine knows the lot is worth.

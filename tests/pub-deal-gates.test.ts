@@ -12,7 +12,7 @@ import {
   setActorLocation,
 } from "../src/engine/locations/locations.js";
 import { registerPubDealAutonomy } from "../src/engine/world/pub-deal-autonomy.js";
-import { type BidderProfile } from "../src/engine/auction/bidder-profile.js";
+import { type KnowledgeProfile } from "../src/engine/knowledge/types.js";
 import type { DB } from "../src/engine/core/db.js";
 import type { WorldEvent } from "../src/engine/core/events.js";
 
@@ -61,11 +61,11 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
       acquiredUnitPrice: Math.max(1, Math.floor(opts.baseValue / 4)),
       acquiredDay: 1,
     });
-    const profile: BidderProfile = {
-      appraisalAccuracy: new Map([["novelty", 1]]),
-      defaultAppraisalAccuracy: 1,
-      flawTypeDetection: new Map(),
-      defaultFlawTypeDetection: 0,
+    const profile: KnowledgeProfile = {
+      priceAccuracy: new Map([["novelty", 1]]),
+      defaultPriceAccuracy: 1,
+      flawDetection: new Map(),
+      defaultFlawDetection: 0,
     };
     return { localDb, seller, buyer, nags, item, profile };
   }
@@ -90,7 +90,7 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map([[buyer.id, profile]]),
+      knowledgeProfiles: new Map([[buyer.id, profile]]),
       attemptsPerHour: 3,
       pairChance: 1.0,
     });
@@ -120,7 +120,7 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map([[buyer.id, profile]]),
+      knowledgeProfiles: new Map([[buyer.id, profile]]),
       attemptsPerHour: 3,
       pairChance: 1.0,
     });
@@ -165,7 +165,7 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map([[buyer.id, profile]]),
+      knowledgeProfiles: new Map([[buyer.id, profile]]),
       attemptsPerHour: 3,
       pairChance: 1.0,
     });
@@ -195,7 +195,7 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map([[buyer.id, profile]]),
+      knowledgeProfiles: new Map([[buyer.id, profile]]),
       attemptsPerHour: 5,
       pairChance: 1.0,
       forwardSellChance: 1.0, // always WANT to forward-sell

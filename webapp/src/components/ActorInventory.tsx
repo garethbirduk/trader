@@ -70,7 +70,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                 item !== undefined
                   ? perceivedTierFor(
                       dump,
-                      owner?.bidderProfile,
+                      owner?.knowledgeProfile,
                       item.category,
                       lot.qualityTier,
                     )

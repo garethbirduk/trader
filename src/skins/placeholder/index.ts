@@ -12,7 +12,7 @@ import {
 import type { LocationType } from "../../engine/locations/locations.js";
 import { RuleBasedAIPolicy } from "../../engine/policy/rule-based.js";
 import type { ActorPolicy } from "../../engine/policy/types.js";
-import type { BidderProfile } from "../../engine/auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../../engine/knowledge/types.js";
 import { seedKnowledgeProfiles } from "../../engine/knowledge/skin-seed.js";
 import { seedCategoryAnchors } from "../../engine/perception/anchors-repo.js";
 import { seedCategoryConditionAnchors } from "../../engine/perception/condition-anchors-repo.js";
@@ -53,7 +53,7 @@ export interface SkinSeedResult {
   readonly playerActorId: number;
   readonly auctionHouseActorId: number;
   readonly policies: ReadonlyMap<number, ActorPolicy>;
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
+  readonly bidderProfiles: ReadonlyMap<number, KnowledgeProfile>;
   /**
    * Map of item category → actor ids who can source pools of that
    * category. The pool spawner consults this to decide reachability.
@@ -721,16 +721,18 @@ export function seedPlaceholderSkin(
     throw new Error("placeholder skin must seed del-boy and auction-house actors");
   }
 
-  // Bidder profiles.
-  const bidderProfiles = new Map<number, BidderProfile>();
+  // Knowledge profiles — five-axis (per-axis accuracy on condition /
+  // flaw / price / band-placement / customer-fit). Authored as the new
+  // shape directly; the old two-axis `BidderProfile` smushed condition
+  // and price into one number with a runtime fan-out helper, which is
+  // gone now.
+  const bidderProfiles = new Map<number, KnowledgeProfile>();
   for (const [code, spec] of Object.entries(ACTOR_PROFILES)) {
     const id = actorByCode.get(code);
     if (id === undefined) continue;
-    const accuracyMap = new Map<string, number>();
+    const perCat = new Map<string, number>();
     if (spec.perCategory) {
-      for (const [cat, acc] of Object.entries(spec.perCategory)) {
-        accuracyMap.set(cat, acc);
-      }
+      for (const [cat, acc] of Object.entries(spec.perCategory)) perCat.set(cat, acc);
     }
     const flawMap = new Map<FlawType, number>();
     if (spec.perFlawDetection) {
@@ -738,28 +740,26 @@ export function seedPlaceholderSkin(
         if (score !== undefined) flawMap.set(flaw as FlawType, score);
       }
     }
-    const profileEntry: BidderProfile = spec.customerTypes
-      ? {
-          appraisalAccuracy: accuracyMap,
-          defaultAppraisalAccuracy: spec.defaultAccuracy,
-          flawTypeDetection: flawMap,
-          defaultFlawTypeDetection: spec.defaultFlawDetection,
-          customerTypes: spec.customerTypes,
-        }
-      : {
-          appraisalAccuracy: accuracyMap,
-          defaultAppraisalAccuracy: spec.defaultAccuracy,
-          flawTypeDetection: flawMap,
-          defaultFlawTypeDetection: spec.defaultFlawDetection,
-        };
+    const profileEntry: KnowledgeProfile = {
+      bandPlacementAccuracy: new Map(perCat),
+      defaultBandPlacementAccuracy: spec.defaultAccuracy,
+      conditionAccuracy: new Map(perCat),
+      defaultConditionAccuracy: spec.defaultAccuracy,
+      flawDetection: flawMap,
+      defaultFlawDetection: spec.defaultFlawDetection,
+      priceAccuracy: new Map(perCat),
+      defaultPriceAccuracy: spec.defaultAccuracy,
+      customerFitAccuracy: new Map(),
+      defaultCustomerFitAccuracy: 0.7,
+      ...(spec.customerTypes ? { customerTypes: spec.customerTypes } : {}),
+    };
     bidderProfiles.set(id, profileEntry);
   }
 
-  // Persist a five-axis KnowledgeProfile for every actor (todolist:57).
-  // The legacy bidderProfiles map is kept in memory for the existing
-  // auction / pub-deal / market pipelines; the new schema-backed
-  // skill grid is what consultations, the belief aggregator, and the
-  // belief-anchored haggle read from.
+  // Persist the five-axis grid into actor_skills / actor_skill_defaults.
+  // The in-memory map above remains the runtime carrier passed to the
+  // auction / pub-deal / market pipelines; the DB rows back consultations
+  // / belief aggregator / haggle anchors.
   seedKnowledgeProfiles(db, bidderProfiles);
 
   // Per-category "uninformed prior" — the floor of the

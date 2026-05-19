@@ -187,9 +187,9 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
             const seller = dump.actors.find((a) => a.id === deal.sellerActorId);
             const buyer = dump.actors.find((a) => a.id === deal.buyerActorId);
             const sellerBand =
-              seller?.bidderProfile !== undefined && item !== undefined && truth !== null
+              seller?.knowledgeProfile !== undefined && item !== undefined && truth !== null
                 ? priceBandFor(
-                    seller.bidderProfile,
+                    seller.knowledgeProfile,
                     item.category,
                     truth,
                     tieredAnchorFor(dump, item.category, l.qualityTier),
@@ -197,9 +197,9 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                   )
                 : null;
             const buyerBand =
-              buyer?.bidderProfile !== undefined && item !== undefined && truth !== null
+              buyer?.knowledgeProfile !== undefined && item !== undefined && truth !== null
                 ? priceBandFor(
-                    buyer.bidderProfile,
+                    buyer.knowledgeProfile,
                     item.category,
                     truth,
                     tieredAnchorFor(dump, item.category, l.qualityTier),

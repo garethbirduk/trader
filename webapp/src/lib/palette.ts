@@ -68,7 +68,7 @@ function clamp01(x: number): number {
 /**
  * The player-actor's "general j" — drives how finely every belief-
  * mediated number in the UI is rendered. Today's BidderProfile has
- * no explicit per-arm j; the player's `defaultAppraisalAccuracy` is
+ * no explicit per-arm j; the player's `defaultPriceAccuracy` is
  * the closest proxy and matches the doc's "skin defaults set them
  * equal per category for most actors" default. Future work: source
  * from the player's `actor_arm_j` table when the player is allowed
@@ -80,5 +80,5 @@ function clamp01(x: number): number {
 export function resolvePerceiverJ(dump: RunDump): number {
   const playerId = dump.playerActorId;
   const player = dump.actors.find((a) => a.id === playerId);
-  return player?.bidderProfile?.defaultAppraisalAccuracy ?? 1.0;
+  return player?.knowledgeProfile?.defaultPriceAccuracy ?? 1.0;
 }

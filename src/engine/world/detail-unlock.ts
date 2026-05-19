@@ -1,5 +1,5 @@
 import type { World, Unsubscribe } from "../core/world.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../knowledge/types.js";
 import {
   adjustActorCash,
   getActorById,
@@ -16,13 +16,11 @@ import {
   type EconomicsConfig,
 } from "../economics/config.js";
 import { resolvePerArmDials } from "../perception/expertise.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
-
 export interface DetailUnlockOptions {
   /** Per-actor bidder profile. Used to compute the interest bonus when
    *  rolling for an autonomous ask. Optional — missing actors fall
    *  back to base probability with no bonus. */
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles: ReadonlyMap<number, KnowledgeProfile>;
   /** Actors that get the info-trader probability multiplier. The
    *  bar-stool gossips (Mike, Sid, Albert) plus anyone tagged in the
    *  skin as a chatty intel-collector. */
@@ -163,7 +161,7 @@ function countInterestMatches(
   asker: number,
   locked: readonly { readonly subjectItemKindId: number | null }[],
 ): number {
-  const profile = opts.bidderProfiles.get(asker);
+  const profile = opts.knowledgeProfiles.get(asker);
   if (profile === undefined) return 0;
   // Route the per-category interest check through the judgement
   // engine's per-arm resolver rather than reading the legacy
@@ -171,7 +169,7 @@ function countInterestMatches(
   // today (deriveKnowledgeProfile copies appraisalAccuracy into
   // priceAccuracy), but means the test diverges automatically when
   // skins set per-arm overrides in the NPC-specialists pass.
-  const knowledgeProfile = deriveKnowledgeProfile(profile);
+  const knowledgeProfile = profile;
   const threshold = economics.detailUnlock.categoryInterestThreshold;
   let n = 0;
   for (const lead of locked) {

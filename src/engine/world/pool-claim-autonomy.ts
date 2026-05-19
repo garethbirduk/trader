@@ -13,8 +13,7 @@ import {
 import { poolUnitPriceOnDay, type WorldPool } from "../pools/types.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { estimatePriceBand } from "../perception/estimate.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../knowledge/types.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -39,18 +38,18 @@ export interface PoolClaimAutonomyOptions {
    *  expert's centre lerps toward truth and picks up underpriced
    *  pools. Omit to preserve the legacy "take any reachable pool"
    *  behaviour. */
-  readonly bidderProfiles?: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles?: ReadonlyMap<number, KnowledgeProfile>;
   /** Min ratio of perceived per-unit value (price-arm centre, RNG-
    *  free) to the pool's published unit price for the pool to be a
    *  claim candidate. Default 1.0 — the actor thinks the pool is
    *  worth at least what it costs. Set >1.0 to require margin;
-   *  <1.0 for desperate claiming. Ignored when `bidderProfiles` is
+   *  <1.0 for desperate claiming. Ignored when `knowledgeProfiles` is
    *  not supplied. Pools with `unitPrice == 0` (free) bypass the
    *  filter — there's no cost basis to compare against. */
   readonly claimValueToCostRatio?: number;
   /** Economics bundle — supplies the tier multipliers used to
    *  reconstruct the pool's truth-price for the price arm. Defaults
-   *  to `DEFAULT_ECONOMICS_CONFIG`. Ignored when `bidderProfiles`
+   *  to `DEFAULT_ECONOMICS_CONFIG`. Ignored when `knowledgeProfiles`
    *  is not supplied. */
   readonly economics?: EconomicsConfig;
 }
@@ -71,7 +70,7 @@ export function registerPoolClaimAutonomy(
   const attemptChance = opts.attemptChance ?? 0.6;
   const claimQuantity = opts.claimQuantity ?? 10;
   const proceedsActorId = opts.proceedsActorId ?? null;
-  const bidderProfiles = opts.bidderProfiles ?? null;
+  const knowledgeProfiles = opts.knowledgeProfiles ?? null;
   const claimValueToCostRatio = opts.claimValueToCostRatio ?? 1.0;
   const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
 
@@ -86,9 +85,9 @@ export function registerPoolClaimAutonomy(
       // so this is Price-only (per docs/judgement.md). RNG-free —
       // the morning claim loop shouldn't shimmer on RNG advancement.
       let candidates: WorldPool[] = reachable;
-      const profile = bidderProfiles?.get(actorId);
+      const profile = knowledgeProfiles?.get(actorId);
       if (profile !== undefined) {
-        const knowledgeProfile = deriveKnowledgeProfile(profile);
+        const knowledgeProfile = profile;
         candidates = reachable.filter((p) => {
           const unitPrice = poolUnitPriceOnDay(p, day);
           if (unitPrice <= 0) return true; // free pool — always a deal

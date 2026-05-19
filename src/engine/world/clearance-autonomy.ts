@@ -21,8 +21,7 @@ import { getActorById, listActors } from "../actors/actors-repo.js";
 import { getStockLotsByOwner } from "../stock/lots-repo.js";
 import { seedWitnessLeads } from "../witness/seed-witness-leads.js";
 import { estimatePriceBand } from "../perception/estimate.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../knowledge/types.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   type EconomicsConfig,
@@ -80,18 +79,18 @@ export interface ClearanceAutonomyOptions {
    *  candidates. A clearance specialist with strong expertise in the
    *  listing's categories sees centre lerp toward truth and finds
    *  good listings attractive; a generalist's centre lerps toward
-   *  the category anchor and rejects more. Omitting `bidderProfiles`
+   *  the category anchor and rejects more. Omitting `knowledgeProfiles`
    *  falls back to the legacy no-appraisal behaviour. */
-  readonly bidderProfiles?: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles?: ReadonlyMap<number, KnowledgeProfile>;
   /** Min ratio of perceived haul value (price-arm centre × qty,
    *  summed across lots) to fee for a listing to be a booking
    *  candidate. Default 2.0 — the NPC wants to clear at least 2×
    *  the fee to make the trip worth the phone call. Ignored when
-   *  `bidderProfiles` is not supplied. */
+   *  `knowledgeProfiles` is not supplied. */
   readonly bookValueToFeeRatio?: number;
   /** Economics bundle — supplies the tier multipliers used to
    *  reconstruct each lot's truth-price for the price arm. Defaults
-   *  to `DEFAULT_ECONOMICS_CONFIG`. Ignored when `bidderProfiles`
+   *  to `DEFAULT_ECONOMICS_CONFIG`. Ignored when `knowledgeProfiles`
    *  is not supplied. */
   readonly economics?: EconomicsConfig;
 }
@@ -134,7 +133,7 @@ export function registerClearanceAutonomy(
   const bookCashMult = opts.bookCashMultiplier ?? 1.5;
   const bookStartHour = opts.bookStartHour ?? 8;
   const bookEndHour = opts.bookEndHour ?? 17;
-  const bidderProfiles = opts.bidderProfiles ?? null;
+  const knowledgeProfiles = opts.knowledgeProfiles ?? null;
   const bookValueToFeeRatio = opts.bookValueToFeeRatio ?? 2.0;
   const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
 
@@ -258,9 +257,9 @@ export function registerClearanceAutonomy(
         // the actor falls back to the legacy "any known listing is a
         // candidate" behaviour.
         let attractive = fresh;
-        const profile = bidderProfiles?.get(actorId);
+        const profile = knowledgeProfiles?.get(actorId);
         if (profile !== undefined) {
-          const knowledgeProfile = deriveKnowledgeProfile(profile);
+          const knowledgeProfile = profile;
           attractive = fresh.filter((listing) => {
             const listingLots = getLotsForListing(world.db, listing.id);
             let perceivedTotal = 0;

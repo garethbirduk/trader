@@ -15,9 +15,9 @@ import { insertLead, getLeadsByHolder } from "../src/engine/leads/leads-repo.js"
 import { registerPubDealAutonomy } from "../src/engine/world/pub-deal-autonomy.js";
 import { registerPubDealGossip } from "../src/engine/world/pub-deal-gossip.js";
 import {
-  FALLBACK_BIDDER_PROFILE,
-  type BidderProfile,
-} from "../src/engine/auction/bidder-profile.js";
+  FALLBACK_KNOWLEDGE_PROFILE,
+  type KnowledgeProfile,
+} from "../src/engine/knowledge/types.js";
 import type { DB } from "../src/engine/core/db.js";
 import type { WorldEvent } from "../src/engine/core/events.js";
 
@@ -72,14 +72,14 @@ describe("pubdeal-side gossip", () => {
       acquiredDay: 1,
     });
 
-    const profiles = new Map<number, BidderProfile>([
+    const profiles = new Map<number, KnowledgeProfile>([
       [
         buyer.id,
         {
-          appraisalAccuracy: new Map([["electrical", 1]]),
-          defaultAppraisalAccuracy: 1,
-          flawTypeDetection: new Map(),
-          defaultFlawTypeDetection: 0,
+          priceAccuracy: new Map([["electrical", 1]]),
+          defaultPriceAccuracy: 1,
+          flawDetection: new Map(),
+          defaultFlawDetection: 0,
         },
       ],
     ]);
@@ -105,7 +105,7 @@ describe("pubdeal-side gossip", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: profiles,
+      knowledgeProfiles: profiles,
       attemptsPerHour: 5,
       pairChance: 1.0,
     });
@@ -144,7 +144,7 @@ describe("pubdeal-side gossip", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: profiles,
+      knowledgeProfiles: profiles,
       attemptsPerHour: 5,
       pairChance: 1.0,
       // Push the walk path: the negotiation will exit before agreement
@@ -198,7 +198,7 @@ describe("pubdeal-side gossip", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: profiles,
+      knowledgeProfiles: profiles,
       attemptsPerHour: 3,
       pairChance: 1.0,
     });

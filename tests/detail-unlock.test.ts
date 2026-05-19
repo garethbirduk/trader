@@ -26,7 +26,7 @@ import {
   registerDetailUnlock,
 } from "../src/engine/world/detail-unlock.js";
 import { getDisclosuresForActor } from "../src/engine/leads/disclosures-repo.js";
-import { DEFAULT_BIDDER_PROFILE } from "../src/engine/auction/bidder-profile.js";
+import { FALLBACK_KNOWLEDGE_PROFILE } from "../src/engine/knowledge/types.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
   resolveEconomicsConfig,
@@ -119,7 +119,7 @@ describe("detail-unlock (two-tier gossip)", () => {
     const result = attemptDetailUnlock(
       world,
       {
-        bidderProfiles: new Map(),
+        knowledgeProfiles: new Map(),
         autonomyEligibleActorIds: new Set([asker.id]),
         economics: DEFAULT_ECONOMICS_CONFIG,
       },
@@ -188,7 +188,7 @@ describe("detail-unlock (two-tier gossip)", () => {
     const result = attemptDetailUnlock(
       world,
       {
-        bidderProfiles: new Map(),
+        knowledgeProfiles: new Map(),
         autonomyEligibleActorIds: new Set([skintAsker.id]),
       },
       {
@@ -234,9 +234,9 @@ describe("detail-unlock (two-tier gossip)", () => {
 
     // Force the autonomy roll to fire by setting baseProb = 1.0.
     registerDetailUnlock(world, {
-      bidderProfiles: new Map([
-        [asker.id, DEFAULT_BIDDER_PROFILE],
-        [partner.id, DEFAULT_BIDDER_PROFILE],
+      knowledgeProfiles: new Map([
+        [asker.id, FALLBACK_KNOWLEDGE_PROFILE],
+        [partner.id, FALLBACK_KNOWLEDGE_PROFILE],
       ]),
       autonomyEligibleActorIds: new Set([asker.id, partner.id]),
       economics: resolveEconomicsConfig({
@@ -291,7 +291,7 @@ describe("detail-unlock (two-tier gossip)", () => {
     world.events.subscribe((e) => events.push(e));
 
     registerDetailUnlock(world, {
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       autonomyEligibleActorIds: new Set(), // asker excluded
       economics: resolveEconomicsConfig({
         detailUnlock: { ...DEFAULT_ECONOMICS_CONFIG.detailUnlock, baseProb: 1.0 },

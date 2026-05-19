@@ -82,7 +82,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                   item !== undefined
                     ? perceivedTierFor(
                         dump,
-                        owner?.bidderProfile,
+                        owner?.knowledgeProfile,
                         item.category,
                         lot.qualityTier,
                       )

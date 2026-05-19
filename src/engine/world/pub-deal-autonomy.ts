@@ -1,13 +1,12 @@
 import type { World, Unsubscribe } from "../core/world.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
-import { FALLBACK_BIDDER_PROFILE } from "../auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../knowledge/types.js";
+import { FALLBACK_KNOWLEDGE_PROFILE } from "../knowledge/types.js";
 import { estimateLotValue } from "../perception/lot-value.js";
 import { estimatePriceBand } from "../perception/estimate.js";
 import {
   buildCompositePayloadFromLotValuation,
   insertJudgement,
 } from "../perception/judgement-log-repo.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
 import { actorKnowsFlaw } from "../inspection/inspection-repo.js";
 import { getActorById } from "../actors/actors-repo.js";
 import { TRANSIT_DAYS_BY_TIER, TRANSPORT_LIMITS } from "../actors/types.js";
@@ -31,7 +30,7 @@ export interface PubDealAutonomyOptions {
   /** Actors eligible to participate as either buyer or seller. */
   readonly npcActorIds: readonly number[];
   /** Per-actor bidder profiles. Buyers value lots through these. */
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles: ReadonlyMap<number, KnowledgeProfile>;
   /** Hour window in which attempts can fire. Inclusive on both ends. */
   readonly startHour?: number;
   readonly endHour?: number;
@@ -195,7 +194,7 @@ export function registerPubDealAutonomy(
           clock,
           locId,
           present,
-          profiles: opts.bidderProfiles,
+          profiles: opts.knowledgeProfiles,
           normalDeadlineDay: clock.day + deadlineDaysOut,
           sellerAnchorAggression,
           sellerFloorMultiplier,
@@ -220,7 +219,7 @@ function runOneAttempt(args: {
   clock: import("../core/clock.js").Clock;
   locId: number;
   present: readonly number[];
-  profiles: ReadonlyMap<number, BidderProfile>;
+  profiles: ReadonlyMap<number, KnowledgeProfile>;
   normalDeadlineDay: number;
   sellerAnchorAggression: number;
   sellerFloorMultiplier: number;
@@ -373,19 +372,19 @@ function runOneAttempt(args: {
   // Buyer's profile — the judgement engine handles "previously
   // burned by this flaw" via the knownFlawType arg below; no need
   // to pre-mutate the profile.
-  const buyerProfile = profiles.get(buyerId) ?? FALLBACK_BIDDER_PROFILE;
+  const buyerProfile = profiles.get(buyerId) ?? FALLBACK_KNOWLEDGE_PROFILE;
 
   // Seller's profile + per-unit belief band. The belief drives the
   // haggle floor and target — cost basis is sunk and no longer
   // anchors the negotiation (todolist:104-107).
-  const sellerProfile = profiles.get(sellerId) ?? FALLBACK_BIDDER_PROFILE;
+  const sellerProfile = profiles.get(sellerId) ?? FALLBACK_KNOWLEDGE_PROFILE;
   const sellerBeliefEstimate = estimatePriceBand({
     db: world.db,
     actorId: sellerId,
     category: item.category,
     truth: item.baseValue * economics.tierMultipliers[seedLot.qualityTier],
     tierMultiplier: economics.tierMultipliers[seedLot.qualityTier],
-    profileOverride: deriveKnowledgeProfile(sellerProfile),
+    profileOverride: sellerProfile,
   });
   // Buyer's per-unit belief band, used for the event snapshot only.
   // The buyer's actual ceiling routes through `estimateLotValue`
@@ -396,7 +395,7 @@ function runOneAttempt(args: {
     category: item.category,
     truth: item.baseValue * economics.tierMultipliers[perceivedTier],
     tierMultiplier: economics.tierMultipliers[perceivedTier],
-    profileOverride: deriveKnowledgeProfile(buyerProfile),
+    profileOverride: buyerProfile,
   });
   const trueRrpPerUnit =
     item.baseValue * economics.tierMultipliers[seedLot.qualityTier];
@@ -441,7 +440,7 @@ function runOneAttempt(args: {
     (sellerActorForRead?.socialScore ?? 0.5);
   const flawDetectionBonus = economics.characterArmAlpha * socialDelta;
 
-  const knowledgeProfile = deriveKnowledgeProfile(buyerProfile);
+  const knowledgeProfile = buyerProfile;
   const valuationResult = estimateLotValue({
     db: world.db,
     actorId: buyerId,

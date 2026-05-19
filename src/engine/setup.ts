@@ -260,7 +260,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     [...skin.tradingActorIds].filter((id) => id !== skin.playerActorId),
   );
   registerDetailUnlock(world, {
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
     infoTraderActorIds: new Set(skin.infoTraderActorIds),
     autonomyEligibleActorIds: detailUnlockAutonomy,
     economics: skin.economics,
@@ -392,7 +392,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
 
   registerActorPlanner(world, {
     flexibleActorIds,
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
     awakeHoursByActor,
     flexibleHoursByActor,
     homeLocationByActor,
@@ -407,13 +407,13 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     proceedsActorId: skin.auctionHouseActorId,
     attemptChance: 0.5,
     claimQuantity: 8,
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
     economics: skin.economics,
   });
   registerPubDealAutonomy(world, {
     pubLocationIds: skin.pubLocationIds,
     npcActorIds: tradingIds,
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
     economics: skin.economics,
   });
 
@@ -429,7 +429,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     registerPubDealAutonomy(world, {
       pubLocationIds: skin.shopLocationIds,
       npcActorIds: [...tradingIds, ...skin.shopkeeperActorIds],
-      bidderProfiles: skin.bidderProfiles,
+      knowledgeProfiles: skin.bidderProfiles,
       economics: shopEconomics,
       requireSellerFrom: dealerSet,
       requireBuyerFrom: shopkeeperSet,
@@ -440,7 +440,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   registerMarketSale(world, {
     marketLocationId: skin.marketLocationId,
     sellerActorIds: new Set(skin.marketSellerActorIds),
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
     economics: skin.economics,
   });
 
@@ -497,7 +497,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     if (shops.length > 0) {
       registerShopSale(world, {
         shops,
-        bidderProfiles: skin.bidderProfiles,
+        knowledgeProfiles: skin.bidderProfiles,
         economics: skin.economics,
       });
     }
@@ -540,7 +540,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
     paperFromHour: skin.paperFromHour,
     phoneCapableLocationIds: skin.allPubLocationIds,
     bookerActorIds: new Set(skin.tradingActorIds),
-    bidderProfiles: skin.bidderProfiles,
+    knowledgeProfiles: skin.bidderProfiles,
     economics: skin.economics,
   });
   // Market stall mode + Slater patrol (todolist #3 + #4). Sellers

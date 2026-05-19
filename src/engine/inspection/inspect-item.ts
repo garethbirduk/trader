@@ -4,7 +4,7 @@ import {
   getActorById,
 } from "../actors/actors-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../knowledge/types.js";
 import type { FlawType } from "../stock/types.js";
 import type { KnownFlaw } from "./inspection-repo.js";
 import { recordKnownFlaw } from "./inspection-repo.js";
@@ -27,7 +27,7 @@ import { recordKnownFlaw } from "./inspection-repo.js";
 export interface InspectItemArgs {
   readonly buyerActorId: number;
   readonly expertActorId: number;
-  readonly expertProfile: BidderProfile;
+  readonly expertProfile: KnowledgeProfile;
   readonly itemKindId: number;
   readonly atDay: number;
   readonly fee: number;
@@ -111,10 +111,10 @@ export function inspectItem(
 }
 
 function expertDetectionFor(
-  profile: BidderProfile,
+  profile: KnowledgeProfile,
   flawType: FlawType,
 ): number {
   return (
-    profile.flawTypeDetection.get(flawType) ?? profile.defaultFlawTypeDetection
+    profile.flawDetection.get(flawType) ?? profile.defaultFlawDetection
   );
 }

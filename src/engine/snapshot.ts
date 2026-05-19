@@ -193,11 +193,17 @@ export interface RunDump {
     /** Character-arm scalar in [0, 1] — drives the bidirectional
      *  read at pub-deal entry (docs/judgement.md). */
     socialScore: number;
-    bidderProfile?: {
-      appraisalAccuracy: Record<string, number>;
-      defaultAppraisalAccuracy: number;
-      flawTypeDetection: Record<string, number>;
-      defaultFlawTypeDetection: number;
+    knowledgeProfile?: {
+      bandPlacementAccuracy: Record<string, number>;
+      defaultBandPlacementAccuracy: number;
+      conditionAccuracy: Record<string, number>;
+      defaultConditionAccuracy: number;
+      flawDetection: Record<string, number>;
+      defaultFlawDetection: number;
+      priceAccuracy: Record<string, number>;
+      defaultPriceAccuracy: number;
+      customerFitAccuracy: Record<string, number>;
+      defaultCustomerFitAccuracy: number;
       customerTypes: readonly string[];
     };
     /** Per-arm j overrides from the `actor_arm_j` table. Only the
@@ -629,11 +635,17 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
         socialScore: a.socialScore,
         ...(profile !== undefined
           ? {
-              bidderProfile: {
-                appraisalAccuracy: Object.fromEntries(profile.appraisalAccuracy),
-                defaultAppraisalAccuracy: profile.defaultAppraisalAccuracy,
-                flawTypeDetection: Object.fromEntries(profile.flawTypeDetection),
-                defaultFlawTypeDetection: profile.defaultFlawTypeDetection,
+              knowledgeProfile: {
+                bandPlacementAccuracy: Object.fromEntries(profile.bandPlacementAccuracy),
+                defaultBandPlacementAccuracy: profile.defaultBandPlacementAccuracy,
+                conditionAccuracy: Object.fromEntries(profile.conditionAccuracy),
+                defaultConditionAccuracy: profile.defaultConditionAccuracy,
+                flawDetection: Object.fromEntries(profile.flawDetection),
+                defaultFlawDetection: profile.defaultFlawDetection,
+                priceAccuracy: Object.fromEntries(profile.priceAccuracy),
+                defaultPriceAccuracy: profile.defaultPriceAccuracy,
+                customerFitAccuracy: Object.fromEntries(profile.customerFitAccuracy),
+                defaultCustomerFitAccuracy: profile.defaultCustomerFitAccuracy,
                 customerTypes: profile.customerTypes ?? [],
               },
             }

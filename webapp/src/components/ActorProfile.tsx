@@ -221,9 +221,9 @@ export function ActorProfile({
           </>
         ) : null}
       </dl>
-      {actor.bidderProfile !== undefined ? (
+      {actor.knowledgeProfile !== undefined ? (
         <ExpertiseSection
-          profile={actor.bidderProfile}
+          profile={actor.knowledgeProfile}
           perceiverJ={resolvePerceiverJ(dump)}
           invert={isPlayer}
         />
@@ -234,7 +234,7 @@ export function ActorProfile({
 
 /**
  * Per-category expertise indicator surfaced from the actor's
- * bidderProfile. Shows what categories they're sharp on (their
+ * knowledgeProfile. Shows what categories they're sharp on (their
  * specialties), their general competence floor, the flaw types they
  * notice, and the customer market they serve.
  *
@@ -252,7 +252,7 @@ function ExpertiseSection({
   perceiverJ,
   invert,
 }: {
-  readonly profile: NonNullable<RunDump["actors"][number]["bidderProfile"]>;
+  readonly profile: NonNullable<RunDump["actors"][number]["knowledgeProfile"]>;
   readonly perceiverJ: number;
   /** Flip the palette so high competence reads blue (good for the
    *  actor being described) — passed in when the profile belongs to
@@ -262,10 +262,10 @@ function ExpertiseSection({
   readonly invert: boolean;
 }) {
   const categories = useMemo(() => {
-    const entries = Object.entries(profile.appraisalAccuracy ?? {});
+    const entries = Object.entries(profile.priceAccuracy ?? {});
     // Surface every named category, ranked by accuracy desc. The
     // viewer can read the gap between named-category accuracy and
-    // the actor's `defaultAppraisalAccuracy` to see who's a
+    // the actor's `defaultPriceAccuracy` to see who's a
     // specialist vs a generalist.
     return entries
       .map(([cat, acc]) => ({ category: cat, accuracy: acc }))
@@ -273,8 +273,8 @@ function ExpertiseSection({
   }, [profile]);
 
   const flaws = useMemo(() => {
-    const entries = Object.entries(profile.flawTypeDetection ?? {});
-    const def = profile.defaultFlawTypeDetection ?? 0;
+    const entries = Object.entries(profile.flawDetection ?? {});
+    const def = profile.defaultFlawDetection ?? 0;
     // Only list flaws where the actor is *better than their own
     // default* — the design hook is "what flaws do they have an
     // eye for?", not "what's their flat detection score."
@@ -284,7 +284,7 @@ function ExpertiseSection({
       .sort((a, b) => b.detection - a.detection);
   }, [profile]);
 
-  const defaultAccuracy = profile.defaultAppraisalAccuracy ?? 0.5;
+  const defaultAccuracy = profile.defaultPriceAccuracy ?? 0.5;
 
   // Don't render the section if the actor is a featureless generalist
   // with no specialties and no flaw eye — there's nothing to surface.

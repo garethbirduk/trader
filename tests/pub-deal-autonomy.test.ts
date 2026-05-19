@@ -16,9 +16,9 @@ import { registerDailySettlement } from "../src/engine/world/daily-settlement.js
 import { insertPool } from "../src/engine/pools/pools-repo.js";
 import { insertLead } from "../src/engine/leads/leads-repo.js";
 import {
-  FALLBACK_BIDDER_PROFILE,
-  type BidderProfile,
-} from "../src/engine/auction/bidder-profile.js";
+  FALLBACK_KNOWLEDGE_PROFILE,
+  type KnowledgeProfile,
+} from "../src/engine/knowledge/types.js";
 import type { DB } from "../src/engine/core/db.js";
 import type { WorldEvent } from "../src/engine/core/events.js";
 
@@ -56,14 +56,14 @@ describe("pub-deal autonomy", () => {
       acquiredDay: 1,
     });
 
-    const profiles = new Map<number, BidderProfile>([
+    const profiles = new Map<number, KnowledgeProfile>([
       [
         buyer.id,
         {
-          appraisalAccuracy: new Map([["electrical", 1]]),
-          defaultAppraisalAccuracy: 1,
-          flawTypeDetection: new Map(),
-          defaultFlawTypeDetection: 0,
+          priceAccuracy: new Map([["electrical", 1]]),
+          defaultPriceAccuracy: 1,
+          flawDetection: new Map(),
+          defaultFlawDetection: 0,
         },
       ],
     ]);
@@ -82,7 +82,7 @@ describe("pub-deal autonomy", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: profiles,
+      knowledgeProfiles: profiles,
       attemptsPerHour: 10,
       pairChance: 1.0,
     });
@@ -136,7 +136,7 @@ describe("pub-deal autonomy", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       attemptsPerHour: 10,
       pairChance: 1.0,
     });
@@ -181,7 +181,7 @@ describe("pub-deal autonomy", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [a.id, b.id],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       startHour: 18,
       endHour: 22,
       attemptsPerHour: 10,
@@ -245,14 +245,14 @@ describe("pub-deal autonomy", () => {
       subjectPoolId: sourcePool.id,
     });
 
-    const profiles = new Map<number, BidderProfile>([
+    const profiles = new Map<number, KnowledgeProfile>([
       [
         buyer.id,
         {
-          appraisalAccuracy: new Map(),
-          defaultAppraisalAccuracy: 1,
-          flawTypeDetection: new Map(),
-          defaultFlawTypeDetection: 0,
+          priceAccuracy: new Map(),
+          defaultPriceAccuracy: 1,
+          flawDetection: new Map(),
+          defaultFlawDetection: 0,
         },
       ],
     ]);
@@ -270,7 +270,7 @@ describe("pub-deal autonomy", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: profiles,
+      knowledgeProfiles: profiles,
       attemptsPerHour: 5,
       pairChance: 1.0,
       forwardSellChance: 1.0, // every attempt is a forward-sale
@@ -328,7 +328,7 @@ describe("pub-deal autonomy", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       attemptsPerHour: 5,
       pairChance: 1.0,
       trustGatingThreshold: -25,
@@ -376,7 +376,7 @@ describe("pub-deal autonomy", () => {
     registerPubDealAutonomy(world, {
       pubLocationIds: [nags.id],
       npcActorIds: [seller.id, buyer.id],
-      bidderProfiles: new Map(), // no profiles → fallback
+      knowledgeProfiles: new Map(), // no profiles → fallback
       attemptsPerHour: 5,
       pairChance: 1.0,
     });
@@ -386,6 +386,6 @@ describe("pub-deal autonomy", () => {
     // autonomy should at least try, not throw.
     expect(events.filter((e) => e.type === "pubdeal.attempted").length)
       .toBeGreaterThan(0);
-    expect(FALLBACK_BIDDER_PROFILE.defaultAppraisalAccuracy).toBeGreaterThan(0);
+    expect(FALLBACK_KNOWLEDGE_PROFILE.defaultPriceAccuracy).toBeGreaterThan(0);
   });
 });

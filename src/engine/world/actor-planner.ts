@@ -1,5 +1,5 @@
 import type { World, Unsubscribe } from "../core/world.js";
-import type { BidderProfile } from "../auction/bidder-profile.js";
+import type { KnowledgeProfile } from "../knowledge/types.js";
 import { getStockLotsByOwner } from "../stock/lots-repo.js";
 import { getItemKindById } from "../stock/items-repo.js";
 import { getActorById } from "../actors/actors-repo.js";
@@ -12,8 +12,6 @@ import {
 } from "../economics/config.js";
 import { isWeekend } from "../core/calendar.js";
 import { estimatePriceBand } from "../perception/estimate.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
-
 /**
  * Per-actor, per-(day, hour) destination override decided by the
  * planner. The actor's policy callback consults `getOverride` to pick
@@ -92,7 +90,7 @@ export interface ActorPlannerOptions {
    *  out — their schedules are authoritative. */
   readonly flexibleActorIds: ReadonlySet<number>;
   /** Per-actor bidder profile — used for category interest in lots. */
-  readonly bidderProfiles: ReadonlyMap<number, BidderProfile>;
+  readonly knowledgeProfiles: ReadonlyMap<number, KnowledgeProfile>;
   /** Each actor's awake-hour window. Outside this range the planner
    *  forces their home location ("go to sleep"). */
   readonly awakeHoursByActor: ReadonlyMap<number, { start: number; end: number }>;
@@ -169,7 +167,7 @@ export function registerActorPlanner(
       const actor = getActorById(world.db, actorId);
       if (actor === null) continue;
 
-      const profile = opts.bidderProfiles.get(actorId);
+      const profile = opts.knowledgeProfiles.get(actorId);
 
       // Inventory snapshot.
       const lots = getStockLotsByOwner(world.db, actorId);
@@ -200,7 +198,7 @@ export function registerActorPlanner(
       // shimmer or consume RNG draws.
       let interestingCount = 0;
       if (profile !== undefined) {
-        const knowledgeProfile = deriveKnowledgeProfile(profile);
+        const knowledgeProfile = profile;
         const assumedTier = economics.pubAssumedTier;
         const assumedMult = economics.tierMultipliers[assumedTier];
         for (const lot of knownDocketLots) {

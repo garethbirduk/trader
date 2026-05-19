@@ -99,7 +99,7 @@ describe("shop turnover (Stage 8)", () => {
           specialties: ["electrical"],
         },
       ],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       economics,
     });
     world.start();
@@ -177,7 +177,7 @@ describe("shop turnover (Stage 8)", () => {
           specialties: ["electrical"],
         },
       ],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       economics,
     });
     world.start();
@@ -243,7 +243,7 @@ describe("shop turnover (Stage 8)", () => {
           hourlyFootfall: { 12: 20 }, // per-shop override
         },
       ],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       economics,
     });
     world.start();
@@ -321,7 +321,7 @@ describe("shop turnover (Stage 8)", () => {
           personaWeightMultipliers: { "old-dears": 5, students: 0 },
         },
       ],
-      bidderProfiles: new Map(),
+      knowledgeProfiles: new Map(),
       economics,
     });
     world.start();

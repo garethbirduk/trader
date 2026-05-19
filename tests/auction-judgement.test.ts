@@ -61,10 +61,7 @@ describe("default-bidders — judgement engine end-to-end", () => {
           [
             aid,
             {
-              appraisalAccuracy: new Map(),
-              defaultAppraisalAccuracy: 1.0,
-              flawTypeDetection: new Map(),
-              defaultFlawTypeDetection: 0.5,
+              bandPlacementAccuracy: new Map(), defaultBandPlacementAccuracy: 1.0, conditionAccuracy: new Map(), defaultConditionAccuracy: 1.0, flawDetection: new Map(), defaultFlawDetection: 0.5, priceAccuracy: new Map(), defaultPriceAccuracy: 1.0, customerFitAccuracy: new Map(), defaultCustomerFitAccuracy: 0.7,
             },
           ],
         ]),
@@ -122,10 +119,7 @@ describe("default-bidders — judgement engine end-to-end", () => {
           [
             aid,
             {
-              appraisalAccuracy: new Map(),
-              defaultAppraisalAccuracy: 0.1,
-              flawTypeDetection: new Map(),
-              defaultFlawTypeDetection: 0.5,
+              bandPlacementAccuracy: new Map(), defaultBandPlacementAccuracy: 0.1, conditionAccuracy: new Map(), defaultConditionAccuracy: 0.1, flawDetection: new Map(), defaultFlawDetection: 0.5, priceAccuracy: new Map(), defaultPriceAccuracy: 0.1, customerFitAccuracy: new Map(), defaultCustomerFitAccuracy: 0.7,
             },
           ],
         ]),
@@ -197,19 +191,13 @@ describe("default-bidders — judgement engine end-to-end", () => {
           [
             expert,
             {
-              appraisalAccuracy: new Map(),
-              defaultAppraisalAccuracy: 0.95,
-              flawTypeDetection: new Map(),
-              defaultFlawTypeDetection: 0.5,
+              bandPlacementAccuracy: new Map(), defaultBandPlacementAccuracy: 0.95, conditionAccuracy: new Map(), defaultConditionAccuracy: 0.95, flawDetection: new Map(), defaultFlawDetection: 0.5, priceAccuracy: new Map(), defaultPriceAccuracy: 0.95, customerFitAccuracy: new Map(), defaultCustomerFitAccuracy: 0.7,
             },
           ],
           [
             clueless,
             {
-              appraisalAccuracy: new Map(),
-              defaultAppraisalAccuracy: 0.1,
-              flawTypeDetection: new Map(),
-              defaultFlawTypeDetection: 0.5,
+              bandPlacementAccuracy: new Map(), defaultBandPlacementAccuracy: 0.1, conditionAccuracy: new Map(), defaultConditionAccuracy: 0.1, flawDetection: new Map(), defaultFlawDetection: 0.5, priceAccuracy: new Map(), defaultPriceAccuracy: 0.1, customerFitAccuracy: new Map(), defaultCustomerFitAccuracy: 0.7,
             },
           ],
         ]),

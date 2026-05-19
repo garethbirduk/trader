@@ -9,10 +9,6 @@ import {
   actorHasInspectedLot,
   actorKnowsLot,
 } from "./knowledge-repo.js";
-import {
-  FALLBACK_BIDDER_PROFILE,
-  type BidderProfile,
-} from "./bidder-profile.js";
 import type { QualityTier } from "../stock/types.js";
 import {
   DEFAULT_ECONOMICS_CONFIG,
@@ -23,13 +19,16 @@ import {
   buildCompositePayloadFromLotValuation,
   insertJudgement,
 } from "../perception/judgement-log-repo.js";
-import { deriveKnowledgeProfile } from "../knowledge/skin-seed.js";
+import {
+  FALLBACK_KNOWLEDGE_PROFILE,
+  type KnowledgeProfile,
+} from "../knowledge/types.js";
 
 export interface BidderOptions {
-  /** Per-actor bidder profiles. Actors without one use `fallbackProfile`. */
-  readonly profiles?: ReadonlyMap<number, BidderProfile>;
+  /** Per-actor knowledge profiles. Actors without one use `fallbackProfile`. */
+  readonly profiles?: ReadonlyMap<number, KnowledgeProfile>;
   /** Profile used for actors not present in `profiles`. */
-  readonly fallbackProfile?: BidderProfile;
+  readonly fallbackProfile?: KnowledgeProfile;
   /** Actors with cash <= this floor are excluded from the bidder pool. */
   readonly minCashToParticipate?: number;
   /** Skipped actor codes (e.g. "auction-house", or the player). */
@@ -91,16 +90,16 @@ export interface BidderOptions {
  *      and they obviously can't pay more than they have.
  *   4. Bidders whose ceiling falls below the lot's floor drop out.
  *
- * Plug a `BidderProfile` per actor into the skin to get characters who
- * specialise (an electrical specialist, a clueless mug, etc.). Actors
- * without a profile fall back to a passable generalist.
+ * Plug a `KnowledgeProfile` per actor into the skin to get characters
+ * who specialise (an electrical specialist, a clueless mug, etc.).
+ * Actors without a profile fall back to a passable generalist.
  */
 export function makeBidders(
   opts: BidderOptions = {},
 ): (db: DB, lot: AuctionLot, day: number, rng: SeededRNG) => readonly AuctionBidder[] {
   const economics = opts.economics ?? DEFAULT_ECONOMICS_CONFIG;
-  const profiles = opts.profiles ?? new Map<number, BidderProfile>();
-  const fallback = opts.fallbackProfile ?? FALLBACK_BIDDER_PROFILE;
+  const profiles = opts.profiles ?? new Map<number, KnowledgeProfile>();
+  const fallback = opts.fallbackProfile ?? FALLBACK_KNOWLEDGE_PROFILE;
   const minCash = opts.minCashToParticipate ?? 100;
   const exclude = new Set(opts.excludeActorCodes ?? ["auction-house"]);
   const requireLocation = opts.requireActorAtLocationId;
@@ -152,20 +151,17 @@ export function makeBidders(
       // bidders run the full Condition ∘ Price composition against
       // truth.
       //
-      // The in-memory BidderProfile is the auction's source of truth
+      // The in-memory KnowledgeProfile is the auction's source of truth
       // for an actor's appraisal skill — the persisted skills table
       // is for consultations / beliefs / haggle-anchors, and isn't
-      // necessarily seeded for every actor a test cares about. Derive
-      // a KnowledgeProfile from the BidderProfile so the judgement
-      // engine reads the right per-category accuracies.
-      const knowledgeProfile = deriveKnowledgeProfile(profile);
+      // necessarily seeded for every actor a test cares about.
       const result = estimateLotValue({
         db,
         actorId: a.id,
         lot,
         rng,
         economics,
-        profileOverride: knowledgeProfile,
+        profileOverride: profile,
         ...(inspected ? {} : { perceivedTierOverride: assumedTier }),
         ...(knowsFlaw && item.flawType !== null
           ? { knownFlawType: item.flawType }
