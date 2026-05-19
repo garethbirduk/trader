@@ -1,18 +1,13 @@
-import { useEffect, useState } from "react";
-import type { RunDump } from "./types.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { DaySnapshot, RunDump } from "./types.js";
 import { TimeStepper } from "./components/TimeStepper.js";
+import { Sidebar } from "./components/Sidebar.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
 import { CurrentTimeProvider } from "./lib/current-time.js";
 import { PovProvider, usePov } from "./lib/pov.js";
 import { PovSwitcher } from "./components/PovSwitcher.js";
 import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
-
-// REBUILD: imports below are for components commented out during the
-// UI rebuild. Restore as we re-introduce each surface.
-// import { useMemo, useRef } from "react";
-// import type { DaySnapshot } from "./types.js";
-// import { Sidebar } from "./components/Sidebar.js";
-// import { SelectionChips } from "./components/SelectionChips.js";
+import { SelectionChips } from "./components/SelectionChips.js";
 
 interface LoadState {
   readonly status: "loading" | "loaded" | "error";
@@ -117,66 +112,84 @@ interface LoadedProps {
   readonly setTopTab: (t: SidebarTopTab) => void;
 }
 
-// REBUILD: left-panel resizer state — restored when Sidebar comes back.
-// const LEFT_PANEL_KEY = "trader-left-panel-px";
-// const DEFAULT_LEFT_PX = 320;
-// const MIN_LEFT_PX = 220;
-// const MIN_RIGHT_PX = 200;
-//
-// function readPersistedPx(key: string, min: number, fallback: number): number {
-//   try {
-//     const raw = localStorage.getItem(key);
-//     if (raw !== null) {
-//       const n = Number(raw);
-//       if (Number.isFinite(n) && n >= min) return n;
-//     }
-//   } catch {
-//     /* ignore */
-//   }
-//   return fallback;
-// }
+const LEFT_PANEL_KEY = "trader-left-panel-px";
+const DEFAULT_LEFT_PX = 320;
+const MIN_LEFT_PX = 220;
+const MIN_RIGHT_PX = 200;
+
+function readPersistedPx(key: string, min: number, fallback: number): number {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= min) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return fallback;
+}
 
 function Loaded(props: LoadedProps) {
   const { dump, day, hour, setDay, setHour } = props;
   const { pov } = usePov();
   const set = useSelectionSet();
+  const appRef = useRef<HTMLDivElement>(null);
+  const [leftPx, setLeftPx] = useState<number>(() =>
+    readPersistedPx(LEFT_PANEL_KEY, MIN_LEFT_PX, DEFAULT_LEFT_PX),
+  );
+  useEffect(() => {
+    try {
+      localStorage.setItem(LEFT_PANEL_KEY, String(Math.round(leftPx)));
+    } catch {
+      /* quota / disabled */
+    }
+  }, [leftPx]);
 
-  // REBUILD: left-panel resizer — re-enable when Sidebar returns.
-  // const appRef = useRef<HTMLDivElement>(null);
-  // const [leftPx, setLeftPx] = useState<number>(() =>
-  //   readPersistedPx(LEFT_PANEL_KEY, MIN_LEFT_PX, DEFAULT_LEFT_PX),
-  // );
-  // useEffect(() => {
-  //   try {
-  //     localStorage.setItem(LEFT_PANEL_KEY, String(Math.round(leftPx)));
-  //   } catch {
-  //     /* quota / disabled */
-  //   }
-  // }, [leftPx]);
-  // const onLeftResizeDown = (e: React.PointerEvent) => { ... };
+  const onLeftResizeDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const app = appRef.current;
+    if (app === null) return;
+    const startX = e.clientX;
+    const startLeft = leftPx;
+    const totalW = app.getBoundingClientRect().width;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    const onMove = (ev: PointerEvent) => {
+      const delta = ev.clientX - startX;
+      const next = startLeft + delta;
+      const maxLeft = Math.max(MIN_LEFT_PX, totalW - MIN_RIGHT_PX - 6);
+      setLeftPx(Math.min(maxLeft, Math.max(MIN_LEFT_PX, next)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
 
   useEffect(() => {
     if (day > dump.runLengthDays) setDay(dump.runLengthDays);
     if (day < 1) setDay(1);
   }, [day, dump.runLengthDays, setDay]);
 
-  // REBUILD: per-day snapshot — restored when Sidebar (or anything
-  // consuming snapshot.lotsByOwner / etc.) returns.
-  // const snapshot: DaySnapshot | null = useMemo(
-  //   () => dump.snapshots?.find((s) => s.day === day) ?? null,
-  //   [dump, day],
-  // );
-
-  // REBUILD: topTab is unused while the Sidebar is commented out. Kept
-  // in props so the App-level state survives the rebuild.
-  void props.topTab;
-  void props.setTopTab;
+  // Sidebar still wants the day's snapshot (lots-by-owner, etc.).
+  const snapshot: DaySnapshot | null = useMemo(
+    () => dump.snapshots?.find((s) => s.day === day) ?? null,
+    [dump, day],
+  );
 
   return (
     <CurrentTimeProvider value={{ day, hour }}>
       <div
-        className="app app--rebuild"
+        className="app"
+        ref={appRef}
         data-pov={pov.kind}
+        style={{
+          ["--left-panel-w" as string]: `${leftPx}px`,
+        }}
       >
         <header className="header">
           <h1>TRADER · sim viewer</h1>
@@ -228,42 +241,33 @@ function Loaded(props: LoadedProps) {
             seed=<strong>{dump.seed}</strong> · {dump.events.length} events
           </div>
         </header>
-
-        {/* REBUILD: Sidebar, left-resizer, and RHS main panel are
-            commented out while we rebuild the UI from the header down.
-            Re-introduce one surface at a time, each routed through the
-            standard chip component family (see docs/ui-rules.md).
-
-            <Sidebar
-              dump={dump}
-              day={day}
-              hour={hour}
-              snapshot={snapshot}
-              topTab={props.topTab}
-              setTopTab={props.setTopTab}
-            />
-            <div
-              className="left-resizer"
-              role="separator"
-              aria-orientation="vertical"
-              title="Drag to resize"
-              onPointerDown={onLeftResizeDown}
-            >
-              <span className="left-resizer-grip" />
-            </div>
-            <main className="rhs-placeholder">
-              <SelectionChips dump={dump} />
-              <div className="rhs-stub">
-                <p>RHS not built yet.</p>
-              </div>
-            </main>
-        */}
-
-        <main className="rebuild-stub">
-          <p className="muted">
-            UI rebuild in progress — only the header is wired up. Add new
-            surfaces below, following <code>docs/ui-rules.md</code>.
-          </p>
+        <Sidebar
+          dump={dump}
+          day={day}
+          hour={hour}
+          snapshot={snapshot}
+          topTab={props.topTab}
+          setTopTab={props.setTopTab}
+        />
+        <div
+          className="left-resizer"
+          role="separator"
+          aria-orientation="vertical"
+          title="Drag to resize"
+          onPointerDown={onLeftResizeDown}
+        >
+          <span className="left-resizer-grip" />
+        </div>
+        <main className="rhs-placeholder">
+          <SelectionChips dump={dump} />
+          <div className="rhs-stub">
+            <p>RHS not built yet.</p>
+            <p className="muted">
+              Tabs (Map · Inventory · Gossip · Deals · Diary · …) and the
+              upper/lower scene split land in Phase 4. Until then the
+              selection chips above are the only RHS content.
+            </p>
+          </div>
         </main>
       </div>
     </CurrentTimeProvider>

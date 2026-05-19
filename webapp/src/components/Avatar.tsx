@@ -28,8 +28,8 @@ export function Avatar({ name, code, isPlayer, size, onClick, selected, title }:
           cy={size / 2}
           r={size / 2 - 1}
           fill={colour}
-          stroke={isPlayer ? "#fff" : "rgba(0,0,0,0.4)"}
-          strokeWidth={isPlayer ? 1.5 : 1}
+          stroke="rgba(0,0,0,0.4)"
+          strokeWidth={1}
         />
         <text
           x={size / 2}
