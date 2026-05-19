@@ -437,5 +437,356 @@
       { "from": 9, "to": 17, "location": "camshaft-autos" }
     ],
     "weekendSchedule": []
+  },
+  {
+    "code": "raquel",
+    "firstName": "Raquel",
+    "lastName": "Turner",
+    "shortName": "Raquel",
+    "cash": 250,
+    "homeLocation": "raquel-flat",
+    "defaultLocation": "raquel-flat",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 9, "end": 23 },
+    "schedule": [
+      { "from": 10, "to": 13, "location": "raquel-flat" },
+      { "from": 13, "to": 17, "location": "FLEXIBLE" },
+      { "from": 19, "to": 23, "location": "starlight-rooms" },
+      { "from": 23, "to": 10, "location": "raquel-flat" }
+    ]
+  },
+  {
+    "code": "cassandra",
+    "firstName": "Cassandra",
+    "lastName": "Parry",
+    "shortName": "Cassandra",
+    "cash": 800,
+    "homeLocation": "cassandra-flat",
+    "defaultLocation": "cassandra-bank",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 22 },
+    "schedule": [
+      { "from": 7.5, "to": 8.5, "location": "FLEXIBLE" },
+      { "from": 8.5, "to": 13, "location": "cassandra-bank" },
+      { "from": 13, "to": 14, "location": "FLEXIBLE" },
+      { "from": 14, "to": 17.5, "location": "cassandra-bank" },
+      { "from": 18, "to": 20, "location": "FLEXIBLE" },
+      { "from": 20, "to": 22.5, "location": "nags" },
+      { "from": 22.5, "to": 7.5, "location": "cassandra-flat" }
+    ],
+    "weekendSchedule": [
+      { "from": 20, "to": 22.5, "location": "nags" }
+    ],
+    "lunchSlot": {
+      "hours": [13],
+      "daysOfWeek": [1, 2, 3, 4, 5],
+      "candidateCodes": ["cassandra-bank", "cassandra-flat", "sids-cafe", "nags"]
+    }
+  },
+  {
+    "code": "sid",
+    "firstName": "Sid",
+    "shortName": "Sid",
+    "cash": 400,
+    "socialScore": 0.75,
+    "homeLocation": "sids-cafe",
+    "defaultLocation": "sids-cafe",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 6, "end": 23 },
+    "schedule": [
+      { "from": 6, "to": 17, "location": "sids-cafe" },
+      { "from": 19, "to": 23, "location": "nags" },
+      { "from": 23, "to": 6, "location": "sids-cafe" }
+    ]
+  },
+  {
+    "code": "alfie-flowers",
+    "firstName": "Alfie",
+    "lastName": "Flowers",
+    "shortName": "Alfie",
+    "roles": ["supplier"],
+    "cash": 600,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 10, "end": 23 },
+    "schedule": [
+      { "from": 10, "to": 13, "location": "auction-house" },
+      { "from": 13, "to": 15, "location": "one-eleven-club" },
+      { "from": 20, "to": 24, "location": "one-eleven-club" }
+    ]
+  },
+  {
+    "code": "ronnie-nelson",
+    "firstName": "Ronnie",
+    "lastName": "Nelson",
+    "shortName": "Ronnie",
+    "cash": 900,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "van",
+    "awakeHours": { "start": 9, "end": 23 },
+    "schedule": [
+      { "from": 10, "to": 17, "location": "FLEXIBLE" },
+      { "from": 20, "to": 23, "location": "one-eleven-club" }
+    ]
+  },
+  {
+    "code": "mustapha",
+    "firstName": "Mustapha",
+    "shortName": "Mustapha",
+    "cash": 500,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "van",
+    "awakeHours": { "start": 9, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "FLEXIBLE" }
+    ]
+  },
+  {
+    "code": "arnie",
+    "firstName": "Arnie",
+    "lastName": "Rutter",
+    "shortName": "Arnie",
+    "cash": 0,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 11, "end": 23 },
+    "schedule": [
+      { "from": 12, "to": 14, "location": "one-eleven-club" },
+      { "from": 19, "to": 23, "location": "FLEXIBLE" }
+    ]
+  },
+  {
+    "code": "towser",
+    "firstName": "Towser",
+    "shortName": "Towser",
+    "cash": 80,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 10, "end": 23 },
+    "schedule": [
+      { "from": 10, "to": 16, "location": "auction-house" },
+      { "from": 19, "to": 23, "location": "nags" }
+    ]
+  },
+  {
+    "code": "paddy-the-greek",
+    "firstName": "Paddy",
+    "lastName": "the Greek",
+    "shortName": "Paddy",
+    "cash": 350,
+    "homeLocation": "off-map",
+    "defaultLocation": "peckham-market",
+    "lockupLocation": "lockup",
+    "transportCapacity": "van",
+    "awakeHours": { "start": 7, "end": 17 },
+    "schedule": [
+      { "from": 8, "to": 14, "location": "peckham-market" },
+      { "from": 14, "to": 16, "location": "sids-cafe" }
+    ]
+  },
+  {
+    "code": "slater",
+    "firstName": "Roy",
+    "lastName": "Slater",
+    "shortName": "DCI Slater",
+    "cash": 300,
+    "socialScore": 0.85,
+    "bribable": true,
+    "homeLocation": "slater-flat",
+    "defaultLocation": "police-station",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 22 },
+    "schedule": [
+      { "from": 8, "to": 18, "location": "police-station" },
+      { "from": 18, "to": 22, "location": "FLEXIBLE" },
+      { "from": 22, "to": 8, "location": "slater-flat" }
+    ]
+  },
+  {
+    "code": "pc-hoskins",
+    "firstName": "Terence",
+    "lastName": "Hoskins",
+    "shortName": "PC Hoskins",
+    "cash": 200,
+    "homeLocation": "off-map",
+    "defaultLocation": "police-station",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 22 },
+    "schedule": [
+      { "from": 8, "to": 18, "location": "police-station" },
+      { "from": 18, "to": 22, "location": "FLEXIBLE" }
+    ]
+  },
+  {
+    "code": "dirty-barry",
+    "firstName": "Dirty",
+    "lastName": "Barry",
+    "shortName": "Dirty Barry",
+    "cash": 250,
+    "homeLocation": "dirty-barrys",
+    "defaultLocation": "dirty-barrys",
+    "transportCapacity": "pocket",
+    "awakeHours": { "start": 10, "end": 23 },
+    "schedule": [
+      { "from": 11, "to": 20, "location": "dirty-barrys" },
+      { "from": 21, "to": 23, "location": "nags" },
+      { "from": 23, "to": 11, "location": "dirty-barrys" }
+    ]
+  },
+  {
+    "code": "eugene-mccarthy",
+    "firstName": "Eugene",
+    "lastName": "McCarthy",
+    "shortName": "Eugene",
+    "cash": 1500,
+    "homeLocation": "off-map",
+    "defaultLocation": "starlight-rooms",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 14, "end": 23 },
+    "schedule": [
+      { "from": 20, "to": 24, "location": "starlight-rooms" },
+      { "from": 0, "to": 2, "location": "starlight-rooms" }
+    ]
+  },
+  {
+    "code": "driscoll-brothers",
+    "firstName": "Driscoll",
+    "lastName": "Brothers",
+    "shortName": "Driscolls",
+    "cash": 2000,
+    "socialScore": 0.9,
+    "homeLocation": "off-map",
+    "defaultLocation": "shamrock-club",
+    "transportCapacity": "van",
+    "awakeHours": { "start": 14, "end": 23 },
+    "schedule": [
+      { "from": 20, "to": 24, "location": "shamrock-club" },
+      { "from": 0, "to": 2, "location": "shamrock-club" }
+    ]
+  },
+  {
+    "code": "slough-stan",
+    "firstName": "Slough",
+    "lastName": "Stan",
+    "shortName": "Slough Stan",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "croydon-carl",
+    "firstName": "Croydon",
+    "lastName": "Carl",
+    "shortName": "Croydon Carl",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "maidstone-maureen",
+    "firstName": "Maidstone",
+    "lastName": "Maureen",
+    "shortName": "Maidstone Maureen",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "wandsworth-wally",
+    "firstName": "Wandsworth",
+    "lastName": "Wally",
+    "shortName": "Wandsworth Wally",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "brighton-bernie",
+    "firstName": "Brighton",
+    "lastName": "Bernie",
+    "shortName": "Brighton Bernie",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "watford-wendy",
+    "firstName": "Watford",
+    "lastName": "Wendy",
+    "shortName": "Watford Wendy",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "romford-reg",
+    "firstName": "Romford",
+    "lastName": "Reg",
+    "shortName": "Romford Reg",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "kingston-kev",
+    "firstName": "Kingston",
+    "lastName": "Kev",
+    "shortName": "Kingston Kev",
+    "cash": 4000,
+    "homeLocation": "off-map",
+    "defaultLocation": "off-map",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 7, "end": 19 },
+    "schedule": [
+      { "from": 8, "to": 17, "location": "auction-house" }
+    ],
+    "weekendSchedule": []
   }
 ]

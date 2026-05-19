@@ -161,6 +161,62 @@
     "type": "home"
   },
   {
+    "code": "raquel-flat",
+    "displayName": "Raquel's",
+    "type": "home"
+  },
+  {
+    "code": "cassandra-flat",
+    "displayName": "Cassandra's",
+    "type": "home"
+  },
+  {
+    "code": "slater-flat",
+    "displayName": "Slater's",
+    "type": "home"
+  },
+  {
+    "code": "cassandra-bank",
+    "displayName": "The Bank",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "police-station",
+    "displayName": "The Nick",
+    "type": "civic"
+  },
+  {
+    "code": "dirty-barrys",
+    "displayName": "Dirty Barry's",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "starlight-rooms",
+    "displayName": "Starlight Rooms",
+    "type": "pub",
+    "openHours": { "start": 20, "end": 26 }
+  },
+  {
+    "code": "shamrock-club",
+    "displayName": "Shamrock Club",
+    "type": "pub",
+    "openHours": { "start": 19, "end": 26 }
+  },
+  {
+    "code": "one-eleven-club",
+    "displayName": "The 111 Club",
+    "type": "pub",
+    "openHours": { "start": 19, "end": 26 },
+    "openSessions": [
+      { "daysOfWeek": [1, 2, 3, 4, 7], "start": 19, "end": 23 },
+      { "daysOfWeek": [5, 6], "start": 19, "end": 26 }
+    ]
+  },
+  {
     "code": "parry-printers",
     "displayName": "Parry Print",
     "type": "business",
