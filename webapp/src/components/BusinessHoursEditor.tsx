@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { LocationChip } from "./LocationChip.js";
+import { deriveRoutineFromVenue } from "../lib/routine-from-hours.js";
 
 /**
  * Editor for per-day opening hours on every venue that has them
@@ -254,12 +255,53 @@ export function BusinessHoursEditor() {
         }
         return next as LocationRecord;
       });
+      // Save locations.json first.
       const res = await fetch("/__data?file=locations.json", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
       });
       if (!res.ok) throw new Error(`save failed (${res.status})`);
+
+      // Cascade hour changes to actor routines: every actor whose
+      // `worksAt` references a venue we just changed gets their
+      // schedule + weekendSchedule regenerated from the new hours.
+      const changedVenues = new Map<string, LocationRecord>();
+      for (const l of updated) {
+        if (dirtyCodes.has(l.code)) changedVenues.set(l.code, l);
+      }
+      if (changedVenues.size > 0) {
+        const actorsRes = await fetch("/__data?file=actors.json");
+        if (actorsRes.ok) {
+          const actorsRaw = (await actorsRes.json()) as Array<Record<string, unknown>>;
+          let touched = 0;
+          for (const a of actorsRaw) {
+            const worksAt = typeof a.worksAt === "string" ? a.worksAt : "";
+            if (worksAt.length === 0) continue;
+            const venue = changedVenues.get(worksAt);
+            if (venue === undefined) continue;
+            const r = deriveRoutineFromVenue(worksAt, venue);
+            a.schedule = r.schedule;
+            if (r.weekendSchedule.length > 0) {
+              a.weekendSchedule = r.weekendSchedule;
+            } else {
+              delete a.weekendSchedule;
+            }
+            touched += 1;
+          }
+          if (touched > 0) {
+            const cascadeRes = await fetch("/__data?file=actors.json", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(actorsRaw),
+            });
+            if (!cascadeRes.ok) {
+              throw new Error(`actors.json cascade failed (${cascadeRes.status})`);
+            }
+          }
+        }
+      }
+
       setRaw(updated);
       setStatus({ kind: "saved" });
     } catch (e) {

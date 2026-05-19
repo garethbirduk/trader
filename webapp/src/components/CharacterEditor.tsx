@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "./Avatar.js";
 import { LocationChip } from "./LocationChip.js";
 import { LocationPicker } from "./LocationPicker.js";
+import { deriveRoutineFromVenue } from "../lib/routine-from-hours.js";
 
 /**
  * Character editor — dogfooding surface for tuning routines and
@@ -30,6 +31,16 @@ interface LocationLite {
   readonly code: string;
   readonly displayName: string;
   readonly type?: string;
+  /** Per-day opening sessions; preferred over openHours when present.
+   *  Used by the auto-routine derivation when an actor's worksAt is
+   *  set or changed. */
+  readonly openSessions?: ReadonlyArray<{
+    daysOfWeek: readonly number[];
+    start: number;
+    end: number;
+  }>;
+  readonly openHours?: { start: number; end: number } | null;
+  readonly openDaysOfWeek?: readonly number[];
 }
 
 /** Group locations by `type` for use as <optgroup> blocks. */
@@ -91,7 +102,9 @@ type Status =
   | { kind: "saved" }
   | { kind: "error"; message: string };
 
-export function CharacterEditor() {
+export type CharacterEditorView = "residences" | "actors";
+
+export function CharacterEditor({ view = "residences" }: { view?: CharacterEditorView } = {}) {
   const [raw, setRaw] = useState<readonly ActorRecord[] | null>(null);
   const [drafts, setDrafts] = useState<Record<string, DraftActor>>({});
   const [locations, setLocations] = useState<readonly LocationLite[]>([]);
@@ -187,6 +200,17 @@ export function CharacterEditor() {
     return entries;
   }, [drafts, locations]);
 
+  // Flat list view — every actor, sorted alphabetically by composed
+  // display name. Used by the Actors sub-tab where grouping by household
+  // would obscure the cast-wide alphabetical view.
+  const flatActors = useMemo(() => {
+    const composedFor = (d: DraftActor) =>
+      d.lastName.length > 0 ? `${d.firstName} ${d.lastName}` : d.firstName;
+    return Object.values(drafts).slice().sort((a, b) =>
+      composedFor(a).localeCompare(composedFor(b)),
+    );
+  }, [drafts]);
+
   const onFieldChange = (
     code: string,
     field: keyof Omit<DraftActor, "code">,
@@ -219,6 +243,7 @@ export function CharacterEditor() {
     if (raw === null) return;
     setStatus({ kind: "saving" });
     try {
+      const venueByCode = new Map(locations.map((l) => [l.code, l]));
       const updated: ActorRecord[] = raw.map((a) => {
         const d = drafts[a.code];
         if (d === undefined) return a;
@@ -236,10 +261,28 @@ export function CharacterEditor() {
         } else {
           next.ownsLocation = d.ownsLocation;
         }
-        if (d.worksAt.length === 0) {
+        // When worksAt changes (newly set or repointed to a different
+        // venue), regenerate the actor's routine from the venue's
+        // opening hours. Clearing worksAt leaves the existing routine
+        // alone — the user may want to keep custom spans.
+        const prevWorksAt = a.worksAt ?? "";
+        const newWorksAt = d.worksAt;
+        if (newWorksAt.length === 0) {
           delete next.worksAt;
         } else {
-          next.worksAt = d.worksAt;
+          next.worksAt = newWorksAt;
+          if (newWorksAt !== prevWorksAt) {
+            const venue = venueByCode.get(newWorksAt);
+            if (venue !== undefined) {
+              const r = deriveRoutineFromVenue(newWorksAt, venue);
+              next.schedule = r.schedule;
+              if (r.weekendSchedule.length > 0) {
+                next.weekendSchedule = r.weekendSchedule;
+              } else {
+                delete next.weekendSchedule;
+              }
+            }
+          }
         }
         return next as ActorRecord;
       });
@@ -313,7 +356,20 @@ export function CharacterEditor() {
           <span className="char-col-label">owns</span>
           <span className="char-col-label">works at</span>
         </div>
-        {grouped.map(({ homeCode, homeDisplayName, homeType, members }) => (
+        {view === "actors" ? (
+          <ul className="char-household-list">
+            {flatActors.map((d) => (
+              <ActorRow
+                key={d.code}
+                d={d}
+                isDirty={dirtyCodes.has(d.code)}
+                locations={locations}
+                onFieldChange={onFieldChange}
+              />
+            ))}
+          </ul>
+        ) : (
+          grouped.map(({ homeCode, homeDisplayName, homeType, members }) => (
           <section key={homeCode} className="char-household">
             <header className="char-household-header">
               <LocationChip
@@ -324,74 +380,80 @@ export function CharacterEditor() {
               <span className="muted">{members.length}</span>
             </header>
             <ul className="char-household-list">
-              {members.map((d) => {
-                const isDirty = dirtyCodes.has(d.code);
-                const composed =
-                  d.lastName.length > 0
-                    ? `${d.firstName} ${d.lastName}`
-                    : d.firstName;
-                return (
-                  <li
-                    key={d.code}
-                    className={`char-row ${isDirty ? "char-row-dirty" : ""}`}
-                  >
-                    <Avatar
-                      name={composed}
-                      code={d.code}
-                      isPlayer={false}
-                      size={20}
-                    />
-                    <code className="char-code muted">{d.code}</code>
-                    <input
-                      className="char-input"
-                      value={d.firstName}
-                      placeholder="first"
-                      onChange={(e) =>
-                        onFieldChange(d.code, "firstName", e.target.value)
-                      }
-                    />
-                    <input
-                      className="char-input"
-                      value={d.lastName}
-                      placeholder="last (opt)"
-                      onChange={(e) =>
-                        onFieldChange(d.code, "lastName", e.target.value)
-                      }
-                    />
-                    <input
-                      className="char-input"
-                      value={d.shortName}
-                      placeholder="short"
-                      onChange={(e) =>
-                        onFieldChange(d.code, "shortName", e.target.value)
-                      }
-                    />
-                    <LocationSelect
-                      kind="homeLocation"
-                      value={d.homeLocation}
-                      locations={locations}
-                      onChange={(v) => onFieldChange(d.code, "homeLocation", v)}
-                    />
-                    <LocationSelect
-                      kind="ownsLocation"
-                      value={d.ownsLocation}
-                      locations={locations}
-                      onChange={(v) => onFieldChange(d.code, "ownsLocation", v)}
-                    />
-                    <LocationSelect
-                      kind="worksAt"
-                      value={d.worksAt}
-                      locations={locations}
-                      onChange={(v) => onFieldChange(d.code, "worksAt", v)}
-                    />
-                  </li>
-                );
-              })}
+              {members.map((d) => (
+                <ActorRow
+                  key={d.code}
+                  d={d}
+                  isDirty={dirtyCodes.has(d.code)}
+                  locations={locations}
+                  onFieldChange={onFieldChange}
+                />
+              ))}
             </ul>
           </section>
-        ))}
+          ))
+        )}
       </div>
     </section>
+  );
+}
+
+/** Per-actor editable row — used by both the grouped Residences view
+ *  and the flat Actors view so the cell layout and behaviour stay
+ *  identical between them. */
+function ActorRow({
+  d,
+  isDirty,
+  locations,
+  onFieldChange,
+}: {
+  d: DraftActor;
+  isDirty: boolean;
+  locations: readonly LocationLite[];
+  onFieldChange: (code: string, field: keyof Omit<DraftActor, "code">, value: string) => void;
+}) {
+  const composed = d.lastName.length > 0 ? `${d.firstName} ${d.lastName}` : d.firstName;
+  return (
+    <li className={`char-row ${isDirty ? "char-row-dirty" : ""}`}>
+      <Avatar name={composed} code={d.code} isPlayer={false} size={20} />
+      <code className="char-code muted">{d.code}</code>
+      <input
+        className="char-input"
+        value={d.firstName}
+        placeholder="first"
+        onChange={(e) => onFieldChange(d.code, "firstName", e.target.value)}
+      />
+      <input
+        className="char-input"
+        value={d.lastName}
+        placeholder="last (opt)"
+        onChange={(e) => onFieldChange(d.code, "lastName", e.target.value)}
+      />
+      <input
+        className="char-input"
+        value={d.shortName}
+        placeholder="short"
+        onChange={(e) => onFieldChange(d.code, "shortName", e.target.value)}
+      />
+      <LocationSelect
+        kind="homeLocation"
+        value={d.homeLocation}
+        locations={locations}
+        onChange={(v) => onFieldChange(d.code, "homeLocation", v)}
+      />
+      <LocationSelect
+        kind="ownsLocation"
+        value={d.ownsLocation}
+        locations={locations}
+        onChange={(v) => onFieldChange(d.code, "ownsLocation", v)}
+      />
+      <LocationSelect
+        kind="worksAt"
+        value={d.worksAt}
+        locations={locations}
+        onChange={(v) => onFieldChange(d.code, "worksAt", v)}
+      />
+    </li>
   );
 }
 

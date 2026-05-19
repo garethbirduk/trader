@@ -15,7 +15,7 @@ import { MapEditor } from "./components/MapEditor.js";
 import { BusinessHoursEditor } from "./components/BusinessHoursEditor.js";
 
 export type RhsTab = "calendar" | "map" | "editor";
-export type EditorSubTab = "cast" | "businesses" | "map";
+export type EditorSubTab = "residences" | "actors" | "businesses" | "map";
 
 const DEV = import.meta.env.DEV;
 
@@ -47,7 +47,7 @@ export function App() {
   const [hour, setHour] = useState(0);
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
   const [rhsTab, setRhsTab] = useState<RhsTab>("calendar");
-  const [editorSubTab, setEditorSubTab] = useState<EditorSubTab>("cast");
+  const [editorSubTab, setEditorSubTab] = useState<EditorSubTab>("residences");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -328,11 +328,20 @@ function Loaded(props: LoadedProps) {
                   <button
                     type="button"
                     role="tab"
-                    className={`editor-subtab ${props.editorSubTab === "cast" ? "editor-subtab-active" : ""}`}
-                    aria-selected={props.editorSubTab === "cast"}
-                    onClick={() => props.setEditorSubTab("cast")}
+                    className={`editor-subtab ${props.editorSubTab === "residences" ? "editor-subtab-active" : ""}`}
+                    aria-selected={props.editorSubTab === "residences"}
+                    onClick={() => props.setEditorSubTab("residences")}
                   >
-                    Cast
+                    Residences
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    className={`editor-subtab ${props.editorSubTab === "actors" ? "editor-subtab-active" : ""}`}
+                    aria-selected={props.editorSubTab === "actors"}
+                    onClick={() => props.setEditorSubTab("actors")}
+                  >
+                    Actors
                   </button>
                   <button
                     type="button"
@@ -354,8 +363,10 @@ function Loaded(props: LoadedProps) {
                   </button>
                 </div>
                 <div className="editor-subbody">
-                  {props.editorSubTab === "cast" ? (
-                    <CharacterEditor />
+                  {props.editorSubTab === "residences" ? (
+                    <CharacterEditor view="residences" />
+                  ) : props.editorSubTab === "actors" ? (
+                    <CharacterEditor view="actors" />
                   ) : props.editorSubTab === "businesses" ? (
                     <BusinessHoursEditor />
                   ) : (
