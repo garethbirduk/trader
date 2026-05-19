@@ -210,8 +210,20 @@ export interface RunDump {
     homeLocationId: number | null;
     schedule: readonly { hour: number; locationId: number }[];
     weekendSchedule?: readonly { hour: number; locationId: number }[];
+    /** Hours that aren't pinned by a non-placeholder schedule span —
+     *  i.e. the actor's routine just resolves to home for these hours
+     *  but they're actually open to ad-hoc moves. Calendar-knowledge
+     *  derivation reads this so a third party who "knows" the actor's
+     *  routine doesn't infer false certainty about flex-hour locations. */
+    flexibleHours: readonly number[];
     awakeHours: { start: number; end: number };
   }[];
+  /** Pairs of actors whose calendars are implicitly shared at all times
+   *  (close family, business partners). The viewer treats each member of
+   *  a pair as having continuous co-presence with their partner — they
+   *  know each other's actual location every hour, without needing
+   *  gossip. Codes resolved to ids by the skin loader. */
+  readonly pairs: readonly (readonly [number, number])[];
   readonly items: readonly {
     id: number;
     code: string;
@@ -582,6 +594,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
             ),
           }
         : {}),
+      flexibleHours: [...info.flexibleHours].sort((a, b) => a - b),
       awakeHours: { start: info.awakeHours.start, end: info.awakeHours.end },
     }),
   );
@@ -629,6 +642,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
       };
     }),
     actorRoutines: routineEntries,
+    pairs: skin.pairs ?? [],
     items: listItemKinds(db).map((it) => ({
       id: it.id,
       code: it.code,

@@ -153,6 +153,12 @@ export interface RunActorRoutine {
    *  it for weekend days instead of the weekday `schedule`. Fixed-job
    *  actors whose venue closes on weekends ship one of these. */
   readonly weekendSchedule?: readonly { hour: number; locationId: number }[];
+  /** Hours where the actor's routine just falls back to home — not a
+   *  "fixed" job slot but a placeholder the engine fills with ad-hoc
+   *  moves. Calendar-knowledge derivation reads this so a third party
+   *  who "knows" the actor's routine doesn't infer false certainty
+   *  about flex-hour locations. Optional for back-compat. */
+  readonly flexibleHours?: readonly number[];
   readonly awakeHours: { start: number; end: number };
 }
 
@@ -333,6 +339,10 @@ export interface RunDump {
   readonly locations: readonly RunLocation[];
   readonly snapshots: readonly DaySnapshot[];
   readonly actorRoutines?: readonly RunActorRoutine[];
+  /** Pairs of actors whose calendars are implicitly shared (close family,
+   *  business partners). Each pair-member always "knows" their partner's
+   *  actual location. Optional for back-compat with older dumps. */
+  readonly pairs?: readonly (readonly [number, number])[];
   readonly playerActorId: number;
   readonly auctionHouseActorId: number;
   readonly auctionLocationId?: number;

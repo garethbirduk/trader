@@ -8,6 +8,10 @@ import { PovProvider, usePov } from "./lib/pov.js";
 import { PovSwitcher } from "./components/PovSwitcher.js";
 import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
 import { SelectionChips } from "./components/SelectionChips.js";
+import { CalendarView } from "./components/CalendarView.js";
+import { MapGraph } from "./components/MapGraph.js";
+
+export type RhsTab = "calendar" | "map";
 
 interface LoadState {
   readonly status: "loading" | "loaded" | "error";
@@ -36,6 +40,7 @@ export function App() {
   const [day, setDay] = useState(1);
   const [hour, setHour] = useState(0);
   const [topTab, setTopTab] = useState<SidebarTopTab>("actors");
+  const [rhsTab, setRhsTab] = useState<RhsTab>("calendar");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -96,6 +101,8 @@ export function App() {
           setHour={setHour}
           topTab={topTab}
           setTopTab={setTopTab}
+          rhsTab={rhsTab}
+          setRhsTab={setRhsTab}
         />
       </SelectionSetProvider>
     </PovProvider>
@@ -110,6 +117,8 @@ interface LoadedProps {
   readonly setHour: (h: number) => void;
   readonly topTab: SidebarTopTab;
   readonly setTopTab: (t: SidebarTopTab) => void;
+  readonly rhsTab: RhsTab;
+  readonly setRhsTab: (t: RhsTab) => void;
 }
 
 const LEFT_PANEL_KEY = "trader-left-panel-px";
@@ -258,15 +267,48 @@ function Loaded(props: LoadedProps) {
         >
           <span className="left-resizer-grip" />
         </div>
-        <main className="rhs-placeholder">
+        <main className="rhs">
           <SelectionChips dump={dump} />
-          <div className="rhs-stub">
-            <p>RHS not built yet.</p>
-            <p className="muted">
-              Tabs (Map · Inventory · Gossip · Deals · Diary · …) and the
-              upper/lower scene split land in Phase 4. Until then the
-              selection chips above are the only RHS content.
-            </p>
+          <div className="rhs-tabs" role="tablist" aria-label="RHS view">
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "calendar" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "calendar"}
+              onClick={() => props.setRhsTab("calendar")}
+            >
+              Calendar
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "map" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "map"}
+              onClick={() => props.setRhsTab("map")}
+            >
+              Map
+            </button>
+          </div>
+          <div className="rhs-body">
+            {props.rhsTab === "calendar" ? (
+              <CalendarView
+                dump={dump}
+                day={day}
+                hour={hour}
+                snapshot={snapshot}
+                onChangeDay={setDay}
+                onSelect={(s) => set.replace(s)}
+              />
+            ) : (
+              <MapGraph
+                dump={dump}
+                day={day}
+                hour={hour}
+                snapshot={snapshot}
+                selection={set.primary}
+                onSelect={(s) => set.replace(s)}
+              />
+            )}
           </div>
         </main>
       </div>

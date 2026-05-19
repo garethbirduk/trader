@@ -7,6 +7,8 @@ import { combinedPositions, useLayout, type MapLayout } from "../map-layout.js";
 import { getPlaybackSpeed, setMapBusy } from "../anim-state.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
 import { isLocationOpenAt } from "../lib/location-open.js";
+import { useKnownIds } from "../lib/pov-knowledge.js";
+import { usePov } from "../lib/pov.js";
 import {
   MapBasemap,
   NodeLabel,
@@ -214,6 +216,10 @@ const ANIM_SPEED_PX_PER_SEC = 700;
 
 export function MapGraph(props: Props) {
   const { dump, day, hour, selection, onSelect } = props;
+  const { pov } = usePov();
+  const povActorId = pov.kind === "actor" ? pov.actorId : null;
+  const known = useKnownIds(dump, povActorId ?? -1, day, hour);
+  const isPovMode = povActorId !== null;
   const layout = useLayout();
   syncFromLayout(layout);
   const adj = useMemo(buildAdjacency, [layout]);
@@ -613,12 +619,27 @@ export function MapGraph(props: Props) {
         preserveAspectRatio="xMidYMid meet"
       >
         <MapBasemap />
-        {/* Base edges — always plain grey. */}
+        {/* Base edges — always plain grey. In POV mode, hide an edge
+            only when an endpoint is an off-map location the POV doesn't
+            know about (its perimeter marker isn't rendered, so the
+            edge would terminate in empty space). Edges to unknown
+            on-canvas locations (rendered as dots) stay visible so the
+            graph stays readable. Waypoints are always endpoints. */}
         <g className="edges">
           {EDGES.map(([a, b]) => {
             const pa = POSITIONS[a];
             const pb = POSITIONS[b];
             if (!pa || !pb) return null;
+            if (isPovMode) {
+              const la = dump.locations.find((l) => l.code === a);
+              const lb = dump.locations.find((l) => l.code === b);
+              const hides = (loc: typeof la, code: string): boolean => {
+                if (loc === undefined) return false;
+                if (layout.offMap[code] !== true) return false;
+                return !known.locations.has(loc.id);
+              };
+              if (hides(la, a) || hides(lb, b)) return null;
+            }
             return (
               <line
                 key={edgeKey(a, b)}
@@ -636,6 +657,7 @@ export function MapGraph(props: Props) {
             behind the avatar, something's wrong. */}
         <g className="route-overlays" pointerEvents="none">
           {dump.actors.map((actor) => {
+            if (isPovMode && !known.believedLocations.has(actor.id)) return null;
             const anim = animsRef.current.get(actor.id);
             if (!anim || !anim.transit) return null;
             if (anim.progress >= anim.targetProgress - 0.5) return null;
@@ -692,6 +714,26 @@ export function MapGraph(props: Props) {
             const pos = POSITIONS[loc.code];
             if (!pos) return null;
             const isSel = loc.id === selLoc;
+            const isKnown = !isPovMode || known.locations.has(loc.id);
+            // Unknown-to-POV locations render as a small unlabelled dot —
+            // same shape as a waypoint. The user can still click it (it
+            // exists in the world), but nothing about it is leaked.
+            if (!isKnown) {
+              return (
+                <circle
+                  key={loc.id}
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={3.5}
+                  className="graph-waypoint loc-node-unknown"
+                  style={{ cursor: "pointer" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(isSel ? null : { kind: "location", id: loc.id });
+                  }}
+                />
+              );
+            }
             const isAuction =
               loc.id === dump.auctionLocationId ||
               (loc as { type?: string }).type === "auction";
@@ -753,6 +795,7 @@ export function MapGraph(props: Props) {
             arrived at a location. */}
         <g className="avatars">
           {dump.actors.map((actor) => {
+            if (isPovMode && !known.believedLocations.has(actor.id)) return null;
             const anim = animsRef.current.get(actor.id);
             if (!anim) return null;
             // Avatars currently AT an off-map location render in the
@@ -824,12 +867,16 @@ export function MapGraph(props: Props) {
             position. They always sit on the edge, regardless of zoom. */}
         {dump.locations.map((loc) => {
           if (layout.offMap[loc.code] !== true) return null;
+          if (isPovMode && !known.locations.has(loc.id)) return null;
           const pos = POSITIONS[loc.code];
           if (!pos) return null;
           const peri = projectToPerimeter(pos.x, pos.y, view, canvasSize, 18);
           if (peri === null) return null;
           const isSel = loc.id === selLoc;
-          const pop = stackedAt.get(loc.code)?.length ?? 0;
+          const stack = stackedAt.get(loc.code) ?? [];
+          const pop = isPovMode
+            ? stack.filter((aid) => known.believedLocations.get(aid) === loc.id).length
+            : stack.length;
           return (
             <button
               key={`offmap-${loc.code}`}
@@ -856,6 +903,7 @@ export function MapGraph(props: Props) {
           );
         })}
         {dump.actors.map((actor) => {
+          if (isPovMode && !known.believedLocations.has(actor.id)) return null;
           const anim = animsRef.current.get(actor.id);
           if (!anim) return null;
           const off = renderOffsets.get(actor.id) ?? { x: 0, y: 0 };

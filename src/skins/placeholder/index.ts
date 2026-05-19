@@ -198,6 +198,14 @@ export interface SkinSeedResult {
    * Falls back to displayName when an actor isn't listed.
    */
   readonly shortNameByActorId: ReadonlyMap<number, string>;
+  /**
+   * Pairs of actors whose calendars are implicitly shared at all times
+   * (close family, business partners). The viewer treats each pair-member
+   * as having continuous co-presence with their partner — they always
+   * know each other's actual position. Resolved from pairs.json
+   * (skin-data file) at seed time.
+   */
+  readonly pairs: readonly (readonly [number, number])[];
 }
 
 /**
@@ -996,6 +1004,20 @@ export function seedPlaceholderSkin(
     }
   }
 
+  // Pair-sync: load pairs.json, resolve codes → ids, drop any pair with
+  // an unknown member. Used by the viewer's calendar-knowledge model
+  // (continuous co-presence between partners).
+  const pairsJson = loadSkinJson<readonly (readonly [string, string])[]>(
+    "data/pairs.json",
+  );
+  const resolvedPairs: (readonly [number, number])[] = [];
+  for (const [aCode, bCode] of pairsJson) {
+    const aId = actorByCode.get(aCode);
+    const bId = actorByCode.get(bCode);
+    if (aId === undefined || bId === undefined) continue;
+    resolvedPairs.push([aId, bId]);
+  }
+
   return {
     playerActorId: playerId,
     auctionHouseActorId: auctionHouseId,
@@ -1039,6 +1061,7 @@ export function seedPlaceholderSkin(
     actorRoutines,
     rolesByActorId,
     shortNameByActorId,
+    pairs: resolvedPairs,
   };
 }
 

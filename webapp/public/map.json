@@ -163,6 +163,122 @@
     "camshaft-autos": {
       "x": 790,
       "y": 520
+    },
+    "slough": {
+      "x": 1850,
+      "y": 30
+    },
+    "croydon": {
+      "x": 1900,
+      "y": 30
+    },
+    "maidstone": {
+      "x": 1950,
+      "y": 30
+    },
+    "wandsworth": {
+      "x": 2000,
+      "y": 30
+    },
+    "brighton": {
+      "x": 2050,
+      "y": 30
+    },
+    "watford": {
+      "x": 2100,
+      "y": 30
+    },
+    "romford": {
+      "x": 1850,
+      "y": 80
+    },
+    "kingston": {
+      "x": 1900,
+      "y": 80
+    },
+    "cyril-diamond-home": {
+      "x": 1950,
+      "y": 80
+    },
+    "margaret-bracelet-home": {
+      "x": 2000,
+      "y": 80
+    },
+    "ranjit-patel-home": {
+      "x": 2050,
+      "y": 80
+    },
+    "doreen-wicks-home": {
+      "x": 2100,
+      "y": 80
+    },
+    "albert-pickering-home": {
+      "x": 1850,
+      "y": 130
+    },
+    "linda-beasley-home": {
+      "x": 1900,
+      "y": 130
+    },
+    "eric-sparks-home": {
+      "x": 1950,
+      "y": 130
+    },
+    "brian-yardley-home": {
+      "x": 2000,
+      "y": 130
+    },
+    "doris-whittle-home": {
+      "x": 2050,
+      "y": 130
+    },
+    "reg-throne-home": {
+      "x": 2100,
+      "y": 130
+    },
+    "eddie-spanner-home": {
+      "x": 1850,
+      "y": 180
+    },
+    "vince-camshaft-home": {
+      "x": 1900,
+      "y": 180
+    },
+    "alfie-flowers-home": {
+      "x": 1950,
+      "y": 180
+    },
+    "ronnie-nelson-home": {
+      "x": 2000,
+      "y": 180
+    },
+    "mustapha-home": {
+      "x": 2050,
+      "y": 180
+    },
+    "arnie-home": {
+      "x": 2100,
+      "y": 180
+    },
+    "towser-home": {
+      "x": 1850,
+      "y": 230
+    },
+    "paddy-the-greek-home": {
+      "x": 1900,
+      "y": 230
+    },
+    "pc-hoskins-home": {
+      "x": 1950,
+      "y": 230
+    },
+    "eugene-mccarthy-home": {
+      "x": 2000,
+      "y": 230
+    },
+    "driscoll-brothers-home": {
+      "x": 2050,
+      "y": 230
     }
   },
   "waypoints": {
@@ -571,9 +687,154 @@
     [
       "spanner-motors",
       "wp_14"
+    ],
+    [
+      "slough",
+      "wp_17"
+    ],
+    [
+      "croydon",
+      "wp_17"
+    ],
+    [
+      "maidstone",
+      "wp_17"
+    ],
+    [
+      "wandsworth",
+      "wp_17"
+    ],
+    [
+      "brighton",
+      "wp_17"
+    ],
+    [
+      "watford",
+      "wp_17"
+    ],
+    [
+      "romford",
+      "wp_17"
+    ],
+    [
+      "kingston",
+      "wp_17"
+    ],
+    [
+      "cyril-diamond-home",
+      "wp_17"
+    ],
+    [
+      "margaret-bracelet-home",
+      "wp_17"
+    ],
+    [
+      "ranjit-patel-home",
+      "wp_17"
+    ],
+    [
+      "doreen-wicks-home",
+      "wp_17"
+    ],
+    [
+      "albert-pickering-home",
+      "wp_17"
+    ],
+    [
+      "linda-beasley-home",
+      "wp_17"
+    ],
+    [
+      "eric-sparks-home",
+      "wp_17"
+    ],
+    [
+      "brian-yardley-home",
+      "wp_17"
+    ],
+    [
+      "doris-whittle-home",
+      "wp_17"
+    ],
+    [
+      "reg-throne-home",
+      "wp_17"
+    ],
+    [
+      "eddie-spanner-home",
+      "wp_17"
+    ],
+    [
+      "vince-camshaft-home",
+      "wp_17"
+    ],
+    [
+      "alfie-flowers-home",
+      "wp_17"
+    ],
+    [
+      "ronnie-nelson-home",
+      "wp_17"
+    ],
+    [
+      "mustapha-home",
+      "wp_17"
+    ],
+    [
+      "arnie-home",
+      "wp_17"
+    ],
+    [
+      "towser-home",
+      "wp_17"
+    ],
+    [
+      "paddy-the-greek-home",
+      "wp_17"
+    ],
+    [
+      "pc-hoskins-home",
+      "wp_17"
+    ],
+    [
+      "eugene-mccarthy-home",
+      "wp_17"
+    ],
+    [
+      "driscoll-brothers-home",
+      "wp_17"
     ]
   ],
   "offMap": {
-    "off-map": true
+    "off-map": true,
+    "slough": true,
+    "croydon": true,
+    "maidstone": true,
+    "wandsworth": true,
+    "brighton": true,
+    "watford": true,
+    "romford": true,
+    "kingston": true,
+    "cyril-diamond-home": true,
+    "margaret-bracelet-home": true,
+    "ranjit-patel-home": true,
+    "doreen-wicks-home": true,
+    "albert-pickering-home": true,
+    "linda-beasley-home": true,
+    "eric-sparks-home": true,
+    "brian-yardley-home": true,
+    "doris-whittle-home": true,
+    "reg-throne-home": true,
+    "eddie-spanner-home": true,
+    "vince-camshaft-home": true,
+    "alfie-flowers-home": true,
+    "ronnie-nelson-home": true,
+    "mustapha-home": true,
+    "arnie-home": true,
+    "towser-home": true,
+    "paddy-the-greek-home": true,
+    "pc-hoskins-home": true,
+    "eugene-mccarthy-home": true,
+    "driscoll-brothers-home": true
   }
 }

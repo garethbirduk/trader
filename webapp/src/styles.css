@@ -75,12 +75,40 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 /* RHS placeholder — empty area to the right of the LHS while we build
    the rest of the UI in later phases. Currently holds only the
    selection chips strip plus a stub message. */
+.rhs,
 .rhs-placeholder {
   display: flex;
   flex-direction: column;
   background: var(--bg);
   overflow: hidden;
   min-width: 0;
+}
+.rhs-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 0 8px;
+  border-bottom: 1px solid var(--panel-2);
+}
+.rhs-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--muted);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+}
+.rhs-tab:hover { color: var(--fg); }
+.rhs-tab-active {
+  background: var(--bg);
+  border-color: var(--panel-2);
+  color: var(--fg);
+}
+.rhs-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
 }
 .rhs-stub {
   flex: 1;
@@ -2999,5 +3027,124 @@ svg.graph-map:active { cursor: grabbing; }
 }
 .loc-inline-name {
   color: var(--text);
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * Calendar view
+ * ──────────────────────────────────────────────────────────────── */
+.calendar {
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.calendar-nav button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.calendar-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.calendar-day-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+.calendar-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+}
+.calendar-hours {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cal-hour {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px dashed var(--panel-2);
+  min-height: 22px;
+}
+.cal-hour-current {
+  background: rgba(255, 184, 77, 0.06);
+}
+.cal-hour-current .cal-hour-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+.cal-hour-empty .cal-hour-body { opacity: 0.4; }
+.cal-hour-label {
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 2px;
+  user-select: none;
+}
+.cal-hour-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.cal-loc-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.cal-arrivals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cal-arrival {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.cal-arrival-until {
+  font-size: 10px;
+}
+.cal-fact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--panel-2);
+  font-size: 12px;
+}
+.cal-fact-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cal-fact-name {
+  color: var(--text);
+}
+.cal-fact-auction { border-left: 2px solid var(--accent); }
+.cal-fact-deal { border-left: 2px solid var(--easter); }
+.cal-fact-location-open { border-left: 2px solid var(--accent-2); }
+.cal-fact-location-close { border-left: 2px solid var(--warn); }
+.cal-knowers {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
 }
 
