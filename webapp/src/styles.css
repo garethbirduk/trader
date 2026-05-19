@@ -3242,13 +3242,28 @@ svg.graph-map:active { cursor: grabbing; }
 }
 .char-row {
   display: grid;
-  grid-template-columns: 22px 120px 110px 110px 110px 1fr;
+  grid-template-columns: 22px 110px 100px 100px 100px 1fr 1fr 1fr;
   gap: 6px;
   align-items: center;
   padding: 4px 10px;
   border-top: 1px dashed var(--panel-2);
 }
 .char-row:first-child { border-top: 0; }
+.char-row-headers {
+  position: sticky;
+  top: 33px;
+  z-index: 1;
+  padding: 4px 10px 4px 10px;
+  background: var(--bg);
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+}
+.char-col-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
 .char-row-dirty {
   background: rgba(255, 184, 77, 0.06);
 }

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { Avatar } from "./Avatar.js";
-import { ActorRef, PoolRef } from "./Refs.js";
+import { ActorRef, LocationRef, PoolRef } from "./Refs.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 
@@ -71,10 +71,18 @@ export function ActorProfile({
     return loc;
   }, [dump, day, hour, actorId, actor.currentLocationId]);
 
-  const locName = (id: number | null) =>
-    id === null
-      ? "—"
-      : dump.locations.find((l) => l.id === id)?.displayName ?? `loc ${id}`;
+  const locRefOrDash = (id: number | null) =>
+    id === null ? (
+      <span className="muted">—</span>
+    ) : (
+      <LocationRef
+        dump={dump}
+        id={id}
+        onSelect={(s) => onSelect?.(s)}
+        variant="chip"
+        size={14}
+      />
+    );
 
   const stockSummary = useMemo(() => {
     if (snapshot === null) return null;
@@ -145,9 +153,9 @@ export function ActorProfile({
         <dt>Cash</dt>
         <dd>£{cash}</dd>
         <dt>Home</dt>
-        <dd>{locName(actor.homeLocationId)}</dd>
+        <dd>{locRefOrDash(actor.homeLocationId)}</dd>
         <dt>Now at</dt>
-        <dd>{locName(locId)}</dd>
+        <dd>{locRefOrDash(locId)}</dd>
         <dt>Heat</dt>
         <dd className={heat > 0 ? "warn" : "muted"}>{heat > 0 ? `🔥 ${heat}` : "—"}</dd>
         {stockSummary !== null ? (

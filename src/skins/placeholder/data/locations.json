@@ -65,6 +65,44 @@
     "openDaysOfWeek": [1, 2, 3, 4, 5]
   },
   {
+    "code": "lambeth-council-yard",
+    "displayName": "Council Yard",
+    "type": "civic",
+    "openHours": { "start": 6, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "post-office",
+    "displayName": "Post Office",
+    "type": "civic",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "betting-shop",
+    "displayName": "The Bookies",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "albert-legion",
+    "displayName": "The Legion",
+    "type": "pub",
+    "openHours": { "start": 12, "end": 21 },
+    "openDaysOfWeek": [4, 5, 6, 7]
+  },
+  {
+    "code": "riverside-club",
+    "displayName": "Down By The Riverside Club",
+    "type": "pub",
+    "openHours": { "start": 18, "end": 26 },
+    "openSessions": [
+      { "daysOfWeek": [2, 3, 4], "start": 20, "end": 24 },
+      { "daysOfWeek": [5, 6], "start": 18, "end": 26 }
+    ]
+  },
+  {
     "code": "peckham-market",
     "displayName": "Peckham Market",
     "type": "business",

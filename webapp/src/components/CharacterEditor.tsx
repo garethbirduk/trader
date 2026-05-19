@@ -18,6 +18,8 @@ interface ActorRecord {
   readonly lastName?: string;
   readonly shortName: string;
   readonly homeLocation: string;
+  readonly ownsLocation?: string;
+  readonly worksAt?: string;
   // Everything else passes through untouched.
   readonly [key: string]: unknown;
 }
@@ -25,7 +27,47 @@ interface ActorRecord {
 interface LocationLite {
   readonly code: string;
   readonly displayName: string;
+  readonly type?: string;
 }
+
+/** Group locations by `type` for use as <optgroup> blocks. */
+function groupByType(locs: readonly LocationLite[]): {
+  type: string;
+  label: string;
+  items: readonly LocationLite[];
+}[] {
+  const groups: Record<string, LocationLite[]> = {};
+  for (const l of locs) {
+    const t = l.type ?? "(other)";
+    (groups[t] ??= []).push(l);
+  }
+  const TYPE_LABELS: Record<string, string> = {
+    home: "Residential",
+    business: "Business",
+    pub: "Pub",
+    auction: "Auction",
+    civic: "Service",
+    street: "Street",
+    abstract: "(abstract)",
+    "(other)": "(other)",
+  };
+  // Stable, readable order in the dropdown.
+  const ORDER = ["home", "business", "pub", "auction", "civic", "street", "abstract", "(other)"];
+  return ORDER.filter((t) => groups[t] !== undefined).map((t) => ({
+    type: t,
+    label: TYPE_LABELS[t] ?? t,
+    items: groups[t]!.slice().sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    ),
+  }));
+}
+
+/** Which location-types are valid for each editable field. */
+const ALLOWED_TYPES: Record<"homeLocation" | "ownsLocation" | "worksAt", readonly string[]> = {
+  homeLocation: ["home"],
+  ownsLocation: ["business", "pub", "auction"],
+  worksAt: ["business", "pub", "auction", "civic"],
+};
 
 interface DraftActor {
   readonly code: string;
@@ -33,6 +75,10 @@ interface DraftActor {
   lastName: string;
   shortName: string;
   homeLocation: string;
+  /** Empty string = unset (we delete the field on save). */
+  ownsLocation: string;
+  /** Empty string = unset (we delete the field on save). */
+  worksAt: string;
 }
 
 type Status =
@@ -76,6 +122,8 @@ export function CharacterEditor() {
             lastName: a.lastName ?? "",
             shortName: a.shortName,
             homeLocation: a.homeLocation,
+            ownsLocation: a.ownsLocation ?? "",
+            worksAt: a.worksAt ?? "",
           };
         }
         setDrafts(initialDrafts);
@@ -99,7 +147,9 @@ export function CharacterEditor() {
         d.firstName !== a.firstName ||
         d.lastName !== (a.lastName ?? "") ||
         d.shortName !== a.shortName ||
-        d.homeLocation !== a.homeLocation
+        d.homeLocation !== a.homeLocation ||
+        d.ownsLocation !== (a.ownsLocation ?? "") ||
+        d.worksAt !== (a.worksAt ?? "")
       ) {
         out.add(a.code);
       }
@@ -153,6 +203,8 @@ export function CharacterEditor() {
         lastName: a.lastName ?? "",
         shortName: a.shortName,
         homeLocation: a.homeLocation,
+        ownsLocation: a.ownsLocation ?? "",
+        worksAt: a.worksAt ?? "",
       };
     }
     setDrafts(reset);
@@ -174,6 +226,16 @@ export function CharacterEditor() {
         }
         next.shortName = d.shortName;
         next.homeLocation = d.homeLocation;
+        if (d.ownsLocation.length === 0) {
+          delete next.ownsLocation;
+        } else {
+          next.ownsLocation = d.ownsLocation;
+        }
+        if (d.worksAt.length === 0) {
+          delete next.worksAt;
+        } else {
+          next.worksAt = d.worksAt;
+        }
         return next as ActorRecord;
       });
       const res = await fetch("/__data?file=actors.json", {
@@ -236,6 +298,16 @@ export function CharacterEditor() {
         </button>
       </header>
       <div className="char-editor-body">
+        <div className="char-row char-row-headers" aria-hidden="true">
+          <span />
+          <span className="char-col-label">code</span>
+          <span className="char-col-label">first name</span>
+          <span className="char-col-label">last name</span>
+          <span className="char-col-label">short name</span>
+          <span className="char-col-label">household</span>
+          <span className="char-col-label">owns</span>
+          <span className="char-col-label">works at</span>
+        </div>
         {grouped.map(({ homeCode, homeDisplayName, members }) => (
           <section key={homeCode} className="char-household">
             <header className="char-household-header">
@@ -289,19 +361,24 @@ export function CharacterEditor() {
                         onFieldChange(d.code, "shortName", e.target.value)
                       }
                     />
-                    <select
-                      className="char-select"
+                    <LocationSelect
+                      kind="homeLocation"
                       value={d.homeLocation}
-                      onChange={(e) =>
-                        onFieldChange(d.code, "homeLocation", e.target.value)
-                      }
-                    >
-                      {locations.map((l) => (
-                        <option key={l.code} value={l.code}>
-                          {l.displayName} ({l.code})
-                        </option>
-                      ))}
-                    </select>
+                      locations={locations}
+                      onChange={(v) => onFieldChange(d.code, "homeLocation", v)}
+                    />
+                    <LocationSelect
+                      kind="ownsLocation"
+                      value={d.ownsLocation}
+                      locations={locations}
+                      onChange={(v) => onFieldChange(d.code, "ownsLocation", v)}
+                    />
+                    <LocationSelect
+                      kind="worksAt"
+                      value={d.worksAt}
+                      locations={locations}
+                      onChange={(v) => onFieldChange(d.code, "worksAt", v)}
+                    />
                   </li>
                 );
               })}
@@ -310,5 +387,52 @@ export function CharacterEditor() {
         ))}
       </div>
     </section>
+  );
+}
+
+/**
+ * Dropdown for picking a location for one of the three relation fields.
+ * Filters by the field's allowed location types (residential / business /
+ * service / pub / auction) and groups options with <optgroup> headers so
+ * the categories are visually distinct.
+ *
+ * `homeLocation` requires a value (no — none — option); `ownsLocation`
+ * and `worksAt` are nullable so the dropdown includes a leading empty
+ * option that maps to "delete the field" on save.
+ */
+function LocationSelect({
+  kind,
+  value,
+  locations,
+  onChange,
+}: {
+  kind: "homeLocation" | "ownsLocation" | "worksAt";
+  value: string;
+  locations: readonly LocationLite[];
+  onChange: (v: string) => void;
+}) {
+  const allowed = new Set(ALLOWED_TYPES[kind]);
+  const filtered = locations.filter((l) =>
+    l.type !== undefined ? allowed.has(l.type) : false,
+  );
+  const groups = groupByType(filtered);
+  const nullable = kind !== "homeLocation";
+  return (
+    <select
+      className="char-select"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {nullable ? <option value="">— none —</option> : null}
+      {groups.map((g) => (
+        <optgroup key={g.type} label={g.label}>
+          {g.items.map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.displayName} ({l.code})
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
   );
 }

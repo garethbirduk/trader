@@ -6,6 +6,7 @@ import { usePov } from "../lib/pov.js";
 import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
 import { useActorPositionsAt } from "../lib/positions.js";
 import { LocationAvatar } from "./LocationAvatar.js";
+import { LocationRef } from "./Refs.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { ActorChip } from "./ActorChip.js";
 import { SubChecks, type SubCheck } from "./SubChecks.js";
@@ -316,7 +317,19 @@ function ActorList({
                 <span className="muted">virtual producer</span>
               ) : (
                 <>
-                  <span className="lhs-actor-loc">{locName(dump, loc)} · {a.transportCapacity}</span>
+                  <span className="lhs-actor-loc">
+                    {loc !== null && loc !== undefined ? (
+                      <LocationRef
+                        dump={dump}
+                        id={loc}
+                        onSelect={(s) => set.replace(s)}
+                        variant="inline"
+                      />
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                    {" · "}{a.transportCapacity}
+                  </span>
                   {heat > 0 ? (
                     <span className="actor-heat" title={`heat ${heat}`}>🔥{heat}</span>
                   ) : null}
@@ -817,6 +830,7 @@ function StockList({
   onChangeGrouping: (g: StockGrouping) => void;
   known: KnownIds | null;
 }) {
+  const set = useSelectionSet();
   const allLots = snapshot?.stockLots ?? [];
   const lots = useMemo(
     () => (known === null ? allLots : allLots.filter((l) => known.itemKinds.has(l.itemKindId))),
@@ -912,12 +926,16 @@ function StockList({
                 {prettyCategory(itemKind.category)}
               </span>
             </span>
+          ) : key === -1 ? (
+            <span className="stock-group-title muted">(no location)</span>
           ) : (
-            <span className="stock-group-title">
-              {key === -1
-                ? "(no location)"
-                : dump.locations.find((l) => l.id === key)?.displayName ?? `loc ${key}`}
-            </span>
+            <LocationRef
+              dump={dump}
+              id={key}
+              onSelect={(s) => set.replace(s)}
+              variant="chip"
+              size={14}
+            />
           );
         return (
           <div key={key} className="stock-group">
