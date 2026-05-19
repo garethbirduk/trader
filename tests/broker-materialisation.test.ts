@@ -38,22 +38,22 @@ describe("broker materialisation (Stage 6b)", () => {
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     const broker = insertActor(localDb, {
       code: "broker",
-      displayName: "Broker",
+      firstName: "Broker", shortName: "Broker",
       cash: 1000,
     });
     const visitor = insertActor(localDb, {
       code: "visitor",
-      displayName: "Visitor",
+      firstName: "Visitor", shortName: "Visitor",
       cash: 10000,
     });
     const bob = insertActor(localDb, {
       code: "bob",
-      displayName: "Trader Bob",
+      firstName: "Trader Bob", shortName: "Trader Bob",
       isVirtual: true,
     });
     const proceeds = insertActor(localDb, {
       code: "proceeds",
-      displayName: "Proceeds",
+      firstName: "Proceeds", shortName: "Proceeds",
       cash: 0,
     });
     setActorLocation(localDb, broker.id, nags.id);

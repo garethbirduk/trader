@@ -39,8 +39,8 @@ describe("reputation leads (Stage 5)", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const buyer = insertActor(localDb, { code: "buy", displayName: "Buyer", cash: 1000 });
-    const seller = insertActor(localDb, { code: "sel", displayName: "Seller", cash: 0 });
+    const buyer = insertActor(localDb, { code: "buy", firstName: "Buyer", shortName: "Buyer", cash: 1000 });
+    const seller = insertActor(localDb, { code: "sel", firstName: "Seller", shortName: "Seller", cash: 0 });
     const item = insertItemKind(localDb, {
       code: "v",
       displayName: "Vacuums",
@@ -219,7 +219,7 @@ describe("reputation leads (Stage 5)", () => {
       const { localDb, buyer, seller, item } = seed();
       const otherVictim = insertActor(localDb, {
         code: "victim",
-        displayName: "Some Victim",
+        firstName: "Some Victim", shortName: "Some Victim",
         cash: 0,
       });
       const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });

@@ -28,8 +28,8 @@ describe("visitor↔visitor chat", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
-    const a = insertActor(localDb, { code: "a", displayName: "A", cash: 0 });
-    const b = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 0 });
+    const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
     setActorLocation(localDb, a.id, nags.id);
     setActorLocation(localDb, b.id, nags.id);
     const item = insertItemKind(localDb, {
@@ -103,7 +103,7 @@ describe("visitor↔visitor chat", () => {
 
   it("skips the proprietor — they get the drive-by handler instead", () => {
     const { localDb, nags, a, b, item } = seed();
-    const mike = insertActor(localDb, { code: "mike", displayName: "Mike", cash: 0 });
+    const mike = insertActor(localDb, { code: "mike", firstName: "Mike", shortName: "Mike", cash: 0 });
     setActorLocation(localDb, mike.id, nags.id);
     setLocationProprietor(localDb, nags.id, mike.id);
     insertLead(localDb, {

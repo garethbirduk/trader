@@ -24,8 +24,8 @@ describe("lead disclosures (audit log)", () => {
 
   it("records a disclosure row with all fields", () => {
     db = freshDB();
-    const asker = insertActor(db, { code: "a", displayName: "A" });
-    const partner = insertActor(db, { code: "p", displayName: "P" });
+    const asker = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const partner = insertActor(db, { code: "p", firstName: "P", shortName: "P" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "tools", baseValue: 10,
     });
@@ -58,8 +58,8 @@ describe("lead disclosures (audit log)", () => {
 
   it("is idempotent on (leadId, actorId)", () => {
     db = freshDB();
-    const asker = insertActor(db, { code: "a", displayName: "A" });
-    const partner = insertActor(db, { code: "p", displayName: "P" });
+    const asker = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const partner = insertActor(db, { code: "p", firstName: "P", shortName: "P" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "tools", baseValue: 10,
     });

@@ -32,7 +32,7 @@ function setup(
   const db = freshDB();
   const aid = insertActor(db, {
     code: "test",
-    displayName: "Test",
+    firstName: "Test", shortName: "Test",
     cash: 100000,
     role: "civilian",
     transportCapacity: "none",
@@ -192,7 +192,7 @@ describe("estimateLotValue — composition", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Test",
+      firstName: "Test", shortName: "Test",
       cash: 100000,
       role: "civilian",
       transportCapacity: "none",
@@ -255,7 +255,7 @@ describe("estimateLotValue — composition", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Test",
+      firstName: "Test", shortName: "Test",
       cash: 100000,
       role: "civilian",
       transportCapacity: "none",
@@ -305,7 +305,7 @@ describe("estimateLotValue — composition", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Test",
+      firstName: "Test", shortName: "Test",
       cash: 100000,
       role: "civilian",
       transportCapacity: "none",

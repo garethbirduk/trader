@@ -29,7 +29,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("a perfect expert nails the band tight to truth", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "expert", displayName: "Expert" });
+    const a = insertActor(db, { code: "expert", firstName: "Expert", shortName: "Expert" });
     // True watch RRP = £8000 (Rolex baseline). Good condition.
     const watch = insertItemKind(db, {
       code: "watch-8k", displayName: "Watch", category: "watches",
@@ -74,7 +74,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("an idiot with one wide band has a wide quote that still spans truth", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "idiot", displayName: "Idiot" });
+    const a = insertActor(db, { code: "idiot", firstName: "Idiot", shortName: "Idiot" });
     const watch = insertItemKind(db, {
       code: "watch-8k", displayName: "Watch", category: "watches",
       baseValue: 8000,
@@ -110,7 +110,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("an idiot with the WRONG single band has a quote completely off the truth", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "narrow-idiot", displayName: "Narrow Idiot" });
+    const a = insertActor(db, { code: "narrow-idiot", firstName: "Narrow Idiot", shortName: "Narrow Idiot" });
     const watch = insertItemKind(db, {
       code: "watch-8k", displayName: "Watch", category: "watches",
       baseValue: 8000,
@@ -146,7 +146,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("a wrong tier-impact belief shifts the final number even when placement is correct", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "wrong-impact", displayName: "Wrong Impact" });
+    const a = insertActor(db, { code: "wrong-impact", firstName: "Wrong Impact", shortName: "Wrong Impact" });
     const watch = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
@@ -184,7 +184,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("placement-skill 0 with only one band is harmless (nowhere to slip to)", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const watch = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 8000,
     });
@@ -212,7 +212,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("no partition at all → unsupported, falls back to truth-prior", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "blank", displayName: "Blank" });
+    const a = insertActor(db, { code: "blank", firstName: "Blank", shortName: "Blank" });
     const watch = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 8000,
     });
@@ -232,7 +232,7 @@ describe("v2 extraction band — four-skill model", () => {
 
   it("condition-detection slip moves the multiplier off-tier", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "slip", displayName: "Slip" });
+    const a = insertActor(db, { code: "slip", firstName: "Slip", shortName: "Slip" });
     const watch = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 8000,
     });
@@ -272,8 +272,8 @@ describe("v2 extraction band — canonical watch arc without brand identifiers",
 
   it("Del (idiot watches partition) and Boyce (skilled partition) form wildly different bands on the same lot", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
-    const boyce = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 20000 });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
+    const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 20000 });
     // Single "watch" item — no brand identifier. True RRP £8000,
     // good condition. The engine doesn't know it's a Rolex; the
     // discrimination lives entirely in the actors' partitions.

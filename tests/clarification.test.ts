@@ -31,8 +31,8 @@ describe("clarification action", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A", cash: 0 });
-    const b = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 0 });
+    const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
     const item = insertItemKind(localDb, {
       code: "i",
       displayName: "I",
@@ -111,7 +111,7 @@ describe("clarification action", () => {
 
     it("matches on counterpartyActorId when set", () => {
       const { localDb, a, b, item } = seed();
-      const c = insertActor(localDb, { code: "c", displayName: "C", cash: 0 });
+      const c = insertActor(localDb, { code: "c", firstName: "C", shortName: "C", cash: 0 });
       // B has two supply leads about the same item — one counterpartied
       // to actor c, the other untargeted.
       insertLead(localDb, {

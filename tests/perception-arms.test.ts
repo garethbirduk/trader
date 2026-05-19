@@ -171,7 +171,7 @@ describe("estimateCondition (DB-backed)", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "trigger",
-      displayName: "Trigger",
+      firstName: "Trigger", shortName: "Trigger",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -245,7 +245,7 @@ describe("condition anchor — per-category prior", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "trigger",
-      displayName: "Trigger",
+      firstName: "Trigger", shortName: "Trigger",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -294,7 +294,7 @@ describe("condition anchor — per-category prior", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "rodney",
-      displayName: "Rodney",
+      firstName: "Rodney", shortName: "Rodney",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",

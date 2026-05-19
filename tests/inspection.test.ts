@@ -34,7 +34,7 @@ describe("actor_known_flaws repo", () => {
 
   it("records and retrieves a known flaw", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const item = insertItemKind(db, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -55,7 +55,7 @@ describe("actor_known_flaws repo", () => {
 
   it("is idempotent — recording the same flaw twice doesn't duplicate", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const item = insertItemKind(db, {
       code: "x",
       displayName: "x",
@@ -90,8 +90,8 @@ describe("inspectItem", () => {
 
   it("expert who knows the flaw type reveals it; cash transfers", () => {
     db = freshDB();
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const boyce = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 0 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
+    const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 0 });
     const item = insertItemKind(db, {
       code: "ee-engines",
       displayName: "Lawnmower engines",
@@ -118,8 +118,8 @@ describe("inspectItem", () => {
 
   it("expert without competence: still charges, but doesn't reveal", () => {
     db = freshDB();
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const trigger = insertActor(db, { code: "trigger", displayName: "Trigger", cash: 0 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
+    const trigger = insertActor(db, { code: "trigger", firstName: "Trigger", shortName: "Trigger", cash: 0 });
     const item = insertItemKind(db, {
       code: "x",
       displayName: "x",
@@ -148,8 +148,8 @@ describe("inspectItem", () => {
 
   it("blocks if buyer can't afford the fee", () => {
     db = freshDB();
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 5 });
-    const expert = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 0 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 5 });
+    const expert = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 0 });
     const item = insertItemKind(db, {
       code: "x",
       displayName: "x",
@@ -172,8 +172,8 @@ describe("inspectItem", () => {
 
   it("clean items return looks-clean with itemHasFlaw=false", () => {
     db = freshDB();
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const expert = insertActor(db, { code: "e", displayName: "E", cash: 0 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
+    const expert = insertActor(db, { code: "e", firstName: "E", shortName: "E", cash: 0 });
     const item = insertItemKind(db, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -203,9 +203,9 @@ describe("known flaws affect bidder ceilings", () => {
 
   it("an actor who has been burned by faulty stock applies the discount on future bids", () => {
     db = freshDB();
-    insertActor(db, { code: "auction-house", displayName: "House" });
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 100000 });
-    const ignorant = insertActor(db, { code: "ignorant", displayName: "Ignorant", cash: 100000 });
+    insertActor(db, { code: "auction-house", firstName: "House", shortName: "House" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 100000 });
+    const ignorant = insertActor(db, { code: "ignorant", firstName: "Ignorant", shortName: "Ignorant", cash: 100000 });
     const item = insertItemKind(db, {
       code: "ee-engines",
       displayName: "Lawnmower engines",

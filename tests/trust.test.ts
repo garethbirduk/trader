@@ -27,8 +27,8 @@ describe("trust repo", () => {
 
   it("returns 0 trust for a never-recorded pair", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     const t = getTrust(db, a.id, b.id);
     expect(t.score).toBe(0);
     expect(t.lastEventDay).toBeNull();
@@ -36,8 +36,8 @@ describe("trust repo", () => {
 
   it("adjusts trust upward and downward, persisting last event day", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     expect(adjustTrust(db, a.id, b.id, 5, 1).score).toBe(5);
     expect(adjustTrust(db, a.id, b.id, 3, 2).score).toBe(8);
     expect(adjustTrust(db, a.id, b.id, -10, 3).score).toBe(-2);
@@ -46,8 +46,8 @@ describe("trust repo", () => {
 
   it("trust is asymmetric — A's trust in B is independent of B's trust in A", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     adjustTrust(db, a.id, b.id, 10, 1);
     expect(getTrust(db, a.id, b.id).score).toBe(10);
     expect(getTrust(db, b.id, a.id).score).toBe(0);
@@ -55,16 +55,16 @@ describe("trust repo", () => {
 
   it("rejects self-trust", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     expect(() => getTrust(db, a.id, a.id)).toThrow();
     expect(() => adjustTrust(db, a.id, a.id, 1, 1)).toThrow();
   });
 
   it("listTrustHeldBy returns all pairs from one actor's perspective", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
-    const c = insertActor(db, { code: "c", displayName: "C" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
+    const c = insertActor(db, { code: "c", firstName: "C", shortName: "C" });
     adjustTrust(db, a.id, b.id, 5, 1);
     adjustTrust(db, a.id, c.id, -3, 1);
     expect(listTrustHeldBy(db, a.id).map((p) => p.targetActorId).sort()).toEqual(
@@ -85,9 +85,9 @@ describe("trust reactions wired through deal lifecycle", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const del = insertActor(localDb, { code: "del", displayName: "Del", cash: 0 });
-    const boyce = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 1000 });
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil", cash: 500 });
+    const del = insertActor(localDb, { code: "del", firstName: "Del", shortName: "Del", cash: 0 });
+    const boyce = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000 });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil", cash: 500 });
     const tables = insertItemKind(localDb, {
       code: "tables",
       displayName: "Tables",

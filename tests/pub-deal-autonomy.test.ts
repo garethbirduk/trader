@@ -36,8 +36,8 @@ describe("pub-deal autonomy", () => {
 
     // Boot transport so the seller can credibly move enough of their
     // 50-unit bag to clear the new 25%-slice floor (≥13 units).
-    const seller = insertActor(localDb, { code: "s", displayName: "Seller", cash: 0, transportCapacity: "boot" });
-    const buyer = insertActor(localDb, { code: "b", displayName: "Buyer", cash: 5000, transportCapacity: "boot" });
+    const seller = insertActor(localDb, { code: "s", firstName: "Seller", shortName: "Seller", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", firstName: "Buyer", shortName: "Buyer", cash: 5000, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);
@@ -103,8 +103,8 @@ describe("pub-deal autonomy", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0 });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000 });
+    const seller = insertActor(localDb, { code: "s", firstName: "S", shortName: "S", cash: 0 });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 5000 });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     const flat = insertLocation(localDb, { code: "flat", displayName: "Flat" });
     setActorLocation(localDb, seller.id, flat.id); // NOT at the pub
@@ -148,8 +148,8 @@ describe("pub-deal autonomy", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A", cash: 1000 });
-    const b = insertActor(localDb, { code: "b", displayName: "B", cash: 1000 });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 1000 });
+    const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 1000 });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, a.id, nags.id);
     setActorLocation(localDb, b.id, nags.id);
@@ -199,9 +199,9 @@ describe("pub-deal autonomy", () => {
     db = localDb;
 
     const seller = insertActor(localDb, {
-      code: "s", displayName: "S", cash: 0, transportCapacity: "truck",
+      code: "s", firstName: "S", shortName: "S", cash: 0, transportCapacity: "truck",
     });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 100000 });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 100000 });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);
@@ -292,8 +292,8 @@ describe("pub-deal autonomy", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0, transportCapacity: "boot" });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000, transportCapacity: "boot" });
+    const seller = insertActor(localDb, { code: "s", firstName: "S", shortName: "S", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 5000, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);
@@ -344,8 +344,8 @@ describe("pub-deal autonomy", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0, transportCapacity: "boot" });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000, transportCapacity: "boot" });
+    const seller = insertActor(localDb, { code: "s", firstName: "S", shortName: "S", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 5000, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);

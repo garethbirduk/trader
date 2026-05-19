@@ -52,13 +52,13 @@ describe("canonical watch arc — condition asymmetry", () => {
 
     // ── Cast ──────────────────────────────────────────────────────
     const del = insertActor(db, {
-      code: "del", displayName: "Del Boy", cash: 1000,
+      code: "del", firstName: "Del Boy", shortName: "Del Boy", cash: 1000,
     });
     const boyce = insertActor(db, {
-      code: "boyce", displayName: "Boyce", cash: 20000,
+      code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 20000,
     });
     const mickey = insertActor(db, {
-      code: "mickey", displayName: "Mickey Pearce",
+      code: "mickey", firstName: "Mickey Pearce", shortName: "Mickey Pearce",
     });
 
     // ── Catalogue ─────────────────────────────────────────────────
@@ -220,9 +220,9 @@ describe("canonical watch arc — condition asymmetry", () => {
   it("Del-hedge-anchor variant: uncertain Del anchors high and captures most of the surplus", () => {
     db = freshDB();
 
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
-    const boyce = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 20000 });
-    const mickey = insertActor(db, { code: "m", displayName: "Mickey" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
+    const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 20000 });
+    const mickey = insertActor(db, { code: "m", firstName: "Mickey", shortName: "Mickey" });
 
     const watch = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,

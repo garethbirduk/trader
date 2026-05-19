@@ -20,8 +20,8 @@ import {
 import type { DB } from "../src/engine/core/db.js";
 
 function setup(db: DB) {
-  const del = insertActor(db, { code: "del", displayName: "Del", cash: 0 });
-  const boyce = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 1000 });
+  const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 0 });
+  const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000 });
   const nags = insertLocation(db, { code: "nags", displayName: "Nag's Head" });
   const tables = insertItemKind(db, {
     code: "tables",

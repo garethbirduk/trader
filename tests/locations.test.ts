@@ -37,7 +37,7 @@ describe("locations repo", () => {
 
   it("starts actors with no current location and assigns one", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "del", displayName: "Del" });
+    const a = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     expect(a.currentLocationId).toBeNull();
     expect(getActorCurrentLocationId(db, a.id)).toBeNull();
 
@@ -53,9 +53,9 @@ describe("locations repo", () => {
   it("queries actors at a location", () => {
     db = freshDB();
     const loc = insertLocation(db, { code: "nags-head", displayName: "The Nag's Head" });
-    const del = insertActor(db, { code: "del", displayName: "Del" });
-    const rodney = insertActor(db, { code: "rodney", displayName: "Rodney" });
-    insertActor(db, { code: "boyce", displayName: "Boyce" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+    const rodney = insertActor(db, { code: "rodney", firstName: "Rodney", shortName: "Rodney" });
+    insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce" });
     setActorLocation(db, del.id, loc.id);
     setActorLocation(db, rodney.id, loc.id);
     expect(getActorsAtLocation(db, loc.id)).toEqual([del.id, rodney.id]);

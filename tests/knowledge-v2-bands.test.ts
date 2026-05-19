@@ -24,7 +24,7 @@ describe("actor_category_bands repo", () => {
 
   it("round-trips an actor's partition for a category", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "skilled", displayName: "Skilled" });
+    const a = insertActor(db, { code: "skilled", firstName: "Skilled", shortName: "Skilled" });
     const bands = setActorBands(db, {
       actorId: a.id,
       category: "watches",
@@ -47,7 +47,7 @@ describe("actor_category_bands repo", () => {
 
   it("setActorBands replaces existing partition atomically", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     setActorBands(db, {
       actorId: a.id,
       category: "watches",
@@ -68,7 +68,7 @@ describe("actor_category_bands repo", () => {
 
   it("findBandContaining locates the band that wraps the price", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     setActorBands(db, {
       actorId: a.id,
       category: "watches",
@@ -88,7 +88,7 @@ describe("actor_category_bands repo", () => {
 
   it("findNearestBand returns the closest band when the price falls in a gap", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     setActorBands(db, {
       actorId: a.id,
       category: "watches",
@@ -108,7 +108,7 @@ describe("actor_category_bands repo", () => {
 
   it("an actor with no partition for a category returns null", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     expect(getActorBands(db, a.id, "watches")).toEqual([]);
     expect(findBandContaining(db, a.id, "watches", 100)).toBeNull();
     expect(findNearestBand(db, a.id, "watches", 100)).toBeNull();
@@ -116,7 +116,7 @@ describe("actor_category_bands repo", () => {
 
   it("an idiot with one band that doesn't cover the price still gets it via findNearestBand", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "idiot", displayName: "Idiot" });
+    const a = insertActor(db, { code: "idiot", firstName: "Idiot", shortName: "Idiot" });
     setActorBands(db, {
       actorId: a.id,
       category: "watches",
@@ -129,7 +129,7 @@ describe("actor_category_bands repo", () => {
 
   it("rejects invalid band bounds at write time", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     expect(() =>
       setActorBands(db!, {
         actorId: a.id,
@@ -156,7 +156,7 @@ describe("actor_tier_beliefs repo", () => {
 
   it("round-trips per-(category, tier) multiplier beliefs", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     setTierBelief(db, { actorId: a.id, category: "watches", tier: "mint", multiplier: 1.5 });
     setTierBelief(db, { actorId: a.id, category: "watches", tier: "broken", multiplier: 0.1 });
     const m = getTierBeliefs(db, a.id, "watches");
@@ -167,7 +167,7 @@ describe("actor_tier_beliefs repo", () => {
 
   it("getTierMultiplierBelief falls back to engine truth when no belief stored", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     // Engine truth for mint = 1.5.
     expect(getTierMultiplierBelief(db, a.id, "watches", "mint")).toBe(1.5);
     // Override to a noisy belief.
@@ -177,7 +177,7 @@ describe("actor_tier_beliefs repo", () => {
 
   it("seedTierBeliefsAtTruth populates all five tiers for a category", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "specialist", displayName: "Specialist" });
+    const a = insertActor(db, { code: "specialist", firstName: "Specialist", shortName: "Specialist" });
     seedTierBeliefsAtTruth(db, { actorId: a.id, category: "watches" });
     const m = getTierBeliefs(db, a.id, "watches");
     expect(m.size).toBe(5);
@@ -191,7 +191,7 @@ describe("actor_tier_beliefs repo", () => {
 
   it("setTierBelief upserts on duplicate (actor, category, tier)", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     setTierBelief(db, { actorId: a.id, category: "watches", tier: "mint", multiplier: 1.5 });
     setTierBelief(db, { actorId: a.id, category: "watches", tier: "mint", multiplier: 1.7 });
     expect(getTierMultiplierBelief(db, a.id, "watches", "mint")).toBe(1.7);
@@ -199,7 +199,7 @@ describe("actor_tier_beliefs repo", () => {
 
   it("rejects negative multipliers", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     expect(() =>
       setTierBelief(db!, {
         actorId: a.id, category: "x", tier: "mint", multiplier: -0.5,

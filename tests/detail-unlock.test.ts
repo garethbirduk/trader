@@ -47,13 +47,13 @@ describe("detail-unlock (two-tier gossip)", () => {
     db = localDb;
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     const asker = insertActor(localDb, {
-      code: "a", displayName: "A", cash: 5000,
+      code: "a", firstName: "A", shortName: "A", cash: 5000,
     });
     const partner = insertActor(localDb, {
-      code: "p", displayName: "P", cash: 0,
+      code: "p", firstName: "P", shortName: "P", cash: 0,
     });
     const mike = insertActor(localDb, {
-      code: "m", displayName: "Mike", cash: 0,
+      code: "m", firstName: "Mike", shortName: "Mike", cash: 0,
     });
     setActorLocation(localDb, asker.id, nags.id);
     setActorLocation(localDb, partner.id, nags.id);
@@ -160,7 +160,7 @@ describe("detail-unlock (two-tier gossip)", () => {
     const { localDb, nags, asker, partner, item } = seed();
     // Reset asker's cash to below the £3 fee.
     const skintAsker = insertActor(localDb, {
-      code: "skint", displayName: "Skint", cash: 100,
+      code: "skint", firstName: "Skint", shortName: "Skint", cash: 100,
     });
     setActorLocation(localDb, skintAsker.id, nags.id);
     const src = insertLead(localDb, {

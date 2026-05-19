@@ -67,7 +67,7 @@ describe("actor-arm-j-repo", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Tester",
+      firstName: "Tester", shortName: "Tester",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -80,7 +80,7 @@ describe("actor-arm-j-repo", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Tester",
+      firstName: "Tester", shortName: "Tester",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -94,7 +94,7 @@ describe("actor-arm-j-repo", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Tester",
+      firstName: "Tester", shortName: "Tester",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -109,7 +109,7 @@ describe("actor-arm-j-repo", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Tester",
+      firstName: "Tester", shortName: "Tester",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -123,7 +123,7 @@ describe("actor-arm-j-repo", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "test",
-      displayName: "Tester",
+      firstName: "Tester", shortName: "Tester",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -142,7 +142,7 @@ describe("actor-arm-j-repo", () => {
     const db = freshDB();
     const a = insertActor(db, {
       code: "a",
-      displayName: "Alice",
+      firstName: "Alice", shortName: "Alice",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -150,7 +150,7 @@ describe("actor-arm-j-repo", () => {
     }).id;
     const b = insertActor(db, {
       code: "b",
-      displayName: "Bob",
+      firstName: "Bob", shortName: "Bob",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",

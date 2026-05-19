@@ -22,7 +22,7 @@ function setupScamBaitLot(opts: { baseDetection: number }) {
   const db = freshDB();
   const aid = insertActor(db, {
     code: "buyer",
-    displayName: "Buyer",
+    firstName: "Buyer", shortName: "Buyer",
     cash: 100000,
     role: "civilian",
     transportCapacity: "none",

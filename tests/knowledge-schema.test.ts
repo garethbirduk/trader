@@ -29,7 +29,7 @@ describe("actor_skills repo", () => {
 
   it("loads the fallback profile for an actor with no rows", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "x", displayName: "X" });
+    const a = insertActor(db, { code: "x", firstName: "X", shortName: "X" });
     const profile = loadKnowledgeProfile(db, a.id);
     expect(profile.defaultBandPlacementAccuracy).toBe(
       FALLBACK_KNOWLEDGE_PROFILE.defaultBandPlacementAccuracy,
@@ -40,7 +40,7 @@ describe("actor_skills repo", () => {
 
   it("round-trips a full skill profile through persistKnowledgeProfile + load", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "mickey", displayName: "Mickey" });
+    const a = insertActor(db, { code: "mickey", firstName: "Mickey", shortName: "Mickey" });
     const wanted: KnowledgeProfile = {
       bandPlacementAccuracy: new Map([["watches", 0.15]]),
       defaultBandPlacementAccuracy: 0.1,
@@ -67,7 +67,7 @@ describe("actor_skills repo", () => {
 
   it("upserts on duplicate skill keys", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     setActorSkill(db, { actorId: a.id, axis: "price", key: "watches", accuracy: 0.5 });
     setActorSkill(db, { actorId: a.id, axis: "price", key: "watches", accuracy: 0.9 });
     const profile = loadKnowledgeProfile(db, a.id);
@@ -76,7 +76,7 @@ describe("actor_skills repo", () => {
 
   it("rejects out-of-range accuracy", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     expect(() =>
       setActorSkill(db!, { actorId: a.id, axis: "band_placement", key: "watches", accuracy: 1.5 }),
     ).toThrow();
@@ -95,8 +95,8 @@ describe("actor_beliefs repo", () => {
 
   it("round-trips beliefs across all axes", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 100,
     });
@@ -156,7 +156,7 @@ describe("actor_beliefs repo", () => {
 
   it("preserves multiple conflicting beliefs on the same axis", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 100,
     });

@@ -26,9 +26,9 @@ import type { DB } from "../src/engine/core/db.js";
 function setup(db: DB) {
   // Sellers default to 'truck' so quantity-focused tests aren't accidentally
   // gated by the pocket-cap. Transport behaviour is exercised in transport.test.ts.
-  const del = insertActor(db, { code: "del", displayName: "Del", cash: 0, transportCapacity: "truck" });
-  const boyce = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 1000 });
-  const denzil = insertActor(db, { code: "denzil", displayName: "Denzil", cash: 0, transportCapacity: "truck" });
+  const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 0, transportCapacity: "truck" });
+  const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000 });
+  const denzil = insertActor(db, { code: "denzil", firstName: "Denzil", shortName: "Denzil", cash: 0, transportCapacity: "truck" });
   const tables = insertItemKind(db, {
     code: "tables",
     displayName: "Tables",

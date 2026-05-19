@@ -21,9 +21,9 @@ import { poolUnitPriceOnDay } from "../src/engine/pools/types.js";
 import type { DB } from "../src/engine/core/db.js";
 
 function setup(db: DB) {
-  const del = insertActor(db, { code: "del", displayName: "Del" });
-  const denzil = insertActor(db, { code: "denzil", displayName: "Denzil" });
-  const monkey = insertActor(db, { code: "monkey", displayName: "Monkey" });
+  const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+  const denzil = insertActor(db, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+  const monkey = insertActor(db, { code: "monkey", firstName: "Monkey", shortName: "Monkey" });
   const vacuums = insertItemKind(db, {
     code: "vacuums",
     displayName: "Vacuum cleaners",

@@ -39,7 +39,7 @@ describe("shop turnover (Stage 8)", () => {
     });
     const keeper = insertActor(localDb, {
       code: "eric",
-      displayName: "Eric",
+      firstName: "Eric", shortName: "Eric",
       cash: 0,
     });
     setActorLocation(localDb, keeper.id, shop.id);
@@ -133,7 +133,7 @@ describe("shop turnover (Stage 8)", () => {
     });
     const keeper = insertActor(localDb, {
       code: "eric",
-      displayName: "Eric",
+      firstName: "Eric", shortName: "Eric",
       cash: 0,
     });
     // Keeper not at the shop — currentLocationId is null.
@@ -192,7 +192,7 @@ describe("shop turnover (Stage 8)", () => {
     db = localDb;
     const shop = insertLocation(localDb, { code: "jewel", displayName: "Jewel" });
     const keeper = insertActor(localDb, {
-      code: "cyril", displayName: "Cyril", cash: 0,
+      code: "cyril", firstName: "Cyril", shortName: "Cyril", cash: 0,
     });
     setActorLocation(localDb, keeper.id, shop.id);
     const item = insertItemKind(localDb, {
@@ -263,7 +263,7 @@ describe("shop turnover (Stage 8)", () => {
     db = localDb;
     const shop = insertLocation(localDb, { code: "jewel", displayName: "Jewel" });
     const keeper = insertActor(localDb, {
-      code: "cyril", displayName: "Cyril", cash: 0,
+      code: "cyril", firstName: "Cyril", shortName: "Cyril", cash: 0,
     });
     setActorLocation(localDb, keeper.id, shop.id);
     const item = insertItemKind(localDb, {

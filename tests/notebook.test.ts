@@ -27,13 +27,13 @@ describe("notebook compute + diff", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const me = insertActor(localDb, {
-      code: "me", displayName: "Me", cash: 1000,
+      code: "me", firstName: "Me", shortName: "Me", cash: 1000,
     });
     const boyce = insertActor(localDb, {
-      code: "boyce", displayName: "Boyce", cash: 1000,
+      code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000,
     });
     const mickey = insertActor(localDb, {
-      code: "mickey", displayName: "Mickey", cash: 1000,
+      code: "mickey", firstName: "Mickey", shortName: "Mickey", cash: 1000,
     });
     const item = insertItemKind(localDb, {
       code: "radio",

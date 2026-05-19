@@ -18,7 +18,7 @@ describe("actors repo", () => {
 
   it("inserts and retrieves an actor", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "del", displayName: "Del Boy", cash: 2000 });
+    const a = insertActor(db, { code: "del", firstName: "Del Boy", shortName: "Del Boy", cash: 2000 });
     expect(a.cash).toBe(2000);
     expect(getActorById(db, a.id)).toEqual(a);
     expect(getActorByCode(db, "del")).toEqual(a);
@@ -26,19 +26,19 @@ describe("actors repo", () => {
 
   it("defaults cash to 0", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "rodney", displayName: "Rodney" });
+    const a = insertActor(db, { code: "rodney", firstName: "Rodney", shortName: "Rodney" });
     expect(a.cash).toBe(0);
   });
 
   it("rejects duplicate codes", () => {
     db = freshDB();
-    insertActor(db, { code: "del", displayName: "Del" });
-    expect(() => insertActor(db, { code: "del", displayName: "Del2" })).toThrow();
+    insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+    expect(() => insertActor(db, { code: "del", firstName: "Del2", shortName: "Del2" })).toThrow();
   });
 
   it("adjusts cash by delta, supporting positive and negative", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 1000 });
+    const a = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000 });
     expect(adjustActorCash(db, a.id, 250).cash).toBe(1250);
     expect(adjustActorCash(db, a.id, -300).cash).toBe(950);
   });
@@ -50,8 +50,8 @@ describe("actors repo", () => {
 
   it("lists actors in insertion order", () => {
     db = freshDB();
-    insertActor(db, { code: "a", displayName: "A" });
-    insertActor(db, { code: "b", displayName: "B" });
+    insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     expect(listActors(db).map((x) => x.code)).toEqual(["a", "b"]);
   });
 });

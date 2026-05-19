@@ -34,8 +34,8 @@ describe("buildActorView", () => {
 
   it("snapshots actor cash, inventory, deals, location, and clock", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 500 });
-    const boyce = insertActor(db, { code: "boyce", displayName: "Boyce", cash: 1000 });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 500 });
+    const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000 });
     const flat = insertLocation(db, { code: "flat", displayName: "Flat" });
     setActorLocation(db, del.id, flat.id);
     const tables = insertItemKind(db, {
@@ -80,7 +80,7 @@ describe("RuleBasedAIPolicy", () => {
 
   it("travels to scheduled location when not there", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const flat = insertLocation(db, { code: "flat", displayName: "Flat" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     setActorLocation(db, del.id, flat.id);
@@ -96,7 +96,7 @@ describe("RuleBasedAIPolicy", () => {
 
   it("idles when already at scheduled location", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     setActorLocation(db, del.id, nags.id);
 
@@ -109,7 +109,7 @@ describe("RuleBasedAIPolicy", () => {
 
   it("falls back to default when no schedule entry for the hour", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const flat = insertLocation(db, { code: "flat", displayName: "Flat" });
     setActorLocation(db, del.id, null);
 
@@ -123,7 +123,7 @@ describe("RuleBasedAIPolicy", () => {
 
   it("idles when no schedule and no default", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const policy = new RuleBasedAIPolicy("p-del", {});
     const view = buildActorView(db, del.id, { day: 1, hour: 12 });
     expect(policy.decide(view, createRNG("a")).type).toBe("idle");
@@ -139,7 +139,7 @@ describe("applyAction", () => {
 
   it("travel updates current location and emits event", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     const buf = bufferHandler();
     applyAction(
@@ -155,7 +155,7 @@ describe("applyAction", () => {
 
   it("idle is a no-op", () => {
     db = freshDB();
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     const buf = bufferHandler();
     applyAction(
       db,
@@ -177,8 +177,8 @@ describe("runPoliciesForHour", () => {
 
   it("runs every registered policy in deterministic actor-id order", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     const flat = insertLocation(db, { code: "flat", displayName: "Flat" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
 
@@ -214,9 +214,9 @@ describe("daily settlement", () => {
     db = localDb;
 
     const del = insertActor(localDb, {
-      code: "del", displayName: "Del", cash: 0, transportCapacity: "truck",
+      code: "del", firstName: "Del", shortName: "Del", cash: 0, transportCapacity: "truck",
     });
-    const boyce = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 500 });
+    const boyce = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 500 });
     const tables = insertItemKind(localDb, {
       code: "tables",
       displayName: "Tables",
@@ -265,8 +265,8 @@ describe("daily settlement", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const del = insertActor(localDb, { code: "del", displayName: "Del", cash: 0 });
-    const boyce = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 500 });
+    const del = insertActor(localDb, { code: "del", firstName: "Del", shortName: "Del", cash: 0 });
+    const boyce = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 500 });
     const tables = insertItemKind(localDb, {
       code: "tables",
       displayName: "Tables",

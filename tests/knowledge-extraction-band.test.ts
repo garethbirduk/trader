@@ -16,7 +16,7 @@ describe("computeExtractionBand", () => {
 
   it("with no beliefs, falls back to the prior at the lot's actual tier", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 100,
     });
@@ -35,7 +35,7 @@ describe("computeExtractionBand", () => {
 
   it("a confident price belief collapses the band to that range", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 100,
     });
@@ -58,7 +58,7 @@ describe("computeExtractionBand", () => {
 
   it("a tagged price belief only applies to matching tier combos", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const item = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
@@ -89,7 +89,7 @@ describe("computeExtractionBand", () => {
 
   it("uncertain condition without price belief spans the tier-multiplier prior", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const item = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
@@ -109,7 +109,7 @@ describe("computeExtractionBand", () => {
 
   it("multiple price beliefs union — hedge across plausible conditions", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     const item = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });

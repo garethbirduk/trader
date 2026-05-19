@@ -19,10 +19,10 @@ describe("seedWitnessLeads", () => {
   it("plants a rep lead in every present non-principal's bag", () => {
     db = freshDB();
     const market = insertLocation(db, { code: "market", displayName: "Market" });
-    const del = insertActor(db, { code: "del", displayName: "Del" });
-    const slater = insertActor(db, { code: "slater", displayName: "Slater" });
-    const trigger = insertActor(db, { code: "trigger", displayName: "Trigger" });
-    const denzil = insertActor(db, { code: "denzil", displayName: "Denzil" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+    const slater = insertActor(db, { code: "slater", firstName: "Slater", shortName: "Slater" });
+    const trigger = insertActor(db, { code: "trigger", firstName: "Trigger", shortName: "Trigger" });
+    const denzil = insertActor(db, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
     setActorLocation(db, del.id, market.id);
     setActorLocation(db, slater.id, market.id);
     setActorLocation(db, trigger.id, market.id);
@@ -56,8 +56,8 @@ describe("seedWitnessLeads", () => {
   it("excludes both principals from the witness set", () => {
     db = freshDB();
     const loc = insertLocation(db, { code: "x", displayName: "X" });
-    const del = insertActor(db, { code: "del", displayName: "Del" });
-    const slater = insertActor(db, { code: "slater", displayName: "Slater" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+    const slater = insertActor(db, { code: "slater", firstName: "Slater", shortName: "Slater" });
     setActorLocation(db, del.id, loc.id);
     setActorLocation(db, slater.id, loc.id);
     const result = seedWitnessLeads(db, {
@@ -75,8 +75,8 @@ describe("seedWitnessLeads", () => {
   it("handles single-principal events (counterparty optional)", () => {
     db = freshDB();
     const loc = insertLocation(db, { code: "x", displayName: "X" });
-    const del = insertActor(db, { code: "del", displayName: "Del" });
-    const trigger = insertActor(db, { code: "trigger", displayName: "Trigger" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+    const trigger = insertActor(db, { code: "trigger", firstName: "Trigger", shortName: "Trigger" });
     setActorLocation(db, del.id, loc.id);
     setActorLocation(db, trigger.id, loc.id);
     const result = seedWitnessLeads(db, {
@@ -94,10 +94,10 @@ describe("seedWitnessLeads", () => {
   it("respects maxWitnesses cap when a venue is crowded", () => {
     db = freshDB();
     const loc = insertLocation(db, { code: "x", displayName: "X" });
-    const del = insertActor(db, { code: "del", displayName: "Del" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
     setActorLocation(db, del.id, loc.id);
     for (let i = 0; i < 5; i += 1) {
-      const a = insertActor(db, { code: `w${i}`, displayName: `W${i}` });
+      const a = insertActor(db, { code: `w${i}`, firstName: `W${i}`, shortName: `W${i}` });
       setActorLocation(db, a.id, loc.id);
     }
     const result = seedWitnessLeads(db, {

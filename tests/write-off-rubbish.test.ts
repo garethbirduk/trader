@@ -31,12 +31,12 @@ describe("write-off rubbish (Stage 8)", () => {
     db = localDb;
     const dealer = insertActor(localDb, {
       code: "d",
-      displayName: "Dealer",
+      firstName: "Dealer", shortName: "Dealer",
       cash: opts?.dealerCash ?? 500,
     });
     const ledger = insertActor(localDb, {
       code: "ledger",
-      displayName: "Off-map ledger",
+      firstName: "Off-map ledger", shortName: "Off-map ledger",
       cash: 0,
     });
     const item = insertItemKind(localDb, {

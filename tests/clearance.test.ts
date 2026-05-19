@@ -60,10 +60,10 @@ describe("house clearance", () => {
       code: "tables", displayName: "Tables", category: "furniture", baseValue: 40,
     });
     const winner = insertActor(db, {
-      code: "winner", displayName: "Winner", cash: 1000,
+      code: "winner", firstName: "Winner", shortName: "Winner", cash: 1000,
     });
     const loser = insertActor(db, {
-      code: "loser", displayName: "Loser", cash: 1000,
+      code: "loser", firstName: "Loser", shortName: "Loser", cash: 1000,
     });
     const { listing } = insertClearanceListing(db, {
       listedDay: 1, scheduledDay: 1, fee: 500,
@@ -125,7 +125,7 @@ describe("house clearance", () => {
     const tables = insertItemKind(db, {
       code: "tables", displayName: "Tables", category: "furniture", baseValue: 40,
     });
-    const actor = insertActor(db, { code: "a", displayName: "A", cash: 1000 });
+    const actor = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 1000 });
     const { listing } = insertClearanceListing(db, {
       listedDay: 1, scheduledDay: 1, fee: 500,
       lots: [{ itemKindId: tables.id, qualityTier: "good", quantity: 3 }],
@@ -148,7 +148,7 @@ describe("house clearance", () => {
       code: "tables", displayName: "Tables", category: "furniture", baseValue: 40,
     });
     const winner = insertActor(db, {
-      code: "w", displayName: "W", cash: 1000,
+      code: "w", firstName: "W", shortName: "W", cash: 1000,
     });
     const { listing } = insertClearanceListing(db, {
       listedDay: 1, scheduledDay: 1, fee: 500,
@@ -178,9 +178,9 @@ describe("clearance + witness integration", () => {
   it("a booker's phone call at a venue plants witness leads for present bystanders", () => {
     db = freshDB();
     const pub = insertLocation(db, { code: "nags", displayName: "Nag's" });
-    const del = insertActor(db, { code: "del", displayName: "Del" });
-    const trigger = insertActor(db, { code: "trigger", displayName: "Trigger" });
-    const boyce = insertActor(db, { code: "boyce", displayName: "Boyce" });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+    const trigger = insertActor(db, { code: "trigger", firstName: "Trigger", shortName: "Trigger" });
+    const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce" });
     setActorLocation(db, del.id, pub.id);
     setActorLocation(db, trigger.id, pub.id);
     setActorLocation(db, boyce.id, pub.id);

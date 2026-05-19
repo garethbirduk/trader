@@ -269,7 +269,7 @@ describe("estimate (DB-backed)", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -315,7 +315,7 @@ describe("estimate (DB-backed)", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -338,7 +338,7 @@ describe("estimate (DB-backed)", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "x",
-      displayName: "X",
+      firstName: "X", shortName: "X",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",
@@ -359,7 +359,7 @@ describe("estimate (DB-backed)", () => {
     const db = freshDB();
     const aid = insertActor(db, {
       code: "x",
-      displayName: "X",
+      firstName: "X", shortName: "X",
       cash: 100,
       role: "civilian",
       transportCapacity: "none",

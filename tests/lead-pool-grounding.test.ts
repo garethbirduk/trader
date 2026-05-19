@@ -39,7 +39,7 @@ describe("lead-pool grounding", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
     const item = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "v",
@@ -70,9 +70,9 @@ describe("lead-pool grounding", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
-    const mike = insertActor(localDb, { code: "mike", displayName: "Mike" });
-    const player = insertActor(localDb, { code: "del", displayName: "Del" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+    const mike = insertActor(localDb, { code: "mike", firstName: "Mike", shortName: "Mike" });
+    const player = insertActor(localDb, { code: "del", firstName: "Del", shortName: "Del" });
     const item = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "v",
@@ -106,8 +106,8 @@ describe("lead-pool grounding", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
-    const mike = insertActor(localDb, { code: "mike", displayName: "Mike" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+    const mike = insertActor(localDb, { code: "mike", firstName: "Mike", shortName: "Mike" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setLocationProprietor(localDb, nags.id, mike.id);
     setActorLocation(localDb, mike.id, nags.id);
@@ -164,11 +164,11 @@ describe("lead-pool grounding", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const seller = insertActor(localDb, {
-      code: "s", displayName: "S", cash: 1000, transportCapacity: "truck",
+      code: "s", firstName: "S", shortName: "S", cash: 1000, transportCapacity: "truck",
     });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000 });
-    const supplier = insertActor(localDb, { code: "sup", displayName: "Sup" });
-    const house = insertActor(localDb, { code: "house", displayName: "H" });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 5000 });
+    const supplier = insertActor(localDb, { code: "sup", firstName: "Sup", shortName: "Sup" });
+    const house = insertActor(localDb, { code: "house", firstName: "H", shortName: "H" });
     const item = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "v",
@@ -228,14 +228,14 @@ describe("lead-pool grounding", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const sellerA = insertActor(localDb, {
-      code: "del", displayName: "Del", cash: 5000, transportCapacity: "truck",
+      code: "del", firstName: "Del", shortName: "Del", cash: 5000, transportCapacity: "truck",
     });
     const sellerB = insertActor(localDb, {
-      code: "paddy", displayName: "Paddy", cash: 5000, transportCapacity: "truck",
+      code: "paddy", firstName: "Paddy", shortName: "Paddy", cash: 5000, transportCapacity: "truck",
     });
-    const buyer = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 50000 });
-    const supplier = insertActor(localDb, { code: "sup", displayName: "Sup" });
-    const house = insertActor(localDb, { code: "h", displayName: "H" });
+    const buyer = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 50000 });
+    const supplier = insertActor(localDb, { code: "sup", firstName: "Sup", shortName: "Sup" });
+    const house = insertActor(localDb, { code: "h", firstName: "H", shortName: "H" });
     const item = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "v",
@@ -308,10 +308,10 @@ describe("lead-pool grounding", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const seller = insertActor(localDb, {
-      code: "s", displayName: "S", cash: 5, transportCapacity: "truck",
+      code: "s", firstName: "S", shortName: "S", cash: 5, transportCapacity: "truck",
     });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 5000 });
-    const supplier = insertActor(localDb, { code: "sup", displayName: "Sup" });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 5000 });
+    const supplier = insertActor(localDb, { code: "sup", firstName: "Sup", shortName: "Sup" });
     const item = insertItemKind(localDb, {
       code: "x",
       displayName: "x",

@@ -41,7 +41,7 @@ describe("heat repo", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A" });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A" });
     expect(getHeat(localDb, a.id).score).toBe(0);
   });
 
@@ -49,7 +49,7 @@ describe("heat repo", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A" });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A" });
     raiseHeat(localDb, a.id, 30, 1);
     expect(getHeat(localDb, a.id).score).toBe(30);
     raiseHeat(localDb, a.id, 50, 2);
@@ -62,8 +62,8 @@ describe("heat repo", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A" });
-    const b = insertActor(localDb, { code: "b", displayName: "B" });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B" });
     raiseHeat(localDb, a.id, 30, 1);
     raiseHeat(localDb, b.id, 3, 1);
     decayAllHeat(localDb, 5);
@@ -84,9 +84,9 @@ describe("heat reactions on settlement", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const seller = insertActor(localDb, {
-      code: "s", displayName: "S", cash: 0, transportCapacity: "truck",
+      code: "s", firstName: "S", shortName: "S", cash: 0, transportCapacity: "truck",
     });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 1000 });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 1000 });
     const stolenItem = insertItemKind(localDb, {
       code: "stolen-stuff",
       displayName: "Stolen stuff",
@@ -140,9 +140,9 @@ describe("heat reactions on settlement", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const seller = insertActor(localDb, {
-      code: "s", displayName: "S", cash: 0, transportCapacity: "truck",
+      code: "s", firstName: "S", shortName: "S", cash: 0, transportCapacity: "truck",
     });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 1000 });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 1000 });
     const cleanItem = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -198,9 +198,9 @@ describe("authority sweep", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const villain = insertActor(localDb, {
-      code: "v", displayName: "V", cash: 1000,
+      code: "v", firstName: "V", shortName: "V", cash: 1000,
     });
-    const house = insertActor(localDb, { code: "h", displayName: "H" });
+    const house = insertActor(localDb, { code: "h", firstName: "H", shortName: "H" });
     const lockup = insertLocation(localDb, { code: "lockup", displayName: "Lockup" });
     setActorLocation(localDb, villain.id, lockup.id);
     const stolenItem = insertItemKind(localDb, {
@@ -271,7 +271,7 @@ describe("authority sweep", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A", cash: 1000 });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 1000 });
     const stolenItem = insertItemKind(localDb, {
       code: "x",
       displayName: "x",
@@ -317,7 +317,7 @@ describe("heat decay over a multi-day run", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const a = insertActor(localDb, { code: "a", displayName: "A" });
+    const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A" });
     raiseHeat(localDb, a.id, 30, 1);
     const world = new World({
       db: localDb,

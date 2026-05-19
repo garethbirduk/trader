@@ -24,10 +24,10 @@ describe("virtual actors + pool ownership (Stage 6)", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const live = insertActor(localDb, { code: "a", displayName: "Live A", cash: 100 });
+    const live = insertActor(localDb, { code: "a", firstName: "Live A", shortName: "Live A", cash: 100 });
     const virtual = insertActor(localDb, {
       code: "bob",
-      displayName: "Trader Bob",
+      firstName: "Trader Bob", shortName: "Trader Bob",
       cash: 0,
       transportCapacity: "none",
       isVirtual: true,
@@ -52,7 +52,7 @@ describe("virtual actors + pool ownership (Stage 6)", () => {
     db = localDb;
     const bob = insertActor(localDb, {
       code: "bob",
-      displayName: "Trader Bob",
+      firstName: "Trader Bob", shortName: "Trader Bob",
       isVirtual: true,
     });
     const item = insertItemKind(localDb, {
@@ -84,17 +84,17 @@ describe("virtual actors + pool ownership (Stage 6)", () => {
     db = localDb;
     const bob = insertActor(localDb, {
       code: "bob",
-      displayName: "Trader Bob",
+      firstName: "Trader Bob", shortName: "Trader Bob",
       isVirtual: true,
     });
     const broker = insertActor(localDb, {
       code: "broker",
-      displayName: "Broker",
+      firstName: "Broker", shortName: "Broker",
       cash: 10000,
     });
     const outsider = insertActor(localDb, {
       code: "outsider",
-      displayName: "Outsider",
+      firstName: "Outsider", shortName: "Outsider",
       cash: 10000,
     });
     const item = insertItemKind(localDb, {

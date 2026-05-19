@@ -24,9 +24,9 @@ describe("offerBribe primitive", () => {
   it("a bribable officer accepts an above-threshold offer, cash flows to them", () => {
     db = freshDB();
     const market = insertLocation(db, { code: "m", displayName: "Market" });
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 500 });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 500 });
     const slater = insertActor(db, {
-      code: "slater", displayName: "Slater", cash: 100, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 100, bribable: true,
     });
     const events: WorldEvent[] = [];
     const log = createEventLog();
@@ -52,9 +52,9 @@ describe("offerBribe primitive", () => {
   it("a non-bribable officer refuses, no cash moves, refusal event emitted", () => {
     db = freshDB();
     const market = insertLocation(db, { code: "m", displayName: "Market" });
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 500 });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 500 });
     const cop = insertActor(db, {
-      code: "cop", displayName: "Honest Cop", cash: 100,
+      code: "cop", firstName: "Honest Cop", shortName: "Honest Cop", cash: 100,
       // default bribable=false
     });
     const events: WorldEvent[] = [];
@@ -81,9 +81,9 @@ describe("offerBribe primitive", () => {
   it("a below-threshold offer is refused even by a bribable officer", () => {
     db = freshDB();
     const market = insertLocation(db, { code: "m", displayName: "Market" });
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 500 });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 500 });
     const slater = insertActor(db, {
-      code: "slater", displayName: "Slater", cash: 1000, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 1000, bribable: true,
     });
     // threshold = 40 * (1 + 1000/1000) = 80 — offer of 50 fails.
     const result = offerBribe(db, { day: 1, hour: 12 }, {
@@ -103,12 +103,12 @@ describe("offerBribe primitive", () => {
   it("accepted bribe seeds witness leads on present bystanders", () => {
     db = freshDB();
     const market = insertLocation(db, { code: "m", displayName: "Market" });
-    const del = insertActor(db, { code: "del", displayName: "Del", cash: 500 });
+    const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 500 });
     const slater = insertActor(db, {
-      code: "slater", displayName: "Slater", cash: 100, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 100, bribable: true,
     });
     const trigger = insertActor(db, {
-      code: "trigger", displayName: "Trigger", cash: 0,
+      code: "trigger", firstName: "Trigger", shortName: "Trigger", cash: 0,
     });
     setActorLocation(db, del.id, market.id);
     setActorLocation(db, slater.id, market.id);
@@ -136,9 +136,9 @@ describe("offerBribe primitive", () => {
   it("blocks when offerer can't afford the amount", () => {
     db = freshDB();
     const market = insertLocation(db, { code: "m", displayName: "Market" });
-    const broke = insertActor(db, { code: "broke", displayName: "Broke", cash: 5 });
+    const broke = insertActor(db, { code: "broke", firstName: "Broke", shortName: "Broke", cash: 5 });
     const slater = insertActor(db, {
-      code: "slater", displayName: "Slater", cash: 0, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 0, bribable: true,
     });
     const result = offerBribe(db, { day: 1, hour: 12 }, {
       offererActorId: broke.id,

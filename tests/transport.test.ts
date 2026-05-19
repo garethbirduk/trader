@@ -35,7 +35,7 @@ describe("transport tiers", () => {
     db = freshDB();
     const denzil = insertActor(db, {
       code: "denzil",
-      displayName: "Denzil",
+      firstName: "Denzil", shortName: "Denzil",
       transportCapacity: "truck",
     });
     expect(denzil.transportCapacity).toBe("truck");
@@ -43,7 +43,7 @@ describe("transport tiers", () => {
 
   it("defaults transport capacity to 'pocket' when not specified", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
     expect(a.transportCapacity).toBe("pocket");
   });
 });
@@ -59,11 +59,11 @@ describe("settleDeal — transport check", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 0,
       transportCapacity: "boot", // 30 unit cap
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
     const item = insertItemKind(db, {
       code: "chains",
       displayName: "Gold chains",
@@ -95,11 +95,11 @@ describe("settleDeal — transport check", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 0,
       transportCapacity: "pocket", // 5 unit cap
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 5000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 5000 });
     const item = insertItemKind(db, {
       code: "vacuums",
       displayName: "v",
@@ -130,11 +130,11 @@ describe("settleDeal — transport check", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "mike",
-      displayName: "Mike",
+      firstName: "Mike", shortName: "Mike",
       cash: 0,
       transportCapacity: "none",
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
     const item = insertItemKind(db, {
       code: "x",
       displayName: "x",
@@ -165,11 +165,11 @@ describe("settleDeal — transport check", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "monkey",
-      displayName: "Monkey",
+      firstName: "Monkey", shortName: "Monkey",
       cash: 0,
       transportCapacity: "boot", // 30 cap
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
     const itemA = insertItemKind(db, {
       code: "a",
       displayName: "a",
@@ -228,6 +228,6 @@ describe("placeholder skin transport assignments", () => {
     expect(getActorByCode(db, "monkey-harris")?.transportCapacity).toBe("van");
     expect(getActorByCode(db, "trigger")?.transportCapacity).toBe("pocket");
     expect(getActorByCode(db, "mike")?.transportCapacity).toBe("none");
-    expect(getActorByCode(db, "player")?.transportCapacity).toBe("pocket");
+    expect(getActorByCode(db, "del-boy")?.transportCapacity).toBe("pocket");
   });
 });

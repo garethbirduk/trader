@@ -30,9 +30,9 @@ describe("Slater alerts", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
-    const del = insertActor(localDb, { code: "del", displayName: "Del", cash: 100 });
-    const boyce = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 5000 });
-    const slater = insertActor(localDb, { code: "slater", displayName: "Slater", cash: 0 });
+    const del = insertActor(localDb, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
+    const boyce = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 5000 });
+    const slater = insertActor(localDb, { code: "slater", firstName: "Slater", shortName: "Slater", cash: 0 });
     // A stolen-flagged item kind.
     const radios = insertItemKind(localDb, {
       code: "stolen-radios", displayName: "Radios", category: "electronics",
@@ -108,9 +108,9 @@ describe("Slater alerts", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
-    const del = insertActor(localDb, { code: "del", displayName: "Del", cash: 100 });
-    const boyce = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 5000 });
-    const slater = insertActor(localDb, { code: "slater", displayName: "Slater", cash: 0 });
+    const del = insertActor(localDb, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
+    const boyce = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 5000 });
+    const slater = insertActor(localDb, { code: "slater", firstName: "Slater", shortName: "Slater", cash: 0 });
     const widgets = insertItemKind(localDb, {
       code: "widgets", displayName: "Widgets", category: "tools",
       baseValue: 30,

@@ -36,7 +36,7 @@ describe("market-stall autonomy", () => {
     const market = insertLocation(localDb, { code: "m", displayName: "Market" });
     const lockup = insertLocation(localDb, { code: "l", displayName: "Lockup" });
     const auctionHouse = insertActor(localDb, {
-      code: "ah", displayName: "AH", cash: 0,
+      code: "ah", firstName: "AH", shortName: "AH", cash: 0,
     });
     const item = insertItemKind(localDb, {
       code: "shirts", displayName: "Shirts", category: "clothing", baseValue: 30,
@@ -47,7 +47,7 @@ describe("market-stall autonomy", () => {
   it("a cash-rich dealer registers a LEGIT stall on arrival", () => {
     const { localDb, market, lockup, auctionHouse, item } = setupBasic();
     const boyce = insertActor(localDb, {
-      code: "boyce", displayName: "Boyce", cash: 5000, lockupLocationId: lockup.id,
+      code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 5000, lockupLocationId: lockup.id,
     });
     setActorLocation(localDb, boyce.id, market.id);
     insertStockLot(localDb, {
@@ -56,7 +56,7 @@ describe("market-stall autonomy", () => {
       acquiredDay: 1, locationId: market.id,
     });
     const slater = insertActor(localDb, {
-      code: "slater", displayName: "Slater", cash: 0, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 0, bribable: true,
     });
     const world = new World({
       db: localDb,
@@ -88,7 +88,7 @@ describe("market-stall autonomy", () => {
   it("a cash-poor dealer registers an ADHOC stall — no fee", () => {
     const { localDb, market, lockup, auctionHouse, item } = setupBasic();
     const trigger = insertActor(localDb, {
-      code: "trigger", displayName: "Trigger", cash: 30, lockupLocationId: lockup.id,
+      code: "trigger", firstName: "Trigger", shortName: "Trigger", cash: 30, lockupLocationId: lockup.id,
     });
     setActorLocation(localDb, trigger.id, market.id);
     insertStockLot(localDb, {
@@ -97,7 +97,7 @@ describe("market-stall autonomy", () => {
       acquiredDay: 1, locationId: market.id,
     });
     const slater = insertActor(localDb, {
-      code: "slater", displayName: "Slater", cash: 0, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 0, bribable: true,
     });
     const world = new World({
       db: localDb,
@@ -126,7 +126,7 @@ describe("market-stall autonomy", () => {
   it("Slater patrol + bust: an adhoc seller who can't bribe loses stock and pays a fine", () => {
     const { localDb, market, lockup, auctionHouse, item } = setupBasic();
     const trigger = insertActor(localDb, {
-      code: "trigger", displayName: "Trigger", cash: 30, lockupLocationId: lockup.id,
+      code: "trigger", firstName: "Trigger", shortName: "Trigger", cash: 30, lockupLocationId: lockup.id,
     });
     setActorLocation(localDb, trigger.id, market.id);
     insertStockLot(localDb, {
@@ -135,7 +135,7 @@ describe("market-stall autonomy", () => {
       acquiredDay: 1, locationId: market.id,
     });
     const slater = insertActor(localDb, {
-      code: "slater", displayName: "Slater", cash: 0, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 0, bribable: true,
     });
     setActorLocation(localDb, slater.id, market.id);
     const world = new World({
@@ -173,7 +173,7 @@ describe("market-stall autonomy", () => {
     // Cash 80 < legit threshold (£20 × 5 = £100) → registers adhoc.
     // Still enough for a £40 bribe.
     const del = insertActor(localDb, {
-      code: "del", displayName: "Del", cash: 80, lockupLocationId: lockup.id,
+      code: "del", firstName: "Del", shortName: "Del", cash: 80, lockupLocationId: lockup.id,
     });
     setActorLocation(localDb, del.id, market.id);
     insertStockLot(localDb, {
@@ -182,7 +182,7 @@ describe("market-stall autonomy", () => {
       acquiredDay: 1, locationId: market.id,
     });
     const slater = insertActor(localDb, {
-      code: "slater", displayName: "Slater", cash: 0, bribable: true,
+      code: "slater", firstName: "Slater", shortName: "Slater", cash: 0, bribable: true,
     });
     setActorLocation(localDb, slater.id, market.id);
     const world = new World({
@@ -219,7 +219,7 @@ describe("market-stall autonomy", () => {
     const { localDb, market, lockup, auctionHouse, item } = setupBasic();
     // Cash 80 < legit threshold → adhoc.
     const del = insertActor(localDb, {
-      code: "del", displayName: "Del", cash: 80, lockupLocationId: lockup.id,
+      code: "del", firstName: "Del", shortName: "Del", cash: 80, lockupLocationId: lockup.id,
     });
     setActorLocation(localDb, del.id, market.id);
     insertStockLot(localDb, {
@@ -228,7 +228,7 @@ describe("market-stall autonomy", () => {
       acquiredDay: 1, locationId: market.id,
     });
     const honestCop = insertActor(localDb, {
-      code: "cop", displayName: "Honest Cop", cash: 0,
+      code: "cop", firstName: "Honest Cop", shortName: "Honest Cop", cash: 0,
       // bribable defaults to false
     });
     setActorLocation(localDb, honestCop.id, market.id);

@@ -25,7 +25,7 @@ describe("lead decay (daily handler)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const del = insertActor(localDb, { code: "del", displayName: "Del" });
+    const del = insertActor(localDb, { code: "del", firstName: "Del", shortName: "Del" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",

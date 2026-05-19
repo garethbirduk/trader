@@ -32,8 +32,8 @@ describe("pubdeal-side gossip", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0, transportCapacity: "boot" });
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: opts.buyerCash, transportCapacity: "boot" });
+    const seller = insertActor(localDb, { code: "s", firstName: "S", shortName: "S", cash: 0, transportCapacity: "boot" });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: opts.buyerCash, transportCapacity: "boot" });
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     setActorLocation(localDb, seller.id, nags.id);
     setActorLocation(localDb, buyer.id, nags.id);

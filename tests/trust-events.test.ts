@@ -20,8 +20,8 @@ describe("trust.adjusted events", () => {
     const localDb = openBetterSqlite3DB({ filename: ":memory:" });
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
-    const buyer = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
-    const seller = insertActor(localDb, { code: "s", displayName: "S", cash: 0 });
+    const buyer = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
+    const seller = insertActor(localDb, { code: "s", firstName: "S", shortName: "S", cash: 0 });
     return { localDb, buyer, seller };
   }
 

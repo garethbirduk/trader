@@ -35,8 +35,8 @@ describe("knowledge skin-seed", () => {
 
   it("seedKnowledgeProfiles persists for every actor in the map", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A" });
-    const b = insertActor(db, { code: "b", displayName: "B" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A" });
+    const b = insertActor(db, { code: "b", firstName: "B", shortName: "B" });
     const profiles = new Map<number, BidderProfile>([
       [a.id, {
         appraisalAccuracy: new Map([["watches", 0.95]]),

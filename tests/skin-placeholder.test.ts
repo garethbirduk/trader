@@ -29,7 +29,7 @@ describe("placeholder skin", () => {
     // Pools are spawned daily by the spawner, not pre-seeded — none yet.
     expect(listActivePools(db, 1)).toEqual([]);
 
-    const player = getActorByCode(db, "player");
+    const player = getActorByCode(db, "del-boy");
     expect(player?.id).toBe(result.playerActorId);
     expect(player?.cash).toBeGreaterThan(0);
     expect(player?.currentLocationId).not.toBeNull();
@@ -57,7 +57,7 @@ describe("placeholder skin", () => {
   it("registers policies for every NPC except the player", () => {
     db = freshDB();
     const result = seedPlaceholderSkin(db, createRNG("seed"));
-    const player = getActorByCode(db, "player");
+    const player = getActorByCode(db, "del-boy");
     expect(result.policies.has(player!.id)).toBe(false);
 
     const denzil = getActorByCode(db, "denzil");

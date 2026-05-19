@@ -30,7 +30,7 @@ describe("pending payouts (Stage 7)", () => {
     db = localDb;
     const whale = insertActor(localDb, {
       code: "whale",
-      displayName: "Whale",
+      firstName: "Whale", shortName: "Whale",
       cash: 0,
     });
     insertPendingPayout(localDb, {
@@ -52,7 +52,7 @@ describe("pending payouts (Stage 7)", () => {
     db = localDb;
     const whale = insertActor(localDb, {
       code: "whale",
-      displayName: "Whale",
+      firstName: "Whale", shortName: "Whale",
       cash: 0,
     });
     insertPendingPayout(localDb, {
@@ -80,7 +80,7 @@ describe("pending payouts (Stage 7)", () => {
     db = localDb;
     const whale = insertActor(localDb, {
       code: "whale",
-      displayName: "Whale",
+      firstName: "Whale", shortName: "Whale",
       cash: 0,
     });
     insertPendingPayout(localDb, {

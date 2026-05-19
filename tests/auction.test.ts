@@ -46,7 +46,7 @@ describe("auction lots repo", () => {
 
   it("clears a lot and tracks final price + buyer", () => {
     db = freshDB();
-    const buyer = insertActor(db, { code: "b", displayName: "b" });
+    const buyer = insertActor(db, { code: "b", firstName: "b", shortName: "b" });
     const vacuums = insertItemKind(db, {
       code: "v",
       displayName: "v",
@@ -99,7 +99,7 @@ describe("auction lots repo", () => {
       floorPrice: 20,
       listedDay: 2,
     });
-    const buyer = insertActor(db, { code: "buyer", displayName: "B" });
+    const buyer = insertActor(db, { code: "buyer", firstName: "B", shortName: "B" });
     clearAuctionLot(db, a.id, { atDay: 2, toActorId: buyer.id, finalPrice: 30 });
     expect(listOpenAuctionLots(db).map((l) => l.id)).toEqual([b.id]);
     expect(listAuctionLotsListedOn(db, 1).map((l) => l.id)).toEqual([a.id]);
@@ -119,7 +119,7 @@ describe("pool expiry handler", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",

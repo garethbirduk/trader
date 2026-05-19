@@ -20,10 +20,10 @@ function profileWith(over: Partial<KnowledgeProfile>): KnowledgeProfile {
 describe("default-bidders — judgement engine end-to-end", () => {
   it("expert with full skill produces ceiling close to truth", () => {
     const db = freshDB();
-    insertActor(db, { code: "auction-house", displayName: "H" });
+    insertActor(db, { code: "auction-house", firstName: "H", shortName: "H" });
     const aid = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 100000,
     }).id;
     const item = insertItemKind(db, {
@@ -79,10 +79,10 @@ describe("default-bidders — judgement engine end-to-end", () => {
 
   it("clueless bidder with high j produces ceiling anchored near the prior, well below truth", () => {
     const db = freshDB();
-    insertActor(db, { code: "auction-house", displayName: "H" });
+    insertActor(db, { code: "auction-house", firstName: "H", shortName: "H" });
     const aid = insertActor(db, {
       code: "trigger",
-      displayName: "Trigger",
+      firstName: "Trigger", shortName: "Trigger",
       cash: 100000,
     }).id;
     const item = insertItemKind(db, {
@@ -141,15 +141,15 @@ describe("default-bidders — judgement engine end-to-end", () => {
 
   it("head-to-head, expert beats clueless on a £1100 lot", () => {
     const db = freshDB();
-    insertActor(db, { code: "auction-house", displayName: "H" });
+    insertActor(db, { code: "auction-house", firstName: "H", shortName: "H" });
     const expert = insertActor(db, {
       code: "expert",
-      displayName: "Expert",
+      firstName: "Expert", shortName: "Expert",
       cash: 100000,
     }).id;
     const clueless = insertActor(db, {
       code: "clueless",
-      displayName: "Clueless",
+      firstName: "Clueless", shortName: "Clueless",
       cash: 100000,
     }).id;
     const item = insertItemKind(db, {

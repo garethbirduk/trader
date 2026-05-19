@@ -119,10 +119,10 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
-    const boyce = insertActor(localDb, { code: "boyce", displayName: "Boyce", cash: 1000 });
-    const bidderA = insertActor(localDb, { code: "a", displayName: "A", cash: 1000 });
-    const house = insertActor(localDb, { code: "house", displayName: "Auction House" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+    const boyce = insertActor(localDb, { code: "boyce", firstName: "Boyce", shortName: "Boyce", cash: 1000 });
+    const bidderA = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 1000 });
+    const house = insertActor(localDb, { code: "house", firstName: "Auction House", shortName: "Auction House" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -177,7 +177,7 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -220,8 +220,8 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
-    const broke = insertActor(localDb, { code: "broke", displayName: "Broke", cash: 1 });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+    const broke = insertActor(localDb, { code: "broke", firstName: "Broke", shortName: "Broke", cash: 1 });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -263,10 +263,10 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
-    const flush = insertActor(localDb, { code: "flush", displayName: "Flush", cash: 10 });
-    const rich = insertActor(localDb, { code: "rich", displayName: "Rich", cash: 10000 });
-    const house = insertActor(localDb, { code: "house", displayName: "House" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+    const flush = insertActor(localDb, { code: "flush", firstName: "Flush", shortName: "Flush", cash: 10 });
+    const rich = insertActor(localDb, { code: "rich", firstName: "Rich", shortName: "Rich", cash: 10000 });
+    const house = insertActor(localDb, { code: "house", firstName: "House", shortName: "House" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -316,7 +316,7 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -360,9 +360,9 @@ describe("daily auction handler (pool → auction → bidder)", () => {
     applyMigrations(localDb, ALL_MIGRATIONS);
     db = localDb;
 
-    const denzil = insertActor(localDb, { code: "denzil", displayName: "Denzil" });
-    const buyer = insertActor(localDb, { code: "buyer", displayName: "Buyer", cash: 10000 });
-    const house = insertActor(localDb, { code: "house", displayName: "House" });
+    const denzil = insertActor(localDb, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
+    const buyer = insertActor(localDb, { code: "buyer", firstName: "Buyer", shortName: "Buyer", cash: 10000 });
+    const house = insertActor(localDb, { code: "house", firstName: "House", shortName: "House" });
     const vacuums = insertItemKind(localDb, {
       code: "vacuums",
       displayName: "Vacuums",

@@ -34,13 +34,13 @@ describe("pub-deal pre-haggle gates (Stage 8b)", () => {
     db = localDb;
     const seller = insertActor(localDb, {
       code: "s",
-      displayName: "S",
+      firstName: "S", shortName: "S",
       cash: opts.sellerCash ?? 0,
       transportCapacity: "boot",
     });
     const buyer = insertActor(localDb, {
       code: "b",
-      displayName: "B",
+      firstName: "B", shortName: "B",
       cash: opts.buyerCash,
       transportCapacity: "boot",
     });

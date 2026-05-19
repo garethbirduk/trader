@@ -256,8 +256,8 @@ describe("information mutation on every gossip hop", () => {
       const localDb = openBetterSqlite3DB({ filename: ":memory:" });
       applyMigrations(localDb, ALL_MIGRATIONS);
       db = localDb;
-      const a = insertActor(localDb, { code: "a", displayName: "A", cash: 0 });
-      const b = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
+      const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 0 });
+      const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
       const item = insertItemKind(localDb, {
         code: "i",
         displayName: "I",
@@ -311,8 +311,8 @@ describe("information mutation on every gossip hop", () => {
       const localDb = openBetterSqlite3DB({ filename: ":memory:" });
       applyMigrations(localDb, ALL_MIGRATIONS);
       db = localDb;
-      const a = insertActor(localDb, { code: "a", displayName: "A", cash: 0 });
-      const b = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
+      const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 0 });
+      const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
       const item = insertItemKind(localDb, {
         code: "i",
         displayName: "I",
@@ -353,8 +353,8 @@ describe("information mutation on every gossip hop", () => {
       const localDb = openBetterSqlite3DB({ filename: ":memory:" });
       applyMigrations(localDb, ALL_MIGRATIONS);
       db = localDb;
-      const a = insertActor(localDb, { code: "a", displayName: "A", cash: 0 });
-      const b = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
+      const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 0 });
+      const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
       const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
       setActorLocation(localDb, a.id, nags.id);
       setActorLocation(localDb, b.id, nags.id);
@@ -421,8 +421,8 @@ describe("information mutation on every gossip hop", () => {
       const localDb = openBetterSqlite3DB({ filename: ":memory:" });
       applyMigrations(localDb, ALL_MIGRATIONS);
       db = localDb;
-      const a = insertActor(localDb, { code: "a", displayName: "A", cash: 0 });
-      const b = insertActor(localDb, { code: "b", displayName: "B", cash: 0 });
+      const a = insertActor(localDb, { code: "a", firstName: "A", shortName: "A", cash: 0 });
+      const b = insertActor(localDb, { code: "b", firstName: "B", shortName: "B", cash: 0 });
       const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
       setActorLocation(localDb, a.id, nags.id);
       setActorLocation(localDb, b.id, nags.id);

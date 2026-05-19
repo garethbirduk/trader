@@ -14,8 +14,8 @@ import {
 import type { DB } from "../src/engine/core/db.js";
 
 function seedBasics(db: DB) {
-  const del = insertActor(db, { code: "del", displayName: "Del" });
-  const boyce = insertActor(db, { code: "boyce", displayName: "Boyce" });
+  const del = insertActor(db, { code: "del", firstName: "Del", shortName: "Del" });
+  const boyce = insertActor(db, { code: "boyce", firstName: "Boyce", shortName: "Boyce" });
   const tables = insertItemKind(db, {
     code: "tables",
     displayName: "Tables",

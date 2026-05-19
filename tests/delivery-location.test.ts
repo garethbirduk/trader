@@ -28,7 +28,7 @@ describe("Phase 2 — physical stock location", () => {
 
   it("stock claimed from a pool lands at the claimer's current location", () => {
     db = freshDB();
-    const denzil = insertActor(db, { code: "denzil", displayName: "Denzil" });
+    const denzil = insertActor(db, { code: "denzil", firstName: "Denzil", shortName: "Denzil" });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     setActorLocation(db, denzil.id, lockup.id);
     const item = insertItemKind(db, {
@@ -66,11 +66,11 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 0,
       transportCapacity: "boot",
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     setActorLocation(db, seller.id, nags.id);
     setActorLocation(db, buyer.id, nags.id);
@@ -113,14 +113,14 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "denzil",
-      displayName: "Denzil",
+      firstName: "Denzil", shortName: "Denzil",
       cash: 100,
       transportCapacity: "truck",
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 5000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 5000 });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
-    const house = insertActor(db, { code: "house", displayName: "House" });
+    const house = insertActor(db, { code: "house", firstName: "House", shortName: "House" });
     const item = insertItemKind(db, {
       code: "vacuums",
       displayName: "Vacuums",
@@ -169,11 +169,11 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "denzil",
-      displayName: "Denzil",
+      firstName: "Denzil", shortName: "Denzil",
       cash: 10, // can't afford a £50 truck fee
       transportCapacity: "truck",
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 5000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 5000 });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     const item = insertItemKind(db, {
@@ -221,11 +221,11 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "denzil",
-      displayName: "Denzil",
+      firstName: "Denzil", shortName: "Denzil",
       cash: 1000,
       transportCapacity: "truck", // transit = 2 days
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 5000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 5000 });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     const item = insertItemKind(db, {
@@ -261,11 +261,11 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "denzil",
-      displayName: "Denzil",
+      firstName: "Denzil", shortName: "Denzil",
       cash: 1000,
       transportCapacity: "truck",
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 5000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 5000 });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     const item = insertItemKind(db, {
@@ -300,11 +300,11 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 1000,
       transportCapacity: "boot", // transit = 0 days
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     const item = insertItemKind(db, {
@@ -338,11 +338,11 @@ describe("Phase 2 — physical stock location", () => {
     db = freshDB();
     const seller = insertActor(db, {
       code: "boyce",
-      displayName: "Boyce",
+      firstName: "Boyce", shortName: "Boyce",
       cash: 100,
       transportCapacity: "boot",
     });
-    const buyer = insertActor(db, { code: "del", displayName: "Del", cash: 1000 });
+    const buyer = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 1000 });
     const lockup = insertLocation(db, { code: "lockup", displayName: "Lockup" });
     const nags = insertLocation(db, { code: "nags", displayName: "Nag's" });
     const item = insertItemKind(db, {

@@ -16,7 +16,7 @@ import {
 function makeActor(db: ReturnType<typeof freshDB>, code: string): number {
   return insertActor(db, {
     code,
-    displayName: code,
+    firstName: code, shortName: code,
     cash: 100,
     role: "civilian",
     transportCapacity: "none",

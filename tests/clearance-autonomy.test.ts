@@ -66,7 +66,7 @@ describe("clearance autonomy", () => {
     });
     const lockup = insertLocation(localDb, { code: "lockup", displayName: "Lockup" });
     const booker = insertActor(localDb, {
-      code: "del", displayName: "Del", cash: 2000,
+      code: "del", firstName: "Del", shortName: "Del", cash: 2000,
       lockupLocationId: lockup.id,
     });
 
@@ -145,7 +145,7 @@ describe("clearance autonomy", () => {
     });
     const sids = insertLocation(localDb, { code: "sids", displayName: "Sid's" });
     const reader = insertActor(localDb, {
-      code: "reader", displayName: "Reader", cash: 0,
+      code: "reader", firstName: "Reader", shortName: "Reader", cash: 0,
     });
     const { setActorLocation } = await import("../src/engine/locations/locations.js");
     setActorLocation(localDb, reader.id, sids.id);
@@ -187,10 +187,10 @@ describe("clearance autonomy", () => {
     const nags = insertLocation(localDb, { code: "nags", displayName: "Nag's" });
     const lockup = insertLocation(localDb, { code: "lockup", displayName: "Lockup" });
     const del = insertActor(localDb, {
-      code: "del", displayName: "Del", cash: 2000, lockupLocationId: lockup.id,
+      code: "del", firstName: "Del", shortName: "Del", cash: 2000, lockupLocationId: lockup.id,
     });
     const trigger = insertActor(localDb, {
-      code: "trigger", displayName: "Trigger", cash: 0,
+      code: "trigger", firstName: "Trigger", shortName: "Trigger", cash: 0,
     });
     const { setActorLocation } = await import("../src/engine/locations/locations.js");
     // Del at Sid's during paper hour. Trigger at Nag's the whole time.

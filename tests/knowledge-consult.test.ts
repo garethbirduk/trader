@@ -25,8 +25,8 @@ describe("consultActor — condition axis", () => {
 
   it("zero-skill condition returns an adjacent tier on the slip", () => {
     db = freshDB();
-    const asker = insertActor(db, { code: "del", displayName: "Del", cash: 100 });
-    const rodney = insertActor(db, { code: "rodney", displayName: "Rodney" });
+    const asker = insertActor(db, { code: "del", firstName: "Del", shortName: "Del", cash: 100 });
+    const rodney = insertActor(db, { code: "rodney", firstName: "Rodney", shortName: "Rodney" });
     const item = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
@@ -47,8 +47,8 @@ describe("consultActor — condition axis", () => {
 
   it("perfect-skill condition always names the true tier", () => {
     db = freshDB();
-    const asker = insertActor(db, { code: "a", displayName: "A", cash: 100 });
-    const expert = insertActor(db, { code: "e", displayName: "E" });
+    const asker = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 100 });
+    const expert = insertActor(db, { code: "e", firstName: "E", shortName: "E" });
     const item = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 8000,
     });
@@ -76,8 +76,8 @@ describe("consultActor — price axis", () => {
 
   it("a high-skill price oracle returns a tight band centred on truth", () => {
     db = freshDB();
-    const asker = insertActor(db, { code: "a", displayName: "A", cash: 100 });
-    const mickey = insertActor(db, { code: "m", displayName: "M" });
+    const asker = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 100 });
+    const mickey = insertActor(db, { code: "m", firstName: "M", shortName: "M" });
     const item = insertItemKind(db, {
       code: "watch", displayName: "Watch", category: "watches", baseValue: 100,
     });
@@ -108,8 +108,8 @@ describe("consultActor — flaw axis", () => {
 
   it("zero-skill flaw detection always says 'clean' for a flawed item", () => {
     db = freshDB();
-    const asker = insertActor(db, { code: "a", displayName: "A", cash: 10 });
-    const expert = insertActor(db, { code: "e", displayName: "E" });
+    const asker = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 10 });
+    const expert = insertActor(db, { code: "e", firstName: "E", shortName: "E" });
     const item = insertItemKind(db, {
       code: "fake-watch", displayName: "Fake", category: "watches", baseValue: 100,
       flawType: "fake",
@@ -141,7 +141,7 @@ describe("consultActor — book-keeping", () => {
 
   it("blocks consultation with yourself", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A", cash: 100 });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 100 });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 10,
     });
@@ -158,8 +158,8 @@ describe("consultActor — book-keeping", () => {
 
   it("blocks when asker can't afford the fee", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A", cash: 2 });
-    const e = insertActor(db, { code: "e", displayName: "E" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 2 });
+    const e = insertActor(db, { code: "e", firstName: "E", shortName: "E" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 10,
     });
@@ -177,8 +177,8 @@ describe("consultActor — book-keeping", () => {
 
   it("writes one belief row per successful consultation", () => {
     db = freshDB();
-    const a = insertActor(db, { code: "a", displayName: "A", cash: 100 });
-    const e = insertActor(db, { code: "e", displayName: "E" });
+    const a = insertActor(db, { code: "a", firstName: "A", shortName: "A", cash: 100 });
+    const e = insertActor(db, { code: "e", firstName: "E", shortName: "E" });
     const item = insertItemKind(db, {
       code: "x", displayName: "X", category: "watches", baseValue: 10,
     });
