@@ -72,6 +72,102 @@
     "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
   },
   {
+    "code": "goldfingers",
+    "displayName": "Goldfingers",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "ratners-peckham",
+    "displayName": "Ratners of Peckham",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "patels",
+    "displayName": "Patel's Newsagent",
+    "type": "business",
+    "openHours": { "start": 7, "end": 18 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "code": "corner-shop",
+    "displayName": "The Corner Shop",
+    "type": "business",
+    "openHours": { "start": 7, "end": 18 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "code": "wooden-soldier",
+    "displayName": "Wooden Soldier",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "toyland",
+    "displayName": "Toyland",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "sparks-electrical",
+    "displayName": "Sparks Electrical",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "hi-tech-hut",
+    "displayName": "Hi-Tech Hut",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "comfy-corner",
+    "displayName": "Comfy Corner",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "throne-co",
+    "displayName": "Throne & Co",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "spanner-motors",
+    "displayName": "Spanner Motors",
+    "type": "business",
+    "openHours": { "start": 8, "end": 16 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "code": "camshaft-autos",
+    "displayName": "Camshaft Autos",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
+    "code": "parry-house",
+    "displayName": "Parry's",
+    "type": "home"
+  },
+  {
+    "code": "parry-printers",
+    "displayName": "Parry Print",
+    "type": "business",
+    "openHours": { "start": 9, "end": 17 },
+    "openDaysOfWeek": [1, 2, 3, 4, 5]
+  },
+  {
     "code": "off-map",
     "displayName": "Off-map",
     "type": "abstract"

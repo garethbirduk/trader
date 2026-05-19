@@ -233,5 +233,209 @@
       { "from": 20, "to": 23, "location": "nags" },
       { "from": 23, "to": 8, "location": "denzil-house" }
     ]
+  },
+  {
+    "code": "cyril-diamond",
+    "firstName": "Cyril",
+    "lastName": "Diamond",
+    "shortName": "Cyril",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "goldfingers",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "goldfingers" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "margaret-bracelet",
+    "firstName": "Margaret",
+    "lastName": "Bracelet",
+    "shortName": "Margaret",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "ratners-peckham",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "ratners-peckham" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "ranjit-patel",
+    "firstName": "Ranjit",
+    "lastName": "Patel",
+    "shortName": "Ranjit",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "patels",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "patels" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "doreen-wicks",
+    "firstName": "Doreen",
+    "lastName": "Wicks",
+    "shortName": "Doreen",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "corner-shop",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "corner-shop" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "albert-pickering",
+    "firstName": "Albert",
+    "lastName": "Pickering",
+    "shortName": "Albert P.",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "wooden-soldier",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "wooden-soldier" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "linda-beasley",
+    "firstName": "Linda",
+    "lastName": "Beasley",
+    "shortName": "Linda",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "toyland",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "toyland" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "eric-sparks",
+    "firstName": "Eric",
+    "lastName": "Sparks",
+    "shortName": "Eric",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "sparks-electrical",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "sparks-electrical" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "brian-yardley",
+    "firstName": "Brian",
+    "lastName": "Yardley",
+    "shortName": "Brian",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "hi-tech-hut",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "hi-tech-hut" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "doris-whittle",
+    "firstName": "Doris",
+    "lastName": "Whittle",
+    "shortName": "Doris",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "comfy-corner",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "comfy-corner" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "reg-throne",
+    "firstName": "Reg",
+    "lastName": "Throne",
+    "shortName": "Reg",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "throne-co",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "throne-co" }
+    ],
+    "weekendSchedule": []
+  },
+  {
+    "code": "eddie-spanner",
+    "firstName": "Eddie",
+    "lastName": "Spanner",
+    "shortName": "Eddie",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "spanner-motors",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 7, "end": 17 },
+    "schedule": [
+      { "from": 8, "to": 16, "location": "spanner-motors" }
+    ]
+  },
+  {
+    "code": "alan-parry",
+    "firstName": "Alan",
+    "lastName": "Parry",
+    "shortName": "Alan",
+    "cash": 4000,
+    "homeLocation": "parry-house",
+    "defaultLocation": "parry-printers",
+    "lockupLocation": "parry-printers",
+    "transportCapacity": "boot",
+    "awakeHours": { "start": 8, "end": 22 },
+    "schedule": [
+      { "from": 8.5, "to": 13, "location": "parry-printers" },
+      { "from": 13, "to": 14.5, "location": "FLEXIBLE" },
+      { "from": 14.5, "to": 18, "location": "parry-printers" },
+      { "from": 19, "to": 22, "location": "FLEXIBLE" },
+      { "from": 22, "to": 8.5, "location": "parry-house" }
+    ],
+    "weekendSchedule": [],
+    "lunchSlot": {
+      "hours": [13, 14],
+      "daysOfWeek": [1, 2, 3, 4, 5],
+      "candidateCodes": ["parry-printers", "parry-house", "sids-cafe", "nags"]
+    }
+  },
+  {
+    "code": "vince-camshaft",
+    "firstName": "Vince",
+    "lastName": "Camshaft",
+    "shortName": "Vince",
+    "cash": 2500,
+    "homeLocation": "off-map",
+    "defaultLocation": "camshaft-autos",
+    "transportCapacity": "none",
+    "awakeHours": { "start": 8, "end": 18 },
+    "schedule": [
+      { "from": 9, "to": 17, "location": "camshaft-autos" }
+    ],
+    "weekendSchedule": []
   }
 ]
