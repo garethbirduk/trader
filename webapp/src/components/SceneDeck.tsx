@@ -53,6 +53,8 @@ function eventTouchesActor(e: RunEvent, actorId: number): boolean {
         (e.participantActorIds as readonly number[] | undefined) ?? [];
       return participants.includes(actorId);
     }
+    case "gossip.detail-unlocked":
+      return e.askerActorId === actorId || e.partnerActorId === actorId;
     case "authority.raid":
       return e.actorId === actorId;
     case "clearance.booked":
@@ -65,6 +67,38 @@ function eventTouchesActor(e: RunEvent, actorId: number): boolean {
     default:
       return false;
   }
+}
+
+/** Shape of a gossip exchange's embedded lead snapshot (mirror of
+ *  engine `GossipExchange.lead`). Only the fields the unlock scene
+ *  needs to render are pulled out. */
+interface ExchangeLead {
+  readonly id: number;
+  readonly kind: "commodity" | "rep";
+  readonly side: "supply" | "demand";
+  readonly subjectItemKindId: number | null;
+  readonly subjectQualityTier: string | null;
+  readonly counterpartyActorId: number | null;
+  readonly estimatedQuantity: number;
+  readonly estimatedUnitPrice: number;
+  readonly confidence: "warm" | "cold";
+}
+
+/** Build a `leadId → snapshot` index from every `gossip.exchanged`
+ *  in the dump. The unlock scene uses this to look up the value
+ *  fields for each leadId reported in `gossip.detail-unlocked` (the
+ *  unlock event itself only carries ids + a flipped flag). */
+function indexExchangeLeads(dump: RunDump): ReadonlyMap<number, ExchangeLead> {
+  const out = new Map<number, ExchangeLead>();
+  for (const e of dump.events) {
+    if (e.type !== "gossip.exchanged") continue;
+    const exchanges =
+      (e.exchanges as readonly { lead: ExchangeLead }[] | undefined) ?? [];
+    for (const x of exchanges) {
+      if (!out.has(x.lead.id)) out.set(x.lead.id, x.lead);
+    }
+  }
+  return out;
 }
 
 /**
@@ -204,6 +238,23 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect, povActorId }: P
         label: `Gossip (${gossip.length})`,
         render: () => (
           <GossipScene events={gossip} dump={dump} onSelect={onSelect} />
+        ),
+      });
+    }
+
+    // Detail unlocks — receiver paid £3 + 1h to flip headlines they
+    // already hold from `locked` to `unlocked`. The full lead values
+    // (qty/price/counterparty) become visible here, in contrast to
+    // the gossip headline rows where they're hidden.
+    const unlocks = eventsThisHour.filter(
+      (e) => e.type === "gossip.detail-unlocked",
+    );
+    if (unlocks.length > 0) {
+      list.push({
+        key: "detail-unlock",
+        label: `Unlocks (${unlocks.length})`,
+        render: () => (
+          <DetailUnlockedScene events={unlocks} dump={dump} onSelect={onSelect} />
         ),
       });
     }
@@ -1536,16 +1587,134 @@ function GossipScene({
                   {exchanges.map((x, j) => {
                     const lead = x.lead;
                     const verb = lead.side === "supply" ? "has" : "wants";
+                    // Headline-only per the two-tier gossip model
+                    // (docs gossip mechanic: counterparty / qty / unit
+                    // price hidden until receiver pays £3 + 1h to
+                    // unlock detail). At the moment of the exchange
+                    // the receiver's lead is freshly locked, so we
+                    // render subject + side + speaker + confidence
+                    // only — no counterparty avatar, no BeliefChip
+                    // with qty/price.
+                    return (
+                      <li key={j} className="scene-gossip-headline">
+                        <ActorChip
+                          dump={dump}
+                          actorId={x.fromActorId}
+                          onSelect={onSelect}
+                          size={14}
+                        />
+                        <span className="muted">gossips</span>
+                        {lead.subjectItemKindId !== null ? (
+                          <BeliefChip
+                            dump={dump}
+                            itemKindId={lead.subjectItemKindId}
+                            qualityTier={lead.subjectQualityTier ?? null}
+                            quantity={null}
+                            observerActorId={null}
+                            onSelect={onSelect}
+                          />
+                        ) : (
+                          <span className="muted">[rep lead]</span>
+                        )}
+                        <span className="muted">· {verb}</span>
+                        <span className="muted">· {lead.confidence}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * Detail-unlock scene — receiver paid £3 + 1h in-venue to flip the
+ * value-bearing fields (counterparty + qty + unit price) on locked
+ * headlines they already hold. One row per attempted unlock, with
+ * the full lead snapshot pulled from the prior `gossip.exchanged`
+ * via the dump-wide lead index. Failed flips (already-unlocked /
+ * no-longer-held leads) still render so the diary shows the £3
+ * spent.
+ */
+function DetailUnlockedScene({
+  events,
+  dump,
+  onSelect,
+}: {
+  readonly events: readonly RunEvent[];
+  readonly dump: RunDump;
+  readonly onSelect: (s: Selection) => void;
+}) {
+  const leadIndex = useMemo(() => indexExchangeLeads(dump), [dump]);
+  return (
+    <section className="scene scene-unlock">
+      <header className="scene-header">
+        <span className="scene-tag scene-tag-unlock">🔓 Detail unlock</span>
+        <span className="muted">
+          {events.length} session{events.length === 1 ? "" : "s"}
+        </span>
+      </header>
+      <ul className="scene-gossip-list">
+        {events.map((e, i) => {
+          const asker = e.askerActorId as number;
+          const partner = e.partnerActorId as number;
+          const loc = e.atLocationId as number;
+          const costPaid = Number(e.costPaid ?? 0);
+          const paidTo = e.paidToActorId as number | null;
+          const unlockedLeads =
+            (e.unlockedLeads as
+              | readonly { leadId: number; unlocked: boolean }[]
+              | undefined) ?? [];
+          return (
+            <li key={i} className="scene-gossip-row">
+              <div className="scene-parties">
+                <ActorChip dump={dump} actorId={asker} onSelect={onSelect} size={16} />
+                <span className="muted">paid £{costPaid} to</span>
+                {paidTo !== null ? (
+                  <ActorChip
+                    dump={dump}
+                    actorId={paidTo}
+                    onSelect={onSelect}
+                    size={16}
+                  />
+                ) : (
+                  <span className="muted">the house</span>
+                )}
+                <span className="muted">via</span>
+                <ActorChip
+                  dump={dump}
+                  actorId={partner}
+                  onSelect={onSelect}
+                  size={16}
+                />
+                <span className="muted">at</span>
+                <LocationLink dump={dump} locationId={loc} onSelect={onSelect} />
+              </div>
+              {unlockedLeads.length > 0 ? (
+                <ul className="scene-lines">
+                  {unlockedLeads.map((u, j) => {
+                    const lead = leadIndex.get(u.leadId) ?? null;
+                    if (lead === null) {
+                      return (
+                        <li key={j} className="chip-stack">
+                          <span className="muted">
+                            lead #{u.leadId}
+                            {u.unlocked ? "" : " (already unlocked)"}
+                          </span>
+                        </li>
+                      );
+                    }
+                    const verb = lead.side === "supply" ? "has" : "wants";
+                    const isCommodity =
+                      lead.kind === "commodity" &&
+                      lead.subjectItemKindId !== null;
                     return (
                       <li key={j} className="chip-stack">
                         <div className="chip-stack-row">
-                          <ActorChip
-                            dump={dump}
-                            actorId={x.fromActorId}
-                            onSelect={onSelect}
-                            size={14}
-                          />
-                          <span className="muted">→</span>
                           {lead.counterpartyActorId !== null ? (
                             <ActorChip
                               dump={dump}
@@ -1557,61 +1726,23 @@ function GossipScene({
                             <span className="muted">someone</span>
                           )}
                           <span className="muted">{verb}</span>
-                          <span className="muted">· {lead.confidence}</span>
-                        </div>
-                        {lead.subjectItemKindId !== null ? (
-                          <>
-                            <div className="chip-stack-row">
-                              <span className="chip-stack-label muted">RRP</span>
-                              <BeliefChip
-                                dump={dump}
-                                itemKindId={lead.subjectItemKindId}
-                                qualityTier={lead.subjectQualityTier ?? null}
-                                quantity={lead.estimatedQuantity ?? null}
-                                observerActorId={null}
-                                onSelect={onSelect}
-                              />
-                            </div>
-                            <div className="chip-stack-row">
-                              <ActorChip
-                                dump={dump}
-                                actorId={x.fromActorId}
-                                onSelect={onSelect}
-                                size={14}
-                              />
-                              <span className="muted">claims:</span>
-                              <BeliefChip
-                                dump={dump}
-                                itemKindId={lead.subjectItemKindId}
-                                qualityTier={lead.subjectQualityTier ?? null}
-                                quantity={lead.estimatedQuantity ?? null}
-                                observerActorId={x.fromActorId ?? null}
-                                onSelect={onSelect}
-                              />
-                            </div>
-                            <div className="chip-stack-row">
-                              <ActorChip
-                                dump={dump}
-                                actorId={x.toActorId}
-                                onSelect={onSelect}
-                                size={14}
-                              />
-                              <span className="muted">hears as:</span>
-                              <BeliefChip
-                                dump={dump}
-                                itemKindId={lead.subjectItemKindId}
-                                qualityTier={lead.subjectQualityTier ?? null}
-                                quantity={lead.estimatedQuantity ?? null}
-                                observerActorId={x.toActorId ?? null}
-                                onSelect={onSelect}
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="chip-stack-row">
+                          {isCommodity ? (
+                            <BeliefChip
+                              dump={dump}
+                              itemKindId={lead.subjectItemKindId as number}
+                              qualityTier={lead.subjectQualityTier ?? null}
+                              quantity={lead.estimatedQuantity}
+                              observerActorId={null}
+                              unitPriceOverride={lead.estimatedUnitPrice}
+                              onSelect={onSelect}
+                            />
+                          ) : (
                             <span className="muted">[rep lead]</span>
-                          </div>
-                        )}
+                          )}
+                          {!u.unlocked ? (
+                            <span className="muted">· no change</span>
+                          ) : null}
+                        </div>
                       </li>
                     );
                   })}
