@@ -32,22 +32,24 @@ export interface KnownIds {
 }
 
 /**
- * Hook variant. Memoised on (dump, povActorId, day). Day-level
- * granularity is enough for the LHS list; sub-hour scrubbing doesn't
- * need to reshape it.
+ * Hook variant. Memoised on (dump, povActorId, day, hour). Knowledge is
+ * computed from events strictly before the cursor — at D1 H00 nothing
+ * from today has happened yet, so the POV knows only what was true at
+ * end-of-D0.
  */
 export function useKnownIds(
   dump: RunDump,
   povActorId: number,
   day: number,
+  hour: number,
 ): KnownIds {
   const snapshot = useMemo<DaySnapshot | null>(
     () => dump.snapshots?.find((s) => s.day === day) ?? null,
     [dump.snapshots, day],
   );
   return useMemo(
-    () => computeKnownIds(dump, povActorId, day, snapshot),
-    [dump, povActorId, day, snapshot],
+    () => computeKnownIds(dump, povActorId, day, hour, snapshot),
+    [dump, povActorId, day, hour, snapshot],
   );
 }
 
@@ -55,6 +57,7 @@ function computeKnownIds(
   dump: RunDump,
   povActorId: number,
   day: number,
+  hour: number,
   snapshot: DaySnapshot | null,
 ): KnownIds {
   const actors = new Set<number>();
@@ -120,11 +123,13 @@ function computeKnownIds(
     }
   }
 
-  // Event stream as of the end of `day` (inclusive). Earlier days are
-  // included in full.
+  // Event stream strictly before the (day, hour) cursor. At hour 0 of a
+  // given day, no events from that day have fired yet — so the POV's
+  // knowledge reflects end-of-previous-day.
   const events = dump.events;
   for (const e of events) {
     if (e.at.day > day) continue;
+    if (e.at.day === day && e.at.hour >= hour) continue;
 
     if (e.type === "gossip.exchanged") {
       // Anyone the POV actor was a party to a gossip exchange with —
