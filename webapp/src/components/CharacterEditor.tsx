@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "./Avatar.js";
+import { LocationChip } from "./LocationChip.js";
+import { LocationPicker } from "./LocationPicker.js";
 
 /**
  * Character editor — dogfooding surface for tuning routines and
@@ -172,12 +174,15 @@ export function CharacterEditor() {
       map.set(d.homeLocation, list);
     }
     const locByCode = new Map(locations.map((l) => [l.code, l]));
-    const entries = [...map.entries()].map(([homeCode, members]) => ({
-      homeCode,
-      homeDisplayName:
-        locByCode.get(homeCode)?.displayName ?? homeCode,
-      members: members.slice().sort((a, b) => a.code.localeCompare(b.code)),
-    }));
+    const entries = [...map.entries()].map(([homeCode, members]) => {
+      const loc = locByCode.get(homeCode);
+      return {
+        homeCode,
+        homeDisplayName: loc?.displayName ?? homeCode,
+        homeType: loc?.type,
+        members: members.slice().sort((a, b) => a.code.localeCompare(b.code)),
+      };
+    });
     entries.sort((a, b) => a.homeDisplayName.localeCompare(b.homeDisplayName));
     return entries;
   }, [drafts, locations]);
@@ -308,15 +313,15 @@ export function CharacterEditor() {
           <span className="char-col-label">owns</span>
           <span className="char-col-label">works at</span>
         </div>
-        {grouped.map(({ homeCode, homeDisplayName, members }) => (
+        {grouped.map(({ homeCode, homeDisplayName, homeType, members }) => (
           <section key={homeCode} className="char-household">
             <header className="char-household-header">
-              <span className="char-household-name">{homeDisplayName}</span>
-              <span className="muted">
-                {members.length}
-                {" · "}
-                <code>{homeCode}</code>
-              </span>
+              <LocationChip
+                loc={{ code: homeCode, displayName: homeDisplayName, ...(homeType !== undefined ? { type: homeType } : {}) }}
+                detail="full"
+                size={18}
+              />
+              <span className="muted">{members.length}</span>
             </header>
             <ul className="char-household-list">
               {members.map((d) => {
@@ -391,14 +396,14 @@ export function CharacterEditor() {
 }
 
 /**
- * Dropdown for picking a location for one of the three relation fields.
- * Filters by the field's allowed location types (residential / business /
- * service / pub / auction) and groups options with <optgroup> headers so
- * the categories are visually distinct.
+ * Chip-styled location picker for the three relation fields. Filters by
+ * the field's allowed location types (residential / business / service /
+ * pub / auction), groups options under category headers, renders every
+ * option as a chip (avatar + name + code).
  *
- * `homeLocation` requires a value (no — none — option); `ownsLocation`
- * and `worksAt` are nullable so the dropdown includes a leading empty
- * option that maps to "delete the field" on save.
+ * `homeLocation` requires a value; `ownsLocation` and `worksAt` are
+ * nullable so the picker includes a leading "— none —" option that
+ * maps to "delete the field" on save.
  */
 function LocationSelect({
   kind,
@@ -415,24 +420,16 @@ function LocationSelect({
   const filtered = locations.filter((l) =>
     l.type !== undefined ? allowed.has(l.type) : false,
   );
-  const groups = groupByType(filtered);
-  const nullable = kind !== "homeLocation";
+  const groups = groupByType(filtered).map((g) => ({
+    label: g.label,
+    items: g.items,
+  }));
   return (
-    <select
-      className="char-select"
+    <LocationPicker
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {nullable ? <option value="">— none —</option> : null}
-      {groups.map((g) => (
-        <optgroup key={g.type} label={g.label}>
-          {g.items.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.displayName} ({l.code})
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
+      groups={groups}
+      nullable={kind !== "homeLocation"}
+      onChange={onChange}
+    />
   );
 }

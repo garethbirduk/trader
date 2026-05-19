@@ -6,6 +6,7 @@ import { usePov } from "../lib/pov.js";
 import { useKnownIds, type KnownIds } from "../lib/pov-knowledge.js";
 import { useActorPositionsAt } from "../lib/positions.js";
 import { LocationAvatar } from "./LocationAvatar.js";
+import { LocationChip } from "./LocationChip.js";
 import { LocationRef } from "./Refs.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { ActorChip } from "./ActorChip.js";
@@ -323,12 +324,13 @@ function ActorList({
                         dump={dump}
                         id={loc}
                         onSelect={(s) => set.replace(s)}
-                        variant="inline"
+                        variant="chip"
+                        size={14}
                       />
                     ) : (
                       <span className="muted">—</span>
                     )}
-                    {" · "}{a.transportCapacity}
+                    <span className="muted">· {a.transportCapacity}</span>
                   </span>
                   {heat > 0 ? (
                     <span className="actor-heat" title={`heat ${heat}`}>🔥{heat}</span>
@@ -534,18 +536,15 @@ function LocationBlock({
 
   return (
     <div className={`loc-block ${inSet ? "row-in-set" : ""}`}>
-      <button
-        type="button"
-        className={`loc-row loc-block-header ${inSet ? "actor-row-selected" : ""}`}
+      <LocationChip
+        loc={loc}
+        detail="full"
+        size={22}
         onClick={() => set.toggle(locItem)}
+        state={inSet ? "on" : "off"}
+        className="loc-block-header"
         title={inSet ? "Click to remove from selection" : "Click to add to selection"}
-      >
-        <LocationAvatar displayName={loc.displayName} code={loc.code} type={loc.type} size={22} />
-        <div className="loc-name">
-          <span>{loc.displayName}</span>
-          <span className="actor-loc">{loc.code}</span>
-        </div>
-      </button>
+      />
 
       <div className="loc-block-body">
         {hasAnyActors ? (
@@ -799,7 +798,7 @@ function OwnerBulkChip({
     <ActorChip
       actor={owner}
       dump={dump}
-      size={14}
+      size={18}
       onClick={toggle}
       state={state}
       title={`Bulk-select all ${items.length} of ${owner.displayName}'s item-kinds at ${loc.displayName}`}
@@ -928,15 +927,14 @@ function StockList({
             </span>
           ) : key === -1 ? (
             <span className="stock-group-title muted">(no location)</span>
-          ) : (
-            <LocationRef
-              dump={dump}
-              id={key}
-              onSelect={(s) => set.replace(s)}
-              variant="chip"
-              size={14}
-            />
-          );
+          ) : (() => {
+            const groupLoc = dump.locations.find((l) => l.id === key);
+            return groupLoc !== undefined ? (
+              <LocationChip loc={groupLoc} size={14} />
+            ) : (
+              <span className="stock-group-title muted">loc {key}</span>
+            );
+          })();
         return (
           <div key={key} className="stock-group">
             <div className="stock-group-header">
@@ -1029,15 +1027,7 @@ function StockRow({
               },
             ]}
           />
-          <span className="loc-inline-chip">
-            <LocationAvatar
-              displayName={loc.displayName}
-              code={loc.code}
-              type={loc.type}
-              size={14}
-            />
-            <span className="loc-inline-name">{loc.displayName}</span>
-          </span>
+          <LocationChip loc={loc} size={14} />
         </>
       ) : null}
     </div>

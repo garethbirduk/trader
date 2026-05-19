@@ -2827,9 +2827,64 @@ svg.graph-map:active { cursor: grabbing; }
   padding-right: 2px;
 }
 .actor-chip-owner-bulk {
-  /* Owner-bulk pills sit beside a BeliefChip — slightly tighter. */
-  padding: 1px 6px 1px 3px;
+  /* Owner-bulk pills sit beside a BeliefChip — match the default chip
+     padding + font-size so the name stays legible. The bulk-selection
+     state still differentiates via .actor-chip-on / -some. */
+}
+
+/* LocationChip — parallel of ActorChip for venues. Same hover / on /
+   some semantics so directory rows feel consistent. Two detail levels:
+   `simplified` = avatar + name (one line); `full` = avatar + name + code
+   on a sub-line for directory headers (LHS Locations tab). */
+.loc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 11px;
+  font-family: inherit;
+  line-height: 1.3;
+  text-align: left;
+  max-width: 100%;
+}
+.loc-chip-interactive { cursor: pointer; }
+.loc-chip-interactive:hover {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.loc-chip-on {
+  background: rgba(255, 184, 77, 0.18);
+  border-color: var(--accent);
+}
+.loc-chip-some {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+.loc-chip-names {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+.loc-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.loc-chip-code {
   font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loc-chip.loc-block-header {
+  display: flex;
+  width: 100%;
 }
 
 /* LHS Actors list — the canonical chip is the row's primary toggle
@@ -2862,8 +2917,10 @@ svg.graph-map:active { cursor: grabbing; }
 .lhs-actor-meta .lhs-actor-loc {
   flex: 1 1 auto;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .lhs-actor-meta .actor-cash { color: var(--accent); }
@@ -3225,12 +3282,17 @@ svg.graph-map:active { cursor: grabbing; }
 }
 .char-household-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 6px 10px;
   background: var(--panel-2);
   border-bottom: 1px solid var(--border);
+}
+.char-household-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .char-household-name {
   font-weight: 600;
@@ -3288,5 +3350,95 @@ svg.graph-map:active { cursor: grabbing; }
 .char-select:focus {
   outline: 1px solid var(--accent);
   border-color: var(--accent);
+}
+
+/* Chip-styled location picker (closed state + popover) — replaces
+   the native <select> so options can be rendered as chips. */
+.loc-picker {
+  position: relative;
+  display: inline-block;
+  min-width: 0;
+}
+.loc-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+.loc-picker-btn:hover,
+.loc-picker-btn-open {
+  border-color: var(--accent);
+}
+.loc-picker-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.loc-picker-caret {
+  font-size: 10px;
+  margin-left: 4px;
+}
+.loc-picker-empty {
+  font-style: italic;
+  flex: 1;
+}
+.loc-picker-popover {
+  /* position: fixed + top/left/minWidth come from the component (anchor
+     rect) so the popover escapes ancestor overflow contexts. */
+  max-width: 360px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  padding: 4px;
+}
+.loc-picker-group { margin-bottom: 4px; }
+.loc-picker-group:last-child { margin-bottom: 0; }
+.loc-picker-group-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 6px 2px;
+}
+.loc-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  padding: 3px 6px;
+  font-family: inherit;
+  font-size: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: left;
+}
+.loc-picker-option:hover {
+  background: var(--panel-2);
+}
+.loc-picker-option.is-selected {
+  background: rgba(255, 184, 77, 0.1);
+  border-color: var(--accent);
+}
+.loc-picker-code {
+  font-size: 10px;
+  margin-left: auto;
 }
 

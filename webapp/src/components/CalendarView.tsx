@@ -10,6 +10,7 @@ import {
   type LocationGroup,
 } from "../lib/calendar-data.js";
 import { ActorRef, LocationRef } from "./Refs.js";
+import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -190,14 +191,21 @@ function FactRow({
     const lot = dump.snapshots
       ?.flatMap((s) => s.auctionLots)
       .find((l) => l.id === fact.lotId);
-    const item = lot ? dump.items.find((i) => i.id === lot.itemKindId) : null;
     return (
       <div className="cal-fact cal-fact-auction">
         <span className="cal-fact-label">auction lot</span>
-        <span className="cal-fact-name">
-          {item?.displayName ?? `lot #${fact.lotId}`}
-          {lot ? ` × ${lot.quantity}` : ""}
-        </span>
+        {lot !== undefined ? (
+          <BeliefChip
+            dump={dump}
+            itemKindId={lot.itemKindId}
+            qualityTier={lot.qualityTier}
+            quantity={lot.quantity}
+            observerActorId={povActorId}
+            onSelect={onSelect}
+          />
+        ) : (
+          <span className="muted">lot #{fact.lotId}</span>
+        )}
         <KnowerChips
           actorIds={knowers}
           dump={dump}
