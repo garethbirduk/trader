@@ -648,7 +648,7 @@ export function seedPlaceholderSkin(
         : {}),
     });
 
-    if (spec.code !== "player") {
+    if (spec.code !== "del-boy") {
       const hourOverride = opts.hourOverrideForActor?.(a.id) ?? null;
       const policyOpts: {
         schedule: Map<number, number>;
@@ -698,7 +698,7 @@ export function seedPlaceholderSkin(
     setActorLocation(db, a.id, locId);
   }
 
-  const playerId = actorByCode.get("player");
+  const playerId = actorByCode.get("del-boy");
   const auctionHouseId = actorByCode.get("auction-house");
   // Resolve role tags: skin-defined codes → live actor ids.
   const rolesByActorId = new Map<number, readonly string[]>();
@@ -718,7 +718,7 @@ export function seedPlaceholderSkin(
     if (id !== undefined) shortNameByActorId.set(id, acc.shortName);
   }
   if (playerId === undefined || auctionHouseId === undefined) {
-    throw new Error("placeholder skin must seed player and auction-house actors");
+    throw new Error("placeholder skin must seed del-boy and auction-house actors");
   }
 
   // Bidder profiles.

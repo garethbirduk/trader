@@ -61,20 +61,17 @@ export function PovSwitcher({ dump }: { readonly dump: RunDump }) {
 
   const isAdmin = pov.kind === "admin";
 
-  // Sort: player first, then real actors by full name. Virtual actors
-  // (Sotheby's, off-map market, virtual producers) are institutions /
-  // ledger sinks tied to locations, not real characters — they have no
-  // viewpoint to inhabit, so they're excluded from the picker.
+  // Sort: real actors by full name. Virtual actors (Sotheby's, off-map
+  // market, virtual producers) are institutions / ledger sinks tied to
+  // locations, not real characters — they have no viewpoint to inhabit,
+  // so they're excluded from the picker. The player isn't given a
+  // privileged sort position; they appear alphabetically with everyone
+  // else.
   const orderedActors = useMemo(() => {
     return dump.actors
       .filter((a) => a.isVirtual !== true)
-      .sort((a, b) => {
-        const aPlayer = a.id === dump.playerActorId ? 0 : 1;
-        const bPlayer = b.id === dump.playerActorId ? 0 : 1;
-        if (aPlayer !== bPlayer) return aPlayer - bPlayer;
-        return fullName(a).localeCompare(fullName(b));
-      });
-  }, [dump.actors, dump.playerActorId]);
+      .sort((a, b) => fullName(a).localeCompare(fullName(b)));
+  }, [dump.actors]);
 
   const selectedActor = useMemo(
     () => dump.actors.find((a) => a.id === selectedActorId) ?? null,

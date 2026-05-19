@@ -10,8 +10,11 @@ import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
 import { SelectionChips } from "./components/SelectionChips.js";
 import { CalendarView } from "./components/CalendarView.js";
 import { MapGraph } from "./components/MapGraph.js";
+import { CharacterEditor } from "./components/CharacterEditor.js";
 
-export type RhsTab = "calendar" | "map";
+export type RhsTab = "calendar" | "map" | "editor";
+
+const DEV = import.meta.env.DEV;
 
 interface LoadState {
   readonly status: "loading" | "loaded" | "error";
@@ -288,6 +291,18 @@ function Loaded(props: LoadedProps) {
             >
               Map
             </button>
+            {DEV && pov.kind === "admin" ? (
+              <button
+                type="button"
+                role="tab"
+                className={`rhs-tab ${props.rhsTab === "editor" ? "rhs-tab-active" : ""}`}
+                aria-selected={props.rhsTab === "editor"}
+                onClick={() => props.setRhsTab("editor")}
+                title="Edit cast & relationships (dev / admin only)"
+              >
+                Cast
+              </button>
+            ) : null}
           </div>
           <div className="rhs-body">
             {props.rhsTab === "calendar" ? (
@@ -299,6 +314,8 @@ function Loaded(props: LoadedProps) {
                 onChangeDay={setDay}
                 onSelect={(s) => set.replace(s)}
               />
+            ) : props.rhsTab === "editor" && DEV && pov.kind === "admin" ? (
+              <CharacterEditor />
             ) : (
               <MapGraph
                 dump={dump}

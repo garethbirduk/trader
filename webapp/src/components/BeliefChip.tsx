@@ -156,7 +156,7 @@ export function BeliefChip({
         <Avatar
           name={povActor.displayName ?? povActor.code}
           code={povActor.code}
-          isPlayer={povActor.code === "player"}
+          isPlayer={povActor.id === dump.playerActorId}
           size={14}
           title={`${povActor.displayName ?? povActor.code}'s POV`}
         />

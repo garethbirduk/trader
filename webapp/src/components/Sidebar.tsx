@@ -257,11 +257,9 @@ function ActorList({
             for (const r of roles) if (roleFilter.has(r)) return true;
             return false;
           });
-    return filtered.sort((a, b) => {
-      if (a.id === dump.playerActorId) return -1;
-      if (b.id === dump.playerActorId) return 1;
-      return a.displayName.localeCompare(b.displayName);
-    });
+    return filtered.sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    );
   }, [dump, roleFilter, known]);
 
   return (

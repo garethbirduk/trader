@@ -43,11 +43,9 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
   const actorName = (id: number) =>
     dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`;
 
-  const sortedOwners = [...grouped.entries()].sort((a, b) => {
-    if (a[0] === dump.playerActorId) return -1;
-    if (b[0] === dump.playerActorId) return 1;
-    return actorName(a[0]).localeCompare(actorName(b[0]));
-  });
+  const sortedOwners = [...grouped.entries()].sort((a, b) =>
+    actorName(a[0]).localeCompare(actorName(b[0])),
+  );
 
   return (
     <div className="inventory">
