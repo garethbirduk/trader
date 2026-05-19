@@ -83,7 +83,7 @@ export function Sidebar(props: Props) {
   // knows (gossip-mentioned, transacted, witnessed). Admin POV bypasses
   // (we pass `-1` as the actor id and discard the result via `known`).
   const povActorId = pov.kind === "actor" ? pov.actorId : null;
-  const knownRaw = useKnownIds(dump, povActorId ?? -1, day);
+  const knownRaw = useKnownIds(dump, povActorId ?? -1, day, hour);
   const known: KnownIds | null = povActorId === null ? null : knownRaw;
   const asideRef = useRef<HTMLElement>(null);
 
@@ -927,9 +927,22 @@ function StockList({
               {headerNode}
               <span className="stock-group-count">{arr.length} lot{arr.length === 1 ? "" : "s"}</span>
             </div>
-            {arr.map((lot) => (
-              <StockRow key={lot.id} lot={lot} dump={dump} grouping={grouping} />
-            ))}
+            {arr.map((lot) => {
+              const ctxLoc =
+                grouping === "location"
+                  ? dump.locations.find((l) => l.id === key)
+                  : undefined;
+              const ctxOwner = grouping === "owner" ? ownerActor : undefined;
+              return (
+                <StockRow
+                  key={lot.id}
+                  lot={lot}
+                  dump={dump}
+                  {...(ctxOwner !== undefined ? { contextOwner: ctxOwner } : {})}
+                  {...(ctxLoc !== undefined ? { contextLocation: ctxLoc } : {})}
+                />
+              );
+            })}
           </div>
         );
       })}
@@ -938,19 +951,22 @@ function StockList({
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Shared stock row
+// Shared stock row — one canonical layout used by every Stock grouping.
+// Renders BeliefChip + "owned by [actor]" + "at [location]" inline.
+// Whichever axis is the group context (owner / location) is omitted to
+// avoid duplicating the group header.
 // ────────────────────────────────────────────────────────────────────
 
 function StockRow({
   lot,
   dump,
+  contextOwner,
   contextLocation,
-  grouping,
 }: {
   lot: SnapshotStockLot;
   dump: RunDump;
+  contextOwner?: RunActor;
   contextLocation?: RunLocation;
-  grouping?: StockGrouping;
 }) {
   const set = useSelectionSet();
   const { pov } = usePov();
@@ -958,86 +974,10 @@ function StockRow({
   const inSet = set.has(itemKind);
   const owner = dump.actors.find((a) => a.id === lot.ownerActorId);
   const loc = lot.locationId !== null ? dump.locations.find((l) => l.id === lot.locationId) : undefined;
-
-  // Per-row chip POV: actor POV → that actor's belief (single POV chip,
-  // per feedback_chip_layering_pattern). Admin POV → truth chip (no
-  // avatar, unit = tierTruth). Tier passes through: the actor's true
-  // tier knowledge isn't modelled in the snapshot today, so we render
-  // the lot's true tier in both modes — Phase 5 (POV semantics across
-  // components) is where redaction lands.
   const observerActorId = pov.kind === "actor" ? pov.actorId : null;
 
-  // By-item rows: one line per lot — stock chip, "+ owned by" subcheck,
-  // owner actor chip, "+ at" subcheck, location chip. The + buttons are
-  // the affordance for adding owner/location to the filter; the chips
-  // next to them are the identification of who/where.
-  if (grouping === "item") {
-    return (
-      <div className={`stock-row-by-item ${inSet ? "row-in-set" : ""}`}>
-        <BeliefChip
-          dump={dump}
-          itemKindId={lot.itemKindId}
-          qualityTier={lot.qualityTier}
-          quantity={lot.quantity}
-          observerActorId={observerActorId}
-          onSelect={() => set.toggle(itemKind)}
-        />
-        {owner !== undefined ? (
-          <>
-            <SubChecks
-              checks={[
-                {
-                  kind: "single",
-                  label: "owned by",
-                  item: { kind: "actor", id: owner.id },
-                  title: `Add ${owner.shortName ?? owner.firstName} to selection`,
-                },
-              ]}
-            />
-            <ActorChip actor={owner} dump={dump} size={14} />
-          </>
-        ) : null}
-        {loc !== undefined && contextLocation === undefined ? (
-          <>
-            <SubChecks
-              checks={[
-                {
-                  kind: "single",
-                  label: "at",
-                  item: { kind: "location", id: loc.id },
-                  title: `Add ${loc.displayName} to selection`,
-                },
-              ]}
-            />
-            <span className="loc-inline-chip">
-              <LocationAvatar
-                displayName={loc.displayName}
-                code={loc.code}
-                type={loc.type}
-                size={14}
-              />
-              <span className="loc-inline-name">{loc.displayName}</span>
-            </span>
-          </>
-        ) : null}
-      </div>
-    );
-  }
-
-  // Default (owner / location groupings): stacked layout — stock chip on
-  // top, sub-checks (incl. owner pill and location reference) underneath.
-  const checks: SubCheck[] = [];
-  if (loc !== undefined && contextLocation === undefined) {
-    checks.push({
-      kind: "single",
-      label: loc.displayName,
-      item: { kind: "location", id: loc.id },
-      title: `Add ${loc.displayName} (held at) to selection`,
-    });
-  }
-
   return (
-    <div className={`row-and-checks stock-row-wrap ${inSet ? "row-in-set" : ""}`}>
+    <div className={`stock-row-by-item ${inSet ? "row-in-set" : ""}`}>
       <BeliefChip
         dump={dump}
         itemKindId={lot.itemKindId}
@@ -1046,19 +986,44 @@ function StockRow({
         observerActorId={observerActorId}
         onSelect={() => set.toggle(itemKind)}
       />
-      {owner !== undefined ? (
-        <span className="owned-by">
-          <span className="owned-by-label">owned by</span>
-          <ActorChip
-            actor={owner}
-            dump={dump}
-            size={14}
-            onClick={() => set.toggle({ kind: "actor", id: owner.id })}
-            state={set.has({ kind: "actor", id: owner.id }) ? "on" : "off"}
+      {owner !== undefined && contextOwner === undefined ? (
+        <>
+          <SubChecks
+            checks={[
+              {
+                kind: "single",
+                label: "owned by",
+                item: { kind: "actor", id: owner.id },
+                title: `Add ${owner.shortName ?? owner.firstName} to selection`,
+              },
+            ]}
           />
-        </span>
+          <ActorChip actor={owner} dump={dump} size={14} />
+        </>
       ) : null}
-      <SubChecks checks={checks} />
+      {loc !== undefined && contextLocation === undefined ? (
+        <>
+          <SubChecks
+            checks={[
+              {
+                kind: "single",
+                label: "at",
+                item: { kind: "location", id: loc.id },
+                title: `Add ${loc.displayName} to selection`,
+              },
+            ]}
+          />
+          <span className="loc-inline-chip">
+            <LocationAvatar
+              displayName={loc.displayName}
+              code={loc.code}
+              type={loc.type}
+              size={14}
+            />
+            <span className="loc-inline-name">{loc.displayName}</span>
+          </span>
+        </>
+      ) : null}
     </div>
   );
 }
