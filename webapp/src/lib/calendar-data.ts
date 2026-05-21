@@ -14,6 +14,7 @@ export interface CalendarHourSlot {
 export interface LocationGroup {
   readonly locationId: number;
   readonly arrivals: readonly ActorArrival[];
+  readonly departures: readonly ActorDeparture[];
 }
 
 export interface ActorArrival {
@@ -21,6 +22,10 @@ export interface ActorArrival {
   /** First hour the actor is no longer at this location (exclusive).
    *  24 means they stay through end-of-day. */
   readonly untilHour: number;
+}
+
+export interface ActorDeparture {
+  readonly actorId: number;
 }
 
 export type CalendarFact =
@@ -52,9 +57,13 @@ export interface BuildCalendarOpts {
   readonly dump: RunDump;
   readonly day: number;
   readonly snapshot: DaySnapshot | null;
-  /** POV actor id (admin = null). Used only to suppress the POV's own
-   *  avatar — visibility is driven entirely by the selection set. */
+  /** POV actor id (admin = null). Used to suppress the POV's own
+   *  avatar in arrival/departure rows. */
   readonly povActorId: number | null;
+  /** Knowledge filter: when present, only actors in this set have
+   *  their arrivals / departures rendered. Admin POV passes `null`
+   *  to disable the filter. */
+  readonly knownActorIds: ReadonlySet<number> | null;
   readonly selectionSet: readonly SelectionItem[];
 }
 
@@ -77,28 +86,38 @@ function expandRoutine(
   return out;
 }
 
-/** Walk 0..23 once, emit one ActorArrival each time the hour-by-hour
- *  location changes. Hour 0 always emits. */
-function arrivalsFromRoutine(
+/** Walk 0..23 once, emit one entry each time the hour-by-hour
+ *  location changes. Hour 0 emits an arrival only (no prior location to
+ *  depart from). A transition at hour H emits a departure from the old
+ *  location at H and an arrival at the new location at H. */
+function transitionsFromRoutine(
   byHour: (number | null)[],
-): { hour: number; locationId: number; untilHour: number }[] {
-  const out: { hour: number; locationId: number; untilHour: number }[] = [];
+): {
+  arrivals: { hour: number; locationId: number; untilHour: number }[];
+  departures: { hour: number; locationId: number }[];
+} {
+  const arrivals: { hour: number; locationId: number; untilHour: number }[] = [];
+  const departures: { hour: number; locationId: number }[] = [];
   for (let h = 0; h < 24; h += 1) {
-    const loc = byHour[h];
-    if (loc === null || loc === undefined) continue;
+    const cur = byHour[h] ?? null;
     const prev = h > 0 ? byHour[h - 1] ?? null : null;
-    if (h === 0 || loc !== prev) {
+    const changed = h === 0 ? cur !== null : cur !== prev;
+    if (!changed) continue;
+    if (h > 0 && prev !== null) {
+      departures.push({ hour: h, locationId: prev });
+    }
+    if (cur !== null) {
       let until = 24;
       for (let k = h + 1; k < 24; k += 1) {
-        if (byHour[k] !== loc) {
+        if ((byHour[k] ?? null) !== cur) {
           until = k;
           break;
         }
       }
-      out.push({ hour: h, locationId: loc, untilHour: until });
+      arrivals.push({ hour: h, locationId: cur, untilHour: until });
     }
   }
-  return out;
+  return { arrivals, departures };
 }
 
 function pickSelected(
@@ -123,22 +142,33 @@ function pickSelected(
 }
 
 export function buildCalendarDay(opts: BuildCalendarOpts): CalendarDay {
-  const { dump, day, snapshot, selectionSet } = opts;
+  const { dump, day, snapshot, selectionSet, knownActorIds } = opts;
   const sel = pickSelected(selectionSet);
 
-  // 1) Actor routines for selected actors.
+  // 1) Actor routines for selected actors, with POV knowledge filter.
   const arrivalsByHour: Map<number, Map<number, ActorArrival[]>> = new Map();
-  for (let h = 0; h < 24; h += 1) arrivalsByHour.set(h, new Map());
+  const departuresByHour: Map<number, Map<number, ActorDeparture[]>> = new Map();
+  for (let h = 0; h < 24; h += 1) {
+    arrivalsByHour.set(h, new Map());
+    departuresByHour.set(h, new Map());
+  }
   const allRoutines = dump.actorRoutines ?? [];
   for (const r of allRoutines) {
     if (!sel.actors.has(r.actorId)) continue;
+    if (knownActorIds !== null && !knownActorIds.has(r.actorId)) continue;
     const byHour = expandRoutine(r, day);
-    const arrivals = arrivalsFromRoutine(byHour);
+    const { arrivals, departures } = transitionsFromRoutine(byHour);
     for (const a of arrivals) {
       const hourMap = arrivalsByHour.get(a.hour)!;
       const list = hourMap.get(a.locationId) ?? [];
       list.push({ actorId: r.actorId, untilHour: a.untilHour });
       hourMap.set(a.locationId, list);
+    }
+    for (const d of departures) {
+      const hourMap = departuresByHour.get(d.hour)!;
+      const list = hourMap.get(d.locationId) ?? [];
+      list.push({ actorId: r.actorId });
+      hourMap.set(d.locationId, list);
     }
   }
 
@@ -203,13 +233,21 @@ export function buildCalendarDay(opts: BuildCalendarOpts): CalendarDay {
     }
   }
 
-  // 3) Assemble hour slots.
+  // 3) Assemble hour slots. Union arrival + departure location ids
+  //    so a location with only departures (last hour an actor was
+  //    there) still gets a row.
   const hourSlots: CalendarHourSlot[] = [];
   for (let h = 0; h < 24; h += 1) {
-    const hourMap = arrivalsByHour.get(h)!;
+    const arrMap = arrivalsByHour.get(h)!;
+    const depMap = departuresByHour.get(h)!;
+    const locIds = new Set<number>([...arrMap.keys(), ...depMap.keys()]);
     const groups: LocationGroup[] = [];
-    for (const [locationId, arrivals] of hourMap) {
-      groups.push({ locationId, arrivals });
+    for (const locationId of locIds) {
+      groups.push({
+        locationId,
+        arrivals: arrMap.get(locationId) ?? [],
+        departures: depMap.get(locationId) ?? [],
+      });
     }
     groups.sort((a, b) => {
       const an =

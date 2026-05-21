@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { usePov } from "../lib/pov.js";
+import { useKnownIds } from "../lib/pov-knowledge.js";
 import { useSelectionSet } from "../lib/selection-set.js";
 import { dayLabel } from "../lib/calendar.js";
 import {
@@ -34,6 +35,13 @@ export function CalendarView({
   const povActorId = pov.kind === "actor" ? pov.actorId : null;
   const set = useSelectionSet();
 
+  // POV-knowledge filter: actor POV only sees movements of actors they
+  // know about (household, dealer fraternity, gossip partners, …).
+  // Admin POV bypasses the filter. The hook needs an id unconditionally,
+  // so use a 0 sentinel in admin mode and discard the result.
+  const known = useKnownIds(dump, povActorId ?? 0, day, hour);
+  const knownActorIds = povActorId === null ? null : known.actors;
+
   const agenda = useMemo(
     () =>
       buildCalendarDay({
@@ -41,9 +49,10 @@ export function CalendarView({
         day,
         snapshot,
         povActorId,
+        knownActorIds,
         selectionSet: set.items,
       }),
-    [dump, day, snapshot, povActorId, set.items],
+    [dump, day, snapshot, povActorId, knownActorIds, set.items],
   );
 
   const prevDisabled = day <= 1;
@@ -129,6 +138,15 @@ function LocationGroupRow({
   povActorId: number | null;
   onSelect: (s: Selection) => void;
 }) {
+  // In POV mode the POV's own chip is implicit (they always know where
+  // they are). Admin shows all.
+  const arrivals = group.arrivals.filter(
+    (a) => povActorId === null || a.actorId !== povActorId,
+  );
+  const departures = group.departures.filter(
+    (d) => povActorId === null || d.actorId !== povActorId,
+  );
+  if (arrivals.length === 0 && departures.length === 0) return null;
   return (
     <div className="cal-loc-group">
       <LocationRef
@@ -138,22 +156,36 @@ function LocationGroupRow({
         variant="chip"
         size={14}
       />
-      <div className="cal-arrivals">
-        {group.arrivals.map((a) => {
-          // In POV mode the POV's own chip is implicit. Admin shows all.
-          if (povActorId !== null && a.actorId === povActorId) return null;
-          return (
-            <span key={a.actorId} className="cal-arrival" title={`until ${String(a.untilHour).padStart(2, "0")}:00`}>
+      <div className="cal-movements">
+        {arrivals.length > 0 ? (
+          <div className="cal-arrivals" title="arrivals">
+            <span className="cal-move-arrow" aria-label="arriving">→</span>
+            {arrivals.map((a) => (
               <ActorChipById
+                key={a.actorId}
                 dump={dump}
                 actorId={a.actorId}
                 onSelect={onSelect}
                 size={14}
+                title={`until ${String(a.untilHour).padStart(2, "0")}:00`}
               />
-              <span className="cal-arrival-until muted">→{String(a.untilHour).padStart(2, "0")}</span>
-            </span>
-          );
-        })}
+            ))}
+          </div>
+        ) : null}
+        {departures.length > 0 ? (
+          <div className="cal-departures" title="departures">
+            <span className="cal-move-arrow" aria-label="leaving">←</span>
+            {departures.map((d) => (
+              <ActorChipById
+                key={d.actorId}
+                dump={dump}
+                actorId={d.actorId}
+                onSelect={onSelect}
+                size={14}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

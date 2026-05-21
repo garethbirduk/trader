@@ -3189,24 +3189,33 @@ svg.graph-map:active { cursor: grabbing; }
   min-width: 0;
 }
 .cal-loc-group {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 4px 8px;
+}
+.cal-movements {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cal-arrivals,
+.cal-departures {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-}
-.cal-arrivals {
-  display: flex;
-  flex-wrap: wrap;
   gap: 4px;
 }
-.cal-arrival {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+.cal-move-arrow {
+  color: var(--muted);
+  font-size: 12px;
+  width: 12px;
+  text-align: center;
+  user-select: none;
 }
-.cal-arrival-until {
-  font-size: 10px;
-}
+.cal-arrivals .cal-move-arrow { color: var(--accent-2, var(--accent)); }
+.cal-departures .cal-move-arrow { color: var(--warn, var(--muted)); }
 .cal-fact {
   display: flex;
   align-items: center;
