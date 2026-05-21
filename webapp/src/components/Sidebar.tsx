@@ -8,7 +8,7 @@ import { useActorPositionsAt } from "../lib/positions.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { LocationChip } from "./LocationChip.js";
 import { LocationRef } from "./Refs.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { BeliefChip, CategoryTag } from "./BeliefChip.js";
 import { ActorChip } from "./ActorChip.js";
 import { SubChecks, type SubCheck } from "./SubChecks.js";
 
@@ -180,7 +180,7 @@ export function Sidebar(props: Props) {
           </nav>
           <div className="side-list">
             {topTab === "actors" && (
-              <ActorList dump={dump} snapshot={snapshot} day={day} roleFilter={roleFilter} known={known} />
+              <ActorList dump={dump} snapshot={snapshot} roleFilter={roleFilter} known={known} />
             )}
             {topTab === "locations" && (
               <LocationList dump={dump} day={day} hour={hour} snapshot={snapshot} typeFilter={locTypeFilter} known={known} />
@@ -208,13 +208,11 @@ export function Sidebar(props: Props) {
 function ActorList({
   dump,
   snapshot,
-  day,
   roleFilter,
   known,
 }: {
   dump: RunDump;
   snapshot: DaySnapshot | null;
-  day: number;
   roleFilter: ReadonlySet<string>;
   known: KnownIds | null;
 }) {
@@ -266,7 +264,6 @@ function ActorList({
 
   return (
     <>
-      <div className="side-list-header">D{day}</div>
       {sorted.map((a) => {
         const cash = cashByActor.get(a.id) ?? a.cash;
         const heat = heatByActor.get(a.id) ?? 0;
@@ -306,7 +303,6 @@ function ActorList({
             <ActorChip
               actor={a}
               dump={dump}
-              detail="full"
               size={24}
               onClick={() => set.toggle(item)}
               state={inSet ? "on" : "off"}
@@ -567,16 +563,19 @@ function LocationBlock({
             items={allItemKinds}
             title="All stock kinds held at this venue (POV-filtered)"
           >
-            {stockByCategory.map(({ category, lots }) => (
-              <CategorySubgroup
-                key={category}
-                category={category}
-                lots={lots}
-                dump={dump}
-                loc={loc}
-                snapshot={snapshot}
-              />
-            ))}
+            <div className="stock-rows">
+              {stockByCategory.flatMap(({ lots }) =>
+                lots.map((lot) => (
+                  <StockRowWithOwner
+                    key={lot.id}
+                    lot={lot}
+                    dump={dump}
+                    loc={loc}
+                    snapshot={snapshot}
+                  />
+                )),
+              )}
+            </div>
           </BulkSection>
         ) : null}
 
@@ -674,44 +673,6 @@ function ActorSubgroup({
   );
 }
 
-function CategorySubgroup({
-  category,
-  lots,
-  dump,
-  loc,
-  snapshot,
-}: {
-  category: string;
-  lots: readonly SnapshotStockLot[];
-  dump: RunDump;
-  loc: RunLocation;
-  snapshot: DaySnapshot | null;
-}) {
-  const items: SelectionItem[] = useMemo(() => {
-    const seen = new Set<number>();
-    const out: SelectionItem[] = [];
-    for (const l of lots) {
-      if (seen.has(l.itemKindId)) continue;
-      seen.add(l.itemKindId);
-      out.push({ kind: "item", id: l.itemKindId });
-    }
-    return out;
-  }, [lots]);
-  return (
-    <BulkSection
-      label={prettyCategory(category)}
-      count={items.length}
-      items={items}
-      title={`${prettyCategory(category)} at ${loc.displayName} — ${items.length} item-kind${items.length === 1 ? "" : "s"}`}
-    >
-      <div className="stock-rows">
-        {lots.map((lot) => (
-          <StockRowWithOwner key={lot.id} lot={lot} dump={dump} loc={loc} snapshot={snapshot} />
-        ))}
-      </div>
-    </BulkSection>
-  );
-}
 
 /** Stock row inside a location block — BeliefChip + "owned by [Owner]"
  *  where the owner is a bulk operator that selects every item-kind at
@@ -733,9 +694,11 @@ function StockRowWithOwner({
   const itemKind: SelectionItem = { kind: "item", id: lot.itemKindId };
   const inSet = set.has(itemKind);
   const owner = dump.actors.find((a) => a.id === lot.ownerActorId);
+  const item = dump.items.find((i) => i.id === lot.itemKindId);
 
   return (
     <div className={`stock-row-with-owner ${inSet ? "row-in-set" : ""}`}>
+      {item !== undefined ? <CategoryTag category={item.category} /> : null}
       <BeliefChip
         dump={dump}
         itemKindId={lot.itemKindId}
@@ -745,71 +708,16 @@ function StockRowWithOwner({
         onSelect={() => set.toggle(itemKind)}
       />
       {owner !== undefined ? (
-        <span className="owned-by">
-          <span className="owned-by-label">owned by</span>
-          <OwnerBulkChip owner={owner} loc={loc} dump={dump} snapshot={snapshot} />
-        </span>
+        <ActorChip
+          actor={owner}
+          dump={dump}
+          size={14}
+          onClick={() => set.toggle({ kind: "actor", id: owner.id })}
+          state={set.has({ kind: "actor", id: owner.id }) ? "on" : "off"}
+        />
       ) : null}
     </div>
   );
-}
-
-/** Owner avatar+name beside a stock chip — bulk-selects every
- *  item-kind at the parent location owned by this actor. */
-function OwnerBulkChip({
-  owner,
-  loc,
-  dump,
-  snapshot,
-}: {
-  owner: RunActor;
-  loc: RunLocation;
-  dump: RunDump;
-  snapshot: DaySnapshot | null;
-}) {
-  const set = useSelectionSet();
-  // All item-kinds at this venue owned by this actor (current day).
-  const items = useMemo<SelectionItem[]>(() => {
-    const seen = new Set<number>();
-    const out: SelectionItem[] = [];
-    if (snapshot === null) return out;
-    for (const lot of snapshot.stockLots) {
-      if (lot.locationId !== loc.id) continue;
-      if (lot.ownerActorId !== owner.id) continue;
-      if (seen.has(lot.itemKindId)) continue;
-      seen.add(lot.itemKindId);
-      out.push({ kind: "item", id: lot.itemKindId });
-    }
-    return out;
-  }, [snapshot, owner.id, loc.id]);
-
-  const presence = items.map((i) => set.has(i));
-  const all = presence.length > 0 && presence.every((p) => p);
-  const some = !all && presence.some((p) => p);
-  const state: "on" | "some" | "off" = all ? "on" : some ? "some" : "off";
-  const toggle = () => {
-    if (all) {
-      for (const i of items) set.remove(i);
-    } else {
-      for (const i of items) set.add(i);
-    }
-  };
-  return (
-    <ActorChip
-      actor={owner}
-      dump={dump}
-      size={18}
-      onClick={toggle}
-      state={state}
-      title={`Bulk-select all ${items.length} of ${owner.displayName}'s item-kinds at ${loc.displayName}`}
-      className="actor-chip-owner-bulk"
-    />
-  );
-}
-
-function prettyCategory(c: string): string {
-  if (c.length === 0) return c;
-  return c.charAt(0).toUpperCase() + c.slice(1);
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -920,10 +828,8 @@ function StockList({
             <ActorChip actor={ownerActor} dump={dump} size={14} />
           ) : grouping === "item" && itemKind !== undefined ? (
             <span className="stock-group-title">
+              <CategoryTag category={itemKind.category} />
               {itemKind.displayName}
-              <span className={`category-pill stock-chip-cat-${itemKind.category}`}>
-                {prettyCategory(itemKind.category)}
-              </span>
             </span>
           ) : key === -1 ? (
             <span className="stock-group-title muted">(no location)</span>
@@ -989,9 +895,11 @@ function StockRow({
   const owner = dump.actors.find((a) => a.id === lot.ownerActorId);
   const loc = lot.locationId !== null ? dump.locations.find((l) => l.id === lot.locationId) : undefined;
   const observerActorId = pov.kind === "actor" ? pov.actorId : null;
+  const item = dump.items.find((i) => i.id === lot.itemKindId);
 
   return (
     <div className={`stock-row-by-item ${inSet ? "row-in-set" : ""}`}>
+      {item !== undefined ? <CategoryTag category={item.category} /> : null}
       <BeliefChip
         dump={dump}
         itemKindId={lot.itemKindId}
@@ -1001,34 +909,21 @@ function StockRow({
         onSelect={() => set.toggle(itemKind)}
       />
       {owner !== undefined && contextOwner === undefined ? (
-        <>
-          <SubChecks
-            checks={[
-              {
-                kind: "single",
-                label: "owned by",
-                item: { kind: "actor", id: owner.id },
-                title: `Add ${owner.shortName ?? owner.firstName} to selection`,
-              },
-            ]}
-          />
-          <ActorChip actor={owner} dump={dump} size={14} />
-        </>
+        <ActorChip
+          actor={owner}
+          dump={dump}
+          size={14}
+          onClick={() => set.toggle({ kind: "actor", id: owner.id })}
+          state={set.has({ kind: "actor", id: owner.id }) ? "on" : "off"}
+        />
       ) : null}
       {loc !== undefined && contextLocation === undefined ? (
-        <>
-          <SubChecks
-            checks={[
-              {
-                kind: "single",
-                label: "at",
-                item: { kind: "location", id: loc.id },
-                title: `Add ${loc.displayName} to selection`,
-              },
-            ]}
-          />
-          <LocationChip loc={loc} size={14} />
-        </>
+        <LocationChip
+          loc={loc}
+          size={14}
+          onClick={() => set.toggle({ kind: "location", id: loc.id })}
+          state={set.has({ kind: "location", id: loc.id }) ? "on" : "off"}
+        />
       ) : null}
     </div>
   );

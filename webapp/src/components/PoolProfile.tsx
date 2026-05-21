@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, ItemRef } from "./Refs.js";
+import { ItemRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -80,11 +81,10 @@ export function PoolProfile({ dump, day, snapshot, poolId, onSelect }: Props) {
           <>
             <dt>Source</dt>
             <dd>
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={pool.ownerActorId}
+                actorId={pool.ownerActorId}
                 onSelect={onSelect}
-                variant="chip"
                 size={16}
               />
             </dd>
@@ -106,11 +106,10 @@ export function PoolProfile({ dump, day, snapshot, poolId, onSelect }: Props) {
           </div>
           {pool.reachableBy.map((aid) => (
             <div key={aid} className="loc-person-row">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={aid}
+                actorId={aid}
                 onSelect={onSelect}
-                variant="chip"
                 size={20}
               />
             </div>

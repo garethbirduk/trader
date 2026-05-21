@@ -9,7 +9,8 @@ import {
   type CalendarFact,
   type LocationGroup,
 } from "../lib/calendar-data.js";
-import { ActorRef, LocationRef } from "./Refs.js";
+import { LocationRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
@@ -143,11 +144,10 @@ function LocationGroupRow({
           if (povActorId !== null && a.actorId === povActorId) return null;
           return (
             <span key={a.actorId} className="cal-arrival" title={`until ${String(a.untilHour).padStart(2, "0")}:00`}>
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={a.actorId}
+                actorId={a.actorId}
                 onSelect={onSelect}
-                variant="avatar"
                 size={14}
               />
               <span className="cal-arrival-until muted">→{String(a.untilHour).padStart(2, "0")}</span>
@@ -237,12 +237,11 @@ function KnowerChips({
   return (
     <span className="cal-knowers">
       {actorIds.map((id) => (
-        <ActorRef
+        <ActorChipById
           key={id}
           dump={dump}
-          id={id}
+          actorId={id}
           onSelect={onSelect}
-          variant="avatar"
           size={12}
         />
       ))}

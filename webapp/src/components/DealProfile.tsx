@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, LocationRef } from "./Refs.js";
+import { LocationRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
+import { fullName } from "../lib/actor-names.js";
 import { BeliefChip } from "./BeliefChip.js";
 import {
   tieredAnchorFor,
@@ -88,21 +90,19 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
       <dl className="profile-stats">
         <dt>Seller</dt>
         <dd>
-          <ActorRef
+          <ActorChipById
             dump={dump}
-            id={deal.sellerActorId}
+            actorId={deal.sellerActorId}
             onSelect={onSelect}
-            variant="chip"
             size={16}
           />
         </dd>
         <dt>Buyer</dt>
         <dd>
-          <ActorRef
+          <ActorChipById
             dump={dump}
-            id={deal.buyerActorId}
+            actorId={deal.buyerActorId}
             onSelect={onSelect}
-            variant="chip"
             size={16}
           />
         </dd>
@@ -215,7 +215,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                 ? [
                     sellerBand !== null
                       ? formatPriceArmMath({
-                          observerName: `seller ${seller?.displayName ?? seller?.code ?? "?"}`,
+                          observerName: `seller ${seller !== undefined ? fullName(seller) : "?"}`,
                           itemName: item.displayName,
                           category: item.category,
                           truthTier: l.qualityTier,
@@ -227,7 +227,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                       : null,
                     buyerBand !== null
                       ? formatPriceArmMath({
-                          observerName: `buyer ${buyer?.displayName ?? buyer?.code ?? "?"}`,
+                          observerName: `buyer ${buyer !== undefined ? fullName(buyer) : "?"}`,
                           itemName: item.displayName,
                           category: item.category,
                           truthTier: l.qualityTier,

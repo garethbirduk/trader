@@ -17,6 +17,7 @@ import {
   NODE_R,
 } from "./map-shared.js";
 import { dayLabel } from "../lib/calendar.js";
+import { chipName, fullName } from "../lib/actor-names.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -844,10 +845,10 @@ export function MapGraph(props: Props) {
                     textAnchor="middle"
                     dy="0.35em"
                   >
-                    {getInitials(actor.displayName)}
+                    {getInitials(chipName(actor))}
                   </text>
                   <title>
-                    {actor.displayName}
+                    {fullName(actor)}
                     {anim.transit ? " (in transit)" : ""}
                   </title>
                 </g>
@@ -968,13 +969,13 @@ export function MapGraph(props: Props) {
                 top: `${py}px`,
                 background: colour,
               }}
-              title={`${actor.displayName}${titleSuffix}`}
+              title={`${fullName(actor)}${titleSuffix}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onSelect(isSel ? null : { kind: "actor", id: actor.id });
               }}
             >
-              {getInitials(actor.displayName)}
+              {getInitials(chipName(actor))}
             </button>
           );
         })}

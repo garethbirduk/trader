@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
+import { fullName } from "../lib/actor-names.js";
 import { BeliefChip } from "./BeliefChip.js";
 import {
   tieredAnchorFor,
@@ -121,11 +122,10 @@ export function ItemProfile({ dump, day, snapshot, itemId, onSelect }: Props) {
           <div className="profile-section-label">Owned by</div>
           {stockSummary.owners.map((ownerId) => (
             <div key={ownerId} className="loc-person-row">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={ownerId}
+                actorId={ownerId}
                 onSelect={onSelect}
-                variant="chip"
                 size={20}
               />
             </div>
@@ -184,11 +184,10 @@ function RetailEstimateTable({
           {traders.map((a) => (
             <tr key={a.id}>
               <td>
-                <ActorRef
+                <ActorChipById
                   dump={dump}
-                  id={a.id}
+                  actorId={a.id}
                   onSelect={onSelect}
-                  variant="chip"
                   size={14}
                 />
               </td>
@@ -207,7 +206,7 @@ function RetailEstimateTable({
                 const label =
                   low === high ? `£${centre}` : `£${centre} (£${low}–£${high})`;
                 const titleStr = formatPriceArmMath({
-                  observerName: a.displayName ?? a.code,
+                  observerName: fullName(a),
                   itemName: item.displayName,
                   category: item.category,
                   truthTier: t,

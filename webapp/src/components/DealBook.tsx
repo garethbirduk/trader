@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { DaySnapshot, RunDump, SnapshotDeal } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, DealRef, LocationRef } from "./Refs.js";
+import { DealRef, LocationRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { priceBandFor, tierTruth, tieredAnchorFor } from "../lib/perception.js";
 
@@ -80,19 +81,17 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                 </span>
                 <span className={`deal-state state-${d.state}`}>{d.state}</span>
                 <span className="deal-parties">
-                  <ActorRef
+                  <ActorChipById
                     dump={dump}
-                    id={d.sellerActorId}
+                    actorId={d.sellerActorId}
                     onSelect={onSelect}
-                    variant="chip"
                     size={14}
                   />
                   <span className="ref-arrow">→</span>
-                  <ActorRef
+                  <ActorChipById
                     dump={dump}
-                    id={d.buyerActorId}
+                    actorId={d.buyerActorId}
                     onSelect={onSelect}
-                    variant="chip"
                     size={14}
                   />
                 </span>
@@ -167,11 +166,10 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                         />
                       </div>
                       <div className="deal-line-row">
-                        <ActorRef
+                        <ActorChipById
                           dump={dump}
-                          id={d.sellerActorId}
+                          actorId={d.sellerActorId}
                           onSelect={onSelect}
-                          variant="chip"
                           size={14}
                         />
                         <span className="muted">POV:</span>
@@ -185,19 +183,17 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                         />
                       </div>
                       <div className="deal-line-row">
-                        <ActorRef
+                        <ActorChipById
                           dump={dump}
-                          id={d.sellerActorId}
+                          actorId={d.sellerActorId}
                           onSelect={onSelect}
-                          variant="chip"
                           size={14}
                         />
                         <span className="muted">→</span>
-                        <ActorRef
+                        <ActorChipById
                           dump={dump}
-                          id={d.buyerActorId}
+                          actorId={d.buyerActorId}
                           onSelect={onSelect}
-                          variant="chip"
                           size={14}
                         />
                         <span className="muted">{verb}</span>
@@ -212,11 +208,10 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                         />
                       </div>
                       <div className="deal-line-row">
-                        <ActorRef
+                        <ActorChipById
                           dump={dump}
-                          id={d.buyerActorId}
+                          actorId={d.buyerActorId}
                           onSelect={onSelect}
-                          variant="chip"
                           size={14}
                         />
                         <span className="muted">POV:</span>
@@ -231,11 +226,10 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                       </div>
                       {resaleWholesaleUnit !== null && resaleMarketUnit !== null ? (
                         <div className="deal-line-row">
-                          <ActorRef
+                          <ActorChipById
                             dump={dump}
-                            id={d.buyerActorId}
+                            actorId={d.buyerActorId}
                             onSelect={onSelect}
-                            variant="chip"
                             size={14}
                           />
                           <span className="muted">resale margin:</span>

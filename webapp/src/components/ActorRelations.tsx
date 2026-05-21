@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, DealRef } from "./Refs.js";
+import { DealRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -194,11 +195,10 @@ export function ActorRelations({
                 <span className="relations-arrow muted">
                   {isOpen ? "▾" : "▸"}
                 </span>
-                <ActorRef
+                <ActorChipById
                   dump={dump}
-                  id={r.counterpartyActorId}
+                  actorId={r.counterpartyActorId}
                   onSelect={onSelect}
-                  variant="chip"
                   size={18}
                 />
                 <span className="relations-scores">

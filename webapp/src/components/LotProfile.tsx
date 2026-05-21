@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, LocationRef, PoolRef } from "./Refs.js";
+import { LocationRef, PoolRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
@@ -117,11 +118,10 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
           <>
             <dt>Winner</dt>
             <dd>
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={lot.clearedToActorId}
+                actorId={lot.clearedToActorId}
                 onSelect={onSelect}
-                variant="chip"
                 size={16}
               />
             </dd>
@@ -172,11 +172,10 @@ function KnowledgeSummary({
           </div>
           {knowers.map((aid) => (
             <div key={aid} className="loc-person-row">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={aid}
+                actorId={aid}
                 onSelect={onSelect}
-                variant="chip"
                 size={20}
               />
             </div>
@@ -190,11 +189,10 @@ function KnowledgeSummary({
           </div>
           {inspectors.map((aid) => (
             <div key={aid} className="loc-person-row">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={aid}
+                actorId={aid}
                 onSelect={onSelect}
-                variant="chip"
                 size={20}
               />
             </div>

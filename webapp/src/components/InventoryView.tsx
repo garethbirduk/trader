@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, LocationRef } from "./Refs.js";
-import { ActorChip } from "./Links.js";
+import { LocationRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { perceivedTierFor } from "../lib/perception.js";
 
@@ -63,11 +63,10 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
         return (
           <section key={ownerId} className="inventory-actor">
             <header className="inventory-actor-header">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={ownerId}
+                actorId={ownerId}
                 onSelect={onSelect}
-                variant="chip"
                 size={18}
               />
               <span className="muted">
@@ -101,7 +100,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                       />
                     </div>
                     <div className="inv-lot-row">
-                      <ActorChip
+                      <ActorChipById
                         dump={dump}
                         actorId={ownerId}
                         onSelect={onSelect}

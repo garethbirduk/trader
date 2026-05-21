@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import type { RunDump, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorChip, LocationLink } from "./Links.js";
-import { ActorRef, LotRef } from "./Refs.js";
+import { LocationLink } from "./Links.js";
+import { LotRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
@@ -406,11 +407,10 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
                     </span>
                     <span className="knows-body">
                       {targetId !== null ? (
-                        <ActorRef
+                        <ActorChipById
                           dump={dump}
-                          id={targetId}
+                          actorId={targetId}
                           onSelect={onSelect}
-                          variant="chip"
                           size={14}
                         />
                       ) : (
@@ -418,11 +418,10 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
                       )}{" "}
                       burned{" "}
                       {victimId !== null ? (
-                        <ActorRef
+                        <ActorChipById
                           dump={dump}
-                          id={victimId}
+                          actorId={victimId}
                           onSelect={onSelect}
-                          variant="chip"
                           size={14}
                         />
                       ) : (
@@ -436,7 +435,7 @@ export function ActorKnows({ dump, day, hour, actorId, onSelect }: Props) {
                         <>
                           {" "}
                           <span className="muted">from</span>{" "}
-                          <ActorChip
+                          <ActorChipById
                             dump={dump}
                             actorId={r.fromActorId}
                             onSelect={onSelect}
@@ -552,11 +551,10 @@ function LotKnowledgeLine({
         {row.fromActorId !== null ? (
           <>
             <span className="muted">from</span>
-            <ActorRef
+            <ActorChipById
               dump={dump}
-              id={row.fromActorId}
+              actorId={row.fromActorId}
               onSelect={onSelect}
-              variant="chip"
               size={12}
             />
           </>
@@ -625,7 +623,7 @@ function TimelineView({
               </span>
               <span className="knows-body">
                 from{" "}
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={r.fromActorId}
                   onSelect={onSelect}
@@ -758,7 +756,7 @@ function ByPersonView({
           >
             <div className="knows-group-header">
               {g.counterpartyActorId !== null ? (
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={g.counterpartyActorId}
                   onSelect={onSelect}
@@ -873,7 +871,7 @@ function SubgroupRows({
           const k = subjectKey(r.lead);
           const conflict = conflictMap.get(k);
           const counterpartyChip = r.lead.counterpartyActorId !== null ? (
-            <ActorChip
+            <ActorChipById
               dump={dump}
               actorId={r.lead.counterpartyActorId}
               onSelect={onSelect}
@@ -897,7 +895,7 @@ function SubgroupRows({
                 </span>
                 <span className="muted">·</span>
                 <span className="muted">from</span>
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={r.fromActorId}
                   onSelect={onSelect}
@@ -914,7 +912,7 @@ function SubgroupRows({
               </div>
               {r.lead.subjectItemKindId !== null ? (
                 <div className="chip-stack-row">
-                  <ActorChip
+                  <ActorChipById
                     dump={dump}
                     actorId={receiverActorId}
                     onSelect={onSelect}
@@ -960,7 +958,7 @@ function formatLead(
   return (
     <>
       {cp !== null ? (
-        <ActorChip dump={dump} actorId={cp} onSelect={onSelect} size={14} />
+        <ActorChipById dump={dump} actorId={cp} onSelect={onSelect} size={14} />
       ) : (
         <span className="muted">someone</span>
       )}{" "}

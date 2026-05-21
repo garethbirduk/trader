@@ -11,9 +11,9 @@ import { fullName } from "../lib/actor-names.js";
  *   • Admin toggle — a single button outside the actor list. When ON,
  *     the active POV is Admin regardless of what the actor picker has
  *     selected.
- *   • Actor picker — a custom listbox of `ActorChip detail="full"`
- *     rows. The currently-selected actor persists while the Admin
- *     toggle is ON, and is the lens we return to when Admin flips OFF.
+ *   • Actor picker — a custom listbox of `ActorChip` rows. The
+ *     currently-selected actor persists while the Admin toggle is ON,
+ *     and is the lens we return to when Admin flips OFF.
  *
  * The "Admin in the dropdown" pattern is forbidden — see POV/lens
  * Rule 1. All actor presentation routes through `ActorChip` per
@@ -137,7 +137,6 @@ export function PovSwitcher({ dump }: { readonly dump: RunDump }) {
           <ActorChip
             actor={selectedActor}
             dump={dump}
-            detail="full"
             onClick={() => setOpen((v) => !v)}
             className="pov-actor-trigger"
             suffix={
@@ -177,7 +176,6 @@ export function PovSwitcher({ dump }: { readonly dump: RunDump }) {
                 <ActorChip
                   actor={a}
                   dump={dump}
-                  detail="full"
                   onClick={() => pickActor(a.id)}
                   size={20}
                 />

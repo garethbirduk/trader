@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import type { DaySnapshot, RunDump, SnapshotPool } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, PoolRef } from "./Refs.js";
+import { PoolRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 
 interface Props {
@@ -140,11 +141,10 @@ function PoolCard({
           pool.reachableBy.map((aid, i) => (
             <span key={aid}>
               {i > 0 ? " " : ""}
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={aid}
+                actorId={aid}
                 onSelect={onSelect}
-                variant="chip"
                 size={14}
               />
             </span>

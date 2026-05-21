@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import type { RunDump, RunEvent, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorChip } from "./Links.js";
-import { ActorRef, DealRef, LotRef, PoolRef } from "./Refs.js";
+import { DealRef, LotRef, PoolRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { resolveAuctionWindow } from "../lib/auction-window.js";
 import { dayLabel } from "../lib/calendar.js";
@@ -237,13 +237,12 @@ export function LocationDiary({
                 {peopleHere.length > 0 ? (
                   <div className="people-row">
                     {peopleHere.map((aid) => (
-                      <ActorChip
+                      <ActorChipById
                         key={aid}
                         dump={dump}
                         actorId={aid}
                         onSelect={onSelect}
                         size={18}
-                        showName={false}
                       />
                     ))}
                   </div>
@@ -254,13 +253,12 @@ export function LocationDiary({
                   <div className="people-row people-booked muted">
                     booked:
                     {peopleBooked.map((aid) => (
-                      <ActorChip
+                      <ActorChipById
                         key={aid}
                         dump={dump}
                         actorId={aid}
                         onSelect={onSelect}
                         size={16}
-                        showName={false}
                       />
                     ))}
                   </div>
@@ -323,7 +321,7 @@ function LocationHeader({
         ) : (
           <div className="people-row">
             {residents.map((r) => (
-              <ActorChip
+              <ActorChipById
                 key={r.id}
                 dump={dump}
                 actorId={r.id}
@@ -371,11 +369,10 @@ function AuctionLotRow({
       {lot.clearedDay !== null && lot.clearedToActorId !== null ? (
         <span className="muted">
           —{" → "}
-          <ActorRef
+          <ActorChipById
             dump={dump}
-            id={lot.clearedToActorId}
+            actorId={lot.clearedToActorId}
             onSelect={onSelect}
-            variant="chip"
             size={14}
           />{" "}
           for £{lot.clearedPrice}
@@ -448,11 +445,10 @@ function summarizeLocEvent(
 ): JSX.Element {
   const A = (id: unknown) =>
     typeof id === "number" ? (
-      <ActorRef
+      <ActorChipById
         dump={dump}
-        id={id}
+        actorId={id}
         onSelect={onSelect}
-        variant="chip"
         size={14}
       />
     ) : (

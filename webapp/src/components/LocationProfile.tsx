@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { useCurrentTime } from "../lib/current-time.js";
 import { isLocationOpenAt } from "../lib/location-open.js";
@@ -92,11 +92,10 @@ export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: P
           <div className="profile-section-label">Lives here</div>
           {residents.map((r) => (
             <div key={r.id} className="loc-person-row">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={r.id}
+                actorId={r.id}
                 onSelect={onSelect}
-                variant="chip"
                 size={20}
               />
             </div>
@@ -108,11 +107,10 @@ export function LocationProfile({ dump, day, snapshot, locationId, onSelect }: P
           <div className="profile-section-label">Here right now</div>
           {hereIds.map((id) => (
             <div key={id} className="loc-person-row">
-              <ActorRef
+              <ActorChipById
                 dump={dump}
-                id={id}
+                actorId={id}
                 onSelect={onSelect}
-                variant="chip"
                 size={20}
               />
             </div>

@@ -30,6 +30,7 @@ import {
   tierTruth,
   formatPriceArmMath,
 } from "../lib/perception.js";
+import { fullName } from "../lib/actor-names.js";
 
 const TIER_ORDER: readonly string[] = ["broken", "shoddy", "fair", "good", "mint"];
 
@@ -118,7 +119,7 @@ export function BeliefChip({
         unitValue = Math.max(0, Math.round(band.centre));
         hoverMath = formatPriceArmMath({
           observerName:
-            observer?.displayName ?? observer?.code ?? `actor#${observerActorId}`,
+            observer !== undefined ? fullName(observer) : `actor#${observerActorId}`,
           itemName: item.displayName,
           category: item.category,
           truthTier,
@@ -158,7 +159,7 @@ export function BeliefChip({
           code={povActor.code}
           isPlayer={povActor.id === dump.playerActorId}
           size={14}
-          title={`${povActor.displayName ?? povActor.code}'s POV`}
+          title={`${fullName(povActor)}'s POV`}
         />
       ) : null}
       <span className="stock-chip-name">{item.displayName}</span>
@@ -218,4 +219,19 @@ export function TierTag({
 function capitalize(s: string): string {
   if (s.length === 0) return s;
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Category pill — `(TOOLS)`, `(FOOD)`, etc. Renders the item kind's
+ * `category` field with the same colour family as the surrounding
+ * `BeliefChip` border. Pair it with a `BeliefChip` to give every
+ * stock reference a leading type tag — see ui-rules.md Components
+ * Rule 5.
+ */
+export function CategoryTag({ category }: { readonly category: string }) {
+  return (
+    <span className={`category-pill stock-chip-cat-${category}`}>
+      {capitalize(category)}
+    </span>
+  );
 }

@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { Avatar } from "./Avatar.js";
-import { ActorRef, LocationRef, PoolRef } from "./Refs.js";
+import { LocationRef, PoolRef } from "./Refs.js";
+import { ActorChip, ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 
@@ -133,17 +133,13 @@ export function ActorProfile({
   return (
     <section className="actor-profile">
       <header className="profile-head">
-        <Avatar
-          name={actor.displayName}
-          code={actor.code}
-          isPlayer={isPlayer}
+        <ActorChip
+          actor={actor}
+          dump={dump}
           size={42}
+          className="profile-head-chip"
         />
         <div className="profile-title">
-          <div className="profile-name">
-            {isPlayer ? "▶ " : ""}
-            {actor.displayName}
-          </div>
           <div className="profile-code muted">
             {actor.code} · {actor.transportCapacity}
           </div>
@@ -429,14 +425,13 @@ function VirtualActorProfile({
   return (
     <section className="actor-profile actor-profile-virtual">
       <header className="profile-head">
-        <Avatar
-          name={actor.displayName}
-          code={actor.code}
-          isPlayer={false}
+        <ActorChip
+          actor={actor}
+          dump={dump}
           size={42}
+          className="profile-head-chip"
         />
         <div className="profile-title">
-          <div className="profile-name">{actor.displayName}</div>
           <div className="profile-code muted">
             {actor.code} ·{" "}
             <span className="badge badge-virtual">virtual producer</span>
@@ -483,11 +478,10 @@ function VirtualActorProfile({
                 {brokerIds.map((aid) => (
                   <li key={aid}>
                     {onSelect !== undefined ? (
-                      <ActorRef
+                      <ActorChipById
                         dump={dump}
-                        id={aid}
+                        actorId={aid}
                         onSelect={onSelect}
-                        variant="chip"
                         size={16}
                       />
                     ) : (

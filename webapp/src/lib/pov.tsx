@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { RunActor, RunDump } from "../types.js";
 import { getActorColor } from "../avatar.js";
+import { fullName } from "./actor-names.js";
 
 /**
  * POV — "through whose eyes am I looking" (docs/ui.md §2.1). A
@@ -104,7 +105,7 @@ export function PovProvider({
 
   const label = useMemo<string>(() => {
     if (pov.kind === "admin") return "Admin";
-    return actor?.displayName ?? "Unknown";
+    return actor !== null ? fullName(actor) : "Unknown";
   }, [pov, actor]);
 
   useEffect(() => {

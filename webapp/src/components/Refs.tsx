@@ -1,6 +1,5 @@
 import type { RunDump } from "../types.js";
 import type { Selection, SelectionKind } from "../App.js";
-import { Avatar } from "./Avatar.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { useCurrentTime } from "../lib/current-time.js";
 import { isLocationOpenAt } from "../lib/location-open.js";
@@ -42,77 +41,6 @@ function RefButton({
     >
       {children}
     </button>
-  );
-}
-
-export interface ActorRefProps {
-  readonly dump: RunDump;
-  readonly id: number;
-  readonly onSelect: (s: Selection) => void;
-  readonly variant?: RefVariant | "avatar";
-  readonly size?: number;
-}
-
-export function ActorRef({
-  dump,
-  id,
-  onSelect,
-  variant = "chip",
-  size = 18,
-}: ActorRefProps) {
-  const a = dump.actors.find((x) => x.id === id);
-  if (a === undefined) {
-    return <span className="ref-missing muted">actor {id}</span>;
-  }
-  const isPlayer = a.id === dump.playerActorId;
-  if (variant === "avatar") {
-    return (
-      <RefButton
-        kind="actor"
-        id={id}
-        onSelect={onSelect}
-        variant="chip"
-        title={a.displayName}
-        extraClass="ref-avatar-only"
-      >
-        <Avatar
-          name={a.displayName}
-          code={a.code}
-          isPlayer={isPlayer}
-          size={size}
-        />
-      </RefButton>
-    );
-  }
-  if (variant === "inline") {
-    return (
-      <RefButton
-        kind="actor"
-        id={id}
-        onSelect={onSelect}
-        variant="inline"
-        title={a.displayName}
-      >
-        {a.displayName}
-      </RefButton>
-    );
-  }
-  return (
-    <RefButton
-      kind="actor"
-      id={id}
-      onSelect={onSelect}
-      variant="chip"
-      title={a.displayName}
-    >
-      <Avatar
-        name={a.displayName}
-        code={a.code}
-        isPlayer={isPlayer}
-        size={size}
-      />
-      <span>{a.displayName}</span>
-    </RefButton>
   );
 }
 

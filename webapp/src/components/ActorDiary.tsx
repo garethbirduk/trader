@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
-import { ActorRef, DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { dayLabel, isWeekend } from "../lib/calendar.js";
 
@@ -167,11 +168,10 @@ function summarizeEvent(
 ): JSX.Element {
   const A = (id: unknown) =>
     typeof id === "number" ? (
-      <ActorRef
+      <ActorChipById
         dump={dump}
-        id={id}
+        actorId={id}
         onSelect={onSelect}
-        variant="chip"
         size={14}
       />
     ) : (

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump, SnapshotDeal, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorChip, LocationLink } from "./Links.js";
+import { LocationLink } from "./Links.js";
+import { ActorChipById } from "./ActorChip.js";
 import { LocationRef } from "./Refs.js";
 import { BeliefChip } from "./BeliefChip.js";
 import { perceivedTierFor } from "../lib/perception.js";
@@ -89,7 +90,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                     />
                   </div>
                   <div className="chip-stack-row">
-                    <ActorChip
+                    <ActorChipById
                       dump={dump}
                       actorId={actorId}
                       onSelect={onSelect}
@@ -193,7 +194,7 @@ function DealRow({
       <div className="actor-inv-deal-head">
         <span className="muted">D{deal.agreedDay}</span>
         <span>
-          {arrow} <ActorChip dump={dump} actorId={cpId} onSelect={onSelect} size={14} />
+          {arrow} <ActorChipById dump={dump} actorId={cpId} onSelect={onSelect} size={14} />
         </span>
         <span className="muted">deadline D{deal.deadlineDay}</span>
         {deal.deliveryLocationId !== null ? (

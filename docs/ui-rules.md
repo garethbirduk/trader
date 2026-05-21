@@ -60,22 +60,45 @@ rather than building a parallel component or stripping the chip
 wrapper. Specific chip types (ActorChip, BeliefChip, …) inherit this
 rule; their per-type specifics live below.
 
-### 3. ActorChip has two detail levels: `full` and `simplified`.
-**Why:** actors appear in directory-style surfaces (the POV picker,
-the LHS Actors list, profile headers) where the full identity
-matters, and in compact in-world reference surfaces (selection chips,
-owner pills, mini rows, embedded references in events) where the
-nickname is enough. Two named levels keep the rendering paths
-predictable.
+### 3. One ActorChip everywhere — nickname as the label, full name on hover.
+**Why:** two detail levels meant every caller had to think about which
+one to use, and parallel rendering paths drifted apart. A single chip
+with one label rule is unambiguous and impossible to mis-call. The
+nickname is what people use in-world; the full name is only useful as
+disambiguation, which is exactly what a hover tooltip is for.
 **How to apply:**
-- `detail="full"` — avatar + composed full name (`firstName` + ` ` +
-  `lastName`, falling back to `firstName` alone when no `lastName`).
-  Use in the POV switcher (both its trigger and its option list), the
-  LHS Actors list, and profile headers.
-- `detail="simplified"` — avatar + `shortName`. Use everywhere else:
-  selection chips, owner pills, mini actor rows, embedded references
-  inside event text.
-- Default is `simplified`. Anything else must be passed explicitly.
+- The chip's visible label is `shortName`. When `shortName` is absent,
+  fall back to composed `firstName + " " + lastName` (or `firstName`
+  alone when no `lastName`). Never fall back to `displayName`.
+- The hover `title` is always the composed full name. The full name
+  appears nowhere else in the rendered chip.
+- Use `ActorChip` for every actor reference — POV switcher (trigger
+  + listbox), LHS Actors list, profile headers, selection chips,
+  owner pills, mini rows, embedded references in events. No `detail`
+  prop, no variants.
+- The one exception is the admin character editor, where names are
+  edit boxes, not chips — there the chip is replaced by `<input>`.
+
+### 4. Spatial canvases may render avatar + tooltip without the chip wrapper.
+**Why:** `ActorChip` and `LocationChip` are flow-layout HTML elements
+that always render a label next to the avatar. Maps and similar
+spatial surfaces position nodes at exact pixel coordinates and the
+label would clutter the canvas. The chip wrapper is unsuitable in
+this case, but the identity still needs to be discoverable.
+**How to apply:**
+- A node whose position is computed from canvas geometry (SVG-hosted
+  shapes, HTML elements with `position: absolute` driven by the
+  canvas layout) may render the avatar primitive (`Avatar` /
+  `LocationAvatar`) directly, with the identity exposed via a
+  tooltip (`<title>` inside SVG, `title=""` on HTML).
+- The tooltip text uses `fullName(actor)` for actors and
+  `displayName` for locations.
+- Any label text rendered alongside the node (e.g. a node caption)
+  uses `chipName(actor)` for actors and `displayName` for locations.
+- Any HTML element rendered in normal document flow (legend rows,
+  list entries, side panels) remains HTML-hosted and must use the
+  canonical chip — the carve-out is the spatial canvas, not the page
+  containing it.
 
 ---
 

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorChip } from "./Links.js";
+import { ActorChipById } from "./ActorChip.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 import { BeliefChip } from "./BeliefChip.js";
 
@@ -330,7 +330,7 @@ function SellRow({
   return (
     <li className="chip-stack">
       <div className="chip-stack-row">
-        <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+        <ActorChipById dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
         <CounterpartyDot row={row} perceiverJ={perceiverJ} />
         <span className="muted">wants</span>
         {row.score !== null ? (
@@ -350,7 +350,7 @@ function SellRow({
       </div>
       {row.unlocked && row.theirQty !== null ? (
         <div className="chip-stack-row">
-          <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+          <ActorChipById dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
           <span className="muted">POV:</span>
           <BeliefChip
             dump={dump}
@@ -401,7 +401,7 @@ function BuyRow({
   return (
     <li className="chip-stack">
       <div className="chip-stack-row">
-        <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+        <ActorChipById dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
         <CounterpartyDot row={row} perceiverJ={perceiverJ} />
         <span className="muted">has</span>
         {row.score !== null ? (
@@ -421,7 +421,7 @@ function BuyRow({
       </div>
       {row.unlocked && row.theirQty !== null ? (
         <div className="chip-stack-row">
-          <ActorChip dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
+          <ActorChipById dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
           <span className="muted">POV:</span>
           <BeliefChip
             dump={dump}
@@ -443,7 +443,7 @@ function BuyRow({
       {row.onwardBuyerActorId !== null && row.onwardUnitPrice !== null && row.theirQty !== null ? (
         <div className="chip-stack-row">
           <span className="muted">onward to</span>
-          <ActorChip dump={dump} actorId={row.onwardBuyerActorId} onSelect={onSelect} size={12} />
+          <ActorChipById dump={dump} actorId={row.onwardBuyerActorId} onSelect={onSelect} size={12} />
           <BeliefChip
             dump={dump}
             itemKindId={row.itemKindId}

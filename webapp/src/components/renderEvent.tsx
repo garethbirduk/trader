@@ -1,6 +1,7 @@
 import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorRef, DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
 
 /**
@@ -15,11 +16,10 @@ export function renderEvent(
 ) {
   const A = (id: unknown) =>
     typeof id === "number" ? (
-      <ActorRef
+      <ActorChipById
         dump={dump}
-        id={id}
+        actorId={id}
         onSelect={onSelect}
-        variant="chip"
         size={14}
       />
     ) : (

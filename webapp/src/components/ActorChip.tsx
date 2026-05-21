@@ -1,22 +1,19 @@
 import type { ReactNode } from "react";
 import type { RunActor, RunDump } from "../types.js";
+import type { Selection } from "../App.js";
 import { Avatar } from "./Avatar.js";
 import { chipName, fullName } from "../lib/actor-names.js";
 
 /**
  * The one canonical actor reference. Use this anywhere an actor name
- * needs to appear (see docs/ui-rules.md → Components Rule 1).
+ * needs to appear (ui-rules.md Components Rule 1 + Rule 3).
  *
- * Two detail levels (Rule 3):
- *   • detail="simplified" (default) — avatar + `shortName`. Compact
- *     surfaces: selection chips, owner pills, mini rows, header
- *     triggers.
- *   • detail="full" — avatar + composed full name (`firstName` + ` ` +
- *     `lastName`, falling back to `displayName`). Directory surfaces:
- *     the POV dropdown options, the LHS Actors list, profile headers.
+ * Single chip, no variants: the visible label is the nickname
+ * (`chipName`, which falls back to `firstName + lastName`), and the
+ * full name lives in the hover `title`. The only place actor names
+ * appear outside this chip is the admin character editor, where they
+ * are edit boxes.
  */
-export type ActorChipDetail = "full" | "simplified";
-
 export interface ActorChipProps {
   readonly actor: RunActor;
   readonly dump: RunDump;
@@ -31,9 +28,6 @@ export interface ActorChipProps {
   readonly size?: number;
   /** Tooltip text override. Defaults to the full name. */
   readonly title?: string;
-  /** Detail level. Default is `"simplified"`; pass `"full"` for
-   *  directory-style surfaces. See Components Rule 3. */
-  readonly detail?: ActorChipDetail;
   /** Extra class for context-specific layout (e.g. selection-chip
    *  width caps, owner-pill padding). */
   readonly className?: string;
@@ -47,10 +41,8 @@ export function ActorChip({
   state = "off",
   size = 16,
   title,
-  detail = "simplified",
   className,
 }: ActorChipProps) {
-  const label = detail === "full" ? fullName(actor) : chipName(actor);
   const isPlayer = actor.id === dump.playerActorId;
   const isInteractive = onClick !== undefined;
   // Plain span when non-interactive — avoids nesting <button> elements
@@ -64,7 +56,6 @@ export function ActorChip({
       className={[
         "actor-chip",
         `actor-chip-${state}`,
-        `actor-chip--${detail}`,
         isInteractive ? "actor-chip-interactive" : "",
         className ?? "",
       ]
@@ -74,8 +65,63 @@ export function ActorChip({
       {...tagProps}
     >
       <Avatar name={actor.displayName} code={actor.code} isPlayer={isPlayer} size={size} />
-      <span className="actor-chip-name">{label}</span>
+      <span className="actor-chip-name">{chipName(actor)}</span>
       {suffix}
     </Tag>
+  );
+}
+
+/**
+ * Id-resolving adapter for the canonical `ActorChip`. Event-driven
+ * surfaces (SceneDeck, CalendarView, profiles) hold actor ids rather
+ * than `RunActor` objects, so this wrapper does the dump lookup and
+ * wires `onSelect({ kind: "actor", id })` to the chip's `onClick`.
+ *
+ * Rendering still goes through the canonical chip — there is only one
+ * actor presentation surface. Pass-through props mirror the canonical
+ * `ActorChipProps`. If the id can't be resolved against `dump.actors`,
+ * a muted fallback is rendered so missing data is visible but doesn't
+ * break the surface.
+ */
+export interface ActorChipByIdProps {
+  readonly dump: RunDump;
+  readonly actorId: number;
+  readonly onSelect?: (s: Selection) => void;
+  readonly suffix?: ReactNode;
+  readonly state?: "off" | "on" | "some";
+  readonly size?: number;
+  readonly title?: string;
+  readonly className?: string;
+}
+
+export function ActorChipById({
+  dump,
+  actorId,
+  onSelect,
+  suffix,
+  state,
+  size,
+  title,
+  className,
+}: ActorChipByIdProps) {
+  const actor = dump.actors.find((a) => a.id === actorId);
+  if (actor === undefined) {
+    return <span className="actor-chip-missing muted">actor {actorId}</span>;
+  }
+  const onClick =
+    onSelect !== undefined
+      ? () => onSelect({ kind: "actor", id: actorId })
+      : undefined;
+  return (
+    <ActorChip
+      actor={actor}
+      dump={dump}
+      {...(onClick !== undefined ? { onClick } : {})}
+      {...(suffix !== undefined ? { suffix } : {})}
+      {...(state !== undefined ? { state } : {})}
+      {...(size !== undefined ? { size } : {})}
+      {...(title !== undefined ? { title } : {})}
+      {...(className !== undefined ? { className } : {})}
+    />
   );
 }

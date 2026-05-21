@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DaySnapshot, RunDump, RunEvent, SnapshotAuctionLot, SnapshotDeal, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
-import { ActorChip, LocationLink } from "./Links.js";
-import { ActorRef, ItemRef, LotRef } from "./Refs.js";
+import { LocationLink } from "./Links.js";
+import { ItemRef, LotRef } from "./Refs.js";
+import { ActorChipById } from "./ActorChip.js";
 import { BeliefChip } from "./BeliefChip.js";
+import { chipName, fullName } from "../lib/actor-names.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
 import {
@@ -699,8 +701,10 @@ function AuctionLotPlayer({
   const nonBidderAttendees = attendees.filter((id) => !bidderIdSet.has(id));
   const allBidders = bidders.slice().sort((a, b) => a.ceiling - b.ceiling);
   const ceilingByActor = new Map(bidders.map((b) => [b.actorId, b.ceiling]));
-  const actorName = (id: number) =>
-    dump.actors.find((a) => a.id === id)?.displayName ?? `actor ${id}`;
+  const actorName = (id: number) => {
+    const a = dump.actors.find((x) => x.id === id);
+    return a !== undefined ? chipName(a) : `actor ${id}`;
+  };
 
   // Auctioneer's call for the current frame.
   const call = describeCall(
@@ -761,14 +765,14 @@ function AuctionLotPlayer({
         {isFinal ? (
           winnerId !== null ? (
             <span className="lot-hammer">
-              ★ HAMMER · <ActorChip dump={dump} actorId={winnerId} onSelect={onSelect} size={16} /> for £{finalPrice}
+              ★ HAMMER · <ActorChipById dump={dump} actorId={winnerId} onSelect={onSelect} size={16} /> for £{finalPrice}
             </span>
           ) : (
             <span className="lot-hammer lot-hammer-unsold">unsold ({reason || "no clear"})</span>
           )
         ) : currentLeader !== null ? (
           <span className="muted">
-            <ActorChip dump={dump} actorId={currentLeader} onSelect={onSelect} size={14} />{" "}
+            <ActorChipById dump={dump} actorId={currentLeader} onSelect={onSelect} size={14} />{" "}
             <span>has the bid</span>
           </span>
         ) : (
@@ -798,7 +802,7 @@ function AuctionLotPlayer({
                       : null;
                   const bidderActor = dump.actors.find((a) => a.id === b.actorId);
                   const bidderName =
-                    bidderActor?.displayName ?? bidderActor?.code ?? `actor#${b.actorId}`;
+                    bidderActor !== undefined ? fullName(bidderActor) : `actor#${b.actorId}`;
                   const ceilingTitle =
                     judgement !== null && isComposite(judgement) && lot !== null
                       ? formatCompositeMath({
@@ -820,7 +824,7 @@ function AuctionLotPlayer({
                               : "lot-bidder-out"
                       }`}
                     >
-                      <ActorChip dump={dump} actorId={b.actorId} onSelect={onSelect} size={14} />
+                      <ActorChipById dump={dump} actorId={b.actorId} onSelect={onSelect} size={14} />
                       <span
                         className="muted"
                         {...(ceilingTitle !== undefined ? { title: ceilingTitle } : {})}
@@ -839,7 +843,7 @@ function AuctionLotPlayer({
               <ul className="lot-bidders lot-attendees">
                 {nonBidderAttendees.map((id) => (
                   <li key={id} className="lot-bidder lot-bidder-watching">
-                    <ActorChip dump={dump} actorId={id} onSelect={onSelect} size={14} />
+                    <ActorChipById dump={dump} actorId={id} onSelect={onSelect} size={14} />
                   </li>
                 ))}
               </ul>
@@ -954,11 +958,10 @@ function describeLogEntry(
         text: (
           <span>
             ★ HAMMER —{" "}
-            <ActorRef
+            <ActorChipById
               dump={dump}
-              id={winnerId}
+              actorId={winnerId}
               onSelect={onSelect}
-              variant="chip"
               size={14}
             />{" "}
             wins
@@ -977,11 +980,10 @@ function describeLogEntry(
     text:
       frame.bidder !== null ? (
         <span>
-          <ActorRef
+          <ActorChipById
             dump={dump}
-            id={frame.bidder}
+            actorId={frame.bidder}
             onSelect={onSelect}
-            variant="chip"
             size={14}
           />{" "}
           bids
@@ -1158,9 +1160,9 @@ function PubdealHagglePlayer({
 
       <article className={cardClass}>
         <div className="lot-line">
-          <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={20} />
+          <ActorChipById dump={dump} actorId={sellerId} onSelect={onSelect} size={20} />
           <span className="muted">{kind === "walked" && isFinal ? "↮" : "↔"}</span>
-          <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={20} />
+          <ActorChipById dump={dump} actorId={buyerId} onSelect={onSelect} size={20} />
           {itemId !== undefined ? (
             <>
               <span className="muted">·</span>
@@ -1183,7 +1185,7 @@ function PubdealHagglePlayer({
               <span className="lot-price">£{currentTurn.unitPrice}</span>
               <span className="muted">
                 from{" "}
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={currentTurn.by === "seller" ? sellerId : buyerId}
                   onSelect={onSelect}
@@ -1196,7 +1198,7 @@ function PubdealHagglePlayer({
               <span className="lot-price">£{unitPrice}</span>
               <span className="lot-hammer">
                 ★ DEAL ·{" "}
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={buyerId}
                   onSelect={onSelect}
@@ -1248,7 +1250,7 @@ function PubdealHagglePlayer({
                     : ""
               }`}
             >
-              <ActorChip
+              <ActorChipById
                 dump={dump}
                 actorId={sellerId}
                 onSelect={onSelect}
@@ -1280,7 +1282,7 @@ function PubdealHagglePlayer({
                     : ""
               }`}
             >
-              <ActorChip
+              <ActorChipById
                 dump={dump}
                 actorId={buyerId}
                 onSelect={onSelect}
@@ -1379,11 +1381,10 @@ function PubdealHagglePlayer({
                     {t.unitPrice !== null ? `£${t.unitPrice}` : "—"}
                   </span>
                   <span className="lot-log-text">
-                    <ActorRef
+                    <ActorChipById
                       dump={dump}
-                      id={speakerId}
+                      actorId={speakerId}
                       onSelect={onSelect}
-                      variant="chip"
                       size={14}
                     />{" "}
                     {verb}
@@ -1401,19 +1402,17 @@ function PubdealHagglePlayer({
                   {kind === "agreed" ? (
                     <>
                       ★ DEAL —{" "}
-                      <ActorRef
+                      <ActorChipById
                         dump={dump}
-                        id={sellerId}
+                        actorId={sellerId}
                         onSelect={onSelect}
-                        variant="chip"
                         size={14}
                       />
                       <span className="ref-arrow">→</span>
-                      <ActorRef
+                      <ActorChipById
                         dump={dump}
-                        id={buyerId}
+                        actorId={buyerId}
                         onSelect={onSelect}
-                        variant="chip"
                         size={14}
                       />
                     </>
@@ -1458,10 +1457,10 @@ function renderHaggleQuote(
   frameIdx: number,
 ): JSX.Element {
   const seller = (
-    <ActorChip dump={dump} actorId={sellerId} onSelect={onSelect} size={14} />
+    <ActorChipById dump={dump} actorId={sellerId} onSelect={onSelect} size={14} />
   );
   const buyer = (
-    <ActorChip dump={dump} actorId={buyerId} onSelect={onSelect} size={14} />
+    <ActorChipById dump={dump} actorId={buyerId} onSelect={onSelect} size={14} />
   );
   if (turn === null) {
     if (kind === "agreed" && finalPrice !== null) {
@@ -1568,13 +1567,13 @@ function GossipScene({
             <li key={i} className="scene-gossip-row">
               <div className="scene-parties">
                 {a !== undefined ? (
-                  <ActorChip dump={dump} actorId={a} onSelect={onSelect} size={16} />
+                  <ActorChipById dump={dump} actorId={a} onSelect={onSelect} size={16} />
                 ) : (
                   <span className="muted">?</span>
                 )}
                 <span>↔</span>
                 {b !== undefined ? (
-                  <ActorChip dump={dump} actorId={b} onSelect={onSelect} size={16} />
+                  <ActorChipById dump={dump} actorId={b} onSelect={onSelect} size={16} />
                 ) : (
                   <span className="muted">?</span>
                 )}
@@ -1597,7 +1596,7 @@ function GossipScene({
                     // with qty/price.
                     return (
                       <li key={j} className="scene-gossip-headline">
-                        <ActorChip
+                        <ActorChipById
                           dump={dump}
                           actorId={x.fromActorId}
                           onSelect={onSelect}
@@ -1672,10 +1671,10 @@ function DetailUnlockedScene({
           return (
             <li key={i} className="scene-gossip-row">
               <div className="scene-parties">
-                <ActorChip dump={dump} actorId={asker} onSelect={onSelect} size={16} />
+                <ActorChipById dump={dump} actorId={asker} onSelect={onSelect} size={16} />
                 <span className="muted">paid £{costPaid} to</span>
                 {paidTo !== null ? (
-                  <ActorChip
+                  <ActorChipById
                     dump={dump}
                     actorId={paidTo}
                     onSelect={onSelect}
@@ -1685,7 +1684,7 @@ function DetailUnlockedScene({
                   <span className="muted">the house</span>
                 )}
                 <span className="muted">via</span>
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={partner}
                   onSelect={onSelect}
@@ -1716,7 +1715,7 @@ function DetailUnlockedScene({
                       <li key={j} className="chip-stack">
                         <div className="chip-stack-row">
                           {lead.counterpartyActorId !== null ? (
-                            <ActorChip
+                            <ActorChipById
                               dump={dump}
                               actorId={lead.counterpartyActorId}
                               onSelect={onSelect}
@@ -1775,7 +1774,7 @@ function RaidScene({
         <span className="scene-tag scene-tag-raid">🚨 Raid</span>
       </header>
       <div className="scene-parties">
-        <ActorChip dump={dump} actorId={actorId} onSelect={onSelect} size={20} />
+        <ActorChipById dump={dump} actorId={actorId} onSelect={onSelect} size={20} />
       </div>
       <div className="scene-row">
         {seized} units seized · £{fine} fine
@@ -1838,7 +1837,7 @@ function InspectionScene({
             <li key={i} className="chip-stack">
               <div className="chip-stack-row">
                 <span className="muted">🔨</span>
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={actorId}
                   onSelect={onSelect}
@@ -1864,7 +1863,7 @@ function InspectionScene({
                     />
                   </div>
                   <div className="chip-stack-row">
-                    <ActorChip
+                    <ActorChipById
                       dump={dump}
                       actorId={actorId}
                       onSelect={onSelect}
@@ -1934,7 +1933,7 @@ function ClearanceScene({
             return (
               <li key={i} className="clearance-row clearance-booked">
                 <span className="muted">☎</span>
-                <ActorChip
+                <ActorChipById
                   dump={dump}
                   actorId={bookerId}
                   onSelect={onSelect}
@@ -1965,7 +1964,7 @@ function ClearanceScene({
                 <span>★</span>
                 {winnerId !== null ? (
                   <>
-                    <ActorChip
+                    <ActorChipById
                       dump={dump}
                       actorId={winnerId}
                       onSelect={onSelect}
@@ -2134,7 +2133,7 @@ function MarketScene({
             <li key={i}>
               <article className={cardClass}>
                 <div className="lot-line">
-                  <ActorChip
+                  <ActorChipById
                     dump={dump}
                     actorId={sellerId}
                     onSelect={onSelect}
