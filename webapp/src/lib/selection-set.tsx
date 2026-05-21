@@ -61,6 +61,9 @@ export interface SelectionSetApi {
    *  click behaviour without modifier keys. */
   readonly replace: (item: SelectionItem | null) => void;
   readonly clear: () => void;
+  /** Bulk replacement: swap the entire current set for `items`. One
+   *  history push. Used by the POV-transition prune. */
+  readonly setItems: (items: readonly SelectionItem[]) => void;
   /** Back-compat alias for `replace`. Existing components written
    *  against the single-selection API can keep calling this. */
   readonly setSelection: (item: SelectionItem | null) => void;
@@ -165,6 +168,11 @@ export function SelectionSetProvider(props: SelectionSetProviderProps) {
 
   const clear = useCallback(() => pushSet([]), [pushSet]);
 
+  const setItems = useCallback(
+    (items: readonly SelectionItem[]) => pushSet(items),
+    [pushSet],
+  );
+
   const goBack = useCallback(() => {
     setState((prev) =>
       prev.cursor > 0 ? { ...prev, cursor: prev.cursor - 1 } : prev,
@@ -212,6 +220,7 @@ export function SelectionSetProvider(props: SelectionSetProviderProps) {
       toggle,
       replace,
       clear,
+      setItems,
       setSelection: replace,
       goBack,
       goForward,
@@ -226,6 +235,7 @@ export function SelectionSetProvider(props: SelectionSetProviderProps) {
       toggle,
       replace,
       clear,
+      setItems,
       goBack,
       goForward,
       state.cursor,

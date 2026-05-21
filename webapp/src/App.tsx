@@ -4,7 +4,8 @@ import { TimeStepper } from "./components/TimeStepper.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
 import { CurrentTimeProvider } from "./lib/current-time.js";
-import { PovProvider, usePov } from "./lib/pov.js";
+import { PovProvider, usePov, type Pov } from "./lib/pov.js";
+import { useKnownIds } from "./lib/pov-knowledge.js";
 import { PovSwitcher } from "./components/PovSwitcher.js";
 import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
 import { SelectionChips } from "./components/SelectionChips.js";
@@ -160,6 +161,35 @@ function Loaded(props: LoadedProps) {
   const { dump, day, hour, setDay, setHour } = props;
   const { pov } = usePov();
   const set = useSelectionSet();
+
+  // POV transition prune (see memory: feedback-pov-prune-selection).
+  // When admin→actor or actor→actor, drop selection entries the new
+  // POV doesn't know. An emptied set defers to selection-set §7.3's
+  // auto-add-self rule, which seeds the POV chip as the default.
+  const povActorId = pov.kind === "actor" ? pov.actorId : null;
+  const known = useKnownIds(dump, povActorId ?? -1, day, hour);
+  const prevPovRef = useRef<Pov>(pov);
+  useEffect(() => {
+    const prev = prevPovRef.current;
+    prevPovRef.current = pov;
+    if (pov.kind !== "actor") return;
+    const wasAdmin = prev.kind === "admin";
+    const switchedActor =
+      prev.kind === "actor" && prev.actorId !== pov.actorId;
+    if (!wasAdmin && !switchedActor) return;
+    const pruned = set.items.filter((it) => {
+      if (it.kind === "actor") return known.actors.has(it.id);
+      if (it.kind === "location") return known.locations.has(it.id);
+      if (it.kind === "item") return known.itemKinds.has(it.id);
+      // lots / deals / pools have no clean POV-knowledge gate today —
+      // keep them through the prune rather than guess.
+      return true;
+    });
+    if (pruned.length !== set.items.length) {
+      set.setItems(pruned);
+    }
+  }, [pov, known, set, dump]);
+
   const appRef = useRef<HTMLDivElement>(null);
   const rhsRef = useRef<HTMLDivElement>(null);
   const [leftPx, setLeftPx] = useState<number>(() =>
