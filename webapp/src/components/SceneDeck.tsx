@@ -5,6 +5,7 @@ import { LocationLink } from "./Links.js";
 import { ItemRef, LotRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
 import { StockChip } from "./StockChip.js";
+import { useSelectionSet } from "../lib/selection-set.js";
 import { chipName, fullName } from "../lib/actor-names.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
@@ -319,8 +320,20 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect, povActorId }: P
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
   useEffect(() => {
-    // When the hour changes, snap to the first scene (or null if none).
-    setActiveKey(scenes.length === 0 ? null : scenes[0]!.key);
+    // Hold the active tab when scenes recompute. The `scenes` useMemo
+    // re-runs whenever the parent re-renders (e.g. lower-panel resize
+    // changes App's lowerPx, which re-creates the inline `onSelect`
+    // arrow we depend on), so an unconditional reset to scenes[0]
+    // would yank focus back to the first tab on every drag tick.
+    // Only fall back when the active scene's key no longer exists —
+    // typically because the cursor advanced to a new hour.
+    if (scenes.length === 0) {
+      setActiveKey(null);
+      return;
+    }
+    setActiveKey((cur) =>
+      cur !== null && scenes.some((s) => s.key === cur) ? cur : scenes[0]!.key,
+    );
   }, [scenes]);
 
   if (scenes.length === 0) {
@@ -1532,6 +1545,37 @@ function renderHaggleQuote(
   }
 }
 
+interface RawExchange {
+  readonly fromActorId: number;
+  readonly toActorId: number;
+  readonly lead: {
+    readonly kind: "commodity" | "rep";
+    readonly side: "supply" | "demand";
+    readonly subjectItemKindId: number | null;
+    readonly subjectTargetActorId: number | null;
+    readonly counterpartyActorId: number | null;
+  };
+}
+
+interface GossipGroup {
+  readonly a: number;
+  readonly b: number;
+  readonly loc: number;
+  exchanges: RawExchange[];
+}
+
+/** Subject the gossip line is about — commodity supply/demand uses the
+ *  named counterparty (falling back to the speaker for first-hand "I
+ *  have/want X" leads); rep leads use the target. May be null when the
+ *  payload is incomplete. */
+function subjectActorIdOf(x: RawExchange): number | null {
+  const lead = x.lead;
+  if (lead.kind === "commodity") {
+    return lead.counterpartyActorId ?? x.fromActorId;
+  }
+  return lead.subjectTargetActorId;
+}
+
 function GossipScene({
   events,
   dump,
@@ -1541,92 +1585,141 @@ function GossipScene({
   readonly dump: RunDump;
   readonly onSelect: (s: Selection) => void;
 }) {
+  void onSelect;
+  const set = useSelectionSet();
+  // Chips inside the gossip scene toggle membership in the selection
+  // set rather than replace it. Letting them route through the parent
+  // `onSelect` would wipe the user's current filter (e.g. selecting
+  // Del + Nag's then clicking a gossip line would drop both).
+  const toggle = (s: Selection): void => set.toggle(s);
+
+  // Group by (unordered pair, location). The engine emits multiple
+  // gossip.exchanged events per encounter (chat + clarification +
+  // proprietor + deal — see core/events.ts), and their exchanges
+  // overlap. We:
+  //   1. Drop any exchange where the subject is the LISTENER — you
+  //      don't tell someone news about themselves; they already know.
+  //   2. Dedupe by (speaker, kind, side, subject) so the same lead
+  //      doesn't print twice when chat + clarification both fired.
+  const groups = useMemo<readonly GossipGroup[]>(() => {
+    const map = new Map<string, GossipGroup>();
+    for (const e of events) {
+      const participants =
+        (e.participantActorIds as readonly number[] | undefined) ?? [];
+      const a = participants[0];
+      const b = participants[1];
+      if (a === undefined || b === undefined) continue;
+      const loc = e.atLocationId as number;
+      const key = `${Math.min(a, b)}-${Math.max(a, b)}-${loc}`;
+      const entry: GossipGroup =
+        map.get(key) ?? { a, b, loc, exchanges: [] };
+      const xs = (e.exchanges as readonly RawExchange[] | undefined) ?? [];
+      for (const x of xs) {
+        const subj = subjectActorIdOf(x);
+        if (subj !== null && subj === x.toActorId) continue;
+        entry.exchanges.push(x);
+      }
+      map.set(key, entry);
+    }
+    for (const g of map.values()) {
+      const seen = new Set<string>();
+      g.exchanges = g.exchanges.filter((x) => {
+        const lead = x.lead;
+        const subjectKey =
+          lead.subjectItemKindId !== null
+            ? `i${lead.subjectItemKindId}`
+            : lead.subjectTargetActorId !== null
+              ? `a${lead.subjectTargetActorId}`
+              : "u";
+        const k = `${x.fromActorId}|${lead.kind}|${lead.side}|${subjectKey}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+    return [...map.values()].filter((g) => g.exchanges.length > 0);
+  }, [events]);
+
+  const totalLines = groups.reduce((s, g) => s + g.exchanges.length, 0);
+
   return (
     <section className="scene scene-gossip">
       <header className="scene-header">
         <span className="scene-tag scene-tag-gossip">Gossip</span>
-        <span className="muted">{events.length} exchange{events.length === 1 ? "" : "s"}</span>
+        <span className="muted">
+          {groups.length} encounter{groups.length === 1 ? "" : "s"}
+          {" · "}
+          {totalLines} line{totalLines === 1 ? "" : "s"}
+        </span>
       </header>
       <ul className="scene-gossip-list">
-        {events.map((e, i) => {
-          const participants = (e.participantActorIds as readonly number[] | undefined) ?? [];
-          const a = participants[0];
-          const b = participants[1];
-          const kind = (e.kind as "proprietor" | "chat" | "deal" | "clarification" | undefined) ?? "proprietor";
-          const tag =
-            kind === "chat"
-              ? "chat"
-              : kind === "deal"
-                ? "deal-side"
-                : kind === "clarification"
-                  ? "clarification"
-                  : "proprietor";
-          const loc = e.atLocationId as number;
-          const exchanges = (e.exchanges as readonly any[] | undefined) ?? [];
-          return (
-            <li key={i} className="scene-gossip-row">
-              <div className="scene-parties">
-                {a !== undefined ? (
-                  <ActorChipById dump={dump} actorId={a} onSelect={onSelect} size={16} />
-                ) : (
-                  <span className="muted">?</span>
-                )}
-                <span>↔</span>
-                {b !== undefined ? (
-                  <ActorChipById dump={dump} actorId={b} onSelect={onSelect} size={16} />
-                ) : (
-                  <span className="muted">?</span>
-                )}
-                <span className="muted">at</span>
-                <LocationLink dump={dump} locationId={loc} onSelect={onSelect} />
-                <span className="muted">· {tag}</span>
-              </div>
-              {exchanges.length > 0 ? (
-                <ul className="scene-lines">
-                  {exchanges.map((x, j) => {
-                    const lead = x.lead;
-                    const verb = lead.side === "supply" ? "has" : "wants";
-                    // Headline-only per the two-tier gossip model
-                    // (docs gossip mechanic: counterparty / qty / unit
-                    // price hidden until receiver pays £3 + 1h to
-                    // unlock detail). At the moment of the exchange
-                    // the receiver's lead is freshly locked, so we
-                    // render subject + side + speaker + confidence
-                    // only — no counterparty avatar, no StockChip
-                    // with qty/price.
-                    return (
-                      <li key={j} className="scene-gossip-headline">
-                        <ActorChipById
-                          dump={dump}
-                          actorId={x.fromActorId}
-                          onSelect={onSelect}
-                          size={14}
-                        />
-                        <span className="muted">gossips</span>
-                        {lead.subjectItemKindId !== null ? (
-                          <StockChip
-                            dump={dump}
-                            itemKindId={lead.subjectItemKindId}
-                            qualityTier={lead.subjectQualityTier ?? null}
-                            quantity={null}
-                            observerActorId={null}
-                            onSelect={onSelect}
-                          />
-                        ) : (
-                          <span className="muted">[rep lead]</span>
-                        )}
-                        <span className="muted">· {verb}</span>
-                        <span className="muted">· {lead.confidence}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : null}
-            </li>
-          );
-        })}
+        {groups.map((g, i) => (
+          <li key={i} className="scene-gossip-row">
+            <div className="scene-parties">
+              <ActorChipById dump={dump} actorId={g.a} onSelect={toggle} size={16} />
+              <span className="ref-arrow">↔</span>
+              <ActorChipById dump={dump} actorId={g.b} onSelect={toggle} size={16} />
+              <span className="muted">at</span>
+              <LocationLink dump={dump} locationId={g.loc} onSelect={toggle} />
+            </div>
+            <ul className="scene-lines">
+              {g.exchanges.map((x, j) => (
+                <GossipExchangeLine
+                  key={j}
+                  dump={dump}
+                  exchange={x}
+                  toggle={toggle}
+                />
+              ))}
+            </ul>
+          </li>
+        ))}
       </ul>
     </section>
+  );
+}
+
+/** One row inside a gossip exchange:
+ *    `(speaker): (subject) verb (stock name only)`  — commodity
+ *    `(speaker): (target) — bad rep`                — rep
+ *  Two-tier gossip headline (docs/ui.md + memory:project_gossip_two_tier):
+ *  qty / unit price are hidden until the receiver unlocks. Counterparty
+ *  is shown because the speaker named them out loud — the receiver's
+ *  stored lead row redacts it, but the verbal moment doesn't. */
+function GossipExchangeLine({
+  dump,
+  exchange,
+  toggle,
+}: {
+  readonly dump: RunDump;
+  readonly exchange: RawExchange;
+  readonly toggle: (s: Selection) => void;
+}) {
+  const { fromActorId, lead } = exchange;
+  const isCommodity = lead.kind === "commodity" && lead.subjectItemKindId !== null;
+  const subjectActorId = subjectActorIdOf(exchange);
+  const verb = isCommodity ? (lead.side === "supply" ? "has" : "wants") : "— bad rep";
+  return (
+    <li className="scene-gossip-headline">
+      <ActorChipById dump={dump} actorId={fromActorId} onSelect={toggle} size={14} />
+      <span className="muted">:</span>
+      {subjectActorId !== null ? (
+        <ActorChipById dump={dump} actorId={subjectActorId} onSelect={toggle} size={14} />
+      ) : (
+        <span className="muted">someone</span>
+      )}
+      <span className="muted">{verb}</span>
+      {isCommodity ? (
+        <StockChip
+          dump={dump}
+          itemKindId={lead.subjectItemKindId as number}
+          qualityTier={null}
+          quantity={null}
+          observerActorId={null}
+          onSelect={toggle}
+        />
+      ) : null}
+    </li>
   );
 }
 

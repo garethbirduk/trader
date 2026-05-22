@@ -437,12 +437,9 @@ interface ProfileSpec {
 const ACTOR_PROFILES: Readonly<Record<string, ProfileSpec>> = {};
 
 
-// Which actor codes participate in pub-deal / pool-claim autonomy. The
-// wider cast follows routines but stays out of the trading loop —
-// civilians don't claim pools, and Mike doesn't run pubdeals from
-// behind the bar.
-// Trading actor codes — data moved to JSON (TBD).
-const TRADING_CODES: readonly string[] = [];
+// Trading actors are now derived at seed-time from each actor's
+// `roles: ["dealer"]` flag in data/actors.json (see tradingActorIds
+// below). No const here.
 
 /**
  * Information-trader actors. They aren't necessarily traders of stock —
@@ -885,9 +882,12 @@ export function seedPlaceholderSkin(
     throw new Error("placeholder skin must seed the auction-house location");
   }
 
-  const tradingActorIds = TRADING_CODES.map((c) => actorByCode.get(c)).filter(
-    (id): id is number => id !== undefined,
-  );
+  // Pub-deal / pool-claim autonomy participants. Sourced from each
+  // actor's `roles` field in data/actors.json — the legacy TRADING_CODES
+  // const was emptied when the cast moved to JSON.
+  const tradingActorIds = ACTORS.filter((a) => a.roles?.includes("dealer"))
+    .map((a) => actorByCode.get(a.code))
+    .filter((id): id is number => id !== undefined);
   const infoTraderActorIds = INFO_TRADER_CODES.map((c) => actorByCode.get(c)).filter(
     (id): id is number => id !== undefined,
   );
