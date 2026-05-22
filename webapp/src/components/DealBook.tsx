@@ -1,11 +1,40 @@
 import { useMemo, useState } from "react";
-import type { DaySnapshot, RunDump, SnapshotDeal } from "../types.js";
+import type { DaySnapshot, RunDump, RunEvent, SnapshotDeal } from "../types.js";
 import type { Selection } from "../App.js";
 import { DealRef, LocationRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
 import { CategoryTag, StockChip } from "./StockChip.js";
 import { usePov } from "../lib/pov.js";
 import { useSelectionSet } from "../lib/selection-set.js";
+
+/** Per-deal frozen belief snapshot, captured from `pubdeal.agreed`
+ *  events. Drives the POV chips on the deal card so they show what
+ *  each side actually thought at agreement time, not what their live
+ *  knowledgeProfile would compute now (which is the wrong number for
+ *  history — and silently falls back to truth when the profile is
+ *  missing, hiding the most interesting part of the deal). */
+interface DealBeliefs {
+  readonly sellerCentre: number | null;
+  readonly buyerCentre: number | null;
+}
+
+function buildDealBeliefIndex(events: readonly RunEvent[]): ReadonlyMap<number, DealBeliefs> {
+  const out = new Map<number, DealBeliefs>();
+  for (const e of events) {
+    if (e.type !== "pubdeal.agreed") continue;
+    const dealId = e.dealId as number | undefined;
+    if (typeof dealId !== "number") continue;
+    const sb = e.sellerBelief as { low: number; high: number } | undefined;
+    const bb = e.buyerBelief as { low: number; high: number } | undefined;
+    out.set(dealId, {
+      sellerCentre:
+        sb !== undefined ? Math.max(0, Math.round((sb.low + sb.high) / 2)) : null,
+      buyerCentre:
+        bb !== undefined ? Math.max(0, Math.round((bb.low + bb.high) / 2)) : null,
+    });
+  }
+  return out;
+}
 
 interface Props {
   readonly dump: RunDump;
@@ -83,6 +112,8 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
     return m;
   }, [dump.items]);
 
+  const dealBeliefs = useMemo(() => buildDealBeliefIndex(dump.events), [dump.events]);
+
   const filter = useMemo(() => bucketSelection(set.items), [set.items]);
 
   const filtered = useMemo(() => {
@@ -147,6 +178,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
               deal={d}
               onSelect={onSelect}
               povActorId={povActorId}
+              beliefs={dealBeliefs.get(d.id) ?? null}
             />
           ))}
         </div>
@@ -160,9 +192,10 @@ interface DealCardProps {
   readonly deal: SnapshotDeal;
   readonly onSelect: (s: Selection) => void;
   readonly povActorId: number | null;
+  readonly beliefs: DealBeliefs | null;
 }
 
-function DealCard({ dump, deal, onSelect, povActorId }: DealCardProps) {
+function DealCard({ dump, deal, onSelect, povActorId, beliefs }: DealCardProps) {
   // Character-POV collapses the line to the actor's own view of the
   // sale when they are party to the deal. Observer-POV (admin, or a
   // character watching someone else's deal) gets the full 4-chip read:
@@ -258,6 +291,9 @@ function DealCard({ dump, deal, onSelect, povActorId }: DealCardProps) {
                       qualityTier={l.qualityTier}
                       quantity={l.quantity}
                       observerActorId={deal.sellerActorId}
+                      {...(beliefs?.sellerCentre !== null && beliefs?.sellerCentre !== undefined
+                        ? { unitPriceOverride: beliefs.sellerCentre }
+                        : {})}
                       onSelect={onSelect}
                     />
                     <ActorChipById
@@ -273,6 +309,9 @@ function DealCard({ dump, deal, onSelect, povActorId }: DealCardProps) {
                       qualityTier={l.qualityTier}
                       quantity={l.quantity}
                       observerActorId={deal.buyerActorId}
+                      {...(beliefs?.buyerCentre !== null && beliefs?.buyerCentre !== undefined
+                        ? { unitPriceOverride: beliefs.buyerCentre }
+                        : {})}
                       onSelect={onSelect}
                     />
                     <ActorChipById

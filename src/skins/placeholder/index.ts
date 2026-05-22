@@ -294,8 +294,22 @@ export interface OpenSession {
  * different (e.g. a yuppie's "average electronics" anchor) can split
  * per-archetype later; v1 is one number per category.
  */
-// Per-category "uninformed prior" anchors — data moved to JSON (TBD).
-const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map();
+// Per-category "uninformed prior" anchors — what a punter with zero
+// expertise would guess an average item is worth. Round-tens baselines
+// across each category's catalogue, not careful averages.
+const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map([
+  ["food", 6],
+  ["novelty", 8],
+  ["toys", 15],
+  ["decor", 20],
+  ["tools", 20],
+  ["clothing", 30],
+  ["luggage", 30],
+  ["safety", 30],
+  ["electrical", 40],
+  ["furniture", 60],
+  ["vehicles", 50],
+]);
 
 /**
  * Per-category condition anchor in [0, 1] — the v2 condition arm's
@@ -316,8 +330,22 @@ const CATEGORY_ANCHORS: ReadonlyMap<string, number> = new Map();
  * slightly below — knock-off and second-hand outflow is the dominant
  * channel.
  */
-// Per-category condition anchor — data moved to JSON (TBD).
-const CATEGORY_CONDITION_ANCHORS: ReadonlyMap<string, number> = new Map();
+// Per-category condition anchor — clueless-actor centre on the [0, 1]
+// quality scale. See the long doc-comment above for the lean per
+// category.
+const CATEGORY_CONDITION_ANCHORS: ReadonlyMap<string, number> = new Map([
+  ["food", 0.4],
+  ["tools", 0.4],
+  ["vehicles", 0.4],
+  ["toys", 0.45],
+  ["novelty", 0.45],
+  ["luggage", 0.45],
+  ["clothing", 0.5],
+  ["decor", 0.5],
+  ["furniture", 0.5],
+  ["electrical", 0.55],
+  ["safety", 0.55],
+]);
 
 const DAYS_MON_SUN: readonly number[] = [1, 2, 3, 4, 5, 6, 7];
 const DAYS_THU_SUN: readonly number[] = [4, 5, 6, 7];

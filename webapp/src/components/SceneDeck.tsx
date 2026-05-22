@@ -110,13 +110,36 @@ function indexExchangeLeads(dump: RunDump): ReadonlyMap<number, ExchangeLead> {
  * tab; once the cursor moves past the hour, the scene disappears.
  */
 export function SceneDeck({ dump, day, hour, snapshot, onSelect, povActorId }: Props) {
+  const set = useSelectionSet();
+  // Actor ids in the current selection. Used to narrow the deck:
+  //   • Admin + selected actor → drop events that don't touch any
+  //     selected actor (so "Mickey selected" leaves only Mickey's
+  //     gossip / deals / market / etc.).
+  //   • Player POV — povActorId already does the narrowing; the
+  //     selection set is informational only here.
+  const focusActorIds = useMemo<ReadonlySet<number>>(() => {
+    const out = new Set<number>();
+    for (const s of set.items) {
+      if (s.kind === "actor") out.add(s.id);
+    }
+    return out;
+  }, [set.items]);
+
   const eventsThisHour = useMemo(() => {
     const all = dump.events.filter(
       (e) => e.at.day === day && e.at.hour === hour,
     );
-    if (povActorId === null) return all;
-    return all.filter((e) => eventTouchesActor(e, povActorId));
-  }, [dump.events, day, hour, povActorId]);
+    if (povActorId !== null) {
+      return all.filter((e) => eventTouchesActor(e, povActorId));
+    }
+    if (focusActorIds.size === 0) return all;
+    return all.filter((e) => {
+      for (const id of focusActorIds) {
+        if (eventTouchesActor(e, id)) return true;
+      }
+      return false;
+    });
+  }, [dump.events, day, hour, povActorId, focusActorIds]);
 
   const scenes = useMemo<readonly Scene[]>(() => {
     const list: Scene[] = [];
@@ -240,7 +263,13 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect, povActorId }: P
         key: "gossip",
         label: `Gossip (${gossip.length})`,
         render: () => (
-          <GossipScene events={gossip} dump={dump} onSelect={onSelect} />
+          <GossipScene
+            events={gossip}
+            dump={dump}
+            onSelect={onSelect}
+            povActorId={povActorId}
+            focusActorIds={focusActorIds}
+          />
         ),
       });
     }
@@ -316,7 +345,7 @@ export function SceneDeck({ dump, day, hour, snapshot, onSelect, povActorId }: P
     }
 
     return list;
-  }, [eventsThisHour, snapshot, dump, day, onSelect, povActorId]);
+  }, [eventsThisHour, snapshot, dump, day, onSelect, povActorId, focusActorIds]);
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
   useEffect(() => {
@@ -1580,10 +1609,14 @@ function GossipScene({
   events,
   dump,
   onSelect,
+  povActorId,
+  focusActorIds,
 }: {
   readonly events: readonly RunEvent[];
   readonly dump: RunDump;
   readonly onSelect: (s: Selection) => void;
+  readonly povActorId: number | null;
+  readonly focusActorIds: ReadonlySet<number>;
 }) {
   void onSelect;
   const set = useSelectionSet();
@@ -1599,7 +1632,14 @@ function GossipScene({
   // overlap. We:
   //   1. Drop any exchange where the subject is the LISTENER — you
   //      don't tell someone news about themselves; they already know.
-  //   2. Dedupe by (speaker, kind, side, subject) so the same lead
+  //   2. Drop exchanges that don't match the current POV / selection
+  //      focus: in player mode, keep only what the player *received*
+  //      (toActorId === povActorId); in admin + selected-actors,
+  //      keep exchanges where either side of the line is one of the
+  //      selected actors. Without these filters a Boyce/Trigger
+  //      exchange survives in "Mickey selected" because the parent
+  //      event-level filter already lets sibling exchanges through.
+  //   3. Dedupe by (speaker, kind, side, subject) so the same lead
   //      doesn't print twice when chat + clarification both fired.
   const groups = useMemo<readonly GossipGroup[]>(() => {
     const map = new Map<string, GossipGroup>();
@@ -1617,6 +1657,16 @@ function GossipScene({
       for (const x of xs) {
         const subj = subjectActorIdOf(x);
         if (subj !== null && subj === x.toActorId) continue;
+        if (povActorId !== null) {
+          if (x.toActorId !== povActorId) continue;
+        } else if (focusActorIds.size > 0) {
+          if (
+            !focusActorIds.has(x.fromActorId) &&
+            !focusActorIds.has(x.toActorId)
+          ) {
+            continue;
+          }
+        }
         entry.exchanges.push(x);
       }
       map.set(key, entry);

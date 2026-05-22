@@ -139,8 +139,8 @@ describe("detail-unlock (two-tier gossip)", () => {
     expect(stillLocked.map((l) => l.acquiredDay).sort()).toEqual([1, 2]);
 
     // Asker paid £3 → Mike (the venue proprietor) received it.
-    expect(getActorById(localDb, asker.id)!.cash).toBe(5000 - 300);
-    expect(getActorById(localDb, mike.id)!.cash).toBe(300);
+    expect(getActorById(localDb, asker.id)!.cash).toBe(5000 - 3);
+    expect(getActorById(localDb, mike.id)!.cash).toBe(3);
 
     // Three audit rows written.
     expect(getDisclosuresForActor(localDb, asker.id)).toHaveLength(3);
@@ -152,15 +152,17 @@ describe("detail-unlock (two-tier gossip)", () => {
     expect(unlock).toBeDefined();
     expect(unlock.unlockedLeads).toHaveLength(3);
     expect(unlock.unlockedLeads.every((u) => u.unlocked)).toBe(true);
-    expect(unlock.costPaid).toBe(300);
+    expect(unlock.costPaid).toBe(3);
     expect(unlock.paidToActorId).toBe(mike.id);
   });
 
-  it("is ineligible when cash < pricePence — no flip, no event, no debit", () => {
+  it("is ineligible when cash < price — no flip, no event, no debit", () => {
     const { localDb, nags, asker, partner, item } = seed();
-    // Reset asker's cash to below the £3 fee.
+    // Reset asker's cash to below the £3 unlock fee. attemptDetailUnlock
+    // gates on `cfg.price` directly; the £10 `minCash` floor only
+    // applies to the autonomy roll.
     const skintAsker = insertActor(localDb, {
-      code: "skint", firstName: "Skint", shortName: "Skint", cash: 100,
+      code: "skint", firstName: "Skint", shortName: "Skint", cash: 2,
     });
     setActorLocation(localDb, skintAsker.id, nags.id);
     const src = insertLead(localDb, {
@@ -201,7 +203,120 @@ describe("detail-unlock (two-tier gossip)", () => {
     );
     expect(result.outcome).toBe("ineligible");
     expect(getLockedLeadsByHolder(localDb, skintAsker.id).length).toBe(1);
-    expect(getActorById(localDb, skintAsker.id)!.cash).toBe(100);
+    expect(getActorById(localDb, skintAsker.id)!.cash).toBe(2);
+    expect(events.filter((e) => e.type === "gossip.detail-unlocked")).toHaveLength(0);
+  });
+
+  it("self-subject leads are excluded from the unlock pick", () => {
+    const { localDb, nags, asker, partner, item } = seed();
+
+    // Plant a locked lead whose counterparty *is* the asker — i.e.
+    // gossip about the asker's own supply that loop-backed to them.
+    const selfSubject = insertLead(localDb, {
+      holderActorId: partner.id,
+      side: "supply",
+      subjectItemKindId: item.id,
+      subjectQualityTier: "good",
+      estimatedQuantity: 20,
+      estimatedUnitPrice: 5,
+      acquiredDay: 1,
+      counterpartyActorId: asker.id,
+    });
+    shareLead(localDb, partner.id, asker.id, selfSubject.id, 1);
+
+    // And one normal locked lead (counterparty = a third party).
+    const normal = insertLead(localDb, {
+      holderActorId: partner.id,
+      side: "supply",
+      subjectItemKindId: item.id,
+      subjectQualityTier: "good",
+      estimatedQuantity: 10,
+      estimatedUnitPrice: 4,
+      acquiredDay: 2,
+      counterpartyActorId: partner.id,
+    });
+    shareLead(localDb, partner.id, asker.id, normal.id, 2);
+
+    const world = new World({
+      db: localDb,
+      rng: createRNG("self-subject"),
+      seed: "self-subject",
+      maxDays: 1,
+      startDay: 3,
+      startHour: 19,
+    });
+    const events: WorldEvent[] = [];
+    world.events.subscribe((e) => events.push(e));
+
+    const result = attemptDetailUnlock(
+      world,
+      {
+        knowledgeProfiles: new Map(),
+        autonomyEligibleActorIds: new Set([asker.id]),
+      },
+      {
+        askerActorId: asker.id,
+        partnerActorId: partner.id,
+        locationId: nags.id,
+        day: 3,
+        hour: 19,
+      },
+    );
+    expect(result.outcome).toBe("ok");
+
+    // Only the non-self-subject lead should have been picked.
+    const unlock = events.find(
+      (e) => e.type === "gossip.detail-unlocked",
+    ) as Extract<WorldEvent, { type: "gossip.detail-unlocked" }>;
+    expect(unlock.unlockedLeads).toHaveLength(1);
+    // The self-subject lead is still locked.
+    const stillLocked = getLockedLeadsByHolder(localDb, asker.id);
+    expect(stillLocked.some((l) => l.counterpartyActorId === asker.id)).toBe(true);
+  });
+
+  it("is ineligible when every locked lead is self-subject — no charge, no event", () => {
+    const { localDb, nags, asker, partner, item } = seed();
+
+    const selfOnly = insertLead(localDb, {
+      holderActorId: partner.id,
+      side: "supply",
+      subjectItemKindId: item.id,
+      subjectQualityTier: "good",
+      estimatedQuantity: 20,
+      estimatedUnitPrice: 5,
+      acquiredDay: 1,
+      counterpartyActorId: asker.id,
+    });
+    shareLead(localDb, partner.id, asker.id, selfOnly.id, 1);
+
+    const world = new World({
+      db: localDb,
+      rng: createRNG("self-only"),
+      seed: "self-only",
+      maxDays: 1,
+      startDay: 2,
+      startHour: 19,
+    });
+    const events: WorldEvent[] = [];
+    world.events.subscribe((e) => events.push(e));
+
+    const cashBefore = getActorById(localDb, asker.id)!.cash;
+    const result = attemptDetailUnlock(
+      world,
+      {
+        knowledgeProfiles: new Map(),
+        autonomyEligibleActorIds: new Set([asker.id]),
+      },
+      {
+        askerActorId: asker.id,
+        partnerActorId: partner.id,
+        locationId: nags.id,
+        day: 2,
+        hour: 19,
+      },
+    );
+    expect(result.outcome).toBe("ineligible");
+    expect(getActorById(localDb, asker.id)!.cash).toBe(cashBefore);
     expect(events.filter((e) => e.type === "gossip.detail-unlocked")).toHaveLength(0);
   });
 
@@ -261,7 +376,7 @@ describe("detail-unlock (two-tier gossip)", () => {
     ) as Extract<WorldEvent, { type: "gossip.detail-unlocked" }> | undefined;
     expect(unlock).toBeDefined();
     expect(unlock!.askerActorId).toBe(asker.id);
-    expect(getActorById(localDb, asker.id)!.cash).toBe(5000 - 300);
+    expect(getActorById(localDb, asker.id)!.cash).toBe(5000 - 3);
     expect(getLockedLeadsByHolder(localDb, asker.id)).toHaveLength(0);
   });
 

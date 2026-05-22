@@ -272,17 +272,17 @@ export interface GossipMutationConfig {
 export interface DetailUnlockConfig {
   /** Set false to disable the unlock mechanic globally. */
   readonly enabled: boolean;
-  /** Flat cost the asker pays per unlock session, in pence.
-   *  Default 300 (£3). */
-  readonly pricePence: number;
+  /** Flat cost the asker pays per unlock session, in pounds.
+   *  Default 3. */
+  readonly price: number;
   /** How many of the asker's locked headlines flip to detail tier per
    *  session. Default 3 — top-N most recent. */
   readonly unlockYield: number;
-  /** Asker must have at least this much cash (pence) to consider
-   *  initiating the action. Distinct from `pricePence`: this is the
+  /** Asker must have at least this much cash (pounds) to consider
+   *  initiating the action. Distinct from `price`: this is the
    *  general-solvency floor that makes the £3 spend worthwhile
-   *  in-character. Default 1000 (£10). */
-  readonly minCashPence: number;
+   *  in-character. Default 10. */
+  readonly minCash: number;
   /** Baseline probability per eligible chat that an NPC asker rolls
    *  to ask. Stacks multiplicatively with the per-actor and interest
    *  multipliers. Default 0.3. */
@@ -634,9 +634,9 @@ export const DEFAULT_ECONOMICS_CONFIG: EconomicsConfig = {
   },
   detailUnlock: {
     enabled: true,
-    pricePence: 300,
+    price: 3,
     unlockYield: 3,
-    minCashPence: 1000,
+    minCash: 10,
     baseProb: 0.3,
     infoTraderProbMultiplier: 2.0,
     interestBonusPerMatch: 0.15,

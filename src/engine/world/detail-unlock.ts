@@ -57,8 +57,10 @@ export interface UnlockAttemptResult {
  *
  *   • Hard eligibility:
  *       - asker is in `autonomyEligibleActorIds`
- *       - asker.cash >= `minCashPence`
- *       - asker holds >= 1 locked headline
+ *       - asker.cash >= `minCash`
+ *       - asker holds >= 1 locked headline whose counterparty is not
+ *         the asker themselves (no paying to "discover" your own
+ *         stock or wishlist)
  *
  *   • Autonomy roll (skipped if asker == playerActorId; the player
  *     drives the action from the UI):
@@ -68,9 +70,10 @@ export interface UnlockAttemptResult {
  *              whose category is in asker's appraisal-interest band
  *
  *   • Effect on roll-pass:
- *       - Debit `pricePence` from asker; pay it to the venue
+ *       - Debit `price` from asker; pay it to the venue
  *         proprietor (or sink to off-map account if none).
- *       - Pick top-N most-recent locked headlines from asker's bag.
+ *       - Pick top-N most-recent locked headlines from asker's bag
+ *         (excluding self-subject leads).
  *       - For each, flip detail_unlocked 0→1 (the lead's drifted
  *         detail fields become visible in-place) and write an audit
  *         row to `lead_disclosures`.
@@ -130,9 +133,11 @@ function shouldRoll(
   const cfg = economics.detailUnlock;
   const actor = getActorById(world.db, asker);
   if (actor === null) return false;
-  if (actor.cash < cfg.minCashPence) return false;
+  if (actor.cash < cfg.minCash) return false;
 
-  const locked = getLockedLeadsByHolder(world.db, asker);
+  const locked = getLockedLeadsByHolder(world.db, asker).filter(
+    (l) => l.counterpartyActorId !== asker,
+  );
   if (locked.length === 0) return false;
 
   // Probability: base, optionally bumped by info-trader status,
@@ -214,11 +219,18 @@ export function attemptDetailUnlock(
 
   const asker = getActorById(world.db, args.askerActorId);
   if (asker === null) return { outcome: "ineligible", reason: "no-asker" };
-  if (asker.cash < cfg.pricePence) {
+  if (asker.cash < cfg.price) {
     return { outcome: "ineligible", reason: "insufficient-cash" };
   }
 
-  const locked = getLockedLeadsByHolder(world.db, args.askerActorId);
+  // Self-subject leads (where the asker is the named counterparty) are
+  // excluded — you don't pay to learn what *you* supply or want; the
+  // judgement engine already gives you first-hand certainty on your own
+  // stock and wishlist. Filter before the empty check so an asker whose
+  // bag is *only* self-subject is treated as having nothing to unlock.
+  const locked = getLockedLeadsByHolder(world.db, args.askerActorId).filter(
+    (l) => l.counterpartyActorId !== args.askerActorId,
+  );
   if (locked.length === 0) {
     return { outcome: "ineligible", reason: "no-locked-leads" };
   }
@@ -227,9 +239,9 @@ export function attemptDetailUnlock(
 
   // Cash flow: asker → venue proprietor (or off-map sink if none).
   const proprietorId = getLocationProprietor(world.db, args.locationId);
-  adjustActorCash(world.db, args.askerActorId, -cfg.pricePence);
+  adjustActorCash(world.db, args.askerActorId, -cfg.price);
   if (proprietorId !== null && proprietorId !== args.askerActorId) {
-    adjustActorCash(world.db, proprietorId, cfg.pricePence);
+    adjustActorCash(world.db, proprietorId, cfg.price);
   }
   // If no proprietor, the cash sinks. Off-map sweep handles the
   // accounting at end-of-day.
@@ -244,7 +256,7 @@ export function attemptDetailUnlock(
         actorId: args.askerActorId,
         revealedAtDay: args.day,
         revealedByActorId: args.partnerActorId,
-        costPaid: cfg.pricePence,
+        costPaid: cfg.price,
       });
     }
     unlockedLeads.push({ leadId: lead.id, unlocked: wasFlipped });
@@ -256,7 +268,7 @@ export function attemptDetailUnlock(
     atLocationId: args.locationId,
     askerActorId: args.askerActorId,
     partnerActorId: args.partnerActorId,
-    costPaid: cfg.pricePence,
+    costPaid: cfg.price,
     paidToActorId:
       proprietorId !== null && proprietorId !== args.askerActorId
         ? proprietorId

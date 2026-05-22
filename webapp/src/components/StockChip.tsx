@@ -61,11 +61,18 @@ interface Props {
    *  `priceBandFor` against that actor's category expertise + arm-j.
    *  Ignored when `unitPriceOverride` is provided. */
   readonly observerActorId: number | null;
-  /** Optional override for the per-unit price. When provided, this
+  /** Optional override for the per-unit value. When provided, this
    *  replaces the computed value (truth / POV) and is used as-is for
-   *  the chip's £/u and the total. Use for transactional contexts
-   *  (deal lines, sold market lots) where the chip represents an
-   *  agreed / realised price rather than a perceived value. */
+   *  the chip's £/u and the total. Two valid uses:
+   *  • Transactional contexts (deal lines, sold market lots) — the
+   *    agreed / realised unit price.
+   *  • Frozen-belief contexts (historical events) — the belief
+   *    centre an actor held *at the time of the event*, captured
+   *    from the event payload (`sellerBelief` / `buyerBelief`) rather
+   *    than re-derived from the actor's current knowledgeProfile.
+   *    Use this when the live profile would lie about history — e.g.
+   *    a deal card showing what the buyer thought when they agreed,
+   *    not what their profile would compute today. */
   readonly unitPriceOverride?: number;
   /** Override the perceiver whose j gates the tier badge palette
    *  resolution. Defaults to the player-actor's j. */
