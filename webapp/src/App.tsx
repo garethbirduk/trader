@@ -19,6 +19,7 @@ import { DealBook } from "./components/DealBook.js";
 import { InventoryView } from "./components/InventoryView.js";
 import { PoolBoard } from "./components/PoolBoard.js";
 import { ItemsList } from "./components/ItemsList.js";
+import { GossipBoard } from "./components/GossipBoard.js";
 
 export type RhsTab =
   | "calendar"
@@ -27,6 +28,7 @@ export type RhsTab =
   | "lots"
   | "pools"
   | "items"
+  | "gossip"
   | "editor";
 export type EditorSubTab = "residences" | "actors" | "businesses" | "map";
 
@@ -426,6 +428,15 @@ function Loaded(props: LoadedProps) {
             >
               Items
             </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "gossip" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "gossip"}
+              onClick={() => props.setRhsTab("gossip")}
+            >
+              Gossip
+            </button>
             {DEV && pov.kind === "admin" ? (
               <button
                 type="button"
@@ -474,6 +485,14 @@ function Loaded(props: LoadedProps) {
               <ItemsList
                 dump={dump}
                 day={day}
+                snapshot={snapshot}
+                onSelect={(s) => set.replace(s)}
+              />
+            ) : props.rhsTab === "gossip" ? (
+              <GossipBoard
+                dump={dump}
+                day={day}
+                hour={hour}
                 snapshot={snapshot}
                 onSelect={(s) => set.replace(s)}
               />

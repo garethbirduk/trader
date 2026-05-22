@@ -1159,6 +1159,33 @@ button.cat-child-row:hover { background: var(--panel-2); }
   border-bottom: 1px dotted var(--border);
 }
 .scene-gossip-row:last-child { border-bottom: none; }
+
+.gossip-board { padding: 8px 10px; overflow: auto; }
+.gossip-board-header { padding-bottom: 6px; }
+.gossip-board-groups { list-style: none; margin: 0; padding: 0; }
+.gossip-board-group {
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--border);
+}
+.gossip-board-group:last-child { border-bottom: none; }
+.gossip-board-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+.gossip-board-lines { list-style: none; margin: 0; padding: 0 0 0 12px; }
+.gossip-board-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 1px 0;
+}
+.gossip-board-when {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
 .scene-gossip-headline {
   display: flex;
   align-items: center;
