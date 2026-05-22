@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump, SnapshotPool } from "../types.js";
 import type { Selection } from "../App.js";
 import { PoolRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -112,7 +112,7 @@ function PoolCard({
         </span>
         <span className="pool-status">{status}</span>
         <span className="pool-item">
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={pool.itemKindId}
             qualityTier={pool.qualityTier}

@@ -3,7 +3,8 @@ import type { DaySnapshot, RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationRef, PoolRef } from "./Refs.js";
 import { ActorChip, ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
+import { TransportChip } from "./TransportChip.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
 
 interface Props {
@@ -141,7 +142,8 @@ export function ActorProfile({
         />
         <div className="profile-title">
           <div className="profile-code muted">
-            {actor.code} · {actor.transportCapacity}
+            {actor.code}
+            <TransportChip capacity={actor.transportCapacity} />
           </div>
         </div>
       </header>
@@ -457,7 +459,7 @@ function VirtualActorProfile({
                   ) : (
                     <span>pool {p.id}</span>
                   )}{" "}
-                  <BeliefChip
+                  <StockChip
                     dump={dump}
                     itemKindId={p.itemKindId}
                     qualityTier={p.qualityTier}

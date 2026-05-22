@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
 import { ActorChipById } from "./ActorChip.js";
 import { LocationRef } from "./Refs.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import { perceivedTierFor } from "../lib/perception.js";
 
 interface Props {
@@ -80,7 +80,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                 <li key={lot.id} className="chip-stack">
                   <div className="chip-stack-row">
                     <span className="chip-stack-label muted">RRP</span>
-                    <BeliefChip
+                    <StockChip
                       dump={dump}
                       itemKindId={lot.itemKindId}
                       qualityTier={lot.qualityTier}
@@ -97,7 +97,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                       size={14}
                     />
                     <span className="muted">POV:</span>
-                    <BeliefChip
+                    <StockChip
                       dump={dump}
                       itemKindId={lot.itemKindId}
                       qualityTier={perceivedTier}
@@ -120,7 +120,7 @@ export function ActorInventory({ dump, day, snapshot, actorId, onSelect }: Props
                         />
                       </>
                     ) : null}
-                    <BeliefChip
+                    <StockChip
                       dump={dump}
                       itemKindId={lot.itemKindId}
                       qualityTier={perceivedTier}
@@ -207,7 +207,7 @@ function DealRow({
       <ul className="actor-inv-deal-lines">
         {deal.lines.map((line, i) => (
           <li key={i}>
-            <BeliefChip
+            <StockChip
               dump={dump}
               itemKindId={line.itemKindId}
               qualityTier={line.qualityTier}

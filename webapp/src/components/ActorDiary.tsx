@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
 import { DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import { dayLabel, isWeekend } from "../lib/calendar.js";
 
 interface Props {
@@ -195,7 +195,7 @@ function summarizeEvent(
     quantity?: number | null,
   ) =>
     typeof id === "number" ? (
-      <BeliefChip
+      <StockChip
         dump={dump}
         itemKindId={id}
         qualityTier={qualityTier ?? null}

@@ -358,7 +358,7 @@ export interface RunDump {
   readonly economics?: EconomicsDump;
   /** Per-category anchor table — the "uninformed prior" floor of the
    *  judgement engine's `centre = anchor + (truth - anchor) × expertise`
-   *  lerp. Used by BeliefChip to render perceiver-relative belief bands
+   *  lerp. Used by StockChip to render perceiver-relative belief bands
    *  client-side. Optional for older dumps. */
   readonly categoryAnchors?: Readonly<Record<string, number>>;
   /** Per-category condition-arm anchor in [0, 1] — the analogous prior

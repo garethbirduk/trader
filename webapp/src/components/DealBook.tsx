@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump, SnapshotDeal } from "../types.js";
 import type { Selection } from "../App.js";
 import { DealRef, LocationRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import { priceBandFor, tierTruth, tieredAnchorFor } from "../lib/perception.js";
 
 /** Wholesale-to-shop resale benchmark — what a buyer can typically
@@ -156,7 +156,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                     <li key={i} className="deal-line">
                       <div className="deal-line-row">
                         <span className="deal-line-label muted">RRP</span>
-                        <BeliefChip
+                        <StockChip
                           dump={dump}
                           itemKindId={l.itemKindId}
                           qualityTier={l.qualityTier}
@@ -173,7 +173,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                           size={14}
                         />
                         <span className="muted">POV:</span>
-                        <BeliefChip
+                        <StockChip
                           dump={dump}
                           itemKindId={l.itemKindId}
                           qualityTier={l.qualityTier}
@@ -197,7 +197,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                           size={14}
                         />
                         <span className="muted">{verb}</span>
-                        <BeliefChip
+                        <StockChip
                           dump={dump}
                           itemKindId={l.itemKindId}
                           qualityTier={l.qualityTier}
@@ -215,7 +215,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                           size={14}
                         />
                         <span className="muted">POV:</span>
-                        <BeliefChip
+                        <StockChip
                           dump={dump}
                           itemKindId={l.itemKindId}
                           qualityTier={l.qualityTier}
@@ -234,7 +234,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                           />
                           <span className="muted">resale margin:</span>
                           <span className="muted">70% RRP</span>
-                          <BeliefChip
+                          <StockChip
                             dump={dump}
                             itemKindId={l.itemKindId}
                             qualityTier={l.qualityTier}
@@ -249,7 +249,7 @@ export function DealBook({ dump, day, snapshot, onSelect }: Props) {
                             </strong>
                           ) : null}
                           <span className="muted">→ 90% RRP</span>
-                          <BeliefChip
+                          <StockChip
                             dump={dump}
                             itemKindId={l.itemKindId}
                             qualityTier={l.qualityTier}

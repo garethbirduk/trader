@@ -586,7 +586,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 /* StockChip — the one true rendering of a stock reference (see
- * webapp/src/components/BeliefChip.tsx). Format:
+ * webapp/src/components/StockChip.tsx). Format:
  * `Name Nx £unit = total [Tier]`. Numbers use tabular-nums so column
  * alignment holds inside tables. The leading name is a clickable
  * button (item profile link) that strips its default chrome so the
@@ -2857,7 +2857,7 @@ svg.graph-map:active { cursor: grabbing; }
   padding-right: 2px;
 }
 .actor-chip-owner-bulk {
-  /* Owner-bulk pills sit beside a BeliefChip — match the default chip
+  /* Owner-bulk pills sit beside a StockChip — match the default chip
      padding + font-size so the name stays legible. The bulk-selection
      state still differentiates via .actor-chip-on / -some. */
 }
@@ -2964,7 +2964,7 @@ svg.graph-map:active { cursor: grabbing; }
   align-items: flex-start;
 }
 
-/* Stock row with owner — BeliefChip + "owned by [Owner bulk]". */
+/* Stock row with owner — StockChip + "owned by [Owner bulk]". */
 .stock-rows {
   display: flex;
   flex-direction: column;
@@ -3042,6 +3042,11 @@ svg.graph-map:active { cursor: grabbing; }
   border-color: var(--border);
 }
 
+.stock-flat-list {
+  display: flex;
+  flex-direction: column;
+}
+
 .stock-group {
   margin-bottom: 8px;
 }
@@ -3070,7 +3075,7 @@ svg.graph-map:active { cursor: grabbing; }
   font-size: 10px;
   letter-spacing: 0.03em;
 }
-/* Category pill — reuses the same `--chip-cat` palette as BeliefChip
+/* Category pill — reuses the same `--chip-cat` palette as StockChip
    so the header pill and each lot's chip border share a hue. */
 .category-pill {
   display: inline-flex;
@@ -3086,6 +3091,55 @@ svg.graph-map:active { cursor: grabbing; }
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+/* Interactive variant — same pill, but acts as a filter toggle.
+   Adds the standard chip "on" treatment when the matching
+   `{kind:"category"}` chip is in the selection set. */
+.category-pill-button {
+  cursor: pointer;
+  background: transparent;
+  font-family: inherit;
+}
+.category-pill-button:hover {
+  background: color-mix(in srgb, var(--chip-cat) 18%, transparent);
+}
+.category-pill-selected {
+  background: color-mix(in srgb, var(--chip-cat) 28%, transparent);
+  color: var(--text);
+}
+
+/* Selection-chip wrapper for category — pack the CategoryTag pill
+   tightly with the × remove button (matches `selection-chip-item`
+   spacing). The pill itself supplies the colour. */
+.selection-chip-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.selection-chip-category .category-pill {
+  margin-left: 0;
+}
+
+/* TransportChip — canonical chip for an actor's transport / storage
+   tier (pocket / boot / van / truck / none). Same pill shape as
+   .category-pill; per-tier colour cues increasing capacity. */
+.transport-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  height: 14px;
+  border: 1px solid var(--chip-transport, #777);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--chip-transport, #777);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.transport-chip-none   { --chip-transport: #6b6b6b; opacity: 0.7; }
+.transport-chip-pocket { --chip-transport: #4fc3f7; }
+.transport-chip-boot   { --chip-transport: #66bb6a; }
+.transport-chip-van    { --chip-transport: #f08e3f; }
+.transport-chip-truck  { --chip-transport: #e74c3c; }
 /* By-item row: a single horizontal strip per lot. Stock chip, then
    "+ owned by" subcheck → owner actor chip, then "+ at" subcheck →
    location chip. Wraps gracefully on narrow sidebars. */

@@ -15,8 +15,19 @@ import { CharacterEditor } from "./components/CharacterEditor.js";
 import { MapEditor } from "./components/MapEditor.js";
 import { BusinessHoursEditor } from "./components/BusinessHoursEditor.js";
 import { SceneDeck } from "./components/SceneDeck.js";
+import { DealBook } from "./components/DealBook.js";
+import { InventoryView } from "./components/InventoryView.js";
+import { PoolBoard } from "./components/PoolBoard.js";
+import { ItemsList } from "./components/ItemsList.js";
 
-export type RhsTab = "calendar" | "map" | "editor";
+export type RhsTab =
+  | "calendar"
+  | "map"
+  | "deals"
+  | "lots"
+  | "pools"
+  | "items"
+  | "editor";
 export type EditorSubTab = "residences" | "actors" | "businesses" | "map";
 
 const DEV = import.meta.env.DEV;
@@ -36,11 +47,17 @@ export type SelectionKind =
   | "item"
   | "deal"
   | "lot"
-  | "pool";
+  | "pool"
+  | "category";
 
 export interface Selection {
   readonly kind: SelectionKind;
   readonly id: number;
+  /** Only set when kind === "category" — the category string key
+   *  (item kind taxonomy bucket; tools / food / electronics …).
+   *  For all other kinds `id` is the identifier; `id` is unused for
+   *  category items (set to 0). */
+  readonly category?: string;
 }
 
 export function App() {
@@ -373,6 +390,42 @@ function Loaded(props: LoadedProps) {
             >
               Map
             </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "deals" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "deals"}
+              onClick={() => props.setRhsTab("deals")}
+            >
+              Deals
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "lots" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "lots"}
+              onClick={() => props.setRhsTab("lots")}
+            >
+              Lots
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "pools" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "pools"}
+              onClick={() => props.setRhsTab("pools")}
+            >
+              Pools
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "items" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "items"}
+              onClick={() => props.setRhsTab("items")}
+            >
+              Items
+            </button>
             {DEV && pov.kind === "admin" ? (
               <button
                 type="button"
@@ -394,6 +447,34 @@ function Loaded(props: LoadedProps) {
                 hour={hour}
                 snapshot={snapshot}
                 onChangeDay={setDay}
+                onSelect={(s) => set.replace(s)}
+              />
+            ) : props.rhsTab === "deals" ? (
+              <DealBook
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
+                onSelect={(s) => set.replace(s)}
+              />
+            ) : props.rhsTab === "lots" ? (
+              <InventoryView
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
+                onSelect={(s) => set.replace(s)}
+              />
+            ) : props.rhsTab === "pools" ? (
+              <PoolBoard
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
+                onSelect={(s) => set.replace(s)}
+              />
+            ) : props.rhsTab === "items" ? (
+              <ItemsList
+                dump={dump}
+                day={day}
+                snapshot={snapshot}
                 onSelect={(s) => set.replace(s)}
               />
             ) : props.rhsTab === "editor" && DEV && pov.kind === "admin" ? (

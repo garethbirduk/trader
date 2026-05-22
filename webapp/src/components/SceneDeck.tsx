@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
 import { ItemRef, LotRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import { chipName, fullName } from "../lib/actor-names.js";
 import { nextRungAbove, rungAtOrBelow } from "../lib/bid-ladder.js";
 import { isHourInAuctionWindow } from "../lib/auction-window.js";
@@ -462,7 +462,7 @@ function AuctionLotOnView({
   return (
     <article className="lot-card lot-card-onview">
       <div className="lot-line">
-        <BeliefChip
+        <StockChip
           dump={dump}
           itemKindId={lot.itemKindId}
           qualityTier={lot.qualityTier}
@@ -747,7 +747,7 @@ function AuctionLotPlayer({
     <article className={cardClass}>
       <div className="lot-line">
         {lot !== null ? (
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={lot.itemKindId}
             qualityTier={lot.qualityTier}
@@ -1166,7 +1166,7 @@ function PubdealHagglePlayer({
           {itemId !== undefined ? (
             <>
               <span className="muted">·</span>
-              <BeliefChip
+              <StockChip
                 dump={dump}
                 itemKindId={itemId}
                 qualityTier={tier ?? null}
@@ -1592,7 +1592,7 @@ function GossipScene({
                     // unlock detail). At the moment of the exchange
                     // the receiver's lead is freshly locked, so we
                     // render subject + side + speaker + confidence
-                    // only — no counterparty avatar, no BeliefChip
+                    // only — no counterparty avatar, no StockChip
                     // with qty/price.
                     return (
                       <li key={j} className="scene-gossip-headline">
@@ -1604,7 +1604,7 @@ function GossipScene({
                         />
                         <span className="muted">gossips</span>
                         {lead.subjectItemKindId !== null ? (
-                          <BeliefChip
+                          <StockChip
                             dump={dump}
                             itemKindId={lead.subjectItemKindId}
                             qualityTier={lead.subjectQualityTier ?? null}
@@ -1726,7 +1726,7 @@ function DetailUnlockedScene({
                           )}
                           <span className="muted">{verb}</span>
                           {isCommodity ? (
-                            <BeliefChip
+                            <StockChip
                               dump={dump}
                               itemKindId={lead.subjectItemKindId as number}
                               qualityTier={lead.subjectQualityTier ?? null}
@@ -1853,7 +1853,7 @@ function InspectionScene({
                 <>
                   <div className="chip-stack-row">
                     <span className="chip-stack-label muted">RRP</span>
-                    <BeliefChip
+                    <StockChip
                       dump={dump}
                       itemKindId={lot.itemKindId}
                       qualityTier={lot.qualityTier}
@@ -1870,7 +1870,7 @@ function InspectionScene({
                       size={14}
                     />
                     <span className="muted">POV:</span>
-                    <BeliefChip
+                    <StockChip
                       dump={dump}
                       itemKindId={lot.itemKindId}
                       qualityTier={lot.qualityTier}
@@ -2140,7 +2140,7 @@ function MarketScene({
                     size={20}
                   />
                   <span className="muted">·</span>
-                  <BeliefChip
+                  <StockChip
                     dump={dump}
                     itemKindId={itemId}
                     qualityTier={tier}
@@ -2148,7 +2148,7 @@ function MarketScene({
                     observerActorId={null}
                     onSelect={onSelect}
                   />
-                  <BeliefChip
+                  <StockChip
                     dump={dump}
                     itemKindId={itemId}
                     qualityTier={tier}
@@ -2165,7 +2165,7 @@ function MarketScene({
                   ) : (
                     <>
                       <span className="muted">SOLD</span>
-                      <BeliefChip
+                      <StockChip
                         dump={dump}
                         itemKindId={itemId}
                         qualityTier={tier}

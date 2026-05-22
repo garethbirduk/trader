@@ -57,7 +57,7 @@ must stay a chip so the rules above continue to hold.
 **How to apply:** when a surface needs a denser or sparser variant,
 add a named detail level to the chip (e.g. `full`, `simplified`)
 rather than building a parallel component or stripping the chip
-wrapper. Specific chip types (ActorChip, BeliefChip, …) inherit this
+wrapper. Specific chip types (ActorChip, StockChip, …) inherit this
 rule; their per-type specifics live below.
 
 ### 3. One ActorChip everywhere — nickname as the label, full name on hover.

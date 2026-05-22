@@ -273,7 +273,7 @@ export interface RunDump {
   };
   /** Per-category anchor table — the "uninformed prior" floor of the
    *  judgement engine's `centre = anchor + (truth - anchor) × expertise`
-   *  lerp. Shipped to the webapp so BeliefChip can mirror the engine's
+   *  lerp. Shipped to the webapp so StockChip can mirror the engine's
    *  price-band math client-side. */
   readonly categoryAnchors: Record<string, number>;
   /** Per-category condition-arm anchor in [0, 1] — analogous to
@@ -695,7 +695,7 @@ export function buildRunDump(input: BuildRunDumpInput): RunDump {
     // Per-category anchor table — the "uninformed prior" floor of the
     // `centre = anchor + (truth - anchor) × expertise` lerp in the
     // judgement engine's price band. Shipped to the webapp so client-
-    // side BeliefChip rendering can mirror the engine's perception math
+    // side StockChip rendering can mirror the engine's perception math
     // without a DB roundtrip (docs/judgement.md "The generic anchor
     // table").
     categoryAnchors: Object.fromEntries(getAllCategoryAnchors(db)),

@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { LocationLink } from "./Links.js";
 import { LotRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -572,7 +572,7 @@ function LotKnowledgeLine({
       </div>
       <div className="chip-stack-row">
         <span className="chip-stack-label muted">RRP</span>
-        <BeliefChip
+        <StockChip
           dump={dump}
           itemKindId={lot.itemKindId}
           qualityTier={lot.qualityTier}
@@ -584,7 +584,7 @@ function LotKnowledgeLine({
       {inspected ? (
         <div className="chip-stack-row">
           <span className="muted">inspected — POV:</span>
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={lot.itemKindId}
             qualityTier={lot.qualityTier}
@@ -688,7 +688,7 @@ function ByItemView({
             className="knows-group"
           >
             <div className="knows-group-header">
-              <BeliefChip
+              <StockChip
                 dump={dump}
                 itemKindId={g.itemId}
                 qualityTier={g.tier}
@@ -919,7 +919,7 @@ function SubgroupRows({
                     size={12}
                   />
                   <span className="muted">{unlocked ? "POV:" : "knows of:"}</span>
-                  <BeliefChip
+                  <StockChip
                     dump={dump}
                     itemKindId={r.lead.subjectItemKindId}
                     qualityTier={unlocked ? r.lead.subjectQualityTier : null}
@@ -963,7 +963,7 @@ function formatLead(
         <span className="muted">someone</span>
       )}{" "}
       {verb}{" "}
-      <BeliefChip
+      <StockChip
         dump={dump}
         itemKindId={l.subjectItemKindId}
         qualityTier={unlocked ? l.subjectQualityTier : null}

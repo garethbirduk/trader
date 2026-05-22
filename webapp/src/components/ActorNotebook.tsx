@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChipById } from "./ActorChip.js";
 import { colourFor, resolvePerceiverJ } from "../lib/palette.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -339,7 +339,7 @@ function SellRow({
       </div>
       <div className="chip-stack-row">
         <span className="chip-stack-label muted">RRP</span>
-        <BeliefChip
+        <StockChip
           dump={dump}
           itemKindId={row.itemKindId}
           qualityTier={row.itemTier}
@@ -352,7 +352,7 @@ function SellRow({
         <div className="chip-stack-row">
           <ActorChipById dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
           <span className="muted">POV:</span>
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={row.itemKindId}
             qualityTier={row.itemTier}
@@ -372,7 +372,7 @@ function SellRow({
       {row.myQty !== null && row.myUnitCost !== null ? (
         <div className="chip-stack-row">
           <span className="muted">I have</span>
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={row.itemKindId}
             qualityTier={row.itemTier}
@@ -410,7 +410,7 @@ function BuyRow({
       </div>
       <div className="chip-stack-row">
         <span className="chip-stack-label muted">RRP</span>
-        <BeliefChip
+        <StockChip
           dump={dump}
           itemKindId={row.itemKindId}
           qualityTier={row.itemTier}
@@ -423,7 +423,7 @@ function BuyRow({
         <div className="chip-stack-row">
           <ActorChipById dump={dump} actorId={row.counterpartyActorId} onSelect={onSelect} size={14} />
           <span className="muted">POV:</span>
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={row.itemKindId}
             qualityTier={row.itemTier}
@@ -444,7 +444,7 @@ function BuyRow({
         <div className="chip-stack-row">
           <span className="muted">onward to</span>
           <ActorChipById dump={dump} actorId={row.onwardBuyerActorId} onSelect={onSelect} size={12} />
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={row.itemKindId}
             qualityTier={row.itemTier}

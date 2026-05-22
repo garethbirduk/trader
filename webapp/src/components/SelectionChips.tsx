@@ -3,6 +3,7 @@ import type { SelectionItem } from "../lib/selection-set.js";
 import { useSelectionSet } from "../lib/selection-set.js";
 import { LocationAvatar } from "./LocationAvatar.js";
 import { ActorChip } from "./ActorChip.js";
+import { CategoryTag } from "./StockChip.js";
 import { usePov } from "../lib/pov.js";
 
 /**
@@ -34,7 +35,11 @@ export function SelectionChips({ dump }: { readonly dump: RunDump }) {
   return (
     <div className="selection-chips" role="toolbar" aria-label="Selection">
       {set.items.map((item) => (
-        <SelectionChip key={`${item.kind}:${item.id}`} item={item} dump={dump} />
+        <SelectionChip
+          key={item.kind === "category" ? `category:${item.category}` : `${item.kind}:${item.id}`}
+          item={item}
+          dump={dump}
+        />
       ))}
       {set.items.length > 1 ? (
         <button
@@ -74,6 +79,17 @@ function SelectionChip({
       ×
     </button>
   );
+
+  // Category → canonical CategoryTag with × as a suffix.
+  if (item.kind === "category") {
+    const cat = item.category ?? "";
+    return (
+      <span className="selection-chip selection-chip-category" title={`Type · ${cat}`}>
+        <CategoryTag category={cat} />
+        {removeBtn}
+      </span>
+    );
+  }
 
   // Actor → canonical ActorChip with the × as a suffix.
   if (item.kind === "actor") {
@@ -143,9 +159,10 @@ function nonActorMeta(item: SelectionItem, dump: RunDump): ChipMeta {
     case "pool":
       return { label: `Pool #${item.id}`, title: `Pool #${item.id}`, avatar: null };
     case "actor":
-      // Unreachable — actor case is handled above; this case keeps the
-      // switch exhaustive for the type-checker.
-      return { label: `Actor #${item.id}`, title: `Actor #${item.id}`, avatar: null };
+    case "category":
+      // Unreachable — actor / category are handled in the chip
+      // renderer above; these cases keep the switch exhaustive.
+      return { label: `${item.kind} #${item.id}`, title: `${item.kind} #${item.id}`, avatar: null };
   }
 }
 

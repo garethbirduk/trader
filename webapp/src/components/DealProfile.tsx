@@ -4,7 +4,7 @@ import type { Selection } from "../App.js";
 import { LocationRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
 import { fullName } from "../lib/actor-names.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import {
   tieredAnchorFor,
   priceBandFor,
@@ -243,7 +243,7 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
                 : "";
             return (
               <div key={i} className="loc-person-row">
-                <BeliefChip
+                <StockChip
                   dump={dump}
                   itemKindId={l.itemKindId}
                   qualityTier={l.qualityTier}

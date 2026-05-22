@@ -3,7 +3,7 @@ import type { RunDump, RunEvent, SnapshotAuctionLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { DealRef, LotRef, PoolRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import { resolveAuctionWindow } from "../lib/auction-window.js";
 import { dayLabel } from "../lib/calendar.js";
 
@@ -357,7 +357,7 @@ function AuctionLotRow({
   return (
     <li>
       <LotRef dump={dump} id={lot.id} onSelect={onSelect} variant="chip" />{" "}
-      <BeliefChip
+      <StockChip
         dump={dump}
         itemKindId={lot.itemKindId}
         qualityTier={lot.qualityTier}
@@ -501,7 +501,7 @@ function summarizeLocEvent(
       return (
         <>
           {A(e.sellerActorId)} → {A(e.buyerActorId)} re{" "}
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={Number(e.itemKindId)}
             qualityTier={e.qualityTier as string | null ?? null}
@@ -576,7 +576,7 @@ function summarizeLocEvent(
       return (
         <>
           {A(e.sellerActorId)}: sold{" "}
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={Number(e.itemKindId)}
             qualityTier={e.qualityTier as string | null ?? null}

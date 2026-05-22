@@ -74,7 +74,10 @@ export interface SelectionSetApi {
 }
 
 function itemEquals(a: SelectionItem, b: SelectionItem): boolean {
-  return a.kind === b.kind && a.id === b.id;
+  if (a.kind !== b.kind) return false;
+  // Category items are keyed by `category`, not `id` (which is unused).
+  if (a.kind === "category") return a.category === b.category;
+  return a.id === b.id;
 }
 
 function listsEqual(

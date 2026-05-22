@@ -12,7 +12,7 @@ import {
 } from "../lib/calendar-data.js";
 import { LocationRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -227,7 +227,7 @@ function FactRow({
       <div className="cal-fact cal-fact-auction">
         <span className="cal-fact-label">auction lot</span>
         {lot !== undefined ? (
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={lot.itemKindId}
             qualityTier={lot.qualityTier}

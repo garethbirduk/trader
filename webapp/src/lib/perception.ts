@@ -12,7 +12,7 @@
  * `effectiveJ` applies the same stepped + damped sub-band sharpness
  * as the engine, so j=0.51 and j=0.52 land in the same visible band
  * but a tiny continuous differentiator survives for engine math.
- * The webapp uses centres only (BeliefChip is a display, not a
+ * The webapp uses centres only (StockChip is a display, not a
  * decision-maker), so the sub-band damping is informationally inert
  * here — kept aligned for parity if a future call site samples.
  */

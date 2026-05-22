@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationRef, PoolRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -49,7 +49,7 @@ export function LotProfile({ dump, day, snapshot, lotId, onSelect }: Props) {
       <dl className="profile-stats">
         <dt>Item</dt>
         <dd>
-          <BeliefChip
+          <StockChip
             dump={dump}
             itemKindId={lot.itemKindId}
             qualityTier={lot.qualityTier}

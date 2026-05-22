@@ -539,7 +539,7 @@ Layering rule for centre/admin panels with multiple POVs visible:
 
 Sidebar (player-eye) panels: single POV chip per row.
 
-For details see `webapp/src/components/BeliefChip.tsx` and the layering
+For details see `webapp/src/components/StockChip.tsx` and the layering
 pattern saved in user memory (`feedback_chip_layering_pattern.md`).
 
 ---
@@ -739,7 +739,7 @@ layout will need a stacking strategy for narrow screens.
 
 - `docs/design.md` — engine architecture
 - `docs/game.md` — player-facing game description
-- `webapp/src/components/BeliefChip.tsx` — canonical stock chip
+- `webapp/src/components/StockChip.tsx` — canonical stock chip
 - `webapp/src/lib/perception.ts` — client-side judgement helpers
   (`priceBandFor`, `perceivedTierFor`)
 - `src/engine/perception/arms.ts` — engine condition arm

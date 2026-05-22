@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump } from "../types.js";
 import type { Selection } from "../App.js";
 import { ActorChipById } from "./ActorChip.js";
 import { fullName } from "../lib/actor-names.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import {
   tieredAnchorFor,
   priceBandFor,
@@ -105,7 +105,7 @@ export function ItemProfile({ dump, day, snapshot, itemId, onSelect }: Props) {
           <div className="profile-section-label">By quality</div>
           {[...stockSummary.byTier.entries()].map(([tier, qty]) => (
             <div key={tier} className="loc-person-row">
-              <BeliefChip
+              <StockChip
                 dump={dump}
                 itemKindId={itemId}
                 qualityTier={tier}

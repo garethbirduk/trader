@@ -2,7 +2,7 @@ import type { RunDump, RunEvent } from "../types.js";
 import type { Selection } from "../App.js";
 import { DealRef, LocationRef, LotRef, PoolRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 
 /**
  * Translate one event into a human-readable React fragment, looking up
@@ -44,7 +44,7 @@ export function renderEvent(
     quantity?: number | null,
   ) =>
     typeof id === "number" ? (
-      <BeliefChip
+      <StockChip
         dump={dump}
         itemKindId={id}
         qualityTier={qualityTier ?? null}
@@ -65,7 +65,7 @@ export function renderEvent(
     observerActorId: number,
   ) =>
     typeof id === "number" ? (
-      <BeliefChip
+      <StockChip
         dump={dump}
         itemKindId={id}
         qualityTier={qualityTier ?? null}
@@ -84,7 +84,7 @@ export function renderEvent(
     unitPrice: number,
   ) =>
     typeof id === "number" ? (
-      <BeliefChip
+      <StockChip
         dump={dump}
         itemKindId={id}
         qualityTier={qualityTier ?? null}

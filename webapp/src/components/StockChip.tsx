@@ -73,7 +73,7 @@ interface Props {
   readonly onSelect: (s: Selection) => void;
 }
 
-export function BeliefChip({
+export function StockChip({
   dump,
   itemKindId,
   qualityTier,
@@ -224,14 +224,42 @@ function capitalize(s: string): string {
 /**
  * Category pill — `(TOOLS)`, `(FOOD)`, etc. Renders the item kind's
  * `category` field with the same colour family as the surrounding
- * `BeliefChip` border. Pair it with a `BeliefChip` to give every
+ * `StockChip` border. Pair it with a `StockChip` to give every
  * stock reference a leading type tag — see ui-rules.md Components
  * Rule 5.
+ *
+ * When `onSelect` is provided the tag becomes an interactive button
+ * that emits a `{ kind: "category", category }` selection, joining
+ * the RHS selection chips as a filter. Pass `selected` to render the
+ * active-membership ring (matches StockChip / ActorChip "on" state).
  */
-export function CategoryTag({ category }: { readonly category: string }) {
+export function CategoryTag({
+  category,
+  onSelect,
+  selected,
+}: {
+  readonly category: string;
+  readonly onSelect?: (s: Selection) => void;
+  readonly selected?: boolean;
+}) {
+  const label = capitalize(category);
+  if (onSelect === undefined) {
+    return (
+      <span className={`category-pill stock-chip-cat-${category}`}>
+        {label}
+      </span>
+    );
+  }
   return (
-    <span className={`category-pill stock-chip-cat-${category}`}>
-      {capitalize(category)}
-    </span>
+    <button
+      type="button"
+      className={`category-pill category-pill-button stock-chip-cat-${category} ${
+        selected === true ? "category-pill-selected" : ""
+      }`}
+      onClick={() => onSelect({ kind: "category", id: 0, category })}
+      title={`Filter by type · ${label}`}
+    >
+      {label}
+    </button>
   );
 }

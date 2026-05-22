@@ -3,7 +3,7 @@ import type { DaySnapshot, RunDump, SnapshotStockLot } from "../types.js";
 import type { Selection } from "../App.js";
 import { LocationRef } from "./Refs.js";
 import { ActorChipById } from "./ActorChip.js";
-import { BeliefChip } from "./BeliefChip.js";
+import { StockChip } from "./StockChip.js";
 import { perceivedTierFor } from "../lib/perception.js";
 
 interface Props {
@@ -90,7 +90,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                   <li key={lot.id} className="inv-lot">
                     <div className="inv-lot-row">
                       <span className="inv-lot-label muted">RRP</span>
-                      <BeliefChip
+                      <StockChip
                         dump={dump}
                         itemKindId={lot.itemKindId}
                         qualityTier={lot.qualityTier}
@@ -107,7 +107,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                         size={14}
                       />
                       <span className="muted">POV:</span>
-                      <BeliefChip
+                      <StockChip
                         dump={dump}
                         itemKindId={lot.itemKindId}
                         qualityTier={perceivedTier}
@@ -130,7 +130,7 @@ export function InventoryView({ dump, day, snapshot, onSelect }: Props) {
                           />
                         </>
                       ) : null}
-                      <BeliefChip
+                      <StockChip
                         dump={dump}
                         itemKindId={lot.itemKindId}
                         qualityTier={perceivedTier}
