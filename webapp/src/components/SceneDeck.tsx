@@ -13,9 +13,13 @@ import {
   getJudgementById,
   indexJudgements,
   isComposite,
+  isPriceArm,
   type JudgementIndex,
 } from "../lib/judgement-log.js";
-import { formatCompositeMath } from "../lib/perception.js";
+import {
+  formatCompositeMath,
+  formatPriceArmMathFromPayload,
+} from "../lib/perception.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -2188,6 +2192,12 @@ function MarketScene({
   readonly snapshot: DaySnapshot | null;
   readonly onSelect: (s: Selection) => void;
 }) {
+  // Judgement audit index for the sellerBelief band hovers (one row
+  // per stall via market-seller-belief / shop-seller-belief).
+  const judgementIdx = useMemo<JudgementIndex>(
+    () => indexJudgements(dump),
+    [dump],
+  );
   // All sellers this hour share the same footfall + customer mix —
   // it's the same passing crowd. Take the mix from the first event.
   const first = events[0]!;
@@ -2262,6 +2272,28 @@ function MarketScene({
           const offered = Number(e.unitsOffered ?? 0);
           const revenue = Number(e.revenue ?? 0);
           const stockLotId = e.stockLotId as number | undefined;
+          const sellerBelief = e.sellerBelief as
+            | { low: number; high: number }
+            | undefined;
+          const sellerJudgementId = e.sellerJudgementId as number | undefined;
+          const sellerJudgement =
+            sellerJudgementId !== undefined
+              ? getJudgementById(judgementIdx, sellerJudgementId)
+              : null;
+          const sellerActor = dump.actors.find((a) => a.id === sellerId);
+          const itemName =
+            dump.items.find((it) => it.id === itemId)?.displayName ??
+            `item ${itemId}`;
+          const sellerBeliefHover =
+            sellerJudgement !== null &&
+            isPriceArm(sellerJudgement) &&
+            sellerActor !== undefined
+              ? formatPriceArmMathFromPayload({
+                  observerName: fullName(sellerActor),
+                  itemName,
+                  payload: sellerJudgement.payload,
+                })
+              : "what the seller thought a unit was worth";
           // Profit needs cost basis. The lot may have been fully sold
           // by the current day, so fall back to scanning every snapshot
           // for the first hit — acquiredUnitPrice is immutable.
@@ -2322,6 +2354,11 @@ function MarketScene({
                     observerActorId={sellerId}
                     onSelect={onSelect}
                   />
+                  {sellerBelief !== undefined ? (
+                    <span className="belief-band" title={sellerBeliefHover}>
+                      thought £{sellerBelief.low}–£{sellerBelief.high}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="lot-bidline">
                   {empty ? (

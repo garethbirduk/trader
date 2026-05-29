@@ -1456,6 +1456,7 @@
         "low": 16.104000000000003,
         "high": 37.576
       },
+      "sellerJudgementId": 40,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 25,
       "unitsSold": 4,
@@ -1490,6 +1491,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 41,
       "truePricePerUnit": 3.2,
       "unitsOffered": 89,
       "unitsSold": 3,
@@ -1524,6 +1526,7 @@
         "low": 9.504000000000001,
         "high": 22.176000000000002
       },
+      "sellerJudgementId": 42,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 26,
       "unitsSold": 4,
@@ -1558,6 +1561,7 @@
         "low": 8.064,
         "high": 18.816
       },
+      "sellerJudgementId": 43,
       "truePricePerUnit": 6.4,
       "unitsOffered": 45,
       "unitsSold": 3,
@@ -1735,6 +1739,7 @@
         "low": 16.104000000000003,
         "high": 37.576
       },
+      "sellerJudgementId": 44,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 21,
       "unitsSold": 7,
@@ -1772,6 +1777,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 45,
       "truePricePerUnit": 3.2,
       "unitsOffered": 86,
       "unitsSold": 7,
@@ -1809,6 +1815,7 @@
         "low": 9.504000000000001,
         "high": 22.176000000000002
       },
+      "sellerJudgementId": 46,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 22,
       "unitsSold": 5,
@@ -1846,6 +1853,7 @@
         "low": 8.064,
         "high": 18.816
       },
+      "sellerJudgementId": 47,
       "truePricePerUnit": 6.4,
       "unitsOffered": 42,
       "unitsSold": 10,
@@ -1884,6 +1892,7 @@
         "low": 10.032000000000002,
         "high": 14.287999999999998
       },
+      "sellerJudgementId": 48,
       "truePricePerUnit": 9.600000000000001,
       "unitsOffered": 15,
       "unitsSold": 5,
@@ -2161,6 +2170,7 @@
         "low": 16.104000000000003,
         "high": 37.576
       },
+      "sellerJudgementId": 49,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 14,
       "unitsSold": 9,
@@ -2198,6 +2208,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 50,
       "truePricePerUnit": 3.2,
       "unitsOffered": 79,
       "unitsSold": 10,
@@ -2235,6 +2246,7 @@
         "low": 9.504000000000001,
         "high": 22.176000000000002
       },
+      "sellerJudgementId": 51,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 17,
       "unitsSold": 7,
@@ -2273,6 +2285,7 @@
         "low": 8.064,
         "high": 18.816
       },
+      "sellerJudgementId": 52,
       "truePricePerUnit": 6.4,
       "unitsOffered": 32,
       "unitsSold": 12,
@@ -2311,6 +2324,7 @@
         "low": 25.410000000000004,
         "high": 36.19
       },
+      "sellerJudgementId": 53,
       "truePricePerUnit": 22,
       "unitsOffered": 15,
       "unitsSold": 10,
@@ -2809,6 +2823,7 @@
         "low": 16.104000000000003,
         "high": 37.576
       },
+      "sellerJudgementId": 54,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -2845,6 +2860,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 55,
       "truePricePerUnit": 3.2,
       "unitsOffered": 69,
       "unitsSold": 19,
@@ -2883,6 +2899,7 @@
         "low": 9.504000000000001,
         "high": 22.176000000000002
       },
+      "sellerJudgementId": 56,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 10,
       "unitsSold": 10,
@@ -2920,6 +2937,7 @@
         "low": 8.064,
         "high": 18.816
       },
+      "sellerJudgementId": 57,
       "truePricePerUnit": 6.4,
       "unitsOffered": 20,
       "unitsSold": 19,
@@ -2958,6 +2976,7 @@
         "low": 20.064000000000004,
         "high": 28.575999999999997
       },
+      "sellerJudgementId": 58,
       "truePricePerUnit": 19.200000000000003,
       "unitsOffered": 13,
       "unitsSold": 13,
@@ -2995,6 +3014,7 @@
         "low": 9.024000000000001,
         "high": 21.056
       },
+      "sellerJudgementId": 59,
       "truePricePerUnit": 14.4,
       "unitsOffered": 19,
       "unitsSold": 10,
@@ -3226,6 +3246,7 @@
         "low": 26.928,
         "high": 62.832
       },
+      "sellerJudgementId": 60,
       "truePricePerUnit": 30.800000000000004,
       "unitsOffered": 4,
       "unitsSold": 4,
@@ -3261,6 +3282,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 61,
       "truePricePerUnit": 3.2,
       "unitsOffered": 50,
       "unitsSold": 23,
@@ -3299,6 +3321,7 @@
         "low": 19.8,
         "high": 46.199999999999996
       },
+      "sellerJudgementId": 62,
       "truePricePerUnit": 33,
       "unitsOffered": 9,
       "unitsSold": 9,
@@ -3336,6 +3359,7 @@
         "low": 13.860000000000001,
         "high": 32.34
       },
+      "sellerJudgementId": 63,
       "truePricePerUnit": 27.500000000000004,
       "unitsOffered": 11,
       "unitsSold": 11,
@@ -3373,6 +3397,7 @@
         "low": 13.200000000000001,
         "high": 18.799999999999997
       },
+      "sellerJudgementId": 64,
       "truePricePerUnit": 16,
       "unitsOffered": 13,
       "unitsSold": 13,
@@ -3409,6 +3434,7 @@
         "low": 13.464,
         "high": 31.416
       },
+      "sellerJudgementId": 65,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 16,
       "unitsSold": 10,
@@ -3606,6 +3632,7 @@
         "low": 48.84,
         "high": 113.96
       },
+      "sellerJudgementId": 66,
       "truePricePerUnit": 99.00000000000001,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -3641,6 +3668,7 @@
         "low": 8.448,
         "high": 19.712
       },
+      "sellerJudgementId": 67,
       "truePricePerUnit": 12.8,
       "unitsOffered": 28,
       "unitsSold": 7,
@@ -3677,6 +3705,7 @@
         "low": 12.408,
         "high": 28.951999999999998
       },
+      "sellerJudgementId": 68,
       "truePricePerUnit": 19.8,
       "unitsOffered": 9,
       "unitsSold": 6,
@@ -3712,6 +3741,7 @@
         "low": 15.048,
         "high": 35.112
       },
+      "sellerJudgementId": 69,
       "truePricePerUnit": 19.8,
       "unitsOffered": 8,
       "unitsSold": 3,
@@ -3748,6 +3778,7 @@
         "low": 10.032000000000002,
         "high": 14.287999999999998
       },
+      "sellerJudgementId": 70,
       "truePricePerUnit": 9.600000000000001,
       "unitsOffered": 10,
       "unitsSold": 5,
@@ -3783,6 +3814,7 @@
         "low": 15.36,
         "high": 35.839999999999996
       },
+      "sellerJudgementId": 71,
       "truePricePerUnit": 32,
       "unitsOffered": 11,
       "unitsSold": 6,
@@ -9091,6 +9123,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 78,
       "truePricePerUnit": 3.2,
       "unitsOffered": 27,
       "unitsSold": 4,
@@ -9127,6 +9160,7 @@
         "low": 27.060000000000006,
         "high": 63.14000000000001
       },
+      "sellerJudgementId": 79,
       "truePricePerUnit": 60.50000000000001,
       "unitsOffered": 5,
       "unitsSold": 2,
@@ -9465,6 +9499,7 @@
         "low": 18.744,
         "high": 43.736
       },
+      "sellerJudgementId": 80,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 24,
       "unitsSold": 9,
@@ -9502,6 +9537,7 @@
         "low": 15.048,
         "high": 35.112
       },
+      "sellerJudgementId": 81,
       "truePricePerUnit": 19.8,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -9537,6 +9573,7 @@
         "low": 30.129000000000012,
         "high": 42.91100000000001
       },
+      "sellerJudgementId": 82,
       "truePricePerUnit": 24.200000000000003,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -10148,6 +10185,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 89,
       "truePricePerUnit": 3.2,
       "unitsOffered": 23,
       "unitsSold": 17,
@@ -10184,6 +10222,7 @@
         "low": 24.479999999999997,
         "high": 57.11999999999999
       },
+      "sellerJudgementId": 90,
       "truePricePerUnit": 36,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -10219,6 +10258,7 @@
         "low": 10.032000000000002,
         "high": 14.287999999999998
       },
+      "sellerJudgementId": 91,
       "truePricePerUnit": 9.600000000000001,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -11391,6 +11431,7 @@
         "low": 8.448,
         "high": 19.712
       },
+      "sellerJudgementId": 96,
       "truePricePerUnit": 12.8,
       "unitsOffered": 21,
       "unitsSold": 19,
@@ -11429,6 +11470,7 @@
         "low": 37.62,
         "high": 87.78
       },
+      "sellerJudgementId": 97,
       "truePricePerUnit": 60.50000000000001,
       "unitsOffered": 4,
       "unitsSold": 4,
@@ -11465,6 +11507,7 @@
         "low": 25.410000000000004,
         "high": 36.19
       },
+      "sellerJudgementId": 98,
       "truePricePerUnit": 22,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -11501,6 +11544,7 @@
         "low": 9.024000000000001,
         "high": 21.056
       },
+      "sellerJudgementId": 99,
       "truePricePerUnit": 14.4,
       "unitsOffered": 9,
       "unitsSold": 9,
@@ -11974,6 +12018,7 @@
         "low": 18.744,
         "high": 43.736
       },
+      "sellerJudgementId": 107,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 15,
       "unitsSold": 11,
@@ -12011,6 +12056,7 @@
         "low": 27.060000000000006,
         "high": 63.14000000000001
       },
+      "sellerJudgementId": 108,
       "truePricePerUnit": 60.50000000000001,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -12046,6 +12092,7 @@
         "low": 13.464,
         "high": 31.416
       },
+      "sellerJudgementId": 109,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 6,
       "unitsSold": 6,
@@ -12643,6 +12690,7 @@
         "low": 6.144,
         "high": 14.335999999999999
       },
+      "sellerJudgementId": 110,
       "truePricePerUnit": 12.8,
       "unitsOffered": 13,
       "unitsSold": 8,
@@ -12681,6 +12729,7 @@
         "low": 15.36,
         "high": 35.839999999999996
       },
+      "sellerJudgementId": 111,
       "truePricePerUnit": 32,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -17491,6 +17540,7 @@
         "low": 15.18,
         "high": 35.42
       },
+      "sellerJudgementId": 119,
       "truePricePerUnit": 27.500000000000004,
       "unitsOffered": 8,
       "unitsSold": 2,
@@ -17525,6 +17575,7 @@
         "low": 21.779999999999998,
         "high": 50.81999999999999
       },
+      "sellerJudgementId": 120,
       "truePricePerUnit": 38.5,
       "unitsOffered": 4,
       "unitsSold": 4,
@@ -17952,6 +18003,7 @@
         "low": 15.18,
         "high": 35.42
       },
+      "sellerJudgementId": 121,
       "truePricePerUnit": 27.500000000000004,
       "unitsOffered": 6,
       "unitsSold": 6,
@@ -17990,6 +18042,7 @@
         "low": 12.408,
         "high": 28.951999999999998
       },
+      "sellerJudgementId": 122,
       "truePricePerUnit": 19.8,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -18527,6 +18580,7 @@
         "low": 2.3040000000000003,
         "high": 5.376
       },
+      "sellerJudgementId": 128,
       "truePricePerUnit": 3.2,
       "unitsOffered": 6,
       "unitsSold": 6,
@@ -18562,6 +18616,7 @@
         "low": 5.184,
         "high": 12.096
       },
+      "sellerJudgementId": 129,
       "truePricePerUnit": 6.4,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -19835,6 +19890,7 @@
         "low": 6.144,
         "high": 14.335999999999999
       },
+      "sellerJudgementId": 135,
       "truePricePerUnit": 12.8,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -20372,6 +20428,7 @@
         "low": 23.76,
         "high": 55.44
       },
+      "sellerJudgementId": 142,
       "truePricePerUnit": 44,
       "unitsOffered": 5,
       "unitsSold": 5,
@@ -20894,6 +20951,7 @@
         "low": 18.744,
         "high": 43.736
       },
+      "sellerJudgementId": 143,
       "truePricePerUnit": 15.400000000000002,
       "unitsOffered": 4,
       "unitsSold": 4,
@@ -24799,6 +24857,7 @@
         "low": 6.84,
         "high": 15.959999999999999
       },
+      "sellerJudgementId": 146,
       "truePricePerUnit": 9,
       "unitsOffered": 3,
       "unitsSold": 1,
@@ -25217,6 +25276,7 @@
         "low": 5.544,
         "high": 12.936
       },
+      "sellerJudgementId": 147,
       "truePricePerUnit": 11,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -25817,6 +25877,7 @@
         "low": 24.479999999999997,
         "high": 57.11999999999999
       },
+      "sellerJudgementId": 149,
       "truePricePerUnit": 36,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -26767,6 +26828,7 @@
         "low": 8.064,
         "high": 18.816
       },
+      "sellerJudgementId": 154,
       "truePricePerUnit": 6.4,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -32115,6 +32177,7 @@
         "low": 7.4879999999999995,
         "high": 17.471999999999998
       },
+      "sellerJudgementId": 165,
       "truePricePerUnit": 12.8,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -32662,6 +32725,7 @@
         "low": 6.72,
         "high": 15.679999999999998
       },
+      "sellerJudgementId": 166,
       "truePricePerUnit": 8,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -33478,6 +33542,7 @@
         "low": 1.02,
         "high": 2.38
       },
+      "sellerJudgementId": 168,
       "truePricePerUnit": 1.5,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -34448,6 +34513,7 @@
         "low": 9.24,
         "high": 21.56
       },
+      "sellerJudgementId": 172,
       "truePricePerUnit": 19.8,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -45027,6 +45093,7 @@
         "low": 5.04,
         "high": 11.76
       },
+      "sellerJudgementId": 186,
       "truePricePerUnit": 6,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -45062,6 +45129,7 @@
         "low": 27.36,
         "high": 63.839999999999996
       },
+      "sellerJudgementId": 187,
       "truePricePerUnit": 44,
       "unitsOffered": 5,
       "unitsSold": 2,
@@ -45254,6 +45322,7 @@
         "low": 15.299999999999999,
         "high": 35.699999999999996
       },
+      "sellerJudgementId": 188,
       "truePricePerUnit": 22.5,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -45291,6 +45360,7 @@
         "low": 27.36,
         "high": 63.839999999999996
       },
+      "sellerJudgementId": 189,
       "truePricePerUnit": 44,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -45717,6 +45787,7 @@
         "low": 6.72,
         "high": 15.679999999999998
       },
+      "sellerJudgementId": 191,
       "truePricePerUnit": 8,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -45752,6 +45823,7 @@
         "low": 6.84,
         "high": 15.959999999999999
       },
+      "sellerJudgementId": 192,
       "truePricePerUnit": 9,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -46478,6 +46550,7 @@
         "low": 2.1,
         "high": 4.8999999999999995
       },
+      "sellerJudgementId": 194,
       "truePricePerUnit": 4.5,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -63635,6 +63708,7 @@
         "low": 21.912000000000006,
         "high": 51.128000000000014
       },
+      "sellerJudgementId": 226,
       "truePricePerUnit": 24.200000000000003,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -64090,6 +64164,7 @@
         "low": 23.04,
         "high": 53.76
       },
+      "sellerJudgementId": 227,
       "truePricePerUnit": 48,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -64554,6 +64629,7 @@
         "low": 26.88,
         "high": 62.71999999999999
       },
+      "sellerJudgementId": 228,
       "truePricePerUnit": 64,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -65305,6 +65381,7 @@
         "low": 1.7999999999999998,
         "high": 4.199999999999999
       },
+      "sellerJudgementId": 231,
       "truePricePerUnit": 3,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -65654,6 +65731,7 @@
         "low": 2.76,
         "high": 6.4399999999999995
       },
+      "sellerJudgementId": 237,
       "truePricePerUnit": 5,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -66083,6 +66161,7 @@
         "low": 6.072,
         "high": 14.168000000000001
       },
+      "sellerJudgementId": 238,
       "truePricePerUnit": 11,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -77972,6 +78051,7 @@
         "low": 6.119999999999999,
         "high": 14.279999999999998
       },
+      "sellerJudgementId": 263,
       "truePricePerUnit": 7,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -78392,6 +78472,7 @@
         "low": 15.18,
         "high": 35.42
       },
+      "sellerJudgementId": 264,
       "truePricePerUnit": 27.500000000000004,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -79086,6 +79167,7 @@
         "low": 3.2640000000000002,
         "high": 7.616
       },
+      "sellerJudgementId": 268,
       "truePricePerUnit": 4.800000000000001,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -79992,6 +80074,7 @@
         "low": 8.448,
         "high": 19.712
       },
+      "sellerJudgementId": 271,
       "truePricePerUnit": 12.8,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -91345,6 +91428,7 @@
         "low": 33.6,
         "high": 78.39999999999999
       },
+      "sellerJudgementId": 297,
       "truePricePerUnit": 72,
       "unitsOffered": 3,
       "unitsSold": 3,
@@ -91529,6 +91613,7 @@
         "low": 16.896,
         "high": 39.424
       },
+      "sellerJudgementId": 298,
       "truePricePerUnit": 17.6,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -92038,6 +92123,7 @@
         "low": 19.679999999999996,
         "high": 45.919999999999995
       },
+      "sellerJudgementId": 299,
       "truePricePerUnit": 44,
       "unitsOffered": 2,
       "unitsSold": 2,
@@ -93093,6 +93179,7 @@
         "low": 12.192000000000002,
         "high": 28.448000000000004
       },
+      "sellerJudgementId": 300,
       "truePricePerUnit": 7.2,
       "unitsOffered": 1,
       "unitsSold": 1,

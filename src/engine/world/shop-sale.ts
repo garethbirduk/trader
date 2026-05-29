@@ -196,7 +196,6 @@ export function registerShopSale(
           quantity: displayed.quantity,
         }),
       });
-      void sellerJudgementId;
 
       // Build a per-shop flow config. The persona mix's
       // populationWeight is biased by spec.personaWeightMultipliers,
@@ -258,6 +257,7 @@ export function registerShopSale(
         pricePerUnit: averagePricePerUnit,
         priceRange: { low: priceLow, high: priceHigh },
         sellerBelief: { low: sellerEstimate.low, high: sellerEstimate.high },
+        sellerJudgementId,
         truePricePerUnit,
         unitsOffered: displayed.quantity,
         unitsSold,

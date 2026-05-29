@@ -204,6 +204,11 @@ export type WorldEvent =
        *  contrast this with the realised range to show "the seller
        *  thought X; they actually got Y." */
       readonly sellerBelief?: { readonly low: number; readonly high: number };
+      /** judgement_log row id for the sellerBelief band — lets the UI
+       *  pop the full per-arm price formula via
+       *  `formatPriceArmMathFromPayload`. Optional for back-compat
+       *  with older dumps. */
+      readonly sellerJudgementId?: number;
       /** Engine truth: the lot's per-unit RRP (item baseValue ×
        *  tier multiplier). Unknown to the seller; surfaced in the
        *  event for retrospective analysis / UI display. */

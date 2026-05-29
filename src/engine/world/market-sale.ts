@@ -117,7 +117,6 @@ export function registerMarketSale(
           quantity: displayed.quantity,
         }),
       });
-      void sellerJudgementId;
 
       let unitsSold = 0;
       let revenue = 0;
@@ -181,6 +180,7 @@ export function registerMarketSale(
         pricePerUnit: averagePricePerUnit,
         priceRange: { low: priceLow, high: priceHigh },
         sellerBelief: { low: sellerEstimate.low, high: sellerEstimate.high },
+        sellerJudgementId,
         truePricePerUnit,
         unitsOffered: displayed.quantity,
         unitsSold,
