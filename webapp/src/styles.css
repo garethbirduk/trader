@@ -1854,6 +1854,25 @@ button.actor-row.actor-row-selected {
   opacity: 0.35;
   cursor: not-allowed;
 }
+.show-math-toggle {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 3px 9px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.show-math-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.show-math-toggle-on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+}
 .playback {
   display: flex;
   align-items: center;

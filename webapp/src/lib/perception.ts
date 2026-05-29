@@ -232,8 +232,17 @@ export function formatCompositeMath(args: {
   readonly observerName: string;
   readonly itemName: string;
   readonly payload: CompositePayload;
+  /** When false, raw numeric values are replaced with `?` so the
+   *  hover shows formula structure without revealing the observer's
+   *  exact head-numbers. Defaults to true (back-compat with sites
+   *  that don't yet plumb the toggle). */
+  readonly revealNumerics?: boolean;
 }): string {
   const { observerName, itemName, payload } = args;
+  const reveal = args.revealNumerics ?? true;
+  const $ = (n: number): string => (reveal ? String(Math.round(n)) : "?");
+  const pct = (n: number): string => (reveal ? `${(n * 100).toFixed(0)}%` : "?%");
+  const dec = (n: number, d = 2): string => (reveal ? n.toFixed(d) : "?");
   const lines: string[] = [
     `${observerName} · ${itemName} (${payload.category}, truth ${payload.truthTier})`,
     `Composite valuation (Condition → Price → multipliers):`,
@@ -245,11 +254,8 @@ export function formatCompositeMath(args: {
       `  override — uses ${payload.perceivedTier} directly (seller named it / listing hides truth)`,
     );
   } else if (payload.condition !== null) {
-    const ePct = (payload.condition.expertise * 100).toFixed(0);
-    const jStr = payload.condition.j.toFixed(2);
-    const anchorStr = payload.condition.anchor.toFixed(2);
     lines.push(
-      `  expertise ${ePct}%, j=${jStr}, anchor q=${anchorStr}`,
+      `  expertise ${pct(payload.condition.expertise)}, j=${dec(payload.condition.j)}, anchor q=${dec(payload.condition.anchor)}`,
       `  → perceived tier: ${payload.perceivedTier}` +
         (payload.perceivedTier === payload.truthTier
           ? " (truth)"
@@ -259,14 +265,12 @@ export function formatCompositeMath(args: {
   lines.push("");
   lines.push("── Price arm (at perceived tier) ──");
   const p = payload.price;
-  const pEpct = (p.expertise * 100).toFixed(0);
-  const pJ = p.j.toFixed(2);
   lines.push(
-    `  truth   £${Math.round(p.truthUnit)}/u  (baseValue × tierMult ${p.tierMultiplier.toFixed(2)})`,
-    `  anchor  £${Math.round(p.anchor)}/u`,
-    `  centre = lerp(anchor, truth, ${pEpct}%) = £${Math.round(p.centre)}/u`,
-    `  j=${pJ} → band [£${Math.round(p.low)}, £${Math.round(p.high)}]/u`,
-    `  sample (RNG)  £${Math.round(p.sample)}/u → perceived unit £${Math.round(payload.perceivedUnitValue)}/u`,
+    `  truth   £${$(p.truthUnit)}/u  (baseValue × tierMult ${dec(p.tierMultiplier)})`,
+    `  anchor  £${$(p.anchor)}/u`,
+    `  centre = lerp(anchor, truth, ${pct(p.expertise)}) = £${$(p.centre)}/u`,
+    `  j=${dec(p.j)} → band [£${$(p.low)}, £${$(p.high)}]/u`,
+    `  sample (RNG)  £${$(p.sample)}/u → perceived unit £${$(payload.perceivedUnitValue)}/u`,
   );
   lines.push("");
   lines.push("── Flaw + multipliers ──");
@@ -293,14 +297,21 @@ export function formatCompositeMath(args: {
       ) {
         const delta = buyerSocial - sellerSocial;
         const deltaSign = delta >= 0 ? "+" : "";
+        const signedBonus = reveal
+          ? `${sign}${payload.flaw.detectionBonus.toFixed(3)}`
+          : "?";
+        const deltaStr = reveal ? `${deltaSign}${delta.toFixed(2)}` : "?";
         lines.push(
           `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus:`,
-          `    buyer social ${buyerSocial.toFixed(2)} − seller social ${sellerSocial.toFixed(2)} = ${deltaSign}${delta.toFixed(2)}`,
-          `    × α(${characterArmAlpha.toFixed(2)}) = ${sign}${payload.flaw.detectionBonus.toFixed(3)} detection bonus`,
+          `    buyer social ${dec(buyerSocial)} − seller social ${dec(sellerSocial)} = ${deltaStr}`,
+          `    × α(${dec(characterArmAlpha)}) = ${signedBonus} detection bonus`,
         );
       } else {
+        const signedBonus = reveal
+          ? `${sign}${payload.flaw.detectionBonus.toFixed(3)}`
+          : "?";
         lines.push(
-          `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus ${sign}${payload.flaw.detectionBonus.toFixed(3)}`,
+          `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus ${signedBonus}`,
         );
       }
       if (
@@ -312,8 +323,11 @@ export function formatCompositeMath(args: {
         roll !== null
       ) {
         const verdict = payload.flaw.detected ? "**spotted**" : "**missed**";
+        const signedBonus = reveal
+          ? `${sign}${payload.flaw.detectionBonus.toFixed(3)}`
+          : "?";
         lines.push(
-          `    base ${baseDetection.toFixed(2)} + bonus ${sign}${payload.flaw.detectionBonus.toFixed(3)} → effective ${effectiveDetection.toFixed(2)}, rolled ${roll.toFixed(2)} → ${verdict}`,
+          `    base ${dec(baseDetection)} + bonus ${signedBonus} → effective ${dec(effectiveDetection)}, rolled ${dec(roll)} → ${verdict}`,
         );
       }
     } else {
@@ -329,22 +343,20 @@ export function formatCompositeMath(args: {
       ) {
         const verdict = payload.flaw.detected ? "**spotted**" : "**missed**";
         lines.push(
-          `    detection ${effectiveDetection.toFixed(2)}, rolled ${roll.toFixed(2)} → ${verdict}`,
+          `    detection ${dec(effectiveDetection)}, rolled ${dec(roll)} → ${verdict}`,
         );
       }
     }
-    lines.push(
-      `  multiplier ×${payload.flaw.multiplier.toFixed(2)}`,
-    );
+    lines.push(`  multiplier ×${dec(payload.flaw.multiplier)}`);
   } else {
     lines.push("  no flaw on this item");
   }
   if (payload.customerFitMultiplier !== 1) {
-    lines.push(`  customer-fit ×${payload.customerFitMultiplier.toFixed(2)}`);
+    lines.push(`  customer-fit ×${dec(payload.customerFitMultiplier)}`);
   }
   lines.push("");
   lines.push(
-    `Final  £${Math.round(payload.perceivedUnitValue)}/u × ${payload.quantity} × multipliers = £${payload.perceivedLotValue} total`,
+    `Final  £${$(payload.perceivedUnitValue)}/u × ${payload.quantity} × multipliers = £${reveal ? payload.perceivedLotValue : "?"} total`,
   );
   return lines.join("\n");
 }
@@ -360,6 +372,7 @@ export function formatPriceArmMathFromPayload(args: {
   readonly observerName: string;
   readonly itemName: string;
   readonly payload: PriceArmPayload;
+  readonly revealNumerics?: boolean;
 }): string {
   const { observerName, itemName, payload } = args;
   return formatPriceArmMath({
@@ -367,6 +380,9 @@ export function formatPriceArmMathFromPayload(args: {
     itemName,
     category: payload.category,
     truthTier: payload.truthTier,
+    ...(args.revealNumerics !== undefined
+      ? { revealNumerics: args.revealNumerics }
+      : {}),
     truthUnit: payload.truthUnit,
     anchor: payload.anchor,
     band: {
@@ -401,6 +417,10 @@ export function formatPriceArmMath(args: {
   readonly anchor: number;
   readonly band: PriceBandResult;
   readonly quantity: number;
+  /** When false, numeric values are replaced with `?` so the hover
+   *  shows formula structure without revealing exact numbers.
+   *  Defaults to true. */
+  readonly revealNumerics?: boolean;
 }): string {
   const {
     observerName,
@@ -412,22 +432,19 @@ export function formatPriceArmMath(args: {
     band,
     quantity,
   } = args;
-  const ePct = (band.expertise * 100).toFixed(0);
-  const jStr = band.j.toFixed(2);
-  const centreR = Math.round(band.centre);
-  const lowR = Math.round(band.low);
-  const highR = Math.round(band.high);
-  const truthR = Math.round(truthUnit);
-  const anchorR = Math.round(anchor);
-  const totalR = centreR * quantity;
+  const reveal = args.revealNumerics ?? true;
+  const $ = (n: number): string => (reveal ? String(Math.round(n)) : "?");
+  const pct = (n: number): string => (reveal ? `${(n * 100).toFixed(0)}%` : "?%");
+  const dec = (n: number, d = 2): string => (reveal ? n.toFixed(d) : "?");
+  const totalR = reveal ? Math.round(band.centre) * quantity : "?";
   const tierLabel = truthTier ?? "—";
   return [
     `${observerName} · ${itemName} (${category}, ${tierLabel})`,
     `Price arm:`,
-    `  truth   £${truthR}/u`,
-    `  anchor  £${anchorR}/u (category prior × tier mult)`,
-    `  centre = lerp(anchor, truth, expertise ${ePct}%) = £${centreR}/u`,
-    `  j=${jStr} → band [£${lowR}, £${highR}]/u`,
+    `  truth   £${$(truthUnit)}/u`,
+    `  anchor  £${$(anchor)}/u (category prior × tier mult)`,
+    `  centre = lerp(anchor, truth, expertise ${pct(band.expertise)}) = £${$(band.centre)}/u`,
+    `  j=${dec(band.j)} → band [£${$(band.low)}, £${$(band.high)}]/u`,
     `  × ${quantity} = £${totalR} total`,
   ].join("\n");
 }

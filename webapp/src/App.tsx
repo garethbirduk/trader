@@ -5,6 +5,7 @@ import { Sidebar } from "./components/Sidebar.js";
 import { PlaybackControls } from "./components/PlaybackControls.js";
 import { CurrentTimeProvider } from "./lib/current-time.js";
 import { PovProvider, usePov, type Pov } from "./lib/pov.js";
+import { ShowMathProvider, useShowMath } from "./lib/show-math.js";
 import { useKnownIds } from "./lib/pov-knowledge.js";
 import { PovSwitcher } from "./components/PovSwitcher.js";
 import { SelectionSetProvider, useSelectionSet } from "./lib/selection-set.js";
@@ -120,8 +121,9 @@ export function App() {
 
   return (
     <PovProvider dump={state.dump}>
-      <SelectionSetProvider>
-        <Loaded
+      <ShowMathProvider>
+        <SelectionSetProvider>
+          <Loaded
           dump={state.dump}
           day={day}
           hour={hour}
@@ -134,7 +136,8 @@ export function App() {
           editorSubTab={editorSubTab}
           setEditorSubTab={setEditorSubTab}
         />
-      </SelectionSetProvider>
+        </SelectionSetProvider>
+      </ShowMathProvider>
     </PovProvider>
   );
 }
@@ -307,6 +310,7 @@ function Loaded(props: LoadedProps) {
           <h1>TRADER · sim viewer</h1>
           <div className="header-controls">
             <PovSwitcher dump={dump} />
+            <ShowMathToggle />
             <div className="history-nav" role="toolbar" aria-label="Selection history">
               <button
                 type="button"
@@ -582,5 +586,24 @@ function Loaded(props: LoadedProps) {
         </main>
       </div>
     </CurrentTimeProvider>
+  );
+}
+
+function ShowMathToggle() {
+  const { showMath, setShowMath } = useShowMath();
+  return (
+    <button
+      type="button"
+      className={`show-math-toggle ${showMath ? "show-math-toggle-on" : ""}`}
+      onClick={() => setShowMath(!showMath)}
+      title={
+        showMath
+          ? "Hide numeric values in NPC judgement hovers (keeps formula structure)"
+          : "Reveal numeric values in every judgement hover (dev / inspection mode)"
+      }
+      aria-pressed={showMath}
+    >
+      Show math
+    </button>
   );
 }

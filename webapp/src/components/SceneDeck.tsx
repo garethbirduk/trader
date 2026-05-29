@@ -20,6 +20,7 @@ import {
   formatCompositeMath,
   formatPriceArmMathFromPayload,
 } from "../lib/perception.js";
+import { useShowMath } from "../lib/show-math.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -712,6 +713,7 @@ function AuctionLotPlayer({
     () => indexJudgements(dump),
     [dump],
   );
+  const { revealNumerics } = useShowMath();
 
   const lotKey = (event.auctionLotId as number) ?? -1;
 
@@ -855,6 +857,7 @@ function AuctionLotPlayer({
                           observerName: bidderName,
                           itemName: itemName(judgement.payload.itemKindId),
                           payload: judgement.payload,
+                          revealNumerics: revealNumerics(b.actorId),
                         })
                       : undefined;
                   return (
@@ -1101,6 +1104,7 @@ function PubdealHagglePlayer({
     () => indexJudgements(dump),
     [dump],
   );
+  const { revealNumerics } = useShowMath();
   const buyerJudgement =
     buyerJudgementId !== undefined
       ? getJudgementById(judgementIdx, buyerJudgementId)
@@ -1114,6 +1118,7 @@ function PubdealHagglePlayer({
             dump.items.find((i) => i.id === buyerJudgement.payload.itemKindId)
               ?.displayName ?? `item ${buyerJudgement.payload.itemKindId}`,
           payload: buyerJudgement.payload,
+          revealNumerics: revealNumerics(buyerId),
         })
       : "what the buyer thought a unit was worth";
 
@@ -2198,6 +2203,7 @@ function MarketScene({
     () => indexJudgements(dump),
     [dump],
   );
+  const { revealNumerics } = useShowMath();
   // All sellers this hour share the same footfall + customer mix —
   // it's the same passing crowd. Take the mix from the first event.
   const first = events[0]!;
@@ -2292,6 +2298,7 @@ function MarketScene({
                   observerName: fullName(sellerActor),
                   itemName,
                   payload: sellerJudgement.payload,
+                  revealNumerics: revealNumerics(sellerId),
                 })
               : "what the seller thought a unit was worth";
           // Profit needs cost basis. The lot may have been fully sold
