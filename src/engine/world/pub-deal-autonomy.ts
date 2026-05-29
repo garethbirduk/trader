@@ -484,7 +484,6 @@ function runOneAttempt(args: {
     contextRefId: seedLot.id,
     payload: buyerJudgementPayload,
   });
-  void buyerJudgementId;
 
   // Seller's own retail estimate — deterministic tier-anchored mid over
   // the bag they actually hold (excludes forward-sourceable; you don't
@@ -636,6 +635,7 @@ function runOneAttempt(args: {
       high: buyerBeliefEstimate.high,
     },
     truePricePerUnit: Math.round(trueRrpPerUnit),
+    buyerJudgementId,
   });
   // The forward-sale fact isn't carried into the deal record (deals are
   // promises regardless), but the trace can be reconstructed from

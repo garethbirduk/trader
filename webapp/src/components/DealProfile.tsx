@@ -10,7 +10,13 @@ import {
   priceBandFor,
   tierTruth,
   formatPriceArmMath,
+  formatCompositeMath,
 } from "../lib/perception.js";
+import {
+  indexJudgements,
+  getJudgementById,
+  isComposite,
+} from "../lib/judgement-log.js";
 
 interface Props {
   readonly dump: RunDump;
@@ -43,34 +49,64 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
   // Also pull the belief snapshots while we're walking the event list,
   // so we can render "what each side thought a unit was worth" beside
   // the agreed unit price.
-  const { struckAtLocationId, sellerBelief, buyerBelief, truePricePerUnit } =
-    useMemo<{
-      struckAtLocationId: number | null;
-      sellerBelief: { low: number; high: number } | null;
-      buyerBelief: { low: number; high: number } | null;
-      truePricePerUnit: number | null;
-    }>(() => {
-      for (const e of dump.events as readonly RunEvent[]) {
-        if (e.type !== "pubdeal.agreed") continue;
-        if ((e.dealId as number) !== dealId) continue;
-        const locId = e.locationId as number | null | undefined;
-        const sb = e.sellerBelief as { low: number; high: number } | undefined;
-        const bb = e.buyerBelief as { low: number; high: number } | undefined;
-        const tp = e.truePricePerUnit as number | undefined;
-        return {
-          struckAtLocationId: typeof locId === "number" ? locId : null,
-          sellerBelief: sb ?? null,
-          buyerBelief: bb ?? null,
-          truePricePerUnit: typeof tp === "number" ? tp : null,
-        };
-      }
+  const {
+    struckAtLocationId,
+    sellerBelief,
+    buyerBelief,
+    truePricePerUnit,
+    buyerJudgementId,
+  } = useMemo<{
+    struckAtLocationId: number | null;
+    sellerBelief: { low: number; high: number } | null;
+    buyerBelief: { low: number; high: number } | null;
+    truePricePerUnit: number | null;
+    buyerJudgementId: number | null;
+  }>(() => {
+    for (const e of dump.events as readonly RunEvent[]) {
+      if (e.type !== "pubdeal.agreed") continue;
+      if ((e.dealId as number) !== dealId) continue;
+      const locId = e.locationId as number | null | undefined;
+      const sb = e.sellerBelief as { low: number; high: number } | undefined;
+      const bb = e.buyerBelief as { low: number; high: number } | undefined;
+      const tp = e.truePricePerUnit as number | undefined;
+      const bj = e.buyerJudgementId as number | undefined;
       return {
-        struckAtLocationId: null,
-        sellerBelief: null,
-        buyerBelief: null,
-        truePricePerUnit: null,
+        struckAtLocationId: typeof locId === "number" ? locId : null,
+        sellerBelief: sb ?? null,
+        buyerBelief: bb ?? null,
+        truePricePerUnit: typeof tp === "number" ? tp : null,
+        buyerJudgementId: typeof bj === "number" ? bj : null,
       };
-    }, [dump.events, dealId]);
+    }
+    return {
+      struckAtLocationId: null,
+      sellerBelief: null,
+      buyerBelief: null,
+      truePricePerUnit: null,
+      buyerJudgementId: null,
+    };
+  }, [dump.events, dealId]);
+
+  // Buyer-belief band hover — the audit row carries the per-arm
+  // Condition → Price → multipliers chain plus the character-arm
+  // social-delta decomposition (docs/judgement.md).
+  const judgementIdx = useMemo(() => indexJudgements(dump), [dump]);
+  const buyerJudgementHover = useMemo<string | undefined>(() => {
+    if (buyerJudgementId === null) return undefined;
+    const j = getJudgementById(judgementIdx, buyerJudgementId);
+    if (j === null || !isComposite(j)) return undefined;
+    const buyer = deal !== null
+      ? dump.actors.find((a) => a.id === deal.buyerActorId)
+      : undefined;
+    const itemName =
+      dump.items.find((i) => i.id === j.payload.itemKindId)?.displayName ??
+      `item ${j.payload.itemKindId}`;
+    return formatCompositeMath({
+      observerName: buyer !== undefined ? fullName(buyer) : "buyer",
+      itemName,
+      payload: j.payload,
+    });
+  }, [buyerJudgementId, judgementIdx, deal, dump.actors, dump.items]);
 
   if (deal === null) {
     return <div className="empty-state">deal {dealId} not found</div>;
@@ -271,6 +307,9 @@ export function DealProfile({ dump, day, snapshot, dealId, onSelect }: Props) {
           buyerBelief={buyerBelief}
           truePricePerUnit={truePricePerUnit}
           agreedUnitPrice={deal.lines[0]?.unitPrice ?? null}
+          {...(buyerJudgementHover !== undefined
+            ? { buyerBeliefHover: buyerJudgementHover }
+            : {})}
         />
       ) : null}
     </section>
@@ -289,11 +328,13 @@ function BeliefBands({
   buyerBelief,
   truePricePerUnit,
   agreedUnitPrice,
+  buyerBeliefHover,
 }: {
   readonly sellerBelief: { low: number; high: number } | null;
   readonly buyerBelief: { low: number; high: number } | null;
   readonly truePricePerUnit: number | null;
   readonly agreedUnitPrice: number | null;
+  readonly buyerBeliefHover?: string;
 }) {
   return (
     <div className="loc-people deal-beliefs">
@@ -313,7 +354,7 @@ function BeliefBands({
           <>
             <dt>Buyer thought</dt>
             <dd>
-              <span className="belief-band">
+              <span className="belief-band" title={buyerBeliefHover}>
                 £{buyerBelief.low}–£{buyerBelief.high}
               </span>
             </dd>

@@ -1089,6 +1089,29 @@ function PubdealHagglePlayer({
     | { low: number; high: number }
     | undefined;
   const truePricePerUnit = event.truePricePerUnit as number | undefined;
+  const buyerJudgementId = event.buyerJudgementId as number | undefined;
+
+  // Judgement audit lookup for the buyer-belief band hover. Memo'd on
+  // dump so the index is shared across pubdeal scenes within the hour.
+  const judgementIdx = useMemo<JudgementIndex>(
+    () => indexJudgements(dump),
+    [dump],
+  );
+  const buyerJudgement =
+    buyerJudgementId !== undefined
+      ? getJudgementById(judgementIdx, buyerJudgementId)
+      : null;
+  const buyerActor = dump.actors.find((a) => a.id === buyerId);
+  const buyerJudgementHover =
+    buyerJudgement !== null && isComposite(buyerJudgement) && buyerActor !== undefined
+      ? formatCompositeMath({
+          observerName: fullName(buyerActor),
+          itemName:
+            dump.items.find((i) => i.id === buyerJudgement.payload.itemKindId)
+              ?.displayName ?? `item ${buyerJudgement.payload.itemKindId}`,
+          payload: buyerJudgement.payload,
+        })
+      : "what the buyer thought a unit was worth";
 
   const attempted = hourEvents.find(
     (e) =>
@@ -1333,7 +1356,7 @@ function PubdealHagglePlayer({
               {buyerBelief !== undefined ? (
                 <span
                   className="belief-band"
-                  title="what the buyer thought a unit was worth"
+                  title={buyerJudgementHover}
                 >
                   £{buyerBelief.low}–£{buyerBelief.high}
                 </span>

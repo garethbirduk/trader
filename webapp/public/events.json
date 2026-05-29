@@ -6486,7 +6486,8 @@
       "buyerActorId": 7,
       "itemKindId": 73,
       "qualityTier": "fair",
-      "quantity": 5
+      "quantity": 5,
+      "buyerJudgementId": 73
     },
     {
       "type": "gossip.exchanged",
@@ -6671,7 +6672,8 @@
         "low": 24.479999999999997,
         "high": 57.11999999999999
       },
-      "truePricePerUnit": 36
+      "truePricePerUnit": 36,
+      "buyerJudgementId": 73
     },
     {
       "type": "trust.adjusted",
@@ -6934,7 +6936,8 @@
       "buyerActorId": 2,
       "itemKindId": 187,
       "qualityTier": "good",
-      "quantity": 8
+      "quantity": 8,
+      "buyerJudgementId": 75
     },
     {
       "type": "gossip.exchanged",
@@ -7103,7 +7106,8 @@
           "action": "walk",
           "unitPrice": null
         }
-      ]
+      ],
+      "buyerJudgementId": 75
     },
     {
       "type": "actor.departed",
@@ -7220,7 +7224,8 @@
       "buyerActorId": 8,
       "itemKindId": 193,
       "qualityTier": "good",
-      "quantity": 5
+      "quantity": 5,
+      "buyerJudgementId": 77
     },
     {
       "type": "gossip.exchanged",
@@ -7439,7 +7444,8 @@
           "action": "walk",
           "unitPrice": null
         }
-      ]
+      ],
+      "buyerJudgementId": 77
     },
     {
       "type": "actor.departed",
@@ -22053,7 +22059,8 @@
       "buyerActorId": 3,
       "itemKindId": 20,
       "qualityTier": "good",
-      "quantity": 1
+      "quantity": 1,
+      "buyerJudgementId": 144
     },
     {
       "type": "auction.knowledge-acquired",
@@ -22249,7 +22256,8 @@
         "low": 59.519999999999996,
         "high": 138.88
       },
-      "truePricePerUnit": 198
+      "truePricePerUnit": 198,
+      "buyerJudgementId": 144
     },
     {
       "type": "trust.adjusted",
@@ -29157,7 +29165,8 @@
       "buyerActorId": 5,
       "itemKindId": 62,
       "qualityTier": "fair",
-      "quantity": 5
+      "quantity": 5,
+      "buyerJudgementId": 159
     },
     {
       "type": "gossip.exchanged",
@@ -29357,7 +29366,8 @@
         "low": 27.36,
         "high": 63.839999999999996
       },
-      "truePricePerUnit": 44
+      "truePricePerUnit": 44,
+      "buyerJudgementId": 159
     },
     {
       "type": "trust.adjusted",
@@ -42586,7 +42596,8 @@
       "buyerActorId": 6,
       "itemKindId": 62,
       "qualityTier": "fair",
-      "quantity": 5
+      "quantity": 5,
+      "buyerJudgementId": 180
     },
     {
       "type": "gossip.exchanged",
@@ -42761,7 +42772,8 @@
         "low": 27.36,
         "high": 63.839999999999996
       },
-      "truePricePerUnit": 44
+      "truePricePerUnit": 44,
+      "buyerJudgementId": 180
     },
     {
       "type": "trust.adjusted",
@@ -43553,7 +43565,8 @@
       "buyerActorId": 5,
       "itemKindId": 62,
       "qualityTier": "fair",
-      "quantity": 5
+      "quantity": 5,
+      "buyerJudgementId": 182
     },
     {
       "type": "gossip.exchanged",
@@ -43777,7 +43790,8 @@
           "action": "walk",
           "unitPrice": null
         }
-      ]
+      ],
+      "buyerJudgementId": 182
     },
     {
       "type": "actor.departed",
@@ -44226,7 +44240,8 @@
       "buyerActorId": 8,
       "itemKindId": 16,
       "qualityTier": "fair",
-      "quantity": 4
+      "quantity": 4,
+      "buyerJudgementId": 185
     },
     {
       "type": "gossip.exchanged",
@@ -44450,7 +44465,8 @@
           "action": "walk",
           "unitPrice": null
         }
-      ]
+      ],
+      "buyerJudgementId": 185
     },
     {
       "type": "actor.departed",
@@ -54210,7 +54226,8 @@
       "buyerActorId": 6,
       "itemKindId": 16,
       "qualityTier": "fair",
-      "quantity": 4
+      "quantity": 4,
+      "buyerJudgementId": 211
     },
     {
       "type": "gossip.exchanged",
@@ -54384,7 +54401,8 @@
           "action": "walk",
           "unitPrice": null
         }
-      ]
+      ],
+      "buyerJudgementId": 211
     },
     {
       "type": "actor.departed",
@@ -76072,7 +76090,8 @@
       "buyerActorId": 7,
       "itemKindId": 16,
       "qualityTier": "fair",
-      "quantity": 4
+      "quantity": 4,
+      "buyerJudgementId": 261
     },
     {
       "type": "gossip.exchanged",
@@ -76287,7 +76306,8 @@
         "low": 29.279999999999998,
         "high": 68.32
       },
-      "truePricePerUnit": 60
+      "truePricePerUnit": 60,
+      "buyerJudgementId": 261
     },
     {
       "type": "trust.adjusted",
@@ -88743,7 +88763,8 @@
       "buyerActorId": 6,
       "itemKindId": 65,
       "qualityTier": "fair",
-      "quantity": 1
+      "quantity": 1,
+      "buyerJudgementId": 289
     },
     {
       "type": "auction.knowledge-acquired",
@@ -88914,7 +88935,8 @@
         "low": 51.84,
         "high": 120.96
       },
-      "truePricePerUnit": 112
+      "truePricePerUnit": 112,
+      "buyerJudgementId": 289
     },
     {
       "type": "trust.adjusted",
@@ -89321,7 +89343,8 @@
       "buyerActorId": 8,
       "itemKindId": 20,
       "qualityTier": "good",
-      "quantity": 1
+      "quantity": 1,
+      "buyerJudgementId": 291
     },
     {
       "type": "auction.knowledge-acquired",
@@ -89532,7 +89555,8 @@
         "low": 81.84,
         "high": 116.55999999999999
       },
-      "truePricePerUnit": 198
+      "truePricePerUnit": 198,
+      "buyerJudgementId": 291
     },
     {
       "type": "trust.adjusted",
@@ -90274,7 +90298,8 @@
       "buyerActorId": 6,
       "itemKindId": 79,
       "qualityTier": "good",
-      "quantity": 1
+      "quantity": 1,
+      "buyerJudgementId": 294
     },
     {
       "type": "gossip.exchanged",
@@ -90498,7 +90523,8 @@
           "action": "walk",
           "unitPrice": null
         }
-      ]
+      ],
+      "buyerJudgementId": 294
     },
     {
       "type": "pubdeal.skipped-too-small",
@@ -95134,7 +95160,8 @@
       "buyerActorId": 8,
       "itemKindId": 79,
       "qualityTier": "good",
-      "quantity": 1
+      "quantity": 1,
+      "buyerJudgementId": 302
     },
     {
       "type": "gossip.exchanged",
@@ -95354,7 +95381,8 @@
         "low": 87.12,
         "high": 124.07999999999997
       },
-      "truePricePerUnit": 198
+      "truePricePerUnit": 198,
+      "buyerJudgementId": 302
     },
     {
       "type": "trust.adjusted",
@@ -95404,7 +95432,8 @@
       "buyerActorId": 2,
       "itemKindId": 16,
       "qualityTier": "fair",
-      "quantity": 4
+      "quantity": 4,
+      "buyerJudgementId": 303
     },
     {
       "type": "gossip.exchanged",
@@ -95579,7 +95608,8 @@
         "low": 29.279999999999998,
         "high": 68.32
       },
-      "truePricePerUnit": 60
+      "truePricePerUnit": 60,
+      "buyerJudgementId": 303
     },
     {
       "type": "trust.adjusted",

@@ -44,6 +44,11 @@ export interface PubDealAttemptArgs {
   readonly sellerBelief?: { readonly low: number; readonly high: number };
   readonly buyerBelief?: { readonly low: number; readonly high: number };
   readonly truePricePerUnit?: number;
+  /** Buyer's appraisal judgement_log row id — set by the autonomy
+   *  caller so pubdeal events carry a direct join key back to the
+   *  audit row, mirroring the auction.cleared bidder snapshots.
+   *  Surfaces a per-arm decomposition hover on the buyer-belief band. */
+  readonly buyerJudgementId?: number;
 }
 
 export type PubDealResult =
@@ -116,6 +121,9 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
     itemKindId: args.itemKindId,
     qualityTier: args.qualityTier,
     quantity: args.quantity,
+    ...(args.buyerJudgementId !== undefined
+      ? { buyerJudgementId: args.buyerJudgementId }
+      : {}),
   });
 
   if (negotiation.type === "walked") {
@@ -127,6 +135,9 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
       buyerActorId: args.buyer.actorId,
       reason: negotiation.reason,
       turns: negotiation.turns,
+      ...(args.buyerJudgementId !== undefined
+        ? { buyerJudgementId: args.buyerJudgementId }
+        : {}),
     });
     return { type: "walked", reason: negotiation.reason, negotiation };
   }
@@ -164,6 +175,9 @@ export function attemptPubDeal(args: PubDealAttemptArgs): PubDealResult {
     ...(args.buyerBelief !== undefined ? { buyerBelief: args.buyerBelief } : {}),
     ...(args.truePricePerUnit !== undefined
       ? { truePricePerUnit: args.truePricePerUnit }
+      : {}),
+    ...(args.buyerJudgementId !== undefined
+      ? { buyerJudgementId: args.buyerJudgementId }
       : {}),
   });
 
