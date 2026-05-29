@@ -97,15 +97,26 @@ export interface CompositePayload {
     readonly high: number;
     readonly sample: number;
   };
-  /** Flaw + character-arm contribution. `flawDetectionBonus` is the
+  /** Flaw + character-arm contribution. `detectionBonus` is the
    *  α × (buyer_social − seller_social) term (see
-   *  pub-deal-autonomy.ts). 0 outside pub-deal contexts. */
+   *  pub-deal-autonomy.ts). 0 outside pub-deal contexts. The optional
+   *  social fields below let the UI decompose the bonus into its
+   *  social-delta inputs; populated only on pubdeal call sites. The
+   *  optional `baseDetection`/`effectiveDetection`/`roll` triplet
+   *  carries the full coin-toss math — null when no flaw on the item
+   *  or knownFlaw short-circuit fired. */
   readonly flaw: {
     readonly itemFlawType: string | null;
     readonly knownFlawType: string | null;
     readonly detected: boolean;
     readonly multiplier: number;
     readonly detectionBonus: number;
+    readonly buyerSocial?: number;
+    readonly sellerSocial?: number;
+    readonly characterArmAlpha?: number;
+    readonly baseDetection?: number | null;
+    readonly effectiveDetection?: number | null;
+    readonly roll?: number | null;
   };
   readonly customerFitMultiplier: number;
   readonly perceivedUnitValue: number;
@@ -249,6 +260,12 @@ export function buildCompositePayloadFromLotValuation(args: {
   /** α × (buyer_social − seller_social) — set when the call site
    *  passed it into `estimateLotValue`. 0 for non-pubdeal contexts. */
   readonly flawDetectionBonus?: number;
+  /** Decomposition inputs for `flawDetectionBonus` — set on pubdeal
+   *  call sites so the UI can render `buyer X − seller Y = Δ × α =
+   *  bonus`. Omit for auction / non-character-arm contexts. */
+  readonly buyerSocial?: number;
+  readonly sellerSocial?: number;
+  readonly characterArmAlpha?: number;
   /** The flaw type the actor knew up-front (short-circuited the
    *  detection roll to 100%). */
   readonly knownFlawType?: FlawType | null;
@@ -291,6 +308,14 @@ export function buildCompositePayloadFromLotValuation(args: {
       detected: args.valuation.flawDetected,
       multiplier: args.valuation.flawMultiplier,
       detectionBonus: args.flawDetectionBonus ?? 0,
+      ...(args.buyerSocial !== undefined ? { buyerSocial: args.buyerSocial } : {}),
+      ...(args.sellerSocial !== undefined ? { sellerSocial: args.sellerSocial } : {}),
+      ...(args.characterArmAlpha !== undefined
+        ? { characterArmAlpha: args.characterArmAlpha }
+        : {}),
+      baseDetection: args.valuation.flawBaseDetection,
+      effectiveDetection: args.valuation.flawEffectiveDetection,
+      roll: args.valuation.flawRoll,
     },
     customerFitMultiplier: args.valuation.customerFitMultiplier,
     perceivedUnitValue: args.valuation.perceivedUnitValue,

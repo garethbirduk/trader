@@ -278,14 +278,63 @@ export function formatCompositeMath(args: {
       );
     } else if (payload.flaw.detectionBonus !== 0) {
       const sign = payload.flaw.detectionBonus >= 0 ? "+" : "";
-      lines.push(
-        `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus ${sign}${payload.flaw.detectionBonus.toFixed(3)}`,
-      );
+      const {
+        buyerSocial,
+        sellerSocial,
+        characterArmAlpha,
+        baseDetection,
+        effectiveDetection,
+        roll,
+      } = payload.flaw;
+      if (
+        buyerSocial !== undefined &&
+        sellerSocial !== undefined &&
+        characterArmAlpha !== undefined
+      ) {
+        const delta = buyerSocial - sellerSocial;
+        const deltaSign = delta >= 0 ? "+" : "";
+        lines.push(
+          `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus:`,
+          `    buyer social ${buyerSocial.toFixed(2)} − seller social ${sellerSocial.toFixed(2)} = ${deltaSign}${delta.toFixed(2)}`,
+          `    × α(${characterArmAlpha.toFixed(2)}) = ${sign}${payload.flaw.detectionBonus.toFixed(3)} detection bonus`,
+        );
+      } else {
+        lines.push(
+          `  flaw '${payload.flaw.itemFlawType}' — character-arm bonus ${sign}${payload.flaw.detectionBonus.toFixed(3)}`,
+        );
+      }
+      if (
+        baseDetection !== undefined &&
+        baseDetection !== null &&
+        effectiveDetection !== undefined &&
+        effectiveDetection !== null &&
+        roll !== undefined &&
+        roll !== null
+      ) {
+        const verdict = payload.flaw.detected ? "**spotted**" : "**missed**";
+        lines.push(
+          `    base ${baseDetection.toFixed(2)} + bonus ${sign}${payload.flaw.detectionBonus.toFixed(3)} → effective ${effectiveDetection.toFixed(2)}, rolled ${roll.toFixed(2)} → ${verdict}`,
+        );
+      }
     } else {
       lines.push(`  flaw '${payload.flaw.itemFlawType}' — unmodified detection roll`);
+      const { baseDetection, effectiveDetection, roll } = payload.flaw;
+      if (
+        baseDetection !== undefined &&
+        baseDetection !== null &&
+        effectiveDetection !== undefined &&
+        effectiveDetection !== null &&
+        roll !== undefined &&
+        roll !== null
+      ) {
+        const verdict = payload.flaw.detected ? "**spotted**" : "**missed**";
+        lines.push(
+          `    detection ${effectiveDetection.toFixed(2)}, rolled ${roll.toFixed(2)} → ${verdict}`,
+        );
+      }
     }
     lines.push(
-      `  detected: ${payload.flaw.detected ? "yes" : "no"} → multiplier ×${payload.flaw.multiplier.toFixed(2)}`,
+      `  multiplier ×${payload.flaw.multiplier.toFixed(2)}`,
     );
   } else {
     lines.push("  no flaw on this item");

@@ -50,6 +50,15 @@ export interface LotValuation {
   readonly perceivedLotValue: number;
   readonly flawDetected: boolean;
   readonly flawMultiplier: number;
+  /** Profile-derived base detection (pre-bonus). Null when no flaw on
+   *  the item or knownFlaw short-circuit fired. */
+  readonly flawBaseDetection: number | null;
+  /** clamp01(base + bonus) — the threshold the RNG was tested against.
+   *  Null in the same cases as flawBaseDetection. */
+  readonly flawEffectiveDetection: number | null;
+  /** The RNG sample drawn against `flawEffectiveDetection`. Null in
+   *  the same cases as flawBaseDetection. */
+  readonly flawRoll: number | null;
   readonly customerFitMultiplier: number;
   /** Diagnostics — populated when the condition arm actually ran
    *  (null when the override path skipped it). */
@@ -136,6 +145,9 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
   // of who's pitching.
   let flawDetected = false;
   let flawMultiplier = 1;
+  let flawBaseDetection: number | null = null;
+  let flawEffectiveDetection: number | null = null;
+  let flawRoll: number | null = null;
   if (item.flawType !== null) {
     if (args.knownFlawType === item.flawType) {
       flawDetected = true;
@@ -149,10 +161,14 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
         profile.defaultFlawDetection;
       const bonus = args.flawDetectionBonus ?? 0;
       const effective = clamp01(base + bonus);
-      flawDetected = args.rng.next() < effective;
+      const roll = args.rng.next();
+      flawDetected = roll < effective;
       if (flawDetected) {
         flawMultiplier = economics.flawDiscount[item.flawType];
       }
+      flawBaseDetection = base;
+      flawEffectiveDetection = effective;
+      flawRoll = roll;
     }
   }
 
@@ -179,6 +195,9 @@ export function estimateLotValue(args: EstimateLotValueArgs): LotValuation {
     perceivedLotValue,
     flawDetected,
     flawMultiplier,
+    flawBaseDetection,
+    flawEffectiveDetection,
+    flawRoll,
     customerFitMultiplier,
     condition,
     price,

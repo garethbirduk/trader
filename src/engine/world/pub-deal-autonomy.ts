@@ -468,6 +468,9 @@ function runOneAttempt(args: {
     economics,
     valuation: valuationResult,
     flawDetectionBonus,
+    buyerSocial: buyerActor?.socialScore ?? 0.5,
+    sellerSocial: sellerActorForRead?.socialScore ?? 0.5,
+    characterArmAlpha: economics.characterArmAlpha,
     ...(knownBuyerFlaw && item.flawType !== null
       ? { knownFlawType: item.flawType }
       : {}),

@@ -137094,7 +137094,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.025000000000000022
+          "detectionBonus": -0.025000000000000022,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 12.050080661137626,
@@ -137133,7 +137139,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.293451593188447,
@@ -137172,7 +137184,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.125
+          "detectionBonus": -0.125,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 97.91953545940467,
@@ -137211,7 +137229,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.12499999999999997
+          "detectionBonus": -0.12499999999999997,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 18.48889117212358,
@@ -137250,7 +137274,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 23.51208758079454,
@@ -137289,7 +137319,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 32.95438616106003,
@@ -137452,7 +137488,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 32.75781581888251,
@@ -137495,7 +137534,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 31.834212507930562,
@@ -137538,7 +137580,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 28.501126270565194,
@@ -137581,7 +137626,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 21.32446725933702,
@@ -137624,7 +137672,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 35.89287290327245,
@@ -137667,7 +137718,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 21.542656165617686,
@@ -137782,7 +137836,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 20.316053053244786,
@@ -137825,7 +137882,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 8.648912122237709,
@@ -137868,7 +137928,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 16.44309663079542,
@@ -137911,7 +137974,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.794075173167514,
@@ -138050,7 +138116,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 18.287556704463853,
@@ -138093,7 +138162,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 31.63575842822369,
@@ -138136,7 +138208,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 28.92755741654837,
@@ -138179,7 +138254,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 28.64181292625323,
@@ -138222,7 +138300,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 22.09385371804398,
@@ -138261,7 +138342,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 21.546946435863738,
@@ -138304,7 +138388,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 38.838645192833184,
@@ -138463,7 +138550,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.05000000000000002
+          "detectionBonus": -0.05000000000000002,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 17.988517742463078,
@@ -138502,7 +138595,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 89.42301599472006,
@@ -138541,7 +138640,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 16.00416195540383,
@@ -138580,7 +138685,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 29.316107001043186,
@@ -138619,7 +138730,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 85.69507393191053,
@@ -138658,7 +138775,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.125
+          "detectionBonus": 0.125,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 21.787454832438318,
@@ -138697,7 +138820,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 89.56729852109643,
@@ -138836,7 +138965,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.236843247593029,
@@ -138879,7 +139011,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 18.150146587590008,
@@ -138922,7 +139057,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 20.023514427807005,
@@ -138961,7 +139099,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.4171941206764,
@@ -139004,7 +139145,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.207893862483132,
@@ -139095,7 +139239,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 52.505502384771056,
@@ -139138,7 +139285,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 36.786007462524196,
@@ -139181,7 +139331,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.706342735697373,
@@ -139220,7 +139373,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 60.89675582489332,
@@ -139263,7 +139419,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 29.621953650692046,
@@ -139330,7 +139489,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 28.741263062739797,
@@ -139373,7 +139535,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 27.232256751862607,
@@ -139412,7 +139577,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.41413155990444,
@@ -139451,7 +139619,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 20.095102016451772,
@@ -139490,7 +139661,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.754191157171306,
@@ -139529,7 +139703,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.553649969144782,
@@ -139616,7 +139793,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.12499999999999997
+          "detectionBonus": 0.12499999999999997,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 132.13501996275153,
@@ -139655,7 +139838,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 16.533580727665893,
@@ -139746,7 +139935,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 115.17161335307618,
@@ -139813,7 +140005,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 23.69518391991104,
@@ -139852,7 +140047,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 47.32747185085764,
@@ -139895,7 +140093,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 28.554227495862627,
@@ -139938,7 +140139,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 49.987652647698994,
@@ -140005,7 +140209,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 25.22790380941579,
@@ -140048,7 +140255,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 24.883166073568514,
@@ -140087,7 +140297,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 48.11436941966288,
@@ -140130,7 +140343,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 23.976775411197618,
@@ -140169,7 +140385,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.15
+          "detectionBonus": -0.15,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 47.16221216283599,
@@ -140208,7 +140430,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.09999999999999998
+          "detectionBonus": 0.09999999999999998,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 11.531613593822621,
@@ -140247,7 +140475,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.07499999999999996
+          "detectionBonus": 0.07499999999999996,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.478499543725238,
@@ -140286,7 +140520,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 11.639719475977332,
@@ -140325,7 +140565,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.235831808407651,
@@ -140364,7 +140610,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 86.83630900652376,
@@ -140455,7 +140707,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.223639200318956,
@@ -140522,7 +140777,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 6.193514396721633,
@@ -140565,7 +140823,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 6.067880115454681,
@@ -140608,7 +140869,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.073703480550144,
@@ -140675,7 +140939,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.952420109636897,
@@ -140718,7 +140985,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 8.574547050696918,
@@ -140761,7 +141031,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 11.854506694996022,
@@ -140804,7 +141077,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.257508475926908,
@@ -140847,7 +141123,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.042757008451556,
@@ -140886,7 +141165,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.24999999999999997
+          "detectionBonus": -0.24999999999999997,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 11.275977906709073,
@@ -140925,7 +141210,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 79.36705389873052,
@@ -140964,7 +141255,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.17500000000000002
+          "detectionBonus": 0.17500000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 46.93292647947355,
@@ -141003,7 +141300,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.125
+          "detectionBonus": -0.125,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.204205326794654,
@@ -141042,7 +141345,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.17500000000000002
+          "detectionBonus": -0.17500000000000002,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 46.71242537668851,
@@ -141081,7 +141390,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.05000000000000002
+          "detectionBonus": 0.05000000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 34.15555008952143,
@@ -141120,7 +141435,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.236742943508978,
@@ -141159,7 +141480,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.17500000000000002
+          "detectionBonus": 0.17500000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 43.653565408714066,
@@ -141298,7 +141625,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 54.09856215649918,
@@ -141389,7 +141719,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.092690986856976,
@@ -141452,7 +141785,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.05000000000000002
+          "detectionBonus": 0.05000000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.735375741828948,
@@ -141491,7 +141830,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.09999999999999998
+          "detectionBonus": 0.09999999999999998,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 86.68124931481861,
@@ -141530,7 +141875,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.025000000000000022
+          "detectionBonus": -0.025000000000000022,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 32.311223626217235,
@@ -141569,7 +141920,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.09999999999999998
+          "detectionBonus": 0.09999999999999998,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 85.0926172913868,
@@ -141608,7 +141965,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.24999999999999997
+          "detectionBonus": -0.24999999999999997,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.911451191046485,
@@ -141647,7 +142010,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 12.575905538949186,
@@ -141686,7 +142055,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 8.302551397188783,
@@ -141729,7 +142104,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 3.5948152841190026,
@@ -141772,7 +142150,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.059635472333938,
@@ -141815,7 +142196,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 3.824011047907663,
@@ -141858,7 +142242,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 3.7566581819178952,
@@ -141901,7 +142288,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 6.865322980845692,
@@ -141940,7 +142330,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.07499999999999996
+          "detectionBonus": -0.07499999999999996,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.03997337652117,
@@ -141979,7 +142375,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.125
+          "detectionBonus": -0.125,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 5.051977583403309,
@@ -142018,7 +142420,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.09999999999999998
+          "detectionBonus": 0.09999999999999998,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 89.48188640475439,
@@ -142057,7 +142465,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 8.10679738630226,
@@ -142096,7 +142510,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.17500000000000002
+          "detectionBonus": 0.17500000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 29.328336112489417,
@@ -142139,7 +142559,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 10.808982611084183,
@@ -142182,7 +142605,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 14.265975232410439,
@@ -142225,7 +142651,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 44.926043296000174,
@@ -142268,7 +142697,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 47.291381248826895,
@@ -142311,7 +142743,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 47.666453626601935,
@@ -142350,7 +142785,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 3.8397968675000462,
@@ -142393,7 +142831,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.840707886188729,
@@ -142436,7 +142877,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.894437635135358,
@@ -142479,7 +142923,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.772598766051072,
@@ -142518,7 +142965,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.67028637518332,
@@ -142557,7 +143007,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.05000000000000002
+          "detectionBonus": 0.05000000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 31.818577148601445,
@@ -142596,7 +143052,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.17500000000000002
+          "detectionBonus": 0.17500000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 16.25822022771579,
@@ -142635,7 +143097,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.09999999999999998
+          "detectionBonus": -0.09999999999999998,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 97.06522120309695,
@@ -142674,7 +143142,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 20.817409192273885,
@@ -142789,7 +143263,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.29421419207446,
@@ -142832,7 +143309,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.741793803847614,
@@ -142899,7 +143379,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 26.668425908463043,
@@ -142942,7 +143425,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 26.364506083023194,
@@ -142985,7 +143471,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 34.2570220858122,
@@ -143028,7 +143517,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 26.347667122377146,
@@ -143071,7 +143563,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 41.646027460664506,
@@ -143158,7 +143653,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.12499999999999997
+          "detectionBonus": 0.12499999999999997,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 32.10014492275382,
@@ -143197,7 +143698,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 12.511950161811837,
@@ -143236,7 +143743,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.07499999999999996
+          "detectionBonus": -0.07499999999999996,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 98.45246047212423,
@@ -143275,7 +143788,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.12499999999999997
+          "detectionBonus": -0.12499999999999997,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 14.28724375736097,
@@ -143314,7 +143833,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 8.157875213839684,
@@ -143357,7 +143882,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 6.804719520203226,
@@ -143400,7 +143928,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 8.36501645730265,
@@ -143443,7 +143974,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 6.871904807186503,
@@ -143486,7 +144020,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.038662759699129,
@@ -143529,7 +144066,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.280780550201335,
@@ -143572,7 +144112,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.3454863556221,
@@ -143615,7 +144158,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.285230921548974,
@@ -143658,7 +144204,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.682573099505387,
@@ -143697,7 +144246,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.561302935174602,
@@ -143736,7 +144288,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.025000000000000022
+          "detectionBonus": -0.025000000000000022,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.24585619817626,
@@ -143775,7 +144333,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.09999999999999998
+          "detectionBonus": 0.09999999999999998,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.542317567759456,
@@ -143814,7 +144378,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.17500000000000002
+          "detectionBonus": 0.17500000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 19.89928937088293,
@@ -143853,7 +144423,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.125
+          "detectionBonus": -0.125,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 32.209657216352625,
@@ -143892,7 +144468,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.125
+          "detectionBonus": -0.125,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.789345237835676,
@@ -143931,7 +144513,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.8578379726386,
@@ -143970,7 +144558,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.07499999999999996
+          "detectionBonus": -0.07499999999999996,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 18.321858738321225,
@@ -144009,7 +144603,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 87.463166871295,
@@ -144048,7 +144648,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 31.66525383948267,
@@ -144087,7 +144693,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.17500000000000002
+          "detectionBonus": -0.17500000000000002,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 20.276390152189173,
@@ -144178,7 +144790,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 44.20592434550649,
@@ -144221,7 +144836,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 63.310984106444025,
@@ -144264,7 +144882,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 41.93751752061466,
@@ -144331,7 +144952,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 14.778296050702492,
@@ -144374,7 +144998,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.61600332523836,
@@ -144441,7 +145068,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 7.173436430030074,
@@ -144484,7 +145114,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.2029230682091,
@@ -144527,7 +145160,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 9.323259393011119,
@@ -144570,7 +145206,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 12.407877876344118,
@@ -144609,7 +145248,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.15
+          "detectionBonus": -0.15,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.842619840661264,
@@ -144648,7 +145293,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.05000000000000002
+          "detectionBonus": -0.05000000000000002,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 14.355980759971155,
@@ -144687,7 +145338,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 16.934776012911186,
@@ -144726,7 +145383,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.025000000000000022
+          "detectionBonus": -0.025000000000000022,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 14.823508335836088,
@@ -144765,7 +145428,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.24999999999999997
+          "detectionBonus": 0.24999999999999997,
+          "buyerSocial": 0.7,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 21.169029866039438,
@@ -144804,7 +145473,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.024999999999999994
+          "detectionBonus": 0.024999999999999994,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.45,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.095491716779456,
@@ -144843,7 +145518,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.577441665584479,
@@ -144882,7 +145563,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 16.91563204072972,
@@ -144921,7 +145608,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 30.869180657277564,
@@ -144960,7 +145653,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.17500000000000002
+          "detectionBonus": -0.17500000000000002,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 24.271774656925203,
@@ -144999,7 +145698,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.15
+          "detectionBonus": 0.15,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 21.794632320331303,
@@ -145038,7 +145743,10 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 6.945783597661202,
@@ -145077,7 +145785,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.17500000000000002
+          "detectionBonus": 0.17500000000000002,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 12.191142212529929,
@@ -145116,7 +145830,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 113.54367530275869,
@@ -145155,7 +145875,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 13.812821031843919,
@@ -145194,7 +145920,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.07499999999999996
+          "detectionBonus": -0.07499999999999996,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.7,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 100.11936312527092,
@@ -145233,7 +145965,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 18.45295426072778,
@@ -145272,7 +146010,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.125
+          "detectionBonus": 0.125,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.2,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 15.816292926200457,
@@ -145311,7 +146055,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 104.38771151418545,
@@ -145350,7 +146100,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.05000000000000002
+          "detectionBonus": -0.05000000000000002,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 36.23191544665219,
@@ -145389,7 +146145,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.15
+          "detectionBonus": -0.15,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 10.51280263613431,
@@ -145524,7 +146286,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.05000000000000002
+          "detectionBonus": -0.05000000000000002,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 4.55488388164085,
@@ -145563,7 +146331,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0.025000000000000022
+          "detectionBonus": 0.025000000000000022,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 105.41451482372,
@@ -145602,7 +146376,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.024999999999999994
+          "detectionBonus": -0.024999999999999994,
+          "buyerSocial": 0.45,
+          "sellerSocial": 0.5,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 50.68369526478858,
@@ -145641,7 +146421,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": 0
+          "detectionBonus": 0,
+          "buyerSocial": 0.55,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 14.389646474509288,
@@ -145680,7 +146466,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.17500000000000002
+          "detectionBonus": -0.17500000000000002,
+          "buyerSocial": 0.2,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 11.429825470124438,
@@ -145719,7 +146511,13 @@
           "knownFlawType": null,
           "detected": false,
           "multiplier": 1,
-          "detectionBonus": -0.025000000000000022
+          "detectionBonus": -0.025000000000000022,
+          "buyerSocial": 0.5,
+          "sellerSocial": 0.55,
+          "characterArmAlpha": 0.5,
+          "baseDetection": null,
+          "effectiveDetection": null,
+          "roll": null
         },
         "customerFitMultiplier": 1,
         "perceivedUnitValue": 5.104624870109189,

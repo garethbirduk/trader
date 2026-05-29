@@ -82,6 +82,17 @@ export interface CompositePayload {
     readonly detected: boolean;
     readonly multiplier: number;
     readonly detectionBonus: number;
+    /** Decomposition of the character-arm bonus (pubdeal call sites
+     *  only). When present, the UI renders
+     *  `buyer X − seller Y = Δ × α = bonus`. */
+    readonly buyerSocial?: number;
+    readonly sellerSocial?: number;
+    readonly characterArmAlpha?: number;
+    /** Coin-toss math (populated when the item has a flaw and the
+     *  knownFlaw short-circuit didn't fire). */
+    readonly baseDetection?: number | null;
+    readonly effectiveDetection?: number | null;
+    readonly roll?: number | null;
   };
   readonly customerFitMultiplier: number;
   readonly perceivedUnitValue: number;
