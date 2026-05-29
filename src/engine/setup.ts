@@ -29,6 +29,7 @@ import { registerAuctionListingKnowledge } from "./world/auction-listing-knowled
 import { registerAuctionInspection } from "./world/auction-inspection.js";
 import { registerOffMapResale } from "./world/off-map-resale.js";
 import { registerLeadDecay } from "./world/lead-decay.js";
+import { registerJudgementRetention } from "./world/judgement-retention.js";
 import { registerPendingPayouts } from "./world/pending-payouts.js";
 import { registerRegionalClearance } from "./world/regional-clearance.js";
 import { registerClearanceAutonomy } from "./world/clearance-autonomy.js";
@@ -580,6 +581,7 @@ export function setupWorld(db: DB, opts: SetupOptions): SetupResult {
   }
   registerLeadDecay(world);
   registerHeatDecay(world);
+  registerJudgementRetention(world);
   registerAuthoritySweep(world, {
     fineProceedsActorId: skin.auctionHouseActorId,
   });
