@@ -21,6 +21,7 @@ import { InventoryView } from "./components/InventoryView.js";
 import { PoolBoard } from "./components/PoolBoard.js";
 import { ItemsList } from "./components/ItemsList.js";
 import { GossipBoard } from "./components/GossipBoard.js";
+import { GraphScratchpad } from "./components/GraphScratchpad.js";
 
 export type RhsTab =
   | "calendar"
@@ -30,6 +31,7 @@ export type RhsTab =
   | "pools"
   | "items"
   | "gossip"
+  | "scratchpad"
   | "editor";
 export type EditorSubTab = "residences" | "actors" | "businesses" | "map";
 
@@ -441,6 +443,16 @@ function Loaded(props: LoadedProps) {
             >
               Gossip
             </button>
+            <button
+              type="button"
+              role="tab"
+              className={`rhs-tab ${props.rhsTab === "scratchpad" ? "rhs-tab-active" : ""}`}
+              aria-selected={props.rhsTab === "scratchpad"}
+              onClick={() => props.setRhsTab("scratchpad")}
+              title="Throwaway graph editor (in-memory only)"
+            >
+              Scratch
+            </button>
             {DEV && pov.kind === "admin" ? (
               <button
                 type="button"
@@ -500,6 +512,8 @@ function Loaded(props: LoadedProps) {
                 snapshot={snapshot}
                 onSelect={(s) => set.replace(s)}
               />
+            ) : props.rhsTab === "scratchpad" ? (
+              <GraphScratchpad />
             ) : props.rhsTab === "editor" && DEV && pov.kind === "admin" ? (
               <div className="editor-pane">
                 <div className="editor-subtabs" role="tablist" aria-label="Editor section">

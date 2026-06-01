@@ -1873,6 +1873,106 @@ button.actor-row.actor-row-selected {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, var(--panel));
 }
+.scratchpad {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.scratchpad-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.scratchpad-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px 9px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.scratchpad-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.scratchpad-btn-active {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.scratchpad-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.scratchpad-hint {
+  font-size: 11px;
+  margin-left: auto;
+}
+.scratchpad-canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: var(--bg);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--border) 40%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--border) 40%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.scratchpad-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.scratch-edge {
+  stroke: var(--text-dim, var(--text));
+  stroke-width: 2;
+  cursor: pointer;
+}
+.scratch-edge:hover {
+  stroke: var(--accent);
+}
+.scratch-node {
+  cursor: pointer;
+}
+.scratch-node circle {
+  fill: var(--panel);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.scratch-node text {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+}
+.scratch-node:hover circle {
+  stroke: var(--accent);
+}
+.scratch-node-picked circle {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.scratch-node-input {
+  width: 100%;
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-size: 12px;
+  text-align: center;
+  border-radius: 2px;
+  outline: none;
+}
 .playback {
   display: flex;
   align-items: center;
